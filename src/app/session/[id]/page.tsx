@@ -94,7 +94,7 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="flex flex-col h-dvh bg-[#F3F0EE] overflow-hidden">
+    <div className="flex flex-col h-dvh overflow-hidden" style={{ background: "rgba(243, 240, 238, 0.5)" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-14 pb-4">
         <button className="bg-white rounded-full p-3 shadow-sm">
@@ -108,7 +108,7 @@ export default function SessionPage() {
         </h1>
 
         <div className="bg-white rounded-full px-3 py-2 flex items-center gap-1.5 shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-[#C0392B] flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#D42619" }} />
           <span className="text-[13px] font-medium text-[#535353]">
             {HARDCODED_PRESENCE} Here
           </span>
@@ -150,7 +150,7 @@ export default function SessionPage() {
 
       {/* Input bar */}
       <div className="px-4 pb-8 pt-2">
-        <div className="bg-white rounded-full flex items-center pl-5 pr-2 py-2 shadow-sm">
+        <div className="rounded-full flex items-center pl-5 pr-2 py-2" style={{ background: "rgba(255, 255, 255, 0.8)" }}>
           <textarea
             ref={inputRef}
             rows={1}
@@ -164,7 +164,8 @@ export default function SessionPage() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || submitting}
-            className="bg-[#d58733] rounded-full w-9 h-9 flex items-center justify-center ml-2 flex-shrink-0 disabled:opacity-40 transition-opacity"
+            className="rounded-full w-9 h-9 flex items-center justify-center ml-2 flex-shrink-0 disabled:opacity-40 transition-opacity"
+            style={{ background: "#D42619" }}
           >
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 12V2M2 7l5-5 5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
