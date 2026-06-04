@@ -95,38 +95,31 @@ export default function SessionPage() {
 
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ background: "rgba(243, 240, 238, 0.5)" }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-14 pb-4">
-        <button className="bg-white rounded-full p-3 shadow-sm">
-          <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
-            <path d="M1 1h16M1 7h16M1 13h16" stroke="#535353" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
-
-        <h1 className="text-[25px] font-medium text-black leading-none">
-          {HARDCODED_TITLE}
-        </h1>
-
-        <div className="bg-white rounded-full px-3 py-2 flex items-center gap-1.5 shadow-sm">
-          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: "#D42619" }} />
-          <span className="text-[13px] font-medium text-[#535353]">
-            {HARDCODED_PRESENCE} Here
-          </span>
+      {/* Header: title left + hamburger right, presence below title */}
+      <div className="flex items-start justify-between px-[26px] pt-14 pb-3">
+        <div>
+          <h1 className="text-[25px] font-medium text-black leading-[25px]">
+            {HARDCODED_TITLE}
+          </h1>
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="w-[7px] h-[7px] rounded-full flex-shrink-0" style={{ background: "#D42619" }} />
+            <span className="text-[15px] text-[#535353]">
+              {HARDCODED_PRESENCE} Here
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 px-4 pb-5">
-        <button className="bg-[rgba(67,61,61,0.85)] text-white rounded-lg px-5 py-1.5 text-[14px] font-medium">
-          My Notes
-        </button>
-        <button className="bg-white text-[#535353] rounded-lg px-5 py-1.5 text-[14px]">
-          Shared Note
+        <button className="mt-1">
+          <svg width="15" height="10" viewBox="0 0 15 10" fill="none">
+            <path d="M0 0h15" stroke="#817E7E" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M3 5h12" stroke="#817E7E" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M6 10h9" stroke="#817E7E" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
         </button>
       </div>
 
       {/* Notes list */}
-      <div className="flex-1 overflow-y-auto px-5">
+      <div className="flex-1 overflow-y-auto px-[23px] pt-2">
         {notes.length === 0 ? (
           <p className="text-[13px] text-[#afafaf] mt-2">
             Your notes will appear here.
@@ -135,7 +128,7 @@ export default function SessionPage() {
           <div className="space-y-5">
             {notes.map((note) => (
               <div key={note.id}>
-                <p className="text-[10px] text-[#AFAFAF] mb-0.5" style={{ letterSpacing: "-0.5px" }}>
+                <p className="text-[10px] text-[#AFAFAF] mb-0.5 leading-[20px]" style={{ letterSpacing: "-0.5px" }}>
                   {formatTime(note.created_at)}
                 </p>
                 <p className="text-[18px] font-medium text-[#535353] leading-[20px]" style={{ letterSpacing: "-1px" }}>
@@ -149,8 +142,8 @@ export default function SessionPage() {
       </div>
 
       {/* Input bar */}
-      <div className="px-4 pb-8 pt-2">
-        <div className="rounded-full flex items-center pl-5 pr-2 py-2" style={{ background: "rgba(255, 255, 255, 0.8)" }}>
+      <div className="px-[7px] pb-8 pt-2">
+        <div className="rounded-[29px] flex items-center pl-[25px] pr-2 py-2.5" style={{ background: "rgba(255, 255, 255, 0.8)" }}>
           <textarea
             ref={inputRef}
             rows={1}
@@ -164,11 +157,11 @@ export default function SessionPage() {
           <button
             onClick={handleSubmit}
             disabled={!input.trim() || submitting}
-            className="rounded-full w-9 h-9 flex items-center justify-center ml-2 flex-shrink-0 disabled:opacity-40 transition-opacity"
+            className="rounded-[14.5px] w-[52px] h-[29px] flex items-center justify-center ml-2 flex-shrink-0 disabled:opacity-40 transition-opacity"
             style={{ background: "#D42619" }}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 12V2M2 7l5-5 5 5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <path d="M7.5 13V2M1 7.5l6.5-6.5 6.5 6.5" stroke="white" strokeWidth="3" strokeLinecap="round" />
             </svg>
           </button>
         </div>
