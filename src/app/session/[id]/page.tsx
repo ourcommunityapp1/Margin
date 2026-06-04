@@ -94,7 +94,7 @@ export default function SessionPage() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#EDEAE4] overflow-hidden">
+    <div className="flex flex-col h-dvh bg-[#F3F0EE] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-14 pb-4">
         <button className="bg-white rounded-full p-3 shadow-sm">
@@ -103,7 +103,7 @@ export default function SessionPage() {
           </svg>
         </button>
 
-        <h1 className="text-[22px] font-medium text-[#535353] tracking-tight">
+        <h1 className="text-[25px] font-medium text-black leading-none">
           {HARDCODED_TITLE}
         </h1>
 
@@ -135,10 +135,10 @@ export default function SessionPage() {
           <div className="space-y-5">
             {notes.map((note) => (
               <div key={note.id}>
-                <p className="text-[10px] text-[#afafaf] mb-0.5 tracking-wide uppercase">
+                <p className="text-[10px] text-[#AFAFAF] mb-0.5" style={{ letterSpacing: "-0.5px" }}>
                   {formatTime(note.created_at)}
                 </p>
-                <p className="text-[16px] font-medium text-[#535353] leading-snug">
+                <p className="text-[18px] font-medium text-[#535353] leading-[20px]" style={{ letterSpacing: "-1px" }}>
                   {note.content}
                 </p>
               </div>
@@ -158,7 +158,7 @@ export default function SessionPage() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Start your note"
-            className="flex-1 bg-transparent outline-none text-[14px] text-[#535353] placeholder-[#b0a8a8] resize-none leading-6 max-h-32 overflow-y-auto"
+            className="flex-1 bg-transparent outline-none text-[16px] text-[#535353] placeholder-[#8D8585] resize-none leading-[30px] max-h-32 overflow-y-auto"
             style={{ fontFamily: "var(--font-geist), sans-serif" }}
           />
           <button
