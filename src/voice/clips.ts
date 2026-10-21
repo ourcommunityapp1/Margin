@@ -9,7 +9,7 @@
 import { createHash } from 'node:crypto';
 import { addCharge, sumCharges, type Store } from '../server/store.ts';
 import { ElevenLabsError, type ElevenLabs, type ModelInfo, type Plan } from './elevenlabs.ts';
-import { modelsFor, voiceFor, type Kind } from './voices.ts';
+import { MODELS, speedFor, voiceFor, type Kind, type When } from './voices.ts';
 
 export const MAX_CHARS = 2000;
 
@@ -43,9 +43,10 @@ export type ClipResult =
 
 export const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
 
-// The same text in the same voice and kind of reading is the same clip.
-export const clipId = (text: string, speaker: string, kind: Kind) =>
-  createHash('sha256').update(`v1|${kind === 'answer' ? 'live' : 'narration'}|${voiceFor(speaker).id}|${normalize(text)}`).digest('hex').slice(0, 40);
+// The same text in the same voice from the same kind of model is the same clip. (The labels in
+// the hash are the ones the first clips were made under, so those stay found.)
+export const clipId = (text: string, speaker: string, speed: 'quick' | 'ahead') =>
+  createHash('sha256').update(`v1|${speed === 'quick' ? 'live' : 'narration'}|${voiceFor(speaker).id}|${normalize(text)}`).digest('hex').slice(0, 40);
 
 export const clipKey = (id: string) => `clips/${id}.mp3`;
 
@@ -83,21 +84,27 @@ export async function allowance(deps: VoiceDeps): Promise<Allowance> {
   return { share: deps.share, credits, spent: await sumCharges(deps.store, `ledger/${period}`), period, plan: p ?? undefined };
 }
 
-// The models to try for this kind of text, cheapest-to-know first: those the account lists,
-// in order of preference, each with its credits per character.
-async function candidates(deps: VoiceDeps, kind: Kind): Promise<{ id: string; rate: number }[]> {
+// The models to try, in order of preference: those the account lists, each with its credits
+// per character.
+async function candidates(deps: VoiceDeps, speed: 'quick' | 'ahead'): Promise<{ id: string; rate: number }[]> {
   const known = deps.api ? await models(deps.api) : null;
-  const wanted = modelsFor(kind);
+  const wanted = MODELS[speed];
   const usable = known ? wanted.filter((m) => known.has(m)) : wanted;
   // An unknown model's rate is taken as a full credit per character, the most any costs.
   return (usable.length ? usable : wanted).map((id) => ({ id, rate: known?.get(id)?.rate ?? 1 }));
 }
 
-export async function makeClip(deps: VoiceDeps, req: { text: string; speaker: string; kind: Kind }, signal?: AbortSignal): Promise<ClipResult> {
+export async function makeClip(deps: VoiceDeps, req: { text: string; speaker: string; kind: Kind; when?: When }, signal?: AbortSignal): Promise<ClipResult> {
   const text = normalize(req.text);
   if (!text || text.length > MAX_CHARS) return { ok: false, status: 400, error: `Send between 1 and ${MAX_CHARS} characters.` };
-  const id = clipId(text, req.speaker, req.kind);
-  if (await deps.store.has(clipKey(id))) return { ok: true, id, cached: true };
+  // A clip already made by either model is used rather than paid for again; the fuller reading
+  // is preferred when there are both.
+  for (const made of ['ahead', 'quick'] as const) {
+    const found = clipId(text, req.speaker, made);
+    if (await deps.store.has(clipKey(found))) return { ok: true, id: found, cached: true };
+  }
+  const speed = speedFor(req.kind, req.when);
+  const id = clipId(text, req.speaker, speed);
   if (!deps.api) return { ok: false, status: 503, error: 'ElevenLabs isn’t set up.' };
   if (!deps.durable) {
     console.error('[voice] no lasting storage for the allowance tally, so no new clips are made');
@@ -105,7 +112,7 @@ export async function makeClip(deps: VoiceDeps, req: { text: string; speaker: st
   }
 
   const voice = voiceFor(req.speaker);
-  for (const model of await candidates(deps, req.kind)) {
+  for (const model of await candidates(deps, speed)) {
     const cost = Math.ceil(text.length * model.rate);
     const a = await allowance(deps);
     const left = a.credits - a.spent - inFlight;

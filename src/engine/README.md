@@ -127,7 +127,7 @@ node scripts/precompute-guides.ts "Psalm 23" "John 3:1-21"   # study guides ahea
 | `ELEVENLABS_API_KEY` | ElevenLabs voices (`/api/tts`). Without it the phone app reads with the device's voice. | none |
 | `MARGIN_TTS_SHARE` | The share of the ElevenLabs plan's credits Margin may spend in a billing period | `0.05` |
 | `MARGIN_TTS_CREDITS` | The voice allowance in credits when the API key can't read the plan | `1500` |
-| `MARGIN_TTS_MODEL`, `MARGIN_TTS_FAST_MODEL` | Override the reading model (Scripture, commentary, introductions) and the answer model | `eleven_v4`, `eleven_v4_turbo` |
+| `MARGIN_TTS_FAST_MODEL`, `MARGIN_TTS_MODEL` | Override the model for clips wanted now and for clips made ahead | `eleven_v4_turbo`, `eleven_v4` |
 | `MARGIN_DATA_DIR` | Where study guides, the day's spending and voice clips are kept off Netlify (on Netlify they go to Netlify Blobs) | the system's temporary folder |
 
 All live calls use the server-side fallback beta (`server-side-fallback-2026-07-01`). If the chosen model declines a request, the API retries it on another model within the same call. Batch requests can't use it, so the study-guide script leaves it off.
@@ -149,7 +149,7 @@ The phone app also uses these:
 | Route | Body | Returns |
 |---|---|---|
 | `POST /api/login` | `{code}` | sets the access cookie (`GET` says whether this device is signed in) |
-| `POST /api/tts` | `{text, voice: "bsb" \| "host" \| "henry" \| …, kind: "scripture" \| "comment" \| "intro" \| "answer"}` | `{id, url, cached}` for a voiced clip; 402 once Margin's voice allowance is used |
+| `POST /api/tts` | `{text, voice: "bsb" \| "host" \| "henry" \| …, kind: "scripture" \| "comment" \| "intro" \| "answer", when?: "now" \| "ahead"}` | `{id, url, cached}` for a voiced clip; 402 once Margin's voice allowance is used |
 | `GET /api/tts/<id>` | | the clip's MP3, with byte ranges for Safari |
 | `GET /api/voice` | | whether ElevenLabs is on, the allowance and what's spent |
 
@@ -159,10 +159,12 @@ The phone app also uses these:
 
 Voices come from ElevenLabs through `/api/tts` (`src/voice/`). Each sentence is a clip, voiced once and kept in Netlify Blobs, so replays cost nothing.
 
-| What is read | Model | Why |
+| When the clip is needed | Model | Why |
 |---|---|---|
-| Scripture, commentary, introductions | Eleven v4 (`eleven_v4`), else Multilingual v2 | Read the same way every time, so each clip is made once and kept. It gets the most natural model. |
-| Spoken answers | Eleven v4 Turbo (`eleven_v4_turbo`), else Flash v2.5 | New every time, and someone is waiting. It gets the fast model, at about half the credits. |
+| Now: a passage as it plays, a spoken answer | Eleven v4 Turbo (`eleven_v4_turbo`), else Flash v2.5 | Someone is waiting. It starts speaking in a fraction of a second, at about half the credits. |
+| Ahead (`when: "ahead"`), with no one waiting | Eleven v4 (`eleven_v4`), else Multilingual v2 | The most natural reading, for audio prepared before it's played. |
+
+A clip made by either model is reused for both, the fuller reading first, so nothing is voiced twice.
 
 The voices are Marcus (Scripture), Sarah (host), George (Henry), William (Spurgeon), Bill (Augustine and the other Fathers) and Daniel (Chrysostom). They are all ElevenLabs default voices or voices already in the account (`src/voice/voices.ts`).
 

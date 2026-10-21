@@ -35,26 +35,39 @@ const deps = (api: ElevenLabs | null, extra: Partial<VoiceDeps> = {}): VoiceDeps
 
 beforeEach(() => forgetCached());
 
-test('a clip is the same text in the same voice and kind of reading', () => {
-  assert.equal(clipId('In the  beginning\n', 'bsb', 'scripture'), clipId('In the beginning', 'bsb', 'scripture'));
-  assert.equal(clipId('Amen.', 'host', 'intro'), clipId('Amen.', 'host', 'comment'), 'both are narration');
-  assert.notEqual(clipId('Amen.', 'host', 'intro'), clipId('Amen.', 'host', 'answer'), 'answers use the fast model');
-  assert.notEqual(clipId('Amen.', 'henry', 'comment'), clipId('Amen.', 'spurgeon', 'comment'));
-  assert.equal(clipId('Amen.', 'jerome', 'comment'), clipId('Amen.', 'augustine', 'comment'), 'minor Fathers share a voice');
+test('a clip is the same text in the same voice from the same kind of model', () => {
+  assert.equal(clipId('In the  beginning\n', 'bsb', 'quick'), clipId('In the beginning', 'bsb', 'quick'));
+  assert.notEqual(clipId('Amen.', 'host', 'quick'), clipId('Amen.', 'host', 'ahead'));
+  assert.notEqual(clipId('Amen.', 'henry', 'ahead'), clipId('Amen.', 'spurgeon', 'ahead'));
+  assert.equal(clipId('Amen.', 'jerome', 'ahead'), clipId('Amen.', 'augustine', 'ahead'), 'minor Fathers share a voice');
 });
 
-test('narration gets Eleven v4, answers v4 Turbo; a clip is made once, then replayed from storage', async () => {
+test('what someone is waiting for gets v4 Turbo, what is made ahead gets v4; a clip is made once', async () => {
   const { api, calls } = fakeApi();
   const d = deps(api);
   const first = await makeClip(d, { text: 'The LORD is my shepherd; I shall not want.', speaker: 'bsb', kind: 'scripture' });
-  assert.ok(first.ok && !first.cached && first.model === 'eleven_v4' && first.credits === 42);
+  assert.ok(first.ok && !first.cached && first.model === 'eleven_v4_turbo' && first.credits === 21, 'half a credit a character');
   const again = await makeClip(d, { text: 'The LORD is my shepherd; I shall not want.', speaker: 'bsb', kind: 'scripture' });
   assert.ok(again.ok && again.cached);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].voice, 'C9fbwSpEaejywLWx722Z');
-  const answer = await makeClip(d, { text: 'Paul means a gift, not a wage.', speaker: 'host', kind: 'answer' });
-  assert.ok(answer.ok && answer.model === 'eleven_v4_turbo' && answer.credits === 15, 'half a credit a character');
+  const ahead = await makeClip(d, { text: 'He makes me lie down in green pastures.', speaker: 'bsb', kind: 'scripture', when: 'ahead' });
+  assert.ok(ahead.ok && ahead.model === 'eleven_v4' && ahead.credits === 39);
+  const answer = await makeClip(d, { text: 'Paul means a gift, not a wage.', speaker: 'host', kind: 'answer', when: 'ahead' });
+  assert.ok(answer.ok && answer.model === 'eleven_v4_turbo', 'answers are always awaited');
   assert.ok(await d.store.has(clipKey(first.ok ? first.id : '')));
+});
+
+test('a clip made by either model is reused, the fuller reading first', async () => {
+  const { api, calls } = fakeApi();
+  const d = deps(api);
+  const made = await makeClip(d, { text: 'He restores my soul.', speaker: 'bsb', kind: 'scripture', when: 'ahead' });
+  const now = await makeClip(d, { text: 'He restores my soul.', speaker: 'bsb', kind: 'scripture' });
+  assert.ok(made.ok && now.ok && now.cached && now.id === made.id, 'the v4 clip serves a request that is wanted now');
+  const quick = await makeClip(d, { text: 'Selah.', speaker: 'host', kind: 'intro' });
+  const later = await makeClip(d, { text: 'Selah.', speaker: 'host', kind: 'intro', when: 'ahead' });
+  assert.ok(quick.ok && later.ok && later.cached && later.id === quick.id, 'nor is a Turbo clip paid for again');
+  assert.equal(calls.length, 2);
 });
 
 test('Margin stops at its share of the plan, minus a small reserve, and says so', async () => {
@@ -63,12 +76,12 @@ test('Margin stops at its share of the plan, minus a small reserve, and says so'
   const a = await allowance(d);
   assert.equal(a.credits, 1000 - 300);
   const long = 'x'.repeat(650);
-  assert.ok((await makeClip(d, { text: long, speaker: 'henry', kind: 'comment' })).ok);
-  const over = await makeClip(d, { text: 'y'.repeat(100), speaker: 'henry', kind: 'comment' });
+  assert.ok((await makeClip(d, { text: long, speaker: 'henry', kind: 'comment', when: 'ahead' })).ok);
+  const over = await makeClip(d, { text: 'y'.repeat(100), speaker: 'henry', kind: 'comment', when: 'ahead' });
   assert.ok(!over.ok && over.status === 402);
   assert.equal(calls.length, 1, 'nothing was sent once the allowance was used');
   assert.equal((await allowance(d)).spent, 650);
-  const cached = await makeClip(d, { text: long, speaker: 'henry', kind: 'comment' });
+  const cached = await makeClip(d, { text: long, speaker: 'henry', kind: 'comment', when: 'ahead' });
   assert.ok(cached.ok && cached.cached, 'clips already made still play');
 });
 
@@ -82,14 +95,14 @@ test('when the key can’t read the plan, the fixed allowance applies', async ()
   const { api } = fakeApi({ plan: new ElevenLabsError(401, 'missing_permissions', 'missing user_read') });
   const d = deps(api, { fallbackCredits: 50 });
   assert.equal((await allowance(d)).credits, 50);
-  assert.ok((await makeClip(d, { text: 'x'.repeat(40), speaker: 'host', kind: 'intro' })).ok);
-  const r = await makeClip(d, { text: 'z'.repeat(40), speaker: 'host', kind: 'intro' });
+  assert.ok((await makeClip(d, { text: 'x'.repeat(40), speaker: 'host', kind: 'intro', when: 'ahead' })).ok);
+  const r = await makeClip(d, { text: 'z'.repeat(40), speaker: 'host', kind: 'intro', when: 'ahead' });
   assert.ok(!r.ok && r.status === 402);
 });
 
 test('a model the account lacks is skipped; one that fails falls through to the next', async () => {
   const listed = fakeApi({ models: MODELS.filter((m) => !m.id.startsWith('eleven_v4')) });
-  const r1 = await makeClip(deps(listed.api), { text: 'He restores my soul.', speaker: 'bsb', kind: 'scripture' });
+  const r1 = await makeClip(deps(listed.api), { text: 'He restores my soul.', speaker: 'bsb', kind: 'scripture', when: 'ahead' });
   assert.ok(r1.ok && r1.model === 'eleven_multilingual_v2');
   forgetCached();
   const r2 = await makeClip(deps(listed.api), { text: 'He restores my soul.', speaker: 'host', kind: 'answer' });
@@ -98,10 +111,15 @@ test('a model the account lacks is skipped; one that fails falls through to the 
   forgetCached();
   const unknown = fakeApi({
     models: new ElevenLabsError(401, 'missing_permissions', 'missing models_read'),
-    fail: (m) => (m === 'eleven_v4' ? new ElevenLabsError(400, 'model_not_found', 'no such model') : null),
+    fail: (m) => (m.startsWith('eleven_v4') ? new ElevenLabsError(400, 'model_not_found', 'no such model') : null),
   });
-  const r3 = await makeClip(deps(unknown.api), { text: 'He leads me beside quiet waters.', speaker: 'bsb', kind: 'scripture' });
+  const du = deps(unknown.api);
+  const r3 = await makeClip(du, { text: 'He leads me beside quiet waters.', speaker: 'bsb', kind: 'scripture', when: 'ahead' });
   assert.ok(r3.ok && r3.model === 'eleven_multilingual_v2');
+  const r4 = await makeClip(du, { text: 'He leads me beside quiet waters.', speaker: 'bsb', kind: 'scripture' });
+  assert.ok(r4.ok && r4.cached, 'the fallback clip is reused');
+  const r5 = await makeClip(du, { text: 'Your rod and Your staff, they comfort me.', speaker: 'bsb', kind: 'scripture' });
+  assert.ok(r5.ok && r5.model === 'eleven_flash_v2_5');
 });
 
 test('an exhausted account, a bad voice or no key means the device voice', async () => {

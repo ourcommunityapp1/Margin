@@ -713,9 +713,9 @@ if (SPEECH.ok) { SPEECH.load(); try { window.speechSynthesis.onvoiceschanged = (
 
 /* ---------- ElevenLabs voices ---------- */
 // Each sentence is voiced on Margin's server, which keeps every clip, so a passage heard twice
-// costs nothing the second time. Scripture and commentary are read by Eleven v4, answers by the
-// faster v4 Turbo. Once Margin's share of the month's ElevenLabs credits is used, or when a
-// clip can't be made, that sentence is read by the phone's own voice.
+// costs nothing the second time. Everything played here is wanted now, so the server voices it
+// with the fast Eleven v4 Turbo. Once Margin's share of the month's ElevenLabs credits is used,
+// or when a clip can't be made, that sentence is read by the phone's own voice.
 const VOICE = {
   on:true, status:null, el:null, unlocked:false, warned:false, halted:false, clips:new Map(), pending:null, current:'',
   audio() {
@@ -1388,7 +1388,7 @@ async function chatSend(t, q) {
 // Reads the answer in turns: the host or persona, each commentator's exact words in his voice,
 // and Scripture in the Bible voice.
 // Quotations keep the reading voices, so a verse quoted in an answer is the same clip as the
-// verse in a passage; the answer's own words use the fast model.
+// verse in a passage.
 const ANSWER = {token:0};
 const segKind = k => k === 'scripture' ? 'scripture' : k === 'quote' ? 'comment' : k === 'disclosure' ? 'intro' : 'answer';
 function speakAnswer(a) {
