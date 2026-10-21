@@ -7,7 +7,7 @@ import type { Corpus } from '../corpus/store.ts';
 import { loose } from '../text.ts';
 import { Bm25 } from './bm25.ts';
 
-interface Verse { text: string; unit: Span }
+interface Verse { text: string; unit: Span; n: number }
 
 export interface SearchOptions {
   // Books the question names without a chapter ("Philippians says…"): their passages rank first.
@@ -56,7 +56,7 @@ export class PassageIndex {
               if (!p) postings.set(w, (p = []));
               p.push(verses.length);
             }
-            verses.push({ text, unit: u });
+            verses.push({ text, unit: u, n: v });
           }
         }
       }
@@ -68,10 +68,11 @@ export class PassageIndex {
 
   // Quoted or recalled lines of Scripture go straight to their passages; anything else is ranked
   // by keywords, with passages from any book the question names first.
-  search(query: string, limit = 6, opts: SearchOptions = {}): { span: Span; score: number }[] {
-    const out: { span: Span; score: number }[] = [];
+  // A quoted or remembered line also returns its verse, which the question is plainly about.
+  search(query: string, limit = 6, opts: SearchOptions = {}): { span: Span; score: number; verse?: number }[] {
+    const out: { span: Span; score: number; verse?: number }[] = [];
     const seen = new Set<Span>();
-    const add = (span: Span, score: number) => { if (!seen.has(span)) { seen.add(span); out.push({ span, score }); } };
+    const add = (span: Span, score: number, verse?: number) => { if (!seen.has(span)) { seen.add(span); out.push({ span, score, verse }); } };
     const inBooks = (s: Span) => !opts.books?.length || opts.books.includes(s.bi);
 
     // Quoted phrases, and the whole query, which is often just a remembered line.
@@ -80,9 +81,9 @@ export class PassageIndex {
       const q = loose(p);
       if (q.split(' ').length < 4) continue;
       const hits = this.verses.filter((v) => v.text.includes(q));
-      for (const v of [...hits.filter((h) => inBooks(h.unit)), ...hits].slice(0, 3)) add(v.unit, Infinity);
+      for (const v of [...hits.filter((h) => inBooks(h.unit)), ...hits].slice(0, 3)) add(v.unit, Infinity, v.n);
     }
-    for (const v of this.recalled(query).sort((x, y) => Number(inBooks(y.unit)) - Number(inBooks(x.unit))).slice(0, 3)) add(v.unit, Infinity);
+    for (const v of this.recalled(query).sort((x, y) => Number(inBooks(y.unit)) - Number(inBooks(x.unit))).slice(0, 3)) add(v.unit, Infinity, v.n);
 
     const ranked = this.bm25.search(query, opts.books?.length ? 400 : limit + out.length);
     if (opts.books?.length) for (const { item, score } of ranked.filter((r) => opts.books!.includes(r.item.bi)).slice(0, 2)) add(item, score);

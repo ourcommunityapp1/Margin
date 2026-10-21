@@ -28,7 +28,9 @@ const FAST_MODEL = 'claude-sonnet-5-5';
 // (Sonnet 5.5 defaults to high effort, so every call sets it.)
 const EFFORT: Record<JsonRoute | 'answer' | 'repair', Record<Tier, Effort>> = {
   plan: { standard: 'low', hard: 'low' },
-  grade: { standard: 'low', hard: 'medium' },
+  // Judging a paraphrase needs some thought: at low effort the grader rejected faithful ones,
+  // and each false rejection costs a repair on the strongest model.
+  grade: { standard: 'medium', hard: 'medium' },
   playlist: { standard: 'medium', hard: 'medium' },
   answer: { standard: 'low', hard: 'medium' },
   repair: { standard: 'medium', hard: 'medium' },

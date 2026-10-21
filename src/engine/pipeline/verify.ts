@@ -7,7 +7,7 @@ import { findRefs, overlaps, spans as refSpans, type Span } from '../bible/refs.
 import { ABSENT_VOICES, authorOf, type Speaker } from '../corpus/sources.ts';
 import type { Source } from '../retrieve/gather.ts';
 import type { CitedAnswer, Citation } from '../model/types.ts';
-import { loose, normalize, words } from '../text.ts';
+import { inQuote, loose, normalize, quoteSpans, words } from '../text.ts';
 
 export interface QuoteCheck {
   text: string;
@@ -50,7 +50,8 @@ export function toSentences(answer: CitedAnswer): Sentence[] {
   for (const b of answer.blocks) {
     cur.text += b.text;
     cur.citations.push(...b.citations);
-    if (/[.!?]["”’)]*\s*$/.test(b.text)) { out.push(cur); cur = { text: '', citations: [] }; }
+    // A sentence ends at end punctuation, but never inside an open quotation.
+    if (/[.!?]["”’)]*\s*$/.test(b.text) && !inQuote(cur.text)) { out.push(cur); cur = { text: '', citations: [] }; }
   }
   if (cur.text.trim()) out.push(cur);
   return out.map((s) => ({ ...s, text: s.text.trim() }));
@@ -58,10 +59,8 @@ export function toSentences(answer: CitedAnswer): Sentence[] {
 
 export const answerText = (answer: CitedAnswer): string => answer.blocks.map((b) => b.text).join('').replace(/\s+/g, ' ').trim();
 
-const QUOTE = /[“"]([^”"]{3,}?)[”"]/g;
-
 export function quotesIn(text: string): string[] {
-  return [...text.matchAll(QUOTE)].map((m) => m[1].trim()).filter((q) => words(q) >= 3);
+  return quoteSpans(text).map((q) => q.inner.trim()).filter((q) => words(q) >= 3);
 }
 
 // A quotation may skip words with an ellipsis; every remaining piece must appear in the source.
@@ -169,7 +168,8 @@ export function verify(input: VerifyInput): CheckReport {
   const n = words(text);
   if (n > 240) problems.push(`The answer is ${n} words; keep it under 190 so it suits listening.`);
   if (/^\s*([-*•]|\d+\.)\s/m.test(text) || /(^|\s)#{1,3}\s|\*\*|__/.test(text)) problems.push('The answer uses list or markdown formatting, which the voice engine reads aloud. Write plain prose.');
-  if (/\.\.\.|…/.test(text.replace(QUOTE, ''))) warnings.push('Ellipsis outside a quotation.');
+  const unquoted = quoteSpans(text).reduceRight((t, q) => t.slice(0, q.start) + t.slice(q.end), text);
+  if (/\.\.\.|…/.test(unquoted)) warnings.push('Ellipsis outside a quotation.');
   if (speaker !== 'host' && PERSONA_FORBIDDEN.test(text)) problems.push('The persona claimed to be the real writer or performed a pastoral act. Stay an AI voice drawing on his words.');
 
   return { ok: problems.length === 0, quotes, problems, warnings, words: n };

@@ -2,7 +2,8 @@
 //
 //   node src/engine/eval/run.ts                 mock model: checks the plumbing, costs nothing
 //   node src/engine/eval/run.ts --live          Claude API (needs ANTHROPIC_API_KEY); spends credit
-//   options: --limit 20  --category contested  --concurrency 4  --out evals/results/run.json
+//   options: --limit 20  --category contested  --ids ans-001,con-013  --concurrency 4  --out evals/results/run.json
+//   (per-item costs are exact only at --concurrency 1; the total is exact either way)
 //   compare two runs on the same items:  node src/engine/eval/run.ts --compare a.json b.json
 //
 // Rerun after every prompt change and every model upgrade, and add real failures as new items.
@@ -60,6 +61,7 @@ async function main() {
   const lines = (await readFile(path.join(here, 'dataset.jsonl'), 'utf8')).split('\n').filter((l) => l.trim());
   let items: EvalItem[] = lines.map((l) => JSON.parse(l));
   if (opt('category')) items = items.filter((i) => i.category === opt('category'));
+  if (opt('ids')) { const ids = opt('ids')!.split(','); items = items.filter((i) => ids.includes(i.id)); }
   if (opt('limit')) items = items.slice(0, Number(opt('limit')));
 
   const model = live ? anthropicAdapter() : mockAdapter();
@@ -81,7 +83,8 @@ async function main() {
     const checks = grade(item, judged, vs);
     const row: Row = { id: item.id, category: item.category, ms: Date.now() - t0, result, followup, checks, pass: checks.every((c) => c.pass) };
     rows.push(row);
-    process.stdout.write(`${row.pass ? '✓' : '✗'} ${item.id} ${judged.status} ${row.ms}ms${row.pass ? '' : '  ' + checks.filter((c) => !c.pass).map((c) => c.name).join(', ')}\n`);
+    const cost = [result, followup].reduce((usd, r) => usd + (r?.costUsd ?? 0), 0);
+    process.stdout.write(`${row.pass ? '✓' : '✗'} ${item.id} ${judged.status} ${row.ms}ms${model.usage ? ` ${(cost * 100).toFixed(1)}¢` : ''}${row.pass ? '' : '  ' + checks.filter((c) => !c.pass).map((c) => c.name).join(', ')}\n`);
   };
   await Promise.all(Array.from({ length: Math.max(1, Number(opt('concurrency') ?? 1)) }, run));
   rows.sort((a, b) => items.findIndex((i) => i.id === a.id) - items.findIndex((i) => i.id === b.id));

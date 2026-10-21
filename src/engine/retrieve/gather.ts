@@ -88,12 +88,13 @@ function pick(list: Chunk[], n: number, cd: ChapterData, focus: Focus | null): C
 }
 
 // Ranks early-church excerpts: named Fathers first, distinct writers before repeats, doubtful last.
-export function rankFathers(list: Chunk[], n: number): Chunk[] {
+// With a question, a writer's note on what it asks about comes before his others.
+export function rankFathers(list: Chunk[], n: number, rel?: (k: Chunk) => number): Chunk[] {
   const score = (k: Chunk) => {
     const a = authorOf(k.who);
     const r = FATHER_RANK.indexOf(k.who);
     const w = words(k.text);
-    return (a.authorship !== 'genuine' ? 100 : 0) + (r < 0 ? 40 : r) + (w < 30 ? 8 : 0) + (w > 350 ? 6 : 0);
+    return (a.authorship !== 'genuine' ? 100 : 0) + (r < 0 ? 40 : r) + (w < 30 ? 8 : 0) + (w > 350 ? 6 : 0) - (rel ? Math.min(rel(k), 6) * 4 : 0);
   };
   const sorted = list.slice().sort((x, y) => score(x) - score(y));
   const out: Chunk[] = [];
@@ -210,13 +211,14 @@ export async function gather(corpus: Corpus, spans: Span[], policy: VoicePolicy,
     const src = scriptureSource(cd, s, corpus.versification);
     if (src.blocks.length) scripture.push(src);
     const near = Corpus.touching(cd, s.a, s.b).filter((k) => allowed(policy, k));
-    const f = s.b - s.a + 1 > FOCUS_ABOVE_VERSES ? focus : null;
-    const henry = pick(near.filter((k) => k.work === 'mhcc'), i ? 1 : 2, cd, f);
-    const spurgeon = pick(near.filter((k) => k.work === 'tdavid'), i ? 1 : 3, cd, f);
-    // On a long passage, a Father's note must touch the question: the verse it names, a word
+    // Notes are ranked by what the question asks on any passage, since only a few fit; on a
+    // long one, a Father's note must also touch the question at all: the verse it names, a word
     // from the verses the note covers, or two of its own.
+    const f = s.b - s.a + 1 > FOCUS_ABOVE_VERSES ? focus : null;
+    const henry = pick(near.filter((k) => k.work === 'mhcc'), i ? 1 : 2, cd, focus);
+    const spurgeon = pick(near.filter((k) => k.work === 'tdavid'), i ? 1 : 3, cd, focus);
     const relevant = (k: Chunk) => !f || relevance(k, cd, f) >= 2;
-    const fathers = rankFathers(near.filter((k) => (k.work === 'npnf' || k.work === 'catena') && relevant(k)), i ? 1 : policy.speaker === 'host' ? 4 : 6);
+    const fathers = rankFathers(near.filter((k) => (k.work === 'npnf' || k.work === 'catena') && relevant(k)), i ? 1 : policy.speaker === 'host' ? 4 : 6, focus ? (k) => relevance(k, cd, focus) : undefined);
     const overview = cd.bi === PSALMS && cd.spurgeonOverview && allowed(policy, cd.spurgeonOverview) && s.b - s.a + 1 >= cd.nv / 2 ? [cd.spurgeonOverview] : [];
     const lanes = [henry, [...overview, ...spurgeon], fathers];
     for (let round = 0; lanes.some((l) => l[round]); round++) for (const lane of lanes) if (lane[round]) queue.push(lane[round]);

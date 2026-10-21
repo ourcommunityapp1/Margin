@@ -64,6 +64,8 @@ export interface AskResult {
   guide?: 'saved' | 'made';
   // What this answer cost, where the model adapter counts tokens.
   costUsd?: number;
+  // The checker's findings that sent the first answer back for repair.
+  repairedFor?: string[];
   error?: string;
   // The adapter's error code when there is one, e.g. "not_granted" or "rate_limited".
   errorCode?: string;
@@ -205,7 +207,8 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   const focusQuestion = sameThread ? firstAsked! : question;
   const focusRefs = sameThread ? findRefs(focusQuestion, vs, true) : inQuestion;
   // What the question is about beyond its references, so a long passage brings the right notes.
-  const focusSpans = focusRefs.flatMap(({ ref }) => (ref ? refSpans(ref, vs) : [])).filter((x) => x.b - x.a < 12);
+  const lineSpans = sameThread ? [] : exact.flatMap((h) => (h.verse ? [{ ...h.span, a: h.verse, b: h.verse }] : []));
+  const focusSpans = [...focusRefs.flatMap(({ ref }) => (ref ? refSpans(ref, vs) : [])), ...lineSpans].filter((x) => x.b - x.a < 12);
   const focus = focusRefs.reduce((q, { raw }) => q.replace(raw, ' '), focusQuestion);
   const got: Gathered = await gather(corpus, chosen, { speaker, voices: input.voices, focus, focusSpans });
   const sources = got.sources;
@@ -287,12 +290,14 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   };
 
   let attempts = 0;
+  let repairedFor: string[] | undefined;
   try {
     step('Writing the answer…');
     let answer = await model.cite({ route: 'answer', system, sources, question: userText, history, signal: input.signal, tier });
     attempts = 1;
     let report = await check(answer);
     if (!report.ok) {
+      repairedFor = report.problems;
       const repairHistory: Turn[] = [...history, { role: 'user', text: `Question: ${question}` }, { role: 'assistant', text: answerText(answer) }];
       const instructions = `${userText}\n\nMargin's checker found problems with your last answer:\n- ${report.problems.join('\n- ')}\nWrite the answer again so every quotation is copied exactly from a search result and every statement about a writer is supported by his own text. Drop any quotation you can't match exactly.`;
       step('Fixing what didn’t check out…');
@@ -302,7 +307,7 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
     }
     if (report.ok) {
       const text = answerText(answer);
-      const result: AskResult = { status: 'answered', speaker, text, segments: toSegments(text, report.quotes, speaker, vs), quotes: report.quotes, notes, checks: report, attempts, ...meta };
+      const result: AskResult = { status: 'answered', speaker, text, segments: toSegments(text, report.quotes, speaker, vs), quotes: report.quotes, notes, checks: report, attempts, repairedFor, ...meta };
       if (key) {
         await deps.guides!.set(key, { speaker, text, segments: result.segments, quotes: result.quotes, passages, sources: meta.sources, notes: [...notes], made: new Date().toISOString() });
         result.guide = 'made';
@@ -310,7 +315,7 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
       return result;
     }
     notes.push('Margin couldn’t verify a full answer, so it read the passage and a note it could check.');
-    return { ...fallback(sources, speaker, question, got, vs, notes), checks: report, attempts, ...meta };
+    return { ...fallback(sources, speaker, question, got, vs, notes), checks: report, attempts, repairedFor, ...meta };
   } catch (e) {
     if (input.signal?.aborted) throw e;
     if (e instanceof ModelRefusal) {

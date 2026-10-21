@@ -5,6 +5,7 @@ import type { Versification } from '../bible/canon.ts';
 import { findRefs, spans, spokenSpan } from '../bible/refs.ts';
 import { authorOf, type Speaker } from '../corpus/sources.ts';
 import type { QuoteCheck } from './verify.ts';
+import { quoteSpans } from '../text.ts';
 
 export interface AudioSegment {
   // disclosure: "this is an AI voice"; speech: the host or persona talking; quote: a
@@ -39,15 +40,14 @@ export function toSegments(text: string, quotes: QuoteCheck[], speaker: Speaker,
     if (!seg.text.trim()) return;
     out.push({ ...seg, text: seg.text.trim(), say: forSpeech(seg.text, vs) });
   };
-  const re = /[“"]([^”"]{3,}?)[”"]/g;
   let at = 0;
-  for (const m of text.matchAll(re)) {
-    push({ kind: 'speech', voice: speaker, text: text.slice(at, m.index) });
-    const q = quotes.find((x) => x.ok && x.text === m[1].trim());
-    if (q?.who === 'bsb') push({ kind: 'scripture', voice: 'bsb', text: m[1], sourceId: q.sourceId });
-    else if (q?.kind === 'source' && speaker === 'host') push({ kind: 'quote', voice: q.who!, text: m[1], sourceId: q.sourceId });
-    else push({ kind: 'speech', voice: speaker, text: m[1] });
-    at = m.index! + m[0].length;
+  for (const m of quoteSpans(text)) {
+    push({ kind: 'speech', voice: speaker, text: text.slice(at, m.start) });
+    const q = quotes.find((x) => x.ok && x.text === m.inner.trim());
+    if (q?.who === 'bsb') push({ kind: 'scripture', voice: 'bsb', text: m.inner, sourceId: q.sourceId });
+    else if (q?.kind === 'source' && speaker === 'host') push({ kind: 'quote', voice: q.who!, text: m.inner, sourceId: q.sourceId });
+    else push({ kind: 'speech', voice: speaker, text: m.inner });
+    at = m.end;
   }
   push({ kind: 'speech', voice: speaker, text: text.slice(at) });
   return out;

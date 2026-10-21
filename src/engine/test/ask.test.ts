@@ -4,7 +4,11 @@ import { openTestCorpus } from './helpers.ts';
 import { ask } from '../pipeline/ask.ts';
 import { mockAdapter } from '../model/mock.ts';
 import type { CitedAnswer, CiteRequest } from '../model/types.ts';
-import { verify } from '../pipeline/verify.ts';
+import { quotesIn, verify } from '../pipeline/verify.ts';
+import { toSegments } from '../pipeline/audio.ts';
+import { gather } from '../retrieve/gather.ts';
+import { PassageIndex } from '../retrieve/search.ts';
+import { parseRef, spans } from '../bible/refs.ts';
 import type { Source } from '../retrieve/gather.ts';
 
 const corpus = await openTestCorpus();
@@ -153,4 +157,30 @@ test('a question about a voice Margin lacks tells the model to say so before ans
   const catena = mockAdapter({ json: { plan: plan(['Matthew 5:1-12']) } });
   await ask({ corpus, model: catena }, { question: 'What does the Catena Aquinas compiled say on the Beatitudes?' });
   assert.doesNotMatch(catena.calls.find((c) => c.route === 'answer')!.prompt!, /isn’t in Margin’s library/);
+});
+
+test('a quotation that contains the Bible’s own speech marks is read as one quotation', async () => {
+  const text = 'That saying is not in the Bible. Paul reminds the church of his command: "“If anyone is unwilling to work, he shall not eat.”" But Psalm 127:1 warns, "Unless the LORD builds the house, its builders labor in vain."';
+  assert.deepEqual(quotesIn(text).length, 2);
+  const vs = corpus.versification;
+  const sp = ['2 Thessalonians 3:6-13', 'Psalm 127'].flatMap((r) => spans(parseRef(r, vs)!, vs));
+  const g = await gather(corpus, sp, { speaker: 'host' });
+  const at = (id: string) => g.sources.findIndex((s) => s.id.startsWith(id));
+  // The answer arrives in cited pieces, one ending inside the quotation; it stays one sentence.
+  const answer = { blocks: [
+    { text: 'That saying is not in the Bible. Paul reminds the church of his command: "', citations: [] },
+    { text: '“If anyone is unwilling to work, he shall not eat.”', citations: [{ sourceIndex: at('bsb:2TH'), sourceId: g.sources[at('bsb:2TH')].id, citedText: 'x' }] },
+    { text: '" But Psalm 127:1 warns, "Unless the LORD builds the house, its builders labor in vain."', citations: [{ sourceIndex: at('bsb:PSA'), sourceId: g.sources[at('bsb:PSA')].id, citedText: 'x' }] },
+  ] };
+  const report = verify({ answer, sources: g.sources, question: 'Where is God helps those who help themselves?', speaker: 'host', spans: g.spans, versification: vs });
+  assert.deepEqual(report.problems, []);
+  assert.equal(report.quotes.filter((q) => q.ok && q.who === 'bsb').length, 2);
+  const segs = toSegments(answer.blocks.map((b) => b.text).join(''), report.quotes, 'host', vs);
+  assert.equal(segs.filter((x) => x.kind === 'scripture').length, 2);
+});
+
+test('a line quoted in the question brings the notes on its verse', async () => {
+  const index = PassageIndex.build(corpus);
+  const r = await ask({ corpus, model: mockAdapter(), index: () => index }, { question: 'Mr. Spurgeon, what do you make of ‘the valley of the shadow of death’?', speaker: 'spurgeon' });
+  assert.ok(r.sources.some((s) => s.id === 'tdavid:PSA.23.4-4'), r.sources.map((s) => s.id).join(', '));
 });

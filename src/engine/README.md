@@ -52,17 +52,22 @@ The pipeline now spends only where a question needs it:
 | Cached follow-ups | Sources go first in the conversation with a cache marker. A follow-up on the same passages gathers exactly the same sources, so it reads them at 5% of the price. | `model/anthropic.ts`, `pipeline/ask.ts` |
 | Free commands, daily cap | "Read me Psalm 23" plays the passage with no call. Each answer's cost goes on the day's tally. Past `MARGIN_DAILY_BUDGET_USD`, questions get the free answer (the passage and a checked note) until the next day. | `pipeline/ask.ts`, `pipeline/spend.ts`, `index.ts` |
 
-Estimated costs per question, from the measured run's token counts and published prices (not yet measured live):
+A live run of 10 test questions measured the result. It cost 51¢ in all, 5.1¢ per question, including the repairs listed below.
 
-| Question | Estimate |
+| Question | Measured |
 |---|---|
-| Plain question about a named or playing passage | 1½–3¢ |
-| Follow-up on the same passages | about 1¢ |
-| Topic question that needs planning | 2–3¢ |
-| Contested, persona or premise-checking question | 5–6¢ |
+| Plain question about a named passage | 1.5–2.4¢ (the same questions cost 12.2¢ before), answered in 4–6 seconds instead of about 25 |
+| A question and its follow-up ("Are you sure?") | 2.4¢ for both |
+| Contested question | 3.4¢ |
+| Persona, false-premise and missing-writer questions | 7–8¢. Each needed a repair round on Opus. |
 | Replayed study guide, command, or over the daily cap | free |
 
-Each answer reports its cost in `costUsd`, and `npm run engine:eval -- --live` prints the measured total and the cost per item.
+Four of the eleven answers in that run went to a repair round, and two ended in the free answer. The causes were fixed afterwards; a new live run will measure the fixes:
+- **Speech marks inside a quotation.** The quotation checker misread a quotation containing the Bible's own speech marks ("“If anyone is unwilling to work…”"). It now handles quotes within quotes, and never ends a sentence inside an open quotation (`text.ts`).
+- **A paraphrase rejected at low effort.** The grading call, at low effort, rejected a faithful paraphrase of Spurgeon. It now runs at medium effort.
+- **The wrong notes for a short passage.** A persona missed his note on the verse quoted in the question. Notes are now ranked by relevance on passages of any length, and a quoted line points at its verse.
+
+Each answer reports its cost in `costUsd`, and what sent it to repair in `repairedFor`. `npm run engine:eval -- --live --concurrency 1 --ids …` prints the cost of each item and the total.
 
 ## Rules from the research
 

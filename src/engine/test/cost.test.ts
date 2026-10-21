@@ -22,7 +22,7 @@ test('ordinary work goes to the cheaper model with little thinking; judgment to 
   assert.deepEqual(routeFor('answer', 'hard', models), { model: 'claude-opus-5-5', effort: 'medium' });
   assert.equal(routeFor('repair', 'standard', models).model, 'claude-opus-5-5');
   assert.equal(routeFor('plan', 'standard', models).model, 'claude-sonnet-5-5');
-  assert.equal(routeFor('grade', 'hard', models).effort, 'medium');
+  assert.equal(routeFor('grade', 'standard', models).effort, 'medium', 'judging paraphrase needs some thought');
   const p = jsonParams({ route: 'plan', system: 's', prompt: 'p', schema: {} }, models);
   assert.equal(p.output_config?.effort, 'low', 'effort is always set: Sonnet 5.5 would otherwise think at high');
 });
