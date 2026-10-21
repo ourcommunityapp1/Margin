@@ -14,7 +14,7 @@ type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
 export interface AnthropicOptions {
   client?: Anthropic;
-  // MARGIN_MODEL (hard questions, playlists), MARGIN_FAST_MODEL (everything else) and
+  // MARGIN_MODEL (hard questions, repairs), MARGIN_FAST_MODEL (everything else) and
   // MARGIN_GRADER_MODEL override these.
   model?: string;
   fastModel?: string;
@@ -31,7 +31,8 @@ const EFFORT: Record<JsonRoute | 'answer' | 'repair', Record<Tier, Effort>> = {
   // Judging a paraphrase needs some thought: at low effort the grader rejected faithful ones,
   // and each false rejection costs a repair on the strongest model.
   grade: { standard: 'medium', hard: 'medium' },
-  playlist: { standard: 'medium', hard: 'medium' },
+  // Someone is waiting for a playlist, and the host stops a request at 30 seconds.
+  playlist: { standard: 'low', hard: 'medium' },
   answer: { standard: 'low', hard: 'medium' },
   repair: { standard: 'medium', hard: 'medium' },
 };
@@ -52,7 +53,7 @@ export function modelsFrom(opts: AnthropicOptions = {}): Models {
 // Which model and effort a call gets.
 export function routeFor(route: JsonRoute | 'answer' | 'repair', tier: Tier, m: Models): { model: string; effort: Effort } {
   const model = route === 'grade' ? m.grader
-    : route === 'playlist' || route === 'repair' || (route === 'answer' && tier === 'hard') ? m.strong
+    : route === 'repair' || (route === 'answer' && tier === 'hard') ? m.strong
     : m.fast;
   return { model, effort: EFFORT[route][tier] };
 }

@@ -5,6 +5,8 @@ import type { Turn } from '@/engine/model/types';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
+const DEADLINE_MS = 25_000;
+
 interface Body {
   question?: string;
   speaker?: string;
@@ -16,6 +18,7 @@ interface Body {
 
 // POST /api/ask — a grounded, checked answer with audio segments.
 export async function POST(request: Request) {
+  const started = Date.now();
   const denied = authorize(request);
   if (denied) return denied;
   const body = await readJson<Body>(request);
@@ -30,6 +33,8 @@ export async function POST(request: Request) {
   const engine = await serverEngine();
   const result = await engine.ask({
     question, speaker, history, voices: body?.voices?.slice(0, 6), grade: body?.grade, signal: request.signal,
+    // Netlify cuts a request off at 30 seconds; past this the answer falls back to the passage.
+    deadline: started + DEADLINE_MS,
     context: refs.length ? { refs, label: body?.context?.label } : undefined,
   });
   return Response.json(result, { status: result.status === 'error' ? 502 : 200 });

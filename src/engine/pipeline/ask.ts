@@ -40,6 +40,10 @@ export interface AskInput {
   // sensitive answers, where code checks alone can't vouch for the answer; true or false forces it.
   grade?: boolean | 'auto';
   signal?: AbortSignal;
+  // When the answer must be back (ms since the epoch). A host that cuts requests off, as Netlify
+  // does at 30 seconds, then gets the checked fallback rather than nothing: near the deadline the
+  // second check and the repair are skipped, and a call still running at it is stopped.
+  deadline?: number;
   // Progress for the UI: "Choosing passages…", "Reading Romans 3:21–26…", "Checking quotes…".
   onStep?: (step: string) => void;
 }
@@ -117,6 +121,10 @@ const simple = (status: AskResult['status'], speaker: Speaker, text: string, not
 const historyText = (h: Turn[]): string =>
   h.slice(-6).map((t) => `${t.role === 'user' ? 'Listener' : 'Margin'}: ${t.text.slice(0, 600)}`).join('\n');
 
+// Time a second check and a repair need to finish before a deadline (see AskInput.deadline).
+const GRADE_TIME = 9_000;
+const REPAIR_TIME = 16_000;
+
 const surname = (who: string) => new RegExp(`\\b${authorOf(who).name.split(' ').pop()!.replace(/[^A-Za-z-]/g, '')}\\b`, 'i');
 
 export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
@@ -156,6 +164,10 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   }
 
   const step = (s: string) => input.onStep?.(s);
+  // Model calls stop when the listener cancels or the deadline passes.
+  const timer = input.deadline ? AbortSignal.timeout(Math.max(1, input.deadline - Date.now())) : undefined;
+  const signal = timer && input.signal ? AbortSignal.any([input.signal, timer]) : timer ?? input.signal;
+  const left = () => (input.deadline ? input.deadline - Date.now() : Infinity);
   const capped = deps.overBudget ? await deps.overBudget() : false;
   const books = booksNamed(question);
   const index = deps.index ? await deps.index() : undefined;
@@ -169,7 +181,7 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
     step('Choosing passages…');
     try {
       plan = await model.json<Plan>({
-        route: 'plan', system: PLAN_SYSTEM, schema: PLAN_SCHEMA as unknown as Record<string, unknown>, signal: input.signal,
+        route: 'plan', system: PLAN_SYSTEM, schema: PLAN_SCHEMA as unknown as Record<string, unknown>, signal,
         prompt: planPrompt(question, { context: input.context?.label ?? (contextRefs.join(', ') || undefined), history: historyText(history) }),
       });
     } catch (e) {
@@ -280,10 +292,12 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   const check = async (answer: CitedAnswer): Promise<CheckReport> => {
     step('Checking every quotation…');
     let report = verify({ answer, sources, question, speaker, spans: got.spans, versification: vs, contested });
-    if (report.ok && grading) {
+    if (report.ok && grading && left() < GRADE_TIME) {
+      report = { ...report, warnings: [...report.warnings, 'Out of time for the second check; code checks only.'] };
+    } else if (report.ok && grading) {
       try {
         const grade = await model.json<GradeReport>({
-          route: 'grade', system: GRADE_SYSTEM, schema: GRADE_SCHEMA as unknown as Record<string, unknown>, signal: input.signal,
+          route: 'grade', system: GRADE_SYSTEM, schema: GRADE_SCHEMA as unknown as Record<string, unknown>, signal,
           prompt: gradePrompt(answerText(answer), sourcesForGrader(forGrader(answer)), contested, facts), tier: contested ? 'hard' : 'standard',
         });
         report = withGrade(report, grade, contested);
@@ -299,15 +313,15 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   let repairedFor: string[] | undefined;
   try {
     step('Writing the answer…');
-    let answer = await model.cite({ route: 'answer', system, sources, question: userText, history, signal: input.signal, tier });
+    let answer = await model.cite({ route: 'answer', system, sources, question: userText, history, signal, tier });
     attempts = 1;
     let report = await check(answer);
-    if (!report.ok) {
+    if (!report.ok && left() >= REPAIR_TIME) {
       repairedFor = report.problems;
       const repairHistory: Turn[] = [...history, { role: 'user', text: `Question: ${question}` }, { role: 'assistant', text: answerText(answer) }];
       const instructions = `${userText}\n\nMargin's checker found problems with your last answer:\n- ${report.problems.join('\n- ')}\nWrite the answer again so every quotation is copied exactly from a search result and every statement about a writer is supported by his own text. Drop any quotation you can't match exactly.`;
       step('Fixing what didn’t check out…');
-      answer = await model.cite({ route: 'repair', system, sources, question: instructions, history: repairHistory, signal: input.signal, tier: 'hard' });
+      answer = await model.cite({ route: 'repair', system, sources, question: instructions, history: repairHistory, signal, tier: 'hard' });
       attempts = 2;
       report = await check(answer);
     }
@@ -324,6 +338,10 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
     return { ...fallback(sources, speaker, question, got, vs, notes), checks: report, attempts, repairedFor, ...meta };
   } catch (e) {
     if (input.signal?.aborted) throw e;
+    if (timer?.aborted) {
+      notes.push('That took longer than Margin allows, so it read the passage and a note it could check.');
+      return { ...fallback(sources, speaker, question, got, vs, notes), attempts, ...meta };
+    }
     if (e instanceof ModelRefusal) {
       notes.push('The model declined this request, so Margin read the passage instead.');
       return { ...fallback(sources, speaker, question, got, vs, notes), attempts, ...meta };

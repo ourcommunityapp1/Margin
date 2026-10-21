@@ -46,7 +46,7 @@ The pipeline now spends only where a question needs it:
 | Send less | Each note is cut to its most relevant 200 words and commentary to 1,300 words: about 1,800 words a question instead of 3,600, with the same eval results. | `retrieve/gather.ts` |
 | Check only what's needed | The grading call runs only on contested, premise-checking, persona or sensitive answers, and reads only the sources the answer cited. | `pipeline/ask.ts` |
 | Skip planning | No planning call when the question names its passage, or asks about what is playing. | `pipeline/ask.ts` |
-| Model by difficulty | Sonnet 5.5 (half Opus's price) plans, grades and writes ordinary answers. Opus 5.5 writes contested, persona and premise-checking answers, repairs, study guides and playlists. | `model/anthropic.ts` |
+| Model by difficulty | Sonnet 5.5 (half Opus's price) plans, grades, drafts playlists and writes ordinary answers. Opus 5.5 writes contested, persona and premise-checking answers, repairs and study guides. | `model/anthropic.ts` |
 | Less thinking | Effort is set on every call: low for ordinary work, medium for hard answers. Sonnet 5.5 would otherwise think at its default, high. | `model/anthropic.ts` |
 | Study guides | A plain "what does this passage mean?" is answered once by Opus, checked, stored, and replayed free. `scripts/precompute-guides.ts` makes them ahead of time through the Batches API at half price. It only estimates unless given `--yes`. | `pipeline/guides.ts`, `pipeline/precompute.ts` |
 | Cached follow-ups | Sources go first in the conversation with a cache marker. A follow-up on the same passages gathers exactly the same sources, so it reads them at 5% of the price. | `model/anthropic.ts`, `pipeline/ask.ts` |
@@ -120,8 +120,8 @@ node scripts/precompute-guides.ts "Psalm 23" "John 3:1-21"   # study guides ahea
 |---|---|---|
 | `ANTHROPIC_API_KEY` | `/api/ask`, `/api/playlist`, `--live` evals | none |
 | `MARGIN_API_TOKEN` | The access code. Every API route requires it, as `Authorization: Bearer <token>` or as the cookie `/api/login` sets. In production the routes return 503 until it is set, because they spend API credit. | none |
-| `MARGIN_MODEL` | Contested, persona and premise-checking answers, repairs, study guides, playlists | `claude-opus-5-5` |
-| `MARGIN_FAST_MODEL` | Planning and ordinary answers | `claude-sonnet-5-5` |
+| `MARGIN_MODEL` | Contested, persona and premise-checking answers, repairs, study guides | `claude-opus-5-5` |
+| `MARGIN_FAST_MODEL` | Planning, playlists and ordinary answers | `claude-sonnet-5-5` |
 | `MARGIN_GRADER_MODEL` | The grading call | same as `MARGIN_FAST_MODEL` |
 | `MARGIN_DAILY_BUDGET_USD` | What questions and playlists may spend in a day before free answers take over | `2` |
 | `ELEVENLABS_API_KEY` | ElevenLabs voices (`/api/tts`). Without it the phone app reads with the device's voice. | none |
@@ -129,6 +129,8 @@ node scripts/precompute-guides.ts "Psalm 23" "John 3:1-21"   # study guides ahea
 | `MARGIN_TTS_CREDITS` | The voice allowance in credits when the API key can't read the plan | `1500` |
 | `MARGIN_TTS_FAST_MODEL`, `MARGIN_TTS_MODEL` | Override the model for clips wanted now and for clips made ahead | `eleven_v4_turbo`, `eleven_v4` |
 | `MARGIN_DATA_DIR` | Where study guides, the day's spending and voice clips are kept off Netlify (on Netlify they go to Netlify Blobs) | the system's temporary folder |
+
+Netlify stops a request at 30 seconds, even a streamed one, though its documentation says 60. So `/api/ask` gives the pipeline a 25-second deadline (`AskInput.deadline`): near it, the second check and the repair are skipped, and a call still running when it passes is stopped and the listener gets the passage with a checked note. `/api/playlist` stops drafting at 25 seconds and says to try a shorter playlist.
 
 All live calls use the server-side fallback beta (`server-side-fallback-2026-07-01`). If the chosen model declines a request, the API retries it on another model within the same call. Batch requests can't use it, so the study-guide script leaves it off.
 

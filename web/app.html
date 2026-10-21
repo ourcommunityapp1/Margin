@@ -415,7 +415,7 @@ async function api(path, body, signal) {
   catch (e) { if (signal && signal.aborted) throw {code:'cancelled'}; throw apiError(0, 'Couldn’t reach Margin. Check your connection.'); }
   let d = null; try { d = await r.json(); } catch (e) { /* not JSON */ }
   if (r.status === 401 && ACCESS.ok) { ACCESS.ok = false; render(); }
-  if (!r.ok) throw apiError(r.status, (d && d.error) || 'Margin answered ' + r.status + '.');
+  if (!r.ok) throw apiError(r.status, (d && d.error) || (r.status === 504 ? 'That took longer than Margin allows. Try again, or ask for something shorter.' : 'Margin answered ' + r.status + '.'));
   return d;
 }
 async function checkAccess() {

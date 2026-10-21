@@ -164,3 +164,37 @@ test('the grader sees the passages an answer names and the facts the writer was 
   assert.match(prompt, /both Calvinists/);
   assert.match(prompt, /Matthew Henry \(1662–1714\)/);
 });
+
+test('playlists are drafted by the faster model, since someone is waiting', () => {
+  assert.deepEqual(routeFor('playlist', 'standard', models), { model: 'claude-sonnet-5-5', effort: 'low' });
+});
+
+// A model that takes `ms` to answer and stops when told to.
+function slowModel(ms: number, opts: Parameters<typeof mockAdapter>[0] = {}) {
+  const inner = mockAdapter(opts);
+  const wait = <T>(signal: AbortSignal | undefined, value: () => Promise<T>) => new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => resolve(value()), ms);
+    signal?.addEventListener('abort', () => { clearTimeout(t); reject(new Error('aborted')); });
+  });
+  const model: ModelAdapter = {
+    json: (req) => wait(req.signal, () => inner.json(req)),
+    cite: (req) => wait(req.signal, () => inner.cite(req)),
+  };
+  return { model, calls: inner.calls };
+}
+
+test('past the deadline an answer falls back to the passage instead of timing out', async () => {
+  const { model } = slowModel(400);
+  const r = await ask({ corpus, model }, { question: 'What does Romans 3:24 mean by redemption?', deadline: Date.now() + 100 });
+  assert.equal(r.status, 'fallback');
+  assert.ok(r.notes.some((n) => /longer than Margin allows/.test(n)), r.notes.join(' | '));
+  assert.ok(r.passages[0].startsWith('Romans 3'));
+});
+
+test('near the deadline the second check is skipped, not the answer', async () => {
+  const { model, calls } = slowModel(10, { json: { plan: plan(['Romans 3:21-26'], { contested: true }) } });
+  const r = await ask({ corpus, model }, { question: 'Is justification by faith alone?', deadline: Date.now() + 5_000 });
+  assert.equal(r.status, 'answered');
+  assert.ok(!calls.some((c) => c.route === 'grade'), 'no grading call');
+  assert.ok(r.checks?.warnings.some((w) => /Out of time/.test(w)));
+});
