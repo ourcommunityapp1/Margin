@@ -762,12 +762,20 @@ const VOICE = {
   stop() { this.halted = true; if (this.el) { try { this.el.pause(); } catch (e) { /* ignore */ } } this.settle(false); SPEECH.stop(); },
   // One sentence: ElevenLabs when it can, the phone's voice when it can't, silence (with the
   // transcript) when neither can. Resolves false if playback was stopped meanwhile.
+  // o.ready runs once this sentence's clip exists, so what comes next is voiced only then.
   async say(o) {
     if (!o.text) return true;
     if (this.on && ACCESS.ok) {
+      // A new sentence takes a few seconds to voice; say so, or a wait looks like a stall.
+      const slow = setTimeout(() => { if (o.live() && Date.now() - (this.told || 0) > 20000) { this.told = Date.now(); toast('Preparing the voice…'); } }, 1500);
       const url = await this.clip(o.text, o.who, o.kind);
+      clearTimeout(slow);
       if (!o.live()) return false;
-      if (url) { if (await this.play(url, o.rate, o.resume)) return true; if (this.halted || !o.live()) return false; }
+      if (url) {
+        if (o.ready) o.ready();
+        if (await this.play(url, o.rate, o.resume)) return true;
+        if (this.halted || !o.live()) return false;
+      }
     }
     if (SPEECH.ok && !SPEECH.broken) { await SPEECH.say(o.text, o.who, o.rate, o.ms); return o.live(); }
     await new Promise(r => setTimeout(r, o.ms)); return o.live();
@@ -806,10 +814,11 @@ function playUnit(resume) {
   const done = ok => { if (ok !== false && live()) advance(); };
   const ms = Math.max(300, (u.dur - from) / P.rate * 1000);
   if (!u.say) { setTimeout(done, ms); return; }
-  VOICE.say({text:u.say, who:unitVoice(ch, u), kind:unitKind(ch, u), rate:P.rate, ms, resume, live}).then(done);
-  prefetch();
+  VOICE.say({text:u.say, who:unitVoice(ch, u), kind:unitKind(ch, u), rate:P.rate, ms, resume, live, ready:() => { if (live()) prefetch(); }}).then(done);
 }
 // The next two sentences are voiced while this one plays, so there's no wait between them.
+// They're asked for only once this one is ready: a listener who skips ahead while the first
+// sentence is still being voiced shouldn't pay for sentences they never hear.
 function prefetch() {
   if (!VOICE.on || !ACCESS.ok || !P.ses) return;
   let ci = P.ci, ui = P.ui;
