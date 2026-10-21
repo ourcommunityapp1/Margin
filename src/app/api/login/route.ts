@@ -8,13 +8,19 @@ export function GET(request: Request) {
   return Response.json({ ok: hasAccess(request) });
 }
 
+// Phones capitalize and autocorrect, so "Dawn sage island lily 92" counts as the code too.
+const typed = (s: string) => s.trim().toLowerCase().replace(/[\s_\u2013\u2014-]+/g, '-');
+
 // POST /api/login — trade the access code for a long-lived cookie, so the app (and the audio
 // player, which can't send headers) is let in on every request after.
 export async function POST(request: Request) {
   const token = process.env.MARGIN_API_TOKEN;
-  if (!token) return Response.json({ ok: process.env.NODE_ENV !== 'production' }, { status: process.env.NODE_ENV === 'production' ? 503 : 200 });
-  const code = (await readJson<{ code?: string }>(request))?.code?.trim();
-  if (!code || !sameSecret(code, token)) {
+  if (!token) {
+    if (process.env.NODE_ENV !== 'production') return Response.json({ ok: true });
+    return Response.json({ ok: false, error: 'Margin’s server isn’t set up yet: it has no access code. Try again in a few minutes.' }, { status: 503 });
+  }
+  const code = (await readJson<{ code?: string }>(request))?.code;
+  if (!code || !sameSecret(typed(code), typed(token))) {
     await new Promise((r) => setTimeout(r, 800));
     return Response.json({ ok: false, error: 'That code isn’t right.' }, { status: 401 });
   }
