@@ -2,3 +2,10 @@
   # scripts/build-web.mjs puts the phone app and the library into public/ first.
   command = "npm run build"
   publish = ".next"
+
+# The phone app is a static page; serve it at the root straight from the CDN
+# (next.config.ts does the same for `next start`).
+[[redirects]]
+  from = "/"
+  to = "/margin.html"
+  status = 200
