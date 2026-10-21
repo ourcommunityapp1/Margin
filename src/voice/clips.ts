@@ -45,8 +45,8 @@ export const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
 
 // The same text in the same voice from the same kind of model is the same clip. (The labels in
 // the hash are the ones the first clips were made under, so those stay found.)
-export const clipId = (text: string, speaker: string, speed: 'quick' | 'ahead') =>
-  createHash('sha256').update(`v1|${speed === 'quick' ? 'live' : 'narration'}|${voiceFor(speaker).id}|${normalize(text)}`).digest('hex').slice(0, 40);
+export const clipId = (text: string, voiceId: string, speed: 'quick' | 'ahead') =>
+  createHash('sha256').update(`v1|${speed === 'quick' ? 'live' : 'narration'}|${voiceId}|${normalize(text)}`).digest('hex').slice(0, 40);
 
 export const clipKey = (id: string) => `clips/${id}.mp3`;
 
@@ -94,24 +94,25 @@ async function candidates(deps: VoiceDeps, speed: 'quick' | 'ahead'): Promise<{ 
   return (usable.length ? usable : wanted).map((id) => ({ id, rate: known?.get(id)?.rate ?? 1 }));
 }
 
-export async function makeClip(deps: VoiceDeps, req: { text: string; speaker: string; kind: Kind; when?: When }, signal?: AbortSignal): Promise<ClipResult> {
+// req.voiceId is the voice the listener chose for this speaker; one not on the list is ignored.
+export async function makeClip(deps: VoiceDeps, req: { text: string; speaker: string; kind: Kind; when?: When; voiceId?: string }, signal?: AbortSignal): Promise<ClipResult> {
   const text = normalize(req.text);
   if (!text || text.length > MAX_CHARS) return { ok: false, status: 400, error: `Send between 1 and ${MAX_CHARS} characters.` };
+  const voice = voiceFor(req.speaker, req.voiceId);
   // A clip already made by either model is used rather than paid for again; the fuller reading
   // is preferred when there are both.
   for (const made of ['ahead', 'quick'] as const) {
-    const found = clipId(text, req.speaker, made);
+    const found = clipId(text, voice.id, made);
     if (await deps.store.has(clipKey(found))) return { ok: true, id: found, cached: true };
   }
   const speed = speedFor(req.kind, req.when);
-  const id = clipId(text, req.speaker, speed);
+  const id = clipId(text, voice.id, speed);
   if (!deps.api) return { ok: false, status: 503, error: 'ElevenLabs isn’t set up.' };
   if (!deps.durable) {
     console.error('[voice] no lasting storage for the allowance tally, so no new clips are made');
     return { ok: false, status: 503, error: 'The voice allowance can’t be tracked here.' };
   }
 
-  const voice = voiceFor(req.speaker);
   for (const model of await candidates(deps, speed)) {
     const cost = Math.ceil(text.length * model.rate);
     const a = await allowance(deps);

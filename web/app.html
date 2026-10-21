@@ -312,6 +312,14 @@ button.sess:hover .t{color:var(--accent-ink)}
 .chl .m{display:block;font-size:12.5px;color:var(--fg-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chl .now .t{color:var(--accent-ink)}
 .chl .d{font:500 12px/1 var(--f-mono);color:var(--fg-3);font-variant-numeric:tabular-nums}
+.vl{display:flex;flex-direction:column}
+.vl .vr{display:flex;align-items:center;gap:12px;padding:6px 0;border-top:1px solid var(--line)}
+.vl .vr .ibtn{background:var(--card-hi)}
+.vl .pick{flex:1;min-width:0;min-height:48px;display:flex;align-items:center;gap:10px;text-align:left}
+.vl .tx{flex:1;min-width:0}
+.vl .t{display:block;font-weight:600;font-size:14.5px}
+.vl .m{display:block;font-size:12.5px;color:var(--fg-3)}
+.vl .on .t,.vl .on .pick .ic{color:var(--accent-ink)}
 .pulse{animation:pulse 1.4s ease-in-out infinite}
 @keyframes pulse{50%{opacity:.45}}
 #toast{position:absolute;left:50%;bottom:calc(var(--tabs-h) + 76px);transform:translate(-50%, 8px);z-index:60;width:max-content;max-width:calc(100% - 32px);padding:10px 14px;border-radius:10px;background:var(--fg);color:var(--bg);font-size:13.5px;font-weight:500;line-height:1.35;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:center}
@@ -718,6 +726,8 @@ if (SPEECH.ok) { SPEECH.load(); try { window.speechSynthesis.onvoiceschanged = (
 // or when a clip can't be made, that sentence is read by the phone's own voice.
 const VOICE = {
   on:true, status:null, el:null, unlocked:false, warned:false, halted:false, clips:new Map(), pending:null, current:'',
+  // The voice the listener chose for each part, by ElevenLabs voice id; parts not here use Margin's.
+  pick:store.get('voices', {}),
   audio() {
     if (!this.el) { const a = new Audio(); a.preload = 'auto'; a.setAttribute('playsinline', ''); this.el = a; }
     return this.el;
@@ -731,9 +741,10 @@ const VOICE = {
     try { const r = await fetch('/api/voice', {credentials:'same-origin'}); if (r.ok) { this.status = await r.json(); this.on = !!this.status.on; if (cur().v === 'listen') render(); } } catch (e) { /* clips will say */ }
   },
   clip(text, who, kind) {
-    const k = kind + '|' + who + '|' + text;
+    const vid = this.pick[roleOf(who)] || '';
+    const k = kind + '|' + who + '|' + vid + '|' + text;
     if (!this.clips.has(k)) {
-      this.clips.set(k, api('/api/tts', {text, voice:who, kind}).then(d => d.url, e => {
+      this.clips.set(k, api('/api/tts', vid ? {text, voice:who, kind, voiceId:vid} : {text, voice:who, kind}).then(d => d.url, e => {
         this.clips.delete(k);
         if (e && e.status === 402) this.spent();
         return null;
@@ -932,6 +943,7 @@ function renderNP() {
     <div class="sh-body" id="np-body">
       <div class="np-art" id="np-art">${artHTML(ch)}</div>
       <div class="np-title"><div class="tx"><h2 id="np-t">${esc(chTitle(ch))}</h2><p class="m" id="np-m">${esc(chSub(ch))}</p></div>
+        ${VOICE.on ? `<button class="ibtn" data-act="voices" data-arg="now" aria-label="Change the voice you’re hearing">${icon('voice', 24)}</button>` : ''}
         <button class="ibtn" data-act="read-ch" aria-label="Read this passage">${icon('read', 24)}</button></div>
       <div class="scrub" id="np-scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="${Math.round(s.total)}" aria-valuenow="0"><div class="tr"></div><div class="fi" id="np-fill"></div>${ticks}<div class="kn" id="np-knob"></div></div>
       <div class="times"><span id="np-el">0:00</span><span id="np-rm">-0:00</span></div>
@@ -1009,7 +1021,7 @@ function loop() { if (P.playing || DRAG) updateProgress(false, DRAG ? DRAG.t : n
 
 /* ---------- sheets ---------- */
 function openSheet(id) { const el = document.getElementById(id); el.classList.add('open'); el.setAttribute('aria-hidden', 'false'); if (id === 'np') { NP_OPEN = true; renderNP(); setTimeout(() => markUnit(), 360); } }
-function closeSheet(id) { const el = document.getElementById(id); el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); if (id === 'np') NP_OPEN = false; }
+function closeSheet(id) { const el = document.getElementById(id); el.classList.remove('open'); el.setAttribute('aria-hidden', 'true'); if (id === 'np') NP_OPEN = false; if (id === 'sheet') auditionStop(); }
 function sheet(title, sub, body) {
   const el = $('#sheet');
   el.innerHTML = `<div class="sh-top"><button class="ibtn" data-act="close-sheet" data-arg="sheet" aria-label="Close">${icon('chevDown', 26)}</button><div class="ttl">${esc(sub || '')}<b>${esc(title)}</b></div><span style="width:44px"></span></div><div class="sh-body" id="sheet-body">${body}</div>`;
@@ -1024,6 +1036,70 @@ function addDeeper(i) {
   const ch = P.ses.extras[i]; if (!ch || ch.added) return; ch.added = true;
   const chs = P.ses.chapters; let at = P.ci + 1; while (at < chs.length && chs[at].extra) at++;
   chs.splice(at, 0, Object.assign({}, ch)); layout(P.ses); renderDeeper(); if (NP_OPEN) renderNP(); toast(`${vname(ch.who)} plays next`);
+}
+
+/* ---------- choosing voices ---------- */
+// Each part can be read in a voice the listener picks, kept on this phone. Hearing a voice's
+// sample is free. A passage already heard in one voice is voiced again in a new one, which
+// uses credits.
+const ROLES = ['bsb', 'host', 'henry', 'spurgeon', 'augustine', 'chrysostom'];
+const ROLE_NAME = {bsb:'Scripture', host:'Margin host', henry:'Matthew Henry', spurgeon:'Charles Spurgeon', augustine:'Augustine and the other Fathers', chrysostom:'John Chrysostom'};
+// The other Fathers share Augustine's voice, as on the server.
+const roleOf = who => ROLES.indexOf(who) >= 0 ? who : isFather(who) ? 'augustine' : 'host';
+const sampleUrl = id => '/api/voice/sample/' + encodeURIComponent(id);
+let VROLE = '', AUDITION = '';
+function voiceChoice(role) {
+  const s = VOICE.status || {}, list = s.choices || [];
+  return list.find(c => c.id === VOICE.pick[role]) || list.find(c => c.id === (s.defaults || {})[role]);
+}
+// keep: the list is redrawn in place, so it stays scrolled where it was.
+function voicesSheet(role, keep) {
+  VROLE = role || '';
+  const top = keep && $('#sheet-body') ? $('#sheet-body').scrollTop : 0;
+  const s = VOICE.status;
+  if (!s || (s.on && !s.choices)) {
+    sheet('Voices', 'Listen', '<div id="voices"><p class="note pulse">Loading the voices…</p></div>');
+    VOICE.refresh().then(() => { const el = $('#voices'); if (!el) return; if (VOICE.status && VOICE.status.choices) voicesSheet(VROLE); else el.innerHTML = '<p class="note">Couldn’t load the voices. Check your connection and try again.</p>'; });
+    return;
+  }
+  if (!s.on) { sheet('Voices', 'Listen', '<div id="voices"><p class="note">ElevenLabs isn’t set up on Margin’s server, so Margin reads with your phone’s voice.</p></div>'); return; }
+  const defs = s.defaults || {};
+  if (!VROLE) {
+    sheet('Voices', 'Listen', `<div class="stackv" id="voices"><p class="note">Choose who reads each part. Every voice has a free sample to hear first.</p>
+      <div class="chl">${ROLES.map(r => { const c = voiceChoice(r); return `<button data-act="voices" data-arg="${r}">${avHTML(r, 40)}<span class="tx"><span class="t">${esc(ROLE_NAME[r])}</span><span class="m">${esc(c ? c.name : '')}${c && c.id === defs[r] ? ' · Margin’s pick' : ''}</span></span>${icon('chevRight', 20)}</button>`; }).join('')}</div>
+      <p class="note">A new voice starts with the next sentence. Passages you’ve already heard are voiced again in the new voice, which uses some of Margin’s ElevenLabs credits.</p></div>`);
+  } else {
+    const now = voiceChoice(VROLE);
+    sheet(ROLE_NAME[VROLE], 'Voice for', `<div class="stackv" id="voices"><div><button class="chip ghost" data-act="voices" data-arg="">${icon('chevLeft', 16)}All parts</button></div>
+      <div class="vl">${s.choices.map(c => { const on = !!now && now.id === c.id, playing = AUDITION === c.id; return `<div class="vr ${on ? 'on' : ''}">
+        <button class="ibtn" data-act="audition" data-arg="${esc(c.id)}" aria-label="${playing ? 'Stop the sample' : 'Hear a sample of ' + esc(c.name)}">${icon(playing ? 'pause' : 'play', 18)}</button>
+        <button class="pick" data-act="voice-use" data-arg="${esc(VROLE + ':' + c.id)}" aria-pressed="${on}"><span class="tx"><span class="t">${esc(c.name)}${c.id === defs[VROLE] ? ' · Margin’s pick' : ''}</span><span class="m">${esc(c.about)}</span></span>${on ? icon('check', 20) : ''}</button></div>`; }).join('')}</div>
+      <p class="note">Samples are ElevenLabs’ own recordings and free to hear. Margin reads with the same voice on a newer model, so it can sound a little different.</p></div>`);
+  }
+  if (keep) $('#sheet-body').scrollTop = top;
+}
+// A sample plays through the same player as the passages, so whatever was playing pauses.
+function audition(id) {
+  if (AUDITION === id) { auditionStop(); voicesSheet(VROLE, true); return; }
+  if (P.playing) pause();
+  ANSWER.token++; VOICE.stop();
+  AUDITION = id; voicesSheet(VROLE, true);
+  const url = sampleUrl(id);
+  VOICE.play(url, 1).then(ok => {
+    if (AUDITION !== id) return;
+    AUDITION = '';
+    if (!ok && !VOICE.halted && VOICE.current === url) toast('Couldn’t play that sample. Check your connection.');
+    if ($('#voices')) voicesSheet(VROLE, true);
+  });
+}
+function auditionStop() { if (!AUDITION) return; const mine = VOICE.current === sampleUrl(AUDITION); AUDITION = ''; if (mine) VOICE.stop(); }
+function useVoice(role, id) {
+  const s = VOICE.status || {}; const c = (s.choices || []).find(x => x.id === id); if (!c) return;
+  if (id === (s.defaults || {})[role]) delete VOICE.pick[role]; else VOICE.pick[role] = id;
+  store.set('voices', VOICE.pick); voicesSheet(role, true);
+  toast(`Voice for ${ROLE_NAME[role]}: ${c.name}`);
+  // Hear it at once if that part is speaking now.
+  if (P.playing && P.ses && roleOf(unitVoice(curCh(), curUnit())) === role) restartUnit();
 }
 
 /* ---------- navigation ---------- */
@@ -1076,7 +1152,7 @@ function renderListen() {
   const ap = pathById(ACTIVE) || BUILTIN[0]; const ns = nextSpec(ap); const tot = pathSpecs(ap).length;
   const mine = CUSTOM.concat(BUILTIN.filter(p => doneCount(p) > 0)).filter(p => p.id !== ap.id);
   return `<div class="page">
-    <h1 class="greet">${greet}</h1>
+    <div class="row-between"><h1 class="greet">${greet}</h1>${VOICE.on ? `<button class="ibtn" data-act="voices" data-arg="" aria-label="Choose the voices">${icon('voice', 24)}</button>` : ''}</div>
     <section class="hero" aria-label="Continue">
       <p class="ey">${esc(ap.title)} · ${ns.n + 1} of ${tot}</p>
       <h2>${esc(ns.title)}</h2>
@@ -1097,7 +1173,8 @@ function voiceLine() {
   const v = VOICE.status; if (!v) return '';
   if (!v.on) return '<p class="note">Reading with your phone’s voice.</p>';
   const used = v.credits ? Math.min(100, Math.round(v.spent / v.credits * 100)) : 100;
-  return `<p class="note">Voices by ElevenLabs · ${used}% of Margin’s ${esc(Math.round(v.share * 100) + '%')} share of this month’s credits used${used >= 100 ? '. New passages use your phone’s voice until the month resets.' : ''}</p>`;
+  return `<div class="stackv"><p class="note">Voices by ElevenLabs · ${used}% of Margin’s ${esc(Math.round(v.share * 100) + '%')} share of this month’s credits used${used >= 100 ? '. New passages use your phone’s voice until the month resets.' : ''}</p>
+    <div><button class="chip ghost" data-act="voices" data-arg="">${icon('voice', 16)}Choose the voices</button></div></div>`;
 }
 function listenResults() {
   const q = LQ.trim();
@@ -1434,6 +1511,10 @@ const ACT = {
   speed:() => { P.rate = RATES[(RATES.indexOf(P.rate) + 1) % RATES.length]; if (P.playing) restartUnit(); syncUI(); },
   deeper:() => renderDeeper(),
   'deeper-add':a => addDeeper(+a),
+  // "now" opens on whoever is speaking in the player.
+  voices:a => voicesSheet(a === 'now' ? (P.ses && !P.loading ? roleOf(unitVoice(curCh(), curUnit())) : '') : a),
+  audition:a => audition(a),
+  'voice-use':a => { const i = a.indexOf(':'); useVoice(a.slice(0, i), a.slice(i + 1)); },
   'np-tab':a => { NPTAB = a; renderNPPanel(); const seg = $('#np-seg'), body = $('#np-body'); if (seg && body) body.scrollTo({top:seg.offsetTop - 4, behavior:reduceMotion() ? 'auto' : 'smooth'}); },
   chapter:a => { seek(P.ses.chapters[+a].start + 0.001); if (!P.playing) play(); },
   unit:a => { const [i, j] = a.split(':').map(Number); const ch = P.ses.chapters[i]; if (!ch) return; seek(ch.start + ch.units[j].at + 0.001); if (!P.playing) play(); },

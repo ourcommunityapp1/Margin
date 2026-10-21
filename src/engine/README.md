@@ -151,9 +151,10 @@ The phone app also uses these:
 | Route | Body | Returns |
 |---|---|---|
 | `POST /api/login` | `{code}` | sets the access cookie (`GET` says whether this device is signed in) |
-| `POST /api/tts` | `{text, voice: "bsb" \| "host" \| "henry" \| …, kind: "scripture" \| "comment" \| "intro" \| "answer", when?: "now" \| "ahead"}` | `{id, url, cached}` for a voiced clip; 402 once Margin's voice allowance is used |
+| `POST /api/tts` | `{text, voice: "bsb" \| "host" \| "henry" \| …, kind: "scripture" \| "comment" \| "intro" \| "answer", when?: "now" \| "ahead", voiceId?}` | `{id, url, cached}` for a voiced clip; 402 once Margin's voice allowance is used |
 | `GET /api/tts/<id>` | | the clip's MP3, with byte ranges for Safari |
-| `GET /api/voice` | | whether ElevenLabs is on, the allowance and what's spent |
+| `GET /api/voice` | | whether ElevenLabs is on, the allowance and what's spent, and the voices to choose from with each part's default |
+| `GET /api/voice/sample/<voice id>` | | ElevenLabs' free sample of a voice on the list, as MP3 |
 
 ## The phone app
 
@@ -168,7 +169,7 @@ Voices come from ElevenLabs through `/api/tts` (`src/voice/`). Each sentence is 
 
 A clip made by either model is reused for both, the fuller reading first, so nothing is voiced twice.
 
-The voices are Marcus (Scripture), Sarah (host), George (Henry), William (Spurgeon), Bill (Augustine and the other Fathers) and Daniel (Chrysostom). They are all ElevenLabs default voices or voices already in the account (`src/voice/voices.ts`).
+The default voices are Marcus (Scripture), Sarah (host), George (Henry), William (Spurgeon), Bill (Augustine and the other Fathers) and Daniel (Chrysostom). In the app, Choose the voices (on the Listen tab, or the speaker button in the player) lists twelve voices for each part, each with ElevenLabs' free sample. A choice is kept on the phone and sent with each clip as `voiceId`; the server only accepts voices on its list (`CHOICES` in `src/voice/voices.ts`). All of them are ElevenLabs default voices or voices already in the account. A passage heard in one voice is voiced again in another, which uses credits.
 
 Margin reads the plan's credits from ElevenLabs and keeps its own tally of what it has spent, one entry per clip. Once the next clip would pass `MARGIN_TTS_SHARE` of the period's credits, less a 300-credit reserve, new sentences are read by the phone's own voice. Clips already made still play. The Listen tab shows how much of the allowance is used.
 

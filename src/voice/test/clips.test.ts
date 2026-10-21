@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { allowance, clipId, clipKey, forgetCached, makeClip, type VoiceDeps } from '../clips.ts';
 import { ElevenLabsError, elevenLabs, type ElevenLabs, type ModelInfo, type Plan } from '../elevenlabs.ts';
+import { mp3Response, voiceSample } from '../server.ts';
+import { CHOICES, VOICES, voiceFor } from '../voices.ts';
 import { fileStore } from '../../server/store.ts';
 
 const MODELS: ModelInfo[] = [
@@ -36,10 +38,51 @@ const deps = (api: ElevenLabs | null, extra: Partial<VoiceDeps> = {}): VoiceDeps
 beforeEach(() => forgetCached());
 
 test('a clip is the same text in the same voice from the same kind of model', () => {
-  assert.equal(clipId('In the  beginning\n', 'bsb', 'quick'), clipId('In the beginning', 'bsb', 'quick'));
-  assert.notEqual(clipId('Amen.', 'host', 'quick'), clipId('Amen.', 'host', 'ahead'));
-  assert.notEqual(clipId('Amen.', 'henry', 'ahead'), clipId('Amen.', 'spurgeon', 'ahead'));
-  assert.equal(clipId('Amen.', 'jerome', 'ahead'), clipId('Amen.', 'augustine', 'ahead'), 'minor Fathers share a voice');
+  assert.equal(clipId('In the  beginning\n', VOICES.bsb.id, 'quick'), clipId('In the beginning', VOICES.bsb.id, 'quick'));
+  assert.notEqual(clipId('Amen.', VOICES.host.id, 'quick'), clipId('Amen.', VOICES.host.id, 'ahead'));
+  assert.notEqual(clipId('Amen.', VOICES.henry.id, 'ahead'), clipId('Amen.', VOICES.spurgeon.id, 'ahead'));
+  assert.equal(voiceFor('jerome'), voiceFor('augustine'), 'minor Fathers share a voice');
+});
+
+test('a voice the listener chose reads instead of the default; one not on the list is ignored', async () => {
+  const { api, calls } = fakeApi();
+  const d = deps(api);
+  const brian = CHOICES.find((c) => c.name === 'Brian')!;
+  const chosen = await makeClip(d, { text: 'Grace to you.', speaker: 'bsb', kind: 'scripture', voiceId: brian.id });
+  const usual = await makeClip(d, { text: 'Grace to you.', speaker: 'bsb', kind: 'scripture' });
+  assert.ok(chosen.ok && usual.ok && !usual.cached && chosen.id !== usual.id, 'each voice is its own clip');
+  assert.deepEqual(calls.map((c) => c.voice), [brian.id, VOICES.bsb.id]);
+  const named = await makeClip(d, { text: 'Grace to you.', speaker: 'bsb', kind: 'scripture', voiceId: VOICES.bsb.id });
+  assert.ok(named.ok && named.cached && usual.ok && named.id === usual.id, 'choosing the default voice is the default clip');
+  const stranger = await makeClip(d, { text: 'Grace to you.', speaker: 'bsb', kind: 'scripture', voiceId: 'notAVoiceOnTheList000' });
+  assert.ok(stranger.ok && stranger.cached && usual.ok && stranger.id === usual.id);
+  assert.equal(calls.length, 2);
+  for (const v of Object.values(VOICES)) assert.ok(CHOICES.some((c) => c.id === v.id), `${v.name} can be chosen again`);
+  assert.equal(new Set(CHOICES.map((c) => c.id)).size, CHOICES.length);
+});
+
+test('a voice sample is fetched once and served as audio, in byte ranges too', async () => {
+  const store = fileStore(mkdtempSync(path.join(tmpdir(), 'margin-sample-')));
+  let fetched = 0;
+  const get = (async () => { fetched++; return new Response(new Uint8Array([1, 2, 3, 4, 5]), { headers: { 'content-type': 'text/plain' } }); }) as unknown as typeof fetch;
+  const first = await voiceSample(store, CHOICES[0], get);
+  const again = await voiceSample(store, CHOICES[0], get);
+  assert.deepEqual([...first!], [1, 2, 3, 4, 5]);
+  assert.deepEqual([...again!], [1, 2, 3, 4, 5]);
+  assert.equal(fetched, 1);
+  const whole = mp3Response(new Request('https://margin.test/s'), first!, 'private');
+  assert.equal(whole.headers.get('content-type'), 'audio/mpeg');
+  assert.equal(whole.headers.get('content-length'), '5');
+  const part = mp3Response(new Request('https://margin.test/s', { headers: { range: 'bytes=1-2' } }), first!, 'private');
+  assert.equal(part.status, 206);
+  assert.equal(part.headers.get('content-range'), 'bytes 1-2/5');
+  assert.deepEqual([...new Uint8Array(await part.arrayBuffer())], [2, 3]);
+  const tail = mp3Response(new Request('https://margin.test/s', { headers: { range: 'bytes=-2' } }), first!, 'private');
+  assert.deepEqual([...new Uint8Array(await tail.arrayBuffer())], [4, 5]);
+  assert.equal(mp3Response(new Request('https://margin.test/s', { headers: { range: 'bytes=9-' } }), first!, 'private').status, 416);
+  const missing = (async () => new Response('gone', { status: 404 })) as unknown as typeof fetch;
+  assert.equal(await voiceSample(store, CHOICES[1], missing), null);
+  assert.equal(await store.has(`samples/${CHOICES[1].id}.mp3`), false, 'a failed fetch isn’t kept');
 });
 
 test('what someone is waiting for gets v4 Turbo, what is made ahead gets v4; a clip is made once', async () => {
