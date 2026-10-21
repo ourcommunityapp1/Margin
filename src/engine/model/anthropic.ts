@@ -3,7 +3,7 @@
 // (citations and structured outputs can't share a request).
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { CitedAnswer, CiteRequest, JsonRequest, JsonRoute, ModelAdapter } from './types.ts';
+import type { CitedAnswer, CiteRequest, JsonRequest, JsonRoute, ModelAdapter, Usage } from './types.ts';
 import { ModelRefusal } from './types.ts';
 
 type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
@@ -31,11 +31,18 @@ export function anthropicAdapter(opts: AnthropicOptions = {}): ModelAdapter {
   const graderModel = opts.graderModel ?? env.MARGIN_GRADER_MODEL ?? model;
   const effort = { ...DEFAULT_EFFORT, ...opts.effort };
 
+  const usage: Usage = { calls: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
   const check = (msg: Anthropic.Beta.BetaMessage) => {
+    usage.calls++;
+    usage.input += msg.usage.input_tokens;
+    usage.output += msg.usage.output_tokens;
+    usage.cacheRead += msg.usage.cache_read_input_tokens ?? 0;
+    usage.cacheWrite += msg.usage.cache_creation_input_tokens ?? 0;
     if (msg.stop_reason === 'refusal') throw new ModelRefusal(msg.stop_details?.category ?? null);
   };
 
   return {
+    usage,
     async json<T>(req: JsonRequest): Promise<T> {
       const msg = await client.beta.messages.create({
         model: req.route === 'grade' ? graderModel : model,

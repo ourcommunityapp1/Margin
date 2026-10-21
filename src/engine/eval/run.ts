@@ -2,7 +2,7 @@
 //
 //   node src/engine/eval/run.ts                 mock model: checks the plumbing, costs nothing
 //   node src/engine/eval/run.ts --live          Claude API (needs ANTHROPIC_API_KEY); spends credit
-//   options: --limit 20  --category contested  --out evals/results/run.json
+//   options: --limit 20  --category contested  --concurrency 4  --out evals/results/run.json
 //   compare two runs on the same items:  node src/engine/eval/run.ts --compare a.json b.json
 //
 // Rerun after every prompt change and every model upgrade, and add real failures as new items.
@@ -15,6 +15,7 @@ import { fileLoader } from '../corpus/loaders.ts';
 import { anthropicAdapter } from '../model/anthropic.ts';
 import { mockAdapter } from '../model/mock.ts';
 import type { AskResult } from '../pipeline/ask.ts';
+import type { Usage } from '../model/types.ts';
 import { grade, wilson, type Check, type EvalItem } from './graders.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -41,6 +42,12 @@ async function compare(a: string, b: string) {
   console.log(changed.join('\n'));
 }
 
+// Cost at Claude Opus 5.5 rates ($4 in, $20 out per million tokens; cache reads 10%, writes 125%).
+function usageLine(u: Usage): string {
+  const cost = (u.input * 4 + u.cacheRead * 0.4 + u.cacheWrite * 5 + u.output * 20) / 1e6;
+  return `- Tokens: ${u.input + u.cacheRead + u.cacheWrite} in (${u.cacheRead} from cache), ${u.output} out over ${u.calls} calls; about $${cost.toFixed(2)} at Opus 5.5 rates`;
+}
+
 async function main() {
   if (flag('compare')) return compare(args[args.indexOf('--compare') + 1], args[args.indexOf('--compare') + 2]);
   const live = flag('live');
@@ -53,10 +60,14 @@ async function main() {
   if (opt('category')) items = items.filter((i) => i.category === opt('category'));
   if (opt('limit')) items = items.slice(0, Number(opt('limit')));
 
-  const engine = await createEngine({ loader: fileLoader(path.join(root, 'data/corpus')), model: live ? anthropicAdapter() : mockAdapter(), search: true });
+  const model = live ? anthropicAdapter() : mockAdapter();
+  const engine = await createEngine({ loader: fileLoader(path.join(root, 'data/corpus')), model, search: true });
   const vs = engine.corpus.versification;
   const rows: Row[] = [];
-  for (const item of items) {
+  // Items run a few at a time (--concurrency 4) so a live run takes minutes, not an hour.
+  const queue = [...items];
+  const run = async () => { for (let item = queue.shift(); item; item = queue.shift()) await runItem(item); };
+  const runItem = async (item: EvalItem) => {
     const t0 = Date.now();
     const input = { question: item.question, speaker: item.persona ?? 'host', context: item.context } as const;
     const result = await engine.ask(input);
@@ -69,7 +80,9 @@ async function main() {
     const row: Row = { id: item.id, category: item.category, ms: Date.now() - t0, result, followup, checks, pass: checks.every((c) => c.pass) };
     rows.push(row);
     process.stdout.write(`${row.pass ? '✓' : '✗'} ${item.id} ${judged.status} ${row.ms}ms${row.pass ? '' : '  ' + checks.filter((c) => !c.pass).map((c) => c.name).join(', ')}\n`);
-  }
+  };
+  await Promise.all(Array.from({ length: Math.max(1, Number(opt('concurrency') ?? 1)) }, run));
+  rows.sort((a, b) => items.findIndex((i) => i.id === a.id) - items.findIndex((i) => i.id === b.id));
 
   const byCat = new Map<string, Row[]>();
   for (const r of rows) byCat.set(r.category, [...(byCat.get(r.category) ?? []), r]);
@@ -93,6 +106,7 @@ async function main() {
     `- Fallback answers: ${answers.filter((a) => a.status === 'fallback').length}; errors: ${answers.filter((a) => a.status === 'error').length}`,
     `- Answers needing a repair round: ${answers.filter((a) => a.attempts > 1).length}`,
     `- Median time per item: ${rows.map((r) => r.ms).sort((a, b) => a - b)[Math.floor(rows.length / 2)] ?? 0} ms`,
+    model.usage ? usageLine(model.usage) : '',
     live ? '' : '\nMock mode checks the pipeline, not answer quality. Run with --live for real scores.',
   ].join('\n');
   console.log('\n' + summary);

@@ -51,6 +51,16 @@ export interface CitedAnswer {
 export interface ModelAdapter {
   json<T>(req: JsonRequest): Promise<T>;
   cite(req: CiteRequest): Promise<CitedAnswer>;
+  // Running token totals, where the adapter can count them (the Claude API adapter does).
+  usage?: Usage;
+}
+
+export interface Usage {
+  calls: number;
+  input: number;
+  output: number;
+  cacheRead: number;
+  cacheWrite: number;
 }
 
 // The model declined. Margin answers with Scripture and a verified note instead.
