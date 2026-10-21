@@ -3,7 +3,7 @@
 
 import type { Source } from '../retrieve/gather.ts';
 
-export type JsonRoute = 'plan' | 'grade' | 'playlist';
+export type JsonRoute = 'plan' | 'grade' | 'playlist' | 'plain';
 
 export interface JsonRequest {
   route: JsonRoute;

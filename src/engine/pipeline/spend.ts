@@ -1,6 +1,13 @@
 // A daily spending cap. Each answer's cost is added as it happens; once the day's limit is
 // reached, questions get Margin's free answer (the passage and a checked note) until tomorrow.
 
+// Work that waits for tomorrow once the day's limit is reached throws this.
+export class OverBudget extends Error {
+  constructor() {
+    super('Margin has reached today’s spending limit for Claude. Try again tomorrow.');
+  }
+}
+
 export interface SpendStore {
   today(): Promise<number>;
   add(usd: number): Promise<void>;

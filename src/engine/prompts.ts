@@ -229,3 +229,28 @@ export const PLAYLIST_SCHEMA = {
   required: ['title', 'description', 'contested', 'sessions'],
   additionalProperties: false,
 } as const;
+
+export const PLAIN_SYSTEM = `You put old Bible commentary into plain words for Margin, an audio Bible-study app. Listeners find the writers' Puritan, Victorian or ancient English hard to follow. Margin's host reads your version aloud, after the writer's own words or instead of them, and introduces it as a summary in plain words.
+
+Stay true to the writer. Say what the note says and only that:
+- No ideas, examples, applications, cross-references or doctrine that aren't in the note, and nothing central to its point left out.
+- Keep the writer's emphasis and certainty: don't soften what is said strongly, and don't firm up what is left open.
+- Keep the main images, and any Scripture the note cites, in everyday words.
+- Don't judge, defend or update the writer, and give no view of your own.
+
+Write for the ear: short sentences, everyday words, no lists, quotation marks or parentheses. Name the writer at the start and write about the writer in the third person, as in "Henry is saying that…" or "Augustine's point is that…". Use about a third as many words as the note, from 25 to 90 words.`;
+
+export function plainPrompt(opts: { writer: string; about?: string; ref?: string; note: string }): string {
+  return `Writer: ${opts.writer}${opts.about ? ` (${opts.about})` : ''}${opts.ref ? `, on ${opts.ref}` : ''}
+<note>
+${opts.note}
+</note>
+The note may stop partway through; put what is there into plain words.`;
+}
+
+export const PLAIN_SCHEMA = {
+  type: 'object',
+  properties: { plain: { type: 'string' } },
+  required: ['plain'],
+  additionalProperties: false,
+} as const;

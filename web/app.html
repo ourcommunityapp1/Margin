@@ -282,29 +282,15 @@ button.sess:hover .t{color:var(--accent-ink)}
 .scrub .kn{position:absolute;top:8px;left:0;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--fg);box-shadow:0 1px 4px var(--shadow)}
 .scrub .tk{position:absolute;top:7px;width:2px;height:16px;margin-left:-1px;border-radius:1px;background:color-mix(in srgb, var(--fg) 42%, transparent)}
 .times{display:flex;justify-content:space-between;font:500 11.5px/1 var(--f-mono);color:var(--fg-2);font-variant-numeric:tabular-nums}
-.ctrls{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.ctrls{display:flex;align-items:center;justify-content:center;gap:clamp(28px, 11vw, 56px);margin-top:8px}
 .ctrls .ibtn{width:52px;height:52px}
-.ctrls .ibtn .lbl{font:500 13px/1 var(--f-mono)}
 .ctrls .pbtn{width:68px;height:68px;background:var(--fg);color:var(--bg)}
-.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.act{display:flex;align-items:center;justify-content:center;gap:8px;height:52px;border-radius:12px;background:color-mix(in srgb, var(--fg) 10%, transparent);font-size:15px;font-weight:600}
-.act:hover{background:color-mix(in srgb, var(--fg) 15%, transparent)}
-.act.ask{background:var(--accent);color:var(--on-accent)}
-.think{margin-top:16px;font:italic 400 16px/1.5 var(--f-read);color:var(--fg-2)}
-.think b{display:block;font:500 11px/1.4 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;font-style:normal;color:var(--accent-ink);margin-bottom:2px}
-.seg{display:flex;gap:6px;margin-top:22px;position:sticky;top:-4px;z-index:2;padding-block:10px;background:var(--bg)}
-.tx-ch{padding:16px 0 6px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
-.tx-ch:first-child{border-top:0}
-.tx-h{display:flex;align-items:center;gap:10px}
-.tx-h .av{width:32px;height:32px;font-size:12px}
-.tx-h .t{font-size:14px;font-weight:600}
-.tx-h .m{font-size:12.5px;color:var(--fg-3)}
-.tx-b{font:400 17px/1.62 var(--f-read);color:var(--fg-3);max-width:65ch}
-.tx-b .u{cursor:pointer;border-radius:3px;transition:color .2s}
-.tx-b .u:hover{color:var(--fg-2)}
-.tx-b .u.on{color:var(--fg);background:color-mix(in srgb, var(--tc) 22%, transparent);-webkit-box-decoration-break:clone;box-decoration-break:clone}
-.tx-b .hl{display:block;font:italic 400 13.5px/1.45 var(--f-ui);color:var(--fg-3);margin-bottom:8px}
-.tx-b sup{font:500 10px/1 var(--f-mono);color:var(--fg-3);margin-right:3px}
+.ask-now{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:56px;margin-top:18px;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:16px;font-weight:600}
+.choices{display:flex;flex-direction:column;gap:10px}
+.choice{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border-radius:14px;background:var(--card);text-align:left}
+.choice:hover{background:var(--card-hi)}
+.choice .t{font-size:16px;font-weight:600}
+.choice .m{font-size:13.5px;color:var(--fg-2);line-height:1.45}
 .chl{display:flex;flex-direction:column}
 .chl button{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);width:100%;text-align:left}
 .chl .tx{flex:1;min-width:0}
@@ -378,7 +364,6 @@ const store = {
 const reduceMotion = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const I = {
   headphones:'<path d="M4 15v-3a8 8 0 0 1 16 0v3"/><rect x="3.5" y="14" width="4.5" height="6.5" rx="1.5"/><rect x="16" y="14" width="4.5" height="6.5" rx="1.5"/>',
-  fwd30:'<path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4v4.5H16"/><text x="11.5" y="15.6" text-anchor="middle" font-size="7.5" font-family="Geist Mono, monospace" font-weight="600" fill="currentColor" stroke="none">30</text>',
   read:'<path d="M3.5 5.5c3-1.3 5.8-1.3 8.5.5 2.7-1.8 5.5-1.8 8.5-.5v13c-3-1.3-5.8-1.3-8.5.5-2.7-1.8-5.5-1.8-8.5-.5z"/><path d="M12 6v13"/>',
   explore:'<circle cx="12" cy="12" r="8.5"/><path d="m15.5 8.5-2 5-5 2 2-5z"/>',
   build:'<path d="M12 4v16M4 12h16"/><circle cx="12" cy="12" r="9"/>',
@@ -390,7 +375,7 @@ const I = {
   next:'<path d="M5.5 5 15 12l-9.5 7z" fill="currentColor" stroke="none"/><path d="M18.5 5v14"/>',
   chevDown:'<path d="m6 9 6 6 6-6"/>', chevLeft:'<path d="m15 6-6 6 6 6"/>', chevRight:'<path d="m9 6 6 6-6 6"/>',
   mic:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
-  deeper:'<path d="M12 3v11M7.5 9.5 12 14l4.5-4.5M5 20h14"/>',
+  sliders:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   save:'<path d="M6.5 3.5h11v17l-5.5-4-5.5 4z"/>',
   check:'<path d="m5 12.5 4.5 4.5L19 7"/>',
   warn:'<path d="M12 3.5 2.5 20h19zM12 10v4.5M12 17.2v.3"/>',
@@ -550,7 +535,10 @@ function fathersIn(cd, a, b) {
 }
 function pickFathers(list, n) {
   if (n <= 0 || !list.length) return [];
-  const score = f => { const r = FATHER_RANK.indexOf(f.who); const w = words(f.text); return (r < 0 ? 30 : r) + (w < 35 ? 8 : 0) + (w > 300 ? 6 : 0); };
+  // The listener's tradition can put some Fathers first.
+  const first = myTrad().first || [];
+  const rank = who => { const i = first.indexOf(who); if (i >= 0) return i - first.length; const r = FATHER_RANK.indexOf(who); return r < 0 ? 30 : r; };
+  const score = f => { const w = words(f.text); return rank(f.who) + (w < 35 ? 8 : 0) + (w > 300 ? 6 : 0); };
   const sorted = list.slice().sort((p, q) => score(p) - score(q));
   const out = [], seen = new Set();
   for (const f of sorted) { if (out.length >= n) break; if (!seen.has(f.who)) { out.push(f); seen.add(f.who); } }
@@ -584,6 +572,27 @@ function clipText(text, limit) {
 const paras = t => String(t).split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
 const spokenRange = (a, b) => a === b ? 'verse ' + a : 'verses ' + a + ' to ' + b;
 
+/* ---------- listening choices ---------- */
+// The tradition chosen at the start decides whose notes play, unless a playlist names its own
+// voices. Where none of that tradition's writers comment on a passage, the others do.
+const TRADITIONS = {
+  protestant:{name:'Protestant', sub:'Reformed, Baptist, Methodist or evangelical. You’ll hear Matthew Henry and Charles Spurgeon.', voices:['henry', 'spurgeon'], from:'all'},
+  catholic:{name:'Catholic', sub:'You’ll hear the Church Fathers, led by Augustine and Jerome, many through Thomas Aquinas’ Catena Aurea.', voices:['fathers'], first:['augustine', 'jerome', 'ambrose', 'gregory', 'chrysostom', 'bede', 'leo'], from:'fathers'},
+  orthodox:{name:'Orthodox', sub:'You’ll hear John Chrysostom and the Greek Fathers first, then the other Church Fathers.', voices:['fathers'], first:['chrysostom', 'basil', 'gregory_naz', 'athanasius', 'cyril', 'gregory_nyssa', 'theophylact', 'damascene'], from:'fathers'},
+  all:{name:'A bit of everything', sub:'Matthew Henry, Charles Spurgeon and the Church Fathers side by side.', voices:null, from:'all'}
+};
+const TRAD_NOTE = 'Margin’s library has Matthew Henry, Charles Spurgeon and the Church Fathers. Where your tradition’s writers say nothing on a passage, you’ll hear the others. Wesley, Calvin and Luther aren’t in it yet.';
+// Old commentary can be read as written, then summed up in plain words by the host, or only summed up.
+const PLAIN_MODES = {
+  both:{name:'Their words, then plain words', sub:'You hear exactly what each writer wrote, then the host sums it up in everyday English.'},
+  plain:{name:'Plain words only', sub:'The host sums up each writer in everyday English instead of reading the original.'},
+  orig:{name:'Their words only', sub:'You hear exactly what each writer wrote.'}
+};
+const PLAIN_NOTE = 'Summaries are written by AI (Claude), told to say only what the writer said.';
+let MY_TRAD = store.get('trad', null), PLAINM = store.get('plain', null);
+const myTrad = () => TRADITIONS[MY_TRAD] || TRADITIONS.all;
+const plainMode = () => PLAIN_MODES[PLAINM] ? PLAINM : 'both';
+
 /* ---------- sessions ---------- */
 const DEPTH = {overview:{h:200, sp:180, f:1, label:'Overview'}, study:{h:5000, sp:700, f:3, label:'Study'}, deep:{h:5000, sp:650, f:6, label:'Deep'}};
 function bridge(ch) {
@@ -594,11 +603,15 @@ function bridge(ch) {
   if (ch.src === 'catena') return `${vname(ch.who)}, from Aquinas’ Catena Aurea.`;
   return `${vname(ch.who)}, from ${ch.label}.`;
 }
-function segmentsFor(cd, a, b, spec, out, extras) {
+function segmentsFor(cd, a, b, spec, out) {
   const L = DEPTH[spec.depth] || DEPTH.study; const bi = cd.bi, c = cd.ch;
-  const H = wants(spec.voices, 'henry') ? henryEff(cd).filter(s => s.y2 >= a && s.x <= b) : [];
-  const SP = wants(spec.voices, 'spurgeon') && cd.sp ? cd.sp.x.filter(([x, y]) => y >= a && x <= b) : [];
-  const FA = fathersIn(cd, a, b).filter(f => wants(spec.voices, f.who));
+  const notes = vs => [
+    wants(vs, 'henry') ? henryEff(cd).filter(s => s.y2 >= a && s.x <= b) : [],
+    wants(vs, 'spurgeon') && cd.sp ? cd.sp.x.filter(([x, y]) => y >= a && x <= b) : [],
+    fathersIn(cd, a, b).filter(f => wants(vs, f.who))];
+  let [H, SP, FA] = notes(spec.voices);
+  // Where the chosen writers say nothing on these verses, the others speak.
+  if (!H.length && !SP.length && !FA.length) [H, SP, FA] = notes(null);
   const scrip = (x, y) => { const verses = []; for (let v = x; v <= y; v++) verses.push([v, cd.bsb[v - 1] || '']); return {who:'bsb', kind:'scripture', src:'bsb', bi, c, a:x, b:y, ref:refLabel(bi, c, x, y), verses}; };
   const clipped = (ch, lim) => { const r = clipText(ch.text, lim); ch.text = r[0] + (r[1] ? ' […]' : ''); ch.clipped = r[1]; return ch; };
   const hen = s => clipped({who:'henry', kind:'comment', src:'mhcc', bi, c, a:s.x, b:s.y, ref:refLabel(bi, c, s.x, s.y), text:s.text, label:'Concise Commentary'}, L.h);
@@ -625,33 +638,48 @@ function segmentsFor(cd, a, b, spec, out, extras) {
     push(scrip(a, b)); H.forEach(s => push(hen(s))); SP.forEach(s => push(spu(s)));
     pickFathers(FA, L.f).forEach(f => { push(fat(f)); used.add(f); });
   }
-  pickFathers(FA.filter(f => !used.has(f)), 24).forEach(f => extras.push(fat(f)));
 }
 const SESS_CACHE = {};
 async function buildSession(spec) {
-  const out = [], extras = [];
+  const out = [];
+  // Unless the playlist names its own voices, the listener's tradition decides.
+  const chosen = Object.assign({}, spec, {voices:spec.voices || myTrad().voices});
   for (const rs of spec.refs) {
     const r = parseRef(rs); if (!r) continue;
-    for (const [c, a, b] of spansOf(r)) segmentsFor(await getChapter(r.bi, c), a, b, spec, out, extras);
+    for (const [c, a, b] of spansOf(r)) segmentsFor(await getChapter(r.bi, c), a, b, chosen, out);
   }
   const lead = spec.title && !parseRef(spec.title) ? spec.title + '. ' : '';
   out.forEach((ch, i) => { ch.intro = (i === 0 ? lead : '') + bridge(ch); });
-  extras.forEach(ch => { ch.extra = true; ch.intro = 'Going deeper: ' + bridge(ch); });
-  const ses = {spec, chapters:out.map(prep), extras:extras.map(prep)};
+  // The session's question is said at the end rather than shown.
+  if (spec.q && out.length) out[out.length - 1].outro = 'Something to think about. ' + spec.q;
+  const ses = {spec, chapters:out.map(prep)};
   layout(ses); return ses;
 }
+const PLAIN_LEAD = 'In plain words: ';
 function prep(ch) {
   const units = [];
   if (ch.intro) units.push({host:true, text:ch.intro, say:ch.intro});
   if (ch.kind === 'scripture') ch.verses.forEach(([v, t]) => { if (t) chunkText(t).forEach((c, k) => units.push({text:c, say:c, v:k === 0 ? v : null})); });
-  else chunkText(ch.text).forEach(c => units.push({text:c, say:speakable(c)}));
+  else {
+    // A note is read as written, then (or instead) summed up by the host once the summary comes.
+    const mode = plainMode(), sum = PLAIN.text(ch);
+    ch.own = chunkText(ch.text).map(c => ({text:c, say:speakable(c)}));
+    if (mode !== 'plain') units.push(...ch.own);
+    if (mode !== 'orig') units.push({host:true, plain:true, text:sum, say:sum ? PLAIN_LEAD + sum : ''});
+  }
+  if (ch.outro) units.push({host:true, text:ch.outro, say:ch.outro});
   if (!units.length) units.push({host:true, text:'(No text for this passage.)', say:''});
-  let d = 0; units.forEach(u => { u.dur = Math.max(0.6, words(u.say) / 2.5 + 0.35); u.at = d; d += u.dur; });
-  ch.units = units; ch.dur = d; return ch;
+  ch.units = units; retime(ch); return ch;
+}
+// A summary not yet written is timed from the length of its note.
+function retime(ch) {
+  let d = 0;
+  ch.units.forEach(u => { u.dur = u.skip ? 0 : u.plain && !u.say ? Math.min(36, Math.max(10, words(ch.text) / 8)) : Math.max(0.6, words(u.say) / 2.5 + 0.35); u.at = d; d += u.dur; });
+  ch.dur = d;
 }
 function layout(ses) { let t = 0; ses.chapters.forEach(ch => { ch.start = t; t += ch.dur; }); ses.total = t; }
 async function sessionSeconds(spec) {
-  const k = spec.key + '|' + spec.depth + '|' + (spec.voices || []).join(',');
+  const k = [spec.key, spec.depth, (spec.voices || []).join(','), MY_TRAD, plainMode()].join('|');
   if (SESS_CACHE[k] == null) SESS_CACHE[k] = buildSession(spec).then(s => s.total);
   return SESS_CACHE[k];
 }
@@ -667,7 +695,8 @@ const PROG = store.get('prog', {});
 const DEPTHS = store.get('depths', {});
 let ACTIVE = store.get('active', 'saved');
 const depthOf = () => 'study';
-function specOf(p, i) { const s = p.sessions[i]; return {key:p.id + ':' + i, pid:p.id, n:i, title:s.title, refs:s.refs, focus:s.focus || '', q:s.q || '', depth:depthOf(p.id), voices:p.voices || null, format:'read'}; }
+// Playlists that compare the traditions keep every voice, whatever the listener's own.
+function specOf(p, i) { const s = p.sessions[i]; return {key:p.id + ':' + i, pid:p.id, n:i, title:s.title, refs:s.refs, focus:s.focus || '', q:s.q || '', depth:depthOf(p.id), voices:p.voices || (p.cat === 'traditions' ? ['all'] : null), format:'read'}; }
 const pathSpecs = p => p.sessions.map((s, i) => specOf(p, i));
 function pathCover(p, cls, size) {
   const cat = CATS[p.cat] || CATS.custom;
@@ -805,11 +834,12 @@ const unitKind = (ch, u) => u.host ? 'intro' : ch.kind === 'scripture' ? 'script
 
 /* ---------- player ---------- */
 const RATES = [0.8, 1, 1.25, 1.5, 2];
-const P = {queue:[], qi:0, ses:null, ci:0, ui:0, playing:false, loading:false, rate:1, token:0, t0:0, partial:0, sleepEnd:false};
-let NP_OPEN = false, NPTAB = 'chapters', DRAG = null, lastU = null, lastKey = '', lastUserScroll = 0;
+// wait: the player is holding at a summary that hasn't come back yet.
+const P = {queue:[], qi:0, ses:null, ci:0, ui:0, playing:false, loading:false, wait:false, rate:RATES.indexOf(store.get('rate', 1)) >= 0 ? store.get('rate', 1) : 1, token:0, t0:0, partial:0, sleepEnd:false};
+let NP_OPEN = false, DRAG = null, lastKey = '';
 const curCh = () => P.ses.chapters[P.ci];
 const curUnit = () => curCh().units[P.ui];
-function pos() { if (!P.ses) return 0; const ch = curCh(), u = ch.units[P.ui]; const within = P.playing ? Math.min(u.dur, (performance.now() - P.t0) / 1000 * P.rate) : P.partial; return ch.start + u.at + within; }
+function pos() { if (!P.ses) return 0; const ch = curCh(), u = ch.units[P.ui]; const within = P.playing && !P.wait ? Math.min(u.dur, (performance.now() - P.t0) / 1000 * P.rate) : P.partial; return ch.start + u.at + within; }
 function locate(t) {
   const chs = P.ses.chapters; t = Math.max(0, Math.min(t, P.ses.total - 0.01));
   let ci = chs.length - 1; for (let i = 0; i < chs.length; i++) if (t < chs[i].start + chs[i].dur) { ci = i; break; }
@@ -819,8 +849,12 @@ function locate(t) {
 }
 function playUnit(resume) {
   const tok = ++P.token; const ch = curCh(); const u = ch.units[P.ui];
+  P.wait = false;
+  if (u.skip) { advance(); return; }
+  if (P.ui === 0) warmPlain();
   const from = resume ? P.partial : 0;
   P.t0 = performance.now() - from / P.rate * 1000; P.partial = 0; markUnit(); mediaSync();
+  if (u.plain && !u.say) { holdForPlain(ch, u, tok); return; }
   const live = () => tok === P.token && P.playing;
   const done = ok => { if (ok !== false && live()) advance(); };
   const ms = Math.max(300, (u.dur - from) / P.rate * 1000);
@@ -840,6 +874,69 @@ function prefetch() {
     if (u.say) VOICE.clip(u.say, unitVoice(c2, u), unitKind(c2, u));
   }
 }
+/* ---------- plain words ---------- */
+// Summaries come from Margin's server, which writes each note's summary once and keeps it.
+// A note whose summary failed is tried once more when it's reached, and none are asked for
+// once the day's limit for Claude is reached.
+const PLAIN = {
+  memo:new Map(), err:0, told:false,
+  key:ch => ch.who + '|' + ch.text,
+  text(ch) { const m = this.memo.get(this.key(ch)); return m ? m.text : ''; },
+  get(ch, retry) {
+    const k = this.key(ch); let m = this.memo.get(k);
+    if (this.err === 429) return Promise.resolve(m ? m.text : '');
+    if (!m || (m.failed && retry && m.tries < 2)) {
+      m = {text:'', tries:(m ? m.tries : 0) + 1}; this.memo.set(k, m);
+      m.p = api('/api/plain', {who:ch.who, ref:ch.ref, text:ch.text.slice(0, 11900)}).then(d => (m.text = d.text || ''), e => { m.failed = true; this.err = (e && e.status) || 0; return ''; });
+    }
+    return m.p;
+  }
+};
+// The summaries of the voice now playing and the next are asked for ahead, so they're ready when reached.
+function warmPlain() {
+  if (plainMode() === 'orig' || !P.ses || !ACCESS.ok) return;
+  let n = 0;
+  for (let i = P.ci; i < P.ses.chapters.length && n < 2; i++) {
+    const ch = P.ses.chapters[i];
+    if (ch.units.some(u => u.plain && !u.say && !u.skip)) { n++; PLAIN.get(ch).then(t => { if (t) applyPlain(); }); }
+  }
+}
+// Puts every summary that has come back into the session and re-times it.
+function applyPlain() {
+  if (!P.ses) return; let changed = false;
+  P.ses.chapters.forEach(ch => ch.units.forEach(u => { if (u.plain && !u.say && !u.skip) { const t = PLAIN.text(ch); if (t) { u.text = t; u.say = PLAIN_LEAD + t; changed = true; } } }));
+  if (changed) { P.ses.chapters.forEach(retime); layout(P.ses); updateProgress(true); }
+}
+// Playback holds at a summary still being written, then plays what's in its place. With no
+// summary, a "plain words only" note is read as written; otherwise the summary is left out.
+function holdForPlain(ch, u, tok) {
+  P.wait = true;
+  const slow = setTimeout(() => { if (tok === P.token && P.playing) toast('Putting that into plain words…'); }, 1500);
+  PLAIN.get(ch, true).then(text => {
+    clearTimeout(slow);
+    if (tok !== P.token) return;
+    P.wait = false;
+    if (text) applyPlain();
+    else {
+      const i = ch.units.indexOf(u);
+      if (plainMode() === 'plain' && i >= 0) ch.units.splice(i, 1, ...ch.own.map(x => Object.assign({}, x))); else u.skip = true;
+      retime(ch); layout(P.ses); updateProgress(true);
+      if (!PLAIN.told) { PLAIN.told = true; toast((PLAIN.err === 429 ? 'Margin has reached today’s limit for Claude, so summaries are back tomorrow.' : 'Couldn’t put that into plain words just now.') + (plainMode() === 'plain' ? ' Here is what the writer wrote.' : '')); }
+    }
+    if (P.playing) playUnit();
+  });
+}
+function setPlainMode(m) {
+  PLAINM = m; store.set('plain', m);
+  if (!P.ses) return;
+  P.ses.chapters.forEach(prep); layout(P.ses);
+  // The note playing now starts again in the new way.
+  const ch = curCh();
+  if (ch.kind !== 'scripture') { P.ui = 0; P.partial = 0; if (P.playing) restartUnit(); }
+  else P.ui = Math.min(P.ui, ch.units.length - 1);
+  syncUI(); renderNPPanel();
+}
+
 // The lock screen, headphones and the car show what's playing and can pause or skip.
 function mediaSync() {
   if (!('mediaSession' in navigator) || !P.ses || P.loading) return;
@@ -871,7 +968,7 @@ async function startSpec(spec, startCi, autoplay) {
   try { ses = await buildSession(spec); }
   catch (e) { P.loading = false; renderMini(); toast('Couldn’t load that passage. Check your connection and try again.'); return; }
   if (P.queue[P.qi] !== spec) return;
-  P.loading = false; P.ses = ses; P.ci = Math.min(startCi || 0, ses.chapters.length - 1); P.ui = 0; P.partial = 0; lastU = null; lastKey = '';
+  P.loading = false; P.ses = ses; P.ci = Math.min(startCi || 0, ses.chapters.length - 1); P.ui = 0; P.partial = 0; lastKey = '';
   renderMini(); if (NP_OPEN) renderNP();
   if (autoplay) play(); else syncUI();
   const nxt = P.queue[P.qi + 1]; if (nxt) buildSession(nxt).catch(() => {});
@@ -885,7 +982,7 @@ function playQueue(specs, startCi, openNP) {
   startSpec(specs[0], startCi || 0, true);
 }
 function play() { if (!P.ses || P.playing || P.loading) return; ANSWER.token++; P.playing = true; playUnit(P.partial > 0); syncUI(); }
-function pause() { if (!P.playing) return; P.partial = Math.min(curUnit().dur, (performance.now() - P.t0) / 1000 * P.rate); P.playing = false; P.token++; VOICE.stop(); syncUI(); }
+function pause() { if (!P.playing) return; P.partial = P.wait ? 0 : Math.min(curUnit().dur, (performance.now() - P.t0) / 1000 * P.rate); P.playing = false; P.wait = false; P.token++; VOICE.stop(); syncUI(); }
 function restartUnit() { P.token++; VOICE.stop(); setTimeout(() => { if (P.playing) playUnit(); }, 90); }
 function seek(t) { if (!P.ses) return; const r = locate(t); P.ci = r[0]; P.ui = r[1]; P.partial = 0; if (P.playing) restartUnit(); else { P.token++; VOICE.stop(); markUnit(); } syncUI(); updateProgress(true); }
 function nextChapter() {
@@ -902,7 +999,7 @@ function chSub(ch) {
   const doubtful = /^pseudo_|^greek_expositor$|^dionysius$/.test(ch.who);
   const src = ch.src === 'catena' ? 'Catena Aurea · compiled by Thomas Aquinas' + (doubtful ? ' · doubtful attribution' : '') : (ch.label || '');
   const completed = ch.who === 'henry' && ch.bi >= 44 ? ' · completed from Henry’s notes by others' : '';
-  return (ch.extra ? 'Going deeper · ' : '') + src + completed + (ch.clipped ? ' · shortened for listening' : '');
+  return src + completed + (ch.clipped ? ' · shortened for listening' : '') + (plainMode() === 'plain' ? ' · in plain words' : '');
 }
 function artHTML(ch, xs) {
   const v = vOf(ch.who);
@@ -922,6 +1019,7 @@ function renderMini() {
   const ch = curCh(); const sp = P.ses.spec;
   m.style.setProperty('--tc', tc(ch.who));
   m.innerHTML = `<button class="mi-open" data-act="open-np" aria-label="Open the player"><span class="art-s">${artHTML(ch, true)}</span><span class="tx"><span class="t">${esc(chTitle(ch))}</span><span class="m">${esc(sp.title)}</span></span></button>
+    <button class="ibtn" data-act="ask-now" aria-label="Ask about what you just heard">${icon('chat', 22)}</button>
     <button class="ibtn" data-act="toggle" aria-label="${P.playing ? 'Pause' : 'Play'}">${icon(P.playing ? 'pause' : 'play', 24)}</button>
     <span class="prog"><i id="mini-fill"></i></span>`;
 }
@@ -938,63 +1036,34 @@ function renderNP() {
   np.innerHTML = `<div class="sh-top">
       <button class="ibtn" data-act="close-sheet" data-arg="np" aria-label="Close the player">${icon('chevDown', 26)}</button>
       <div class="ttl">${p ? 'Session ' + (sp.n + 1) + ' of ' + p.sessions.length : 'Now playing'}<b>${esc(p ? p.title : sp.title)}</b></div>
-      ${p ? `<button class="ibtn" data-act="path" data-arg="${esc(p.id)}" aria-label="Open the playlist">${icon('list', 22)}</button>` : '<span style="width:44px"></span>'}
+      <button class="ibtn" data-act="settings" aria-label="Listening settings">${icon('sliders', 22)}</button>
     </div>
     <div class="sh-body" id="np-body">
       <div class="np-art" id="np-art">${artHTML(ch)}</div>
-      <div class="np-title"><div class="tx"><h2 id="np-t">${esc(chTitle(ch))}</h2><p class="m" id="np-m">${esc(chSub(ch))}</p></div>
-        ${VOICE.on ? `<button class="ibtn" data-act="voices" data-arg="now" aria-label="Change the voice you’re hearing">${icon('voice', 24)}</button>` : ''}
-        <button class="ibtn" data-act="read-ch" aria-label="Read this passage">${icon('read', 24)}</button></div>
+      <div class="np-title"><div class="tx"><h2 id="np-t">${esc(chTitle(ch))}</h2><p class="m" id="np-m">${esc(chSub(ch))}</p></div></div>
       <div class="scrub" id="np-scrub" role="slider" tabindex="0" aria-label="Seek" aria-valuemin="0" aria-valuemax="${Math.round(s.total)}" aria-valuenow="0"><div class="tr"></div><div class="fi" id="np-fill"></div>${ticks}<div class="kn" id="np-knob"></div></div>
       <div class="times"><span id="np-el">0:00</span><span id="np-rm">-0:00</span></div>
       <div class="ctrls">
-        <button class="ibtn" data-act="speed" aria-label="Playback speed"><span class="lbl" id="np-speed">${P.rate}×</span></button>
         <button class="ibtn" data-act="back15" aria-label="Back 15 seconds">${icon('back15', 30)}</button>
         <button class="pbtn" data-act="toggle" id="np-play" aria-label="${P.playing ? 'Pause' : 'Play'}">${icon(P.playing ? 'pause' : 'play', 30)}</button>
-        <button class="ibtn" data-act="fwd30" aria-label="Forward 30 seconds">${icon('fwd30', 30)}</button>
-        <button class="ibtn" data-act="fwd" aria-label="Next chapter">${icon('next', 28)}</button>
+        <button class="ibtn" data-act="fwd" aria-label="Skip to the next voice">${icon('next', 28)}</button>
       </div>
-      <div class="acts">
-        <button class="act ask" data-act="np-ask">${icon('chat', 20)}Ask about this</button>
-        <button class="act" data-act="deeper">${icon('deeper', 20)}Go deeper</button>
-      </div>
-      ${sp.q ? `<p class="think"><b>Think about</b>${esc(sp.q)}</p>` : ''}
-      <div class="seg" id="np-seg"></div>
+      <button class="ask-now" data-act="ask-now">${icon('chat', 20)}Ask about what you just heard</button>
       <div id="np-panel"></div>
     </div>`;
-  const body = $('#np-body'); const mark = () => { lastUserScroll = performance.now(); };
-  body.addEventListener('wheel', mark, {passive:true}); body.addEventListener('touchmove', mark, {passive:true});
   lastKey = sp.key + ':' + P.ci; renderNPPanel(); updateProgress(true);
 }
 const SOURCES = 'Sources, all public domain: the Berean Standard Bible; Matthew Henry’s Concise Commentary and Spurgeon’s Treasury of David from CrossWire’s SWORD library; the Church Fathers from Aquinas’ Catena Aurea and 19th-century translations of Chrysostom and Augustine. Long notes are shortened for listening and marked […].';
+// Who speaks in this session, and what comes after it. Margin is for listening, so there's no transcript.
 function renderNPPanel() {
   if (!P.ses || !$('#np-panel')) return;
-  $('#np-seg').innerHTML = [['chapters','Chapters'],['text','Text']].map(([k, l]) => `<button class="chip ${NPTAB === k ? 'on' : 'ghost'}" data-act="np-tab" data-arg="${k}">${l}</button>`).join('');
-  const s = P.ses; let html = '';
-  if (NPTAB === 'text') {
-    html = s.chapters.map((ch, i) => `<section class="tx-ch" style="--tc:${tc(ch.who)}"><div class="tx-h">${avHTML(ch.who, 32)}<div><p class="t">${esc(ch.kind === 'scripture' ? ch.ref : vname(ch.who))}</p><p class="m">${esc(ch.kind === 'scripture' ? 'Berean Standard Bible' : chSub(ch) + ' · ' + ch.ref)}</p></div></div>
-      <p class="tx-b">${ch.units.map((u, j) => u.host ? `<span class="hl u" id="u-${i}-${j}" data-act="unit" data-arg="${i}:${j}">${esc(u.text)}</span>` : `<span class="u" id="u-${i}-${j}" data-act="unit" data-arg="${i}:${j}">${u.v ? `<sup>${u.v}</sup>` : ''}${esc(u.text)}</span> `).join('')}</p></section>`).join('');
-  } else {
-    const rest = P.queue.slice(P.qi + 1);
-    html = `<div class="chl">${s.chapters.map((ch, i) => `<button class="${i === P.ci ? 'now' : ''}" data-act="chapter" data-arg="${i}">${avHTML(ch.who, 36)}<span class="tx"><span class="t">${esc(chTitle(ch))}</span><span class="m">${esc(chSub(ch))}</span></span><span class="d">${fmt(ch.dur)}</span></button>`).join('')}</div>
-      ${rest.length ? `<p class="lab" style="margin-top:22px">Up next</p><div class="chl">${rest.map((q, k) => `<button data-act="queue-jump" data-arg="${P.qi + 1 + k}"><span class="av" style="width:36px;height:36px">${icon('play', 14)}</span><span class="tx"><span class="t">${esc(q.title)}</span><span class="m">${esc(q.refs.join(', '))}</span></span></button>`).join('')}</div>` : ''}
-      <p class="note" style="margin-top:22px">${SOURCES}</p>`;
-  }
-  $('#np-panel').innerHTML = html; lastU = null; markUnit(true);
+  const s = P.ses, rest = P.queue.slice(P.qi + 1);
+  $('#np-panel').innerHTML = `<p class="lab" style="margin-top:28px">In this session</p><div class="chl">${s.chapters.map((ch, i) => `<button class="${i === P.ci ? 'now' : ''}" data-act="chapter" data-arg="${i}">${avHTML(ch.who, 36)}<span class="tx"><span class="t">${esc(chTitle(ch))}</span><span class="m">${esc(chSub(ch))}</span></span><span class="d">${fmt(ch.dur)}</span></button>`).join('')}</div>
+    ${rest.length ? `<p class="lab" style="margin-top:22px">Up next</p><div class="chl">${rest.map((q, k) => `<button data-act="queue-jump" data-arg="${P.qi + 1 + k}"><span class="av" style="width:36px;height:36px">${icon('play', 14)}</span><span class="tx"><span class="t">${esc(q.title)}</span><span class="m">${esc(q.refs.join(', '))}</span></span></button>`).join('')}</div>` : ''}
+    <p class="note" style="margin-top:22px">${SOURCES}</p>`;
 }
-function markUnit(noScroll) {
+function markUnit() {
   if (!P.ses) return;
-  const id = 'u-' + P.ci + '-' + P.ui;
-  if (lastU && lastU !== id) { const o = document.getElementById(lastU); if (o) o.classList.remove('on'); }
-  const el = document.getElementById(id);
-  if (el) {
-    el.classList.add('on');
-    if (!noScroll && NP_OPEN && NPTAB === 'text' && performance.now() - lastUserScroll > 5000) {
-      const body = $('#np-body'), sg = $('#np-seg');
-      if (body && sg && sg.getBoundingClientRect().top < body.getBoundingClientRect().top + body.clientHeight * 0.5) { const r = el.getBoundingClientRect(), br = body.getBoundingClientRect(); if (r.top < br.top + 90 || r.bottom > br.bottom - 70) body.scrollTo({top:body.scrollTop + (r.top - br.top) - br.height * 0.38, behavior:reduceMotion() ? 'auto' : 'smooth'}); }
-    }
-  }
-  lastU = id;
   const key = P.ses.spec.key + ':' + P.ci;
   if (key !== lastKey) { lastKey = key; chapterVisuals(); }
 }
@@ -1002,12 +1071,11 @@ function chapterVisuals() {
   renderMini(); if (!NP_OPEN || !$('#np-art')) return;
   const ch = curCh(); $('#np').style.setProperty('--tc', tc(ch.who));
   $('#np-art').innerHTML = artHTML(ch); $('#np-t').textContent = chTitle(ch); $('#np-m').textContent = chSub(ch);
-  if (NPTAB === 'chapters') renderNPPanel();
+  renderNPPanel();
 }
 function syncUI() {
   renderMini(); mediaSync();
   const b = $('#np-play'); if (b) { b.innerHTML = icon(P.playing ? 'pause' : 'play', 30); b.setAttribute('aria-label', P.playing ? 'Pause' : 'Play'); }
-  const sp = $('#np-speed'); if (sp) sp.textContent = P.rate + '×';
   updateProgress(true);
 }
 function updateProgress(force, override) {
@@ -1026,16 +1094,6 @@ function sheet(title, sub, body) {
   const el = $('#sheet');
   el.innerHTML = `<div class="sh-top"><button class="ibtn" data-act="close-sheet" data-arg="sheet" aria-label="Close">${icon('chevDown', 26)}</button><div class="ttl">${esc(sub || '')}<b>${esc(title)}</b></div><span style="width:44px"></span></div><div class="sh-body" id="sheet-body">${body}</div>`;
   openSheet('sheet');
-}
-function renderDeeper() {
-  if (!P.ses) return; const ex = P.ses.extras;
-  sheet(P.ses.spec.title, 'Go deeper', `<div class="stackv"><p class="note">More voices on these verses. Tap one to hear it next.</p>
-    ${ex.length ? `<div class="chl">${ex.map((ch, i) => `<button data-act="deeper-add" data-arg="${i}" ${ch.added ? 'disabled' : ''}>${avHTML(ch.who, 40)}<span class="tx"><span class="t">${esc(vname(ch.who))} · ${esc(ch.ref)}</span><span class="m" style="white-space:normal">${esc(ch.text.split(/\s+/).slice(0, 18).join(' '))}…</span></span><span class="d">${ch.added ? 'Added' : '+ ' + fmt(ch.dur)}</span></button>`).join('')}</div>` : '<p class="note">No other voices have notes on these verses yet.</p>'}</div>`);
-}
-function addDeeper(i) {
-  const ch = P.ses.extras[i]; if (!ch || ch.added) return; ch.added = true;
-  const chs = P.ses.chapters; let at = P.ci + 1; while (at < chs.length && chs[at].extra) at++;
-  chs.splice(at, 0, Object.assign({}, ch)); layout(P.ses); renderDeeper(); if (NP_OPEN) renderNP(); toast(`${vname(ch.who)} plays next`);
 }
 
 /* ---------- choosing voices ---------- */
@@ -1065,7 +1123,7 @@ function voicesSheet(role, keep) {
   if (!s.on) { sheet('Voices', 'Listen', '<div id="voices"><p class="note">ElevenLabs isn’t set up on Margin’s server, so Margin reads with your phone’s voice.</p></div>'); return; }
   const defs = s.defaults || {};
   if (!VROLE) {
-    sheet('Voices', 'Listen', `<div class="stackv" id="voices"><p class="note">Choose who reads each part. Every voice has a free sample to hear first.</p>
+    sheet('Voices', 'Listen', `<div class="stackv" id="voices"><div><button class="chip ghost" data-act="settings">${icon('chevLeft', 16)}Settings</button></div><p class="note">Choose who reads each part. Every voice has a free sample to hear first.</p>
       <div class="chl">${ROLES.map(r => { const c = voiceChoice(r); return `<button data-act="voices" data-arg="${r}">${avHTML(r, 40)}<span class="tx"><span class="t">${esc(ROLE_NAME[r])}</span><span class="m">${esc(c ? c.name : '')}${c && c.id === defs[r] ? ' · Margin’s pick' : ''}</span></span>${icon('chevRight', 20)}</button>`; }).join('')}</div>
       <p class="note">A new voice starts with the next sentence. Passages you’ve already heard are voiced again in the new voice, which uses some of Margin’s ElevenLabs credits.</p></div>`);
   } else {
@@ -1093,6 +1151,26 @@ function audition(id) {
   });
 }
 function auditionStop() { if (!AUDITION) return; const mine = VOICE.current === sampleUrl(AUDITION); AUDITION = ''; if (mine) VOICE.stop(); }
+/* ---------- settings ---------- */
+function settingsSheet() {
+  const t = TRADITIONS[MY_TRAD] ? MY_TRAD : 'all', pm = plainMode();
+  sheet('Settings', 'Listening', `<div class="stackv" id="settings">
+    <section class="stackv"><p class="lab">Your tradition</p><div class="chips">${Object.keys(TRADITIONS).map(k => `<button class="chip ${t === k ? 'on' : 'ghost'}" data-act="set-trad" data-arg="${k}" aria-pressed="${t === k}">${esc(TRADITIONS[k].name)}</button>`).join('')}</div><p class="note">${esc(TRADITIONS[t].sub)}</p></section>
+    <section class="stackv"><p class="lab">Old commentary</p><div class="chips">${Object.keys(PLAIN_MODES).map(k => `<button class="chip ${pm === k ? 'on' : 'ghost'}" data-act="set-plain" data-arg="${k}" aria-pressed="${pm === k}">${esc(PLAIN_MODES[k].name)}</button>`).join('')}</div><p class="note">${esc(PLAIN_MODES[pm].sub)}${pm !== 'orig' ? ' ' + PLAIN_NOTE : ''}</p></section>
+    <section class="stackv"><p class="lab">Speed</p><div class="chips">${RATES.map(r => `<button class="chip ${P.rate === r ? 'on' : 'ghost'}" data-act="set-speed" data-arg="${r}" aria-pressed="${P.rate === r}">${r}×</button>`).join('')}</div></section>
+    ${VOICE.on ? `<div class="chl"><button data-act="voices" data-arg="">${icon('voice', 22)}<span class="tx"><span class="t">Choose the voices</span><span class="m">Who reads Scripture, the host and each writer</span></span>${icon('chevRight', 20)}</button></div>` : ''}
+    <p class="note">${TRAD_NOTE}</p></div>`);
+}
+// The first time in: the listener's tradition, then how old commentary should be read.
+const welcoming = () => ACCESS.ok === true && (!TRADITIONS[MY_TRAD] || !PLAIN_MODES[PLAINM]);
+function renderWelcome() {
+  if (!TRADITIONS[MY_TRAD]) return `<div class="page welcome"><div class="vh"><h1>Welcome to Margin</h1><p class="sub">Which tradition are you closest to? Margin will start you with its writers.</p></div>
+    <div class="choices">${Object.keys(TRADITIONS).map(k => `<button class="choice" data-act="set-trad" data-arg="${k}"><span class="t">${esc(TRADITIONS[k].name)}</span><span class="m">${esc(TRADITIONS[k].sub)}</span></button>`).join('')}</div>
+    <p class="note">${TRAD_NOTE} You can change this any time in settings.</p></div>`;
+  return `<div class="page welcome"><div class="vh"><h1>Old commentary can be hard to follow</h1><p class="sub">These writers lived centuries ago. How should Margin read them?</p></div>
+    <div class="choices">${Object.keys(PLAIN_MODES).map(k => `<button class="choice" data-act="set-plain" data-arg="${k}"><span class="t">${esc(PLAIN_MODES[k].name)}</span><span class="m">${esc(PLAIN_MODES[k].sub)}</span></button>`).join('')}</div>
+    <p class="note">${PLAIN_NOTE} You can change this any time in settings.</p></div>`;
+}
 function useVoice(role, id) {
   const s = VOICE.status || {}; const c = (s.choices || []).find(x => x.id === id); if (!c) return;
   if (id === (s.defaults || {})[role]) delete VOICE.pick[role]; else VOICE.pick[role] = id;
@@ -1116,6 +1194,10 @@ function render() {
   if (ACCESS.ok === false) {
     view.innerHTML = renderGate(); const dock = $('#dock'); dock.hidden = true; dock.innerHTML = ''; app.classList.remove('has-dock'); $('#tabs').innerHTML = '';
     const g = $('#gate-code'); if (g) g.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ACT['sign-in'](); } });
+    return;
+  }
+  if (welcoming()) {
+    view.innerHTML = renderWelcome(); const dock = $('#dock'); dock.hidden = true; dock.innerHTML = ''; app.classList.remove('has-dock'); $('#tabs').innerHTML = '';
     return;
   }
   const c = cur(); let html = '';
@@ -1152,7 +1234,7 @@ function renderListen() {
   const ap = pathById(ACTIVE) || BUILTIN[0]; const ns = nextSpec(ap); const tot = pathSpecs(ap).length;
   const mine = CUSTOM.concat(BUILTIN.filter(p => doneCount(p) > 0)).filter(p => p.id !== ap.id);
   return `<div class="page">
-    <div class="row-between"><h1 class="greet">${greet}</h1>${VOICE.on ? `<button class="ibtn" data-act="voices" data-arg="" aria-label="Choose the voices">${icon('voice', 24)}</button>` : ''}</div>
+    <div class="row-between"><h1 class="greet">${greet}</h1><button class="ibtn" data-act="settings" aria-label="Listening settings">${icon('sliders', 24)}</button></div>
     <section class="hero" aria-label="Continue">
       <p class="ey">${esc(ap.title)} · ${ns.n + 1} of ${tot}</p>
       <h2>${esc(ns.title)}</h2>
@@ -1174,7 +1256,7 @@ function voiceLine() {
   if (!v.on) return '<p class="note">Reading with your phone’s voice.</p>';
   const used = v.credits ? Math.min(100, Math.round(v.spent / v.credits * 100)) : 100;
   return `<div class="stackv"><p class="note">Voices by ElevenLabs · ${used}% of Margin’s ${esc(Math.round(v.share * 100) + '%')} share of this month’s credits used${used >= 100 ? '. New passages use your phone’s voice until the month resets.' : ''}</p>
-    <div><button class="chip ghost" data-act="voices" data-arg="">${icon('voice', 16)}Choose the voices</button></div></div>`;
+    <div><button class="chip ghost" data-act="settings">${icon('sliders', 16)}Listening settings</button></div></div>`;
 }
 function listenResults() {
   const q = LQ.trim();
@@ -1321,7 +1403,8 @@ const HIDE = [];
 const errText = e => (e && ERR[e.code]) || (e && e.status ? e.message : '') || 'Couldn’t reach Margin just now. Try again.';
 /* ---------- Make a playlist ---------- */
 const MK = {q:'', who:'all', len:'study', busy:false, err:'', draft:null, ctl:null};
-const MK_WHO = [['all','Everyone'],['henry','Matthew Henry'],['spurgeon','Spurgeon'],['fathers','Church Fathers']];
+const MK_WHO = [['mine','My tradition'],['all','Everyone'],['henry','Matthew Henry'],['spurgeon','Spurgeon'],['fathers','Church Fathers']];
+const hasTrad = () => !!TRADITIONS[MY_TRAD] && MY_TRAD !== 'all';
 const MK_LEN = {overview:['Short', 3], study:['Medium', 6], deep:['Long', 10]};
 function renderMake() {
   let res = '';
@@ -1333,7 +1416,7 @@ function renderMake() {
       ${d.by === 'claude' ? `<p class="note">Every passage was checked against the Bible and the library${d.dropped ? `; ${d.dropped} that didn’t exist ${d.dropped > 1 ? 'were' : 'was'} dropped` : ''}.</p>` : ''}</div>`; }
   return `<div class="page">${topBar('Make a playlist')}
     <textarea id="mk-q" class="tarea" placeholder="What do you want to learn? For example: how the early church understood baptism" aria-label="What do you want to learn?">${esc(MK.q)}</textarea>
-    <div class="stackv"><p class="lab">From</p><div class="chips">${MK_WHO.map(([k, l]) => `<button class="chip ${MK.who === k ? 'on' : 'ghost'}" data-act="mk-who" data-arg="${k}">${l}</button>`).join('')}</div></div>
+    <div class="stackv"><p class="lab">From</p><div class="chips">${MK_WHO.filter(([k]) => k !== 'mine' || hasTrad()).map(([k, l]) => `<button class="chip ${MK.who === k ? 'on' : 'ghost'}" data-act="mk-who" data-arg="${k}">${l}</button>`).join('')}</div></div>
     <div class="stackv"><p class="lab">Length</p><div class="chips">${Object.keys(MK_LEN).map(k => `<button class="chip ${MK.len === k ? 'on' : 'ghost'}" data-act="mk-len" data-arg="${k}">${MK_LEN[k][0]} · ${MK_LEN[k][1]} sessions</button>`).join('')}</div></div>
     <button class="btn pri" id="mk-go" data-act="mk-draft" ${MK.q.trim().length < 3 || MK.busy ? 'disabled' : ''}>${icon('spark', 18)}${MK.draft ? 'Try again' : 'Make it'}</button>
     ${!SAMPLE.ready ? '<p class="note pulse">Connecting to Claude…</p>' : claudeOK() ? '' : '<p class="note">Sign in to make a playlist on any topic.</p>'}
@@ -1348,7 +1431,7 @@ async function draftPath() {
     const eng = await studyEngine();
     const isPassage = !!parseRef(MK.q);
     if (!isPassage && !claudeOK()) throw {code:'not_declared'};
-    const d = await eng.playlist({topic:MK.q, from:MK.who, sessions:MK_LEN[MK.len][1], signal:MK.ctl.signal});
+    const d = await eng.playlist({topic:MK.q, from:MK.who === 'mine' ? myTrad().from : MK.who, sessions:MK_LEN[MK.len][1], signal:MK.ctl.signal});
     MK.draft = {title:d.title, desc:d.description, goals:[], by:d.by === 'claude' ? 'claude' : 'simple', dropped:d.dropped.length,
       sessions:d.sessions.map(x => ({title:x.title, refs:x.refs, focus:x.idea, q:x.question, note:x.note}))};
     if (!MK.draft.sessions.length) { MK.draft = null; MK.err = 'Claude’s draft didn’t include passages Margin could find. Try rewording.'; }
@@ -1359,7 +1442,7 @@ async function draftPath() {
 }
 function saveDraft(andPlay) {
   const d = MK.draft; if (!d) return;
-  const p = {id:'u' + Date.now().toString(36), cat:'custom', title:(d.title || MK.q).trim() || 'My playlist', desc:d.desc || MK.q.trim(), goals:d.goals || [], sessions:d.sessions, voices:MK.who === 'all' ? null : [MK.who], by:d.by, created:Date.now()};
+  const p = {id:'u' + Date.now().toString(36), cat:'custom', title:(d.title || MK.q).trim() || 'My playlist', desc:d.desc || MK.q.trim(), goals:d.goals || [], sessions:d.sessions, voices:MK.who === 'mine' ? null : [MK.who], by:d.by, created:Date.now()};
   CUSTOM.unshift(p); store.set('custom', CUSTOM); MK.draft = null; MK.q = '';
   NAV.tab = 'listen'; NAV.stack = [{v:'listen'}, {v:'path', a:p.id}]; render(); view.scrollTop = 0; toast('Saved to your playlists');
   if (andPlay) playQueue(pathSpecs(p));
@@ -1411,7 +1494,8 @@ function renderThread(id) {
   const status = !SAMPLE.ready ? 'Connecting to Claude…' : claudeOK() ? '' : 'Sign in to ask questions.';
   return `<div class="chat">${topBar(t.title)}
     <div class="chips nowrap" role="radiogroup" aria-label="Who answers">${PERSONAS.map(k => `<button class="chip ${t.persona === k ? 'on' : 'ghost'}" data-act="persona" data-arg="${k}" role="radio" aria-checked="${t.persona === k}">${esc(k === 'host' ? 'Margin host' : vname(k))}</button>`).join('')}</div>
-    <div class="msgs" id="msgs">${t.turns.map((a, i) => turnHTML(t, a, i)).join('')}${!t.turns.length ? `<p class="note">${t.persona === 'host' ? 'The host reads what the commentators say and compares them.' : `AI speaking as ${esc(vname(t.persona))}, from his own words in the library.`}</p>` : ''}</div>
+    <div class="msgs" id="msgs">${t.turns.map((a, i) => turnHTML(t, a, i)).join('')}${!t.turns.length ? `<p class="note">${t.persona === 'host' ? 'The host reads what the commentators say and compares them.' : `AI speaking as ${esc(vname(t.persona))}, from his own words in the library.`}</p>` : ''}
+      ${!t.turns.length && t.ctx && t.ctx.asks ? `<div class="chips">${t.ctx.asks.map(x => `<button class="chip ghost wrap" data-act="chat-ask" data-arg="${esc(x)}">${esc(x)}</button>`).join('')}</div>` : ''}</div>
     ${status ? `<p class="note">${esc(status)}</p>` : ''}
   </div>`;
 }
@@ -1484,8 +1568,24 @@ function speakAnswer(a) {
   }), Promise.resolve(true));
 }
 
+/* ---------- asking about what was just heard ---------- */
+// The voice speaking now, or the one before it while the next is still being introduced.
+function heard() { return P.ses ? P.ses.chapters[P.ui === 0 && P.ci > 0 ? P.ci - 1 : P.ci] : null; }
+const shortName = k => { const n = vname(k); return /^A /.test(n) ? n.replace(/^A /, 'the ') : /^The /.test(n) ? n : / (the|of) /.test(n) ? n.split(' ')[0] : n.split(' ').pop(); };
+// Pauses, and opens a conversation that knows the passage and the writer just heard, with
+// questions to ask in one tap. Answers are read aloud.
+function askNow() {
+  const ch = heard(); if (!ch) { goTab('ask'); return; }
+  if (P.playing) pause();
+  const who = ch.kind === 'scripture' ? '' : ch.who, name = who ? shortName(who) : '';
+  const ctx = {refs:uniq([ch.ref].concat(P.ses.spec.refs)).slice(0, 3),
+    label:who ? `${vname(who)}’s note on ${ch.ref}, which they just heard` : `${ch.ref}, which they just heard read`,
+    asks:who ? [`What did ${name} mean?`, 'Say that in plain words', 'How does this apply to me?', 'How do other traditions read this?']
+      : ['What does this passage mean?', 'What was going on when this was written?', 'How does this apply to me?', 'What do the commentators say about it?']};
+  openThread(newThread({title:who ? `${vname(who)} on ${ch.ref}` : ch.ref, ctx, voice:true}));
+}
+
 /* ---------- actions ---------- */
-function sessionCtx() { if (!P.ses) return null; return {refs:P.ses.spec.refs.slice(0, 3), label:P.ses.spec.refs.join(', ')}; }
 const ACT = {
   'sign-in':() => { const g = $('#gate-code'); const code = g ? g.value.trim() : ''; if (code) signIn(code); else if (g) g.focus(); },
   tab:a => { if (NAV.tab === a && NAV.stack.length > 1) { NAV.stack = [NAV.stack[0]]; render(); return; } goTab(a); },
@@ -1496,7 +1596,7 @@ const ACT = {
   'play-session':a => { const [id, i] = a.split(':'); const p = pathById(id); if (!p) return; playQueue(pathSpecs(p).slice(+i)); },
   discuss:a => { const p = pathById(a); if (!p) return; openThread(newThread({title:p.title, ctx:{refs:p.sessions.slice(0, 3).map(s => s.refs[0]), label:p.title + ' (' + p.sessions.map(s => s.refs[0]).join(', ') + ')'}})); },
   'path-del':a => { CUSTOM = CUSTOM.filter(p => p.id !== a); store.set('custom', CUSTOM); back(); toast('Playlist deleted'); },
-  make:a => { MK.q = a || ''; MK.draft = null; MK.err = ''; push('make'); },
+  make:a => { MK.q = a || ''; MK.draft = null; MK.err = ''; MK.who = hasTrad() ? 'mine' : 'all'; push('make'); },
   'mk-who':a => { MK.who = a; render(); },
   'mk-len':a => { MK.len = a; render(); },
   'mk-draft':() => draftPath(),
@@ -1506,21 +1606,18 @@ const ACT = {
   'open-np':() => openSheet('np'),
   'close-sheet':a => closeSheet(a),
   back15:() => seek(pos() - 15),
-  fwd30:() => seek(pos() + 30),
   fwd:() => nextChapter(),
-  speed:() => { P.rate = RATES[(RATES.indexOf(P.rate) + 1) % RATES.length]; if (P.playing) restartUnit(); syncUI(); },
-  deeper:() => renderDeeper(),
-  'deeper-add':a => addDeeper(+a),
-  // "now" opens on whoever is speaking in the player.
-  voices:a => voicesSheet(a === 'now' ? (P.ses && !P.loading ? roleOf(unitVoice(curCh(), curUnit())) : '') : a),
+  'ask-now':() => askNow(),
+  settings:() => settingsSheet(),
+  // The tradition and the way old commentary is read are asked once at the start, then live in settings.
+  'set-trad':a => { if (!TRADITIONS[a]) return; const first = welcoming(); MY_TRAD = a; store.set('trad', a); if (first) { render(); view.scrollTop = 0; return; } settingsSheet(); if (P.ses) toast('Your next session will use this.'); },
+  'set-plain':a => { if (!PLAIN_MODES[a]) return; const first = welcoming(); setPlainMode(a); if (first) { render(); view.scrollTop = 0; return; } settingsSheet(); },
+  'set-speed':a => { const r = +a; if (RATES.indexOf(r) < 0) return; P.rate = r; store.set('rate', r); if (P.playing) restartUnit(); syncUI(); settingsSheet(); },
+  voices:a => voicesSheet(a),
   audition:a => audition(a),
   'voice-use':a => { const i = a.indexOf(':'); useVoice(a.slice(0, i), a.slice(i + 1)); },
-  'np-tab':a => { NPTAB = a; renderNPPanel(); const seg = $('#np-seg'), body = $('#np-body'); if (seg && body) body.scrollTo({top:seg.offsetTop - 4, behavior:reduceMotion() ? 'auto' : 'smooth'}); },
   chapter:a => { seek(P.ses.chapters[+a].start + 0.001); if (!P.playing) play(); },
-  unit:a => { const [i, j] = a.split(':').map(Number); const ch = P.ses.chapters[i]; if (!ch) return; seek(ch.start + ch.units[j].at + 0.001); if (!P.playing) play(); },
   'queue-jump':a => { P.qi = +a; startSpec(P.queue[P.qi], 0, true); },
-  'np-ask':() => { const ctx = sessionCtx(); openThread(newThread({title:ctx ? ctx.label : '', ctx, voice:true})); },
-  'read-ch':() => { if (!P.ses) return; const ch = curCh(); setRead(ch.bi, ch.c, ch.a); goTab('read'); },
   'read-ref':a => { const r = parseRef(a); if (!r) return; setRead(r.bi, r.c1 || 1, r.v1); goTab('read'); },
   picker:() => pickerSheet(null),
   'pick-book':a => pickerSheet(+a),
@@ -1541,6 +1638,7 @@ const ACT = {
   thread:a => push('thread', a),
   persona:a => { const t = THREADS.find(x => x.id === cur().a); if (!t) return; t.persona = a; saveThreads(); const keep = $('#c-q') ? $('#c-q').value : ''; render(); const ta = $('#c-q'); if (ta) ta.value = keep; },
   'chat-send':() => { const ta = $('#c-q'); if (!ta) return; const q = ta.value.trim(); if (!q) { ta.focus(); return; } ta.value = ''; const t = cur().v === 'thread' ? THREADS.find(x => x.id === cur().a) : null; if (t) chatSend(t, q); else openThread(newThread({}), q); },
+  'chat-ask':a => { const t = THREADS.find(x => x.id === cur().a); if (t) chatSend(t, a); },
   'chat-stop':() => { if (CHAT.ctl) CHAT.ctl.abort(); },
   'chat-listen':a => { const t = THREADS.find(x => x.id === cur().a); const m = t && t.turns[+a]; if (m && m.text) speakAnswer(m); },
   'chat-play':a => { const t = THREADS.find(x => x.id === cur().a); const m = t && t.turns[+a]; if (m && m.refs && m.refs.length) playQueue(m.refs.map(r => ({key:'chat:' + r, pid:null, title:r, refs:[r], depth:'study', voices:t.persona === 'host' ? null : [t.persona === 'aquinas' ? 'fathers' : t.persona], format:'verse'}))); }

@@ -1,7 +1,8 @@
-// The engine's study guides and daily spending, kept in lasting storage, so a serverless host
-// that starts fresh processes still remembers both.
+// The engine's study guides, notes in plain words and daily spending, kept in lasting storage,
+// so a serverless host that starts fresh processes still remembers them.
 
 import type { GuideStore, StoredGuide } from '../engine/pipeline/guides.ts';
+import type { PlainStore } from '../engine/pipeline/plain.ts';
 import type { SpendStore } from '../engine/pipeline/spend.ts';
 import { addCharge, sumCharges, type Store } from './store.ts';
 
@@ -10,6 +11,14 @@ export function storedGuides(store: Store): GuideStore {
   return {
     get: async (k) => (await store.getJSON<StoredGuide>(key(k))) ?? undefined,
     set: (k, g) => store.set(key(k), JSON.stringify(g)),
+  };
+}
+
+export function storedPlain(store: Store): PlainStore {
+  const key = (k: string) => `plain/${k.replace(/[^A-Za-z0-9]+/g, '_')}.json`;
+  return {
+    get: async (k) => (await store.getJSON<{ text: string }>(key(k)))?.text,
+    set: (k, text) => store.set(key(k), JSON.stringify({ text, made: new Date().toISOString() })),
   };
 }
 

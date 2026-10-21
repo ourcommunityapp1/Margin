@@ -29,6 +29,7 @@ export function mockAdapter(opts: MockOptions = {}): ModelAdapter & { calls: Cal
         return { intent: passages.length ? 'passage' : 'topic', passages, contested: false, false_premise: false, search: '' } as T;
       }
       if (req.route === 'grade') return { claims: [], takes_side: false, one_sided: false, self_help: false } as T;
+      if (req.route === 'plain') return { plain: `In short: ${req.prompt.split('<note>\n')[1]?.split(/(?<=[.!?])\s/)[0] ?? ''}` } as T;
       return { title: 'Study', description: '', contested: false, sessions: [] } as T;
     },
     async cite(req: CiteRequest): Promise<CitedAnswer> {

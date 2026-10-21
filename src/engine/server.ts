@@ -6,12 +6,12 @@ import path from 'node:path';
 import { createEngine, type Engine } from './index.ts';
 import { fileLoader } from './corpus/loaders.ts';
 import { anthropicAdapter } from './model/anthropic.ts';
-import { storedGuides, storedSpend } from '../server/engine-stores.ts';
+import { storedGuides, storedPlain, storedSpend } from '../server/engine-stores.ts';
 import { openStore } from '../server/store.ts';
 
 let engine: Promise<Engine> | undefined;
 
-// Study guides and the day's spending are kept in Netlify Blobs on Netlify, and elsewhere under
+// Study guides, notes in plain words and the day's spending are kept in Netlify Blobs on Netlify, and elsewhere under
 // MARGIN_DATA_DIR (default: the system's temporary folder, which a host may clear).
 // MARGIN_DAILY_BUDGET_USD caps what questions and playlists can spend in a day (default $2).
 export function serverEngine(): Promise<Engine> {
@@ -23,6 +23,7 @@ export function serverEngine(): Promise<Engine> {
     guides: storedGuides(store),
     dailyBudgetUsd: Number.isFinite(limit) && limit > 0 ? limit : undefined,
     spend: storedSpend(store),
+    plain: storedPlain(store),
   }));
   engine.catch(() => { engine = undefined; });
   return engine;

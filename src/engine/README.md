@@ -30,6 +30,8 @@ Each stage is either a separate model call or code. A model call is followed by 
 
 Playlists use a JSON call. Each passage is checked against the Bible, trimmed to 25 verses, and annotated with which voices cover it. With no Claude available, the engine can still lay out a passage as sessions (`pipeline/playlist.ts`).
 
+Plain words use one too. A commentary note is restated in everyday English for listeners who find Puritan, Victorian or ancient prose hard to follow. The prompt holds the restatement to what the writer said: nothing added, nothing central dropped, his emphasis and certainty kept, no view of the model's own. It names the writer and speaks of him in the third person, so it can't pass for his own words. Each note is done once by Sonnet at low effort and kept, and its cost goes on the day's tally; a note already done is served even past the limit (`pipeline/plain.ts`).
+
 Sessions need no model at all (`pipeline/session.ts`).
 
 ## What a question costs
@@ -46,7 +48,7 @@ The pipeline now spends only where a question needs it:
 | Send less | Each note is cut to its most relevant 200 words and commentary to 1,300 words: about 1,800 words a question instead of 3,600, with the same eval results. | `retrieve/gather.ts` |
 | Check only what's needed | The grading call runs only on contested, premise-checking, persona or sensitive answers, and reads only the sources the answer cited. | `pipeline/ask.ts` |
 | Skip planning | No planning call when the question names its passage, or asks about what is playing. | `pipeline/ask.ts` |
-| Model by difficulty | Sonnet 5.5 (half Opus's price) plans, grades, drafts playlists and writes ordinary answers. Opus 5.5 writes contested, persona and premise-checking answers, repairs and study guides. | `model/anthropic.ts` |
+| Model by difficulty | Sonnet 5.5 (half Opus's price) plans, grades, drafts playlists, puts notes into plain words and writes ordinary answers. Opus 5.5 writes contested, persona and premise-checking answers, repairs and study guides. | `model/anthropic.ts` |
 | Less thinking | Effort is set on every call: low for ordinary work, medium for hard answers. Sonnet 5.5 would otherwise think at its default, high. | `model/anthropic.ts` |
 | Study guides | A plain "what does this passage mean?" is answered once by Opus, checked, stored, and replayed free. `scripts/precompute-guides.ts` makes them ahead of time through the Batches API at half price. It only estimates unless given `--yes`. | `pipeline/guides.ts`, `pipeline/precompute.ts` |
 | Cached follow-ups | Sources go first in the conversation with a cache marker. A follow-up on the same passages gathers exactly the same sources, so it reads them at 5% of the price. | `model/anthropic.ts`, `pipeline/ask.ts` |
@@ -123,7 +125,7 @@ node scripts/precompute-guides.ts "Psalm 23" "John 3:1-21"   # study guides ahea
 | `MARGIN_MODEL` | Contested, persona and premise-checking answers, repairs, study guides | `claude-opus-5-5` |
 | `MARGIN_FAST_MODEL` | Planning, playlists and ordinary answers | `claude-sonnet-5-5` |
 | `MARGIN_GRADER_MODEL` | The grading call | same as `MARGIN_FAST_MODEL` |
-| `MARGIN_DAILY_BUDGET_USD` | What questions and playlists may spend in a day before free answers take over | `2` |
+| `MARGIN_DAILY_BUDGET_USD` | What questions, playlists and plain words may spend in a day before free answers take over | `2` |
 | `ELEVENLABS_API_KEY` | ElevenLabs voices (`/api/tts`). Without it the phone app reads with the device's voice. | none |
 | `MARGIN_TTS_SHARE` | The share of the ElevenLabs plan's credits Margin may spend in a billing period | `0.05` |
 | `MARGIN_TTS_CREDITS` | The voice allowance in credits when the API key can't read the plan | `1500` |
@@ -143,6 +145,7 @@ All routes take a `POST` with a JSON body.
 | `/api/ask` | `{question, speaker?: "host" \| "henry" \| "spurgeon" \| "augustine" \| "chrysostom", history?: [{role, text, refs?}], context?: {refs, label}}` | text, audio segments, checked quotations, passages, sources, notes, cost; `command` for "read me…" requests; `guide` when a study guide was made or replayed |
 | `/api/playlist` | `{topic, from?: "all" \| "henry" \| "spurgeon" \| "fathers", sessions?}` | a checked draft playlist |
 | `/api/session` | `{refs: ["Romans 8"], title?, format?: "read" \| "verse"}` | a listening session |
+| `/api/plain` | `{who: "henry" \| "augustine" \| …, text, ref?}` | `{text, saved}`: the note in plain words; 429 past the day's limit |
 
 Send each earlier answer's `passages` back as `refs` in `history`. That way, a follow-up stays on the same text.
 
@@ -160,6 +163,21 @@ The phone app also uses these:
 
 `web/app.html` is the whole app: Listen, Read and Ask in one page. `scripts/build-web.mjs` copies it into `public/` with the built-in playlists and the library as plain JSON, and `next.config.ts` serves it at `/`. It can be added to an iPhone's home screen (Share, then Add to Home Screen) and plays from the lock screen.
 
+Listening is audio only. The player shows who is speaking, a scrubber, back 15 seconds, play and skip to the next voice, and one button: Ask about what you just heard. That button is also on the mini player. It pauses and opens a conversation that knows the passage and the writer just heard, with questions to ask in one tap, and the answer is read aloud. A session's question to think about is said at its end.
+
+The first time in, the listener chooses a tradition, then how old commentary is read. Both can be changed in settings, along with the speed and the voices.
+
+| Tradition | Who speaks |
+|---|---|
+| Protestant | Matthew Henry and Charles Spurgeon |
+| Catholic | The Church Fathers, Augustine, Jerome, Ambrose and Gregory first |
+| Orthodox | The Church Fathers, Chrysostom and the Greek Fathers first |
+| A bit of everything | Everyone |
+
+A playlist that names its voices keeps them, and the playlists comparing the traditions keep everyone. Where a tradition's writers say nothing on a passage, the others speak.
+
+Old commentary can be read as written, as written and then in plain words, or in plain words only. The host reads the summary, starting "In plain words:". Summaries for the voice playing and the next are asked for ahead. If one can't be made, a note in plain-words-only mode is read as written; otherwise the summary is left out.
+
 Voices come from ElevenLabs through `/api/tts` (`src/voice/`). Each sentence is a clip, voiced once and kept in Netlify Blobs, so replays cost nothing.
 
 | When the clip is needed | Model | Why |
@@ -169,7 +187,7 @@ Voices come from ElevenLabs through `/api/tts` (`src/voice/`). Each sentence is 
 
 A clip made by either model is reused for both, the fuller reading first, so nothing is voiced twice.
 
-The default voices are Marcus (Scripture), Sarah (host), George (Henry), William (Spurgeon), Bill (Augustine and the other Fathers) and Daniel (Chrysostom). In the app, Choose the voices (on the Listen tab, or the speaker button in the player) lists twelve voices for each part, each with ElevenLabs' free sample. A choice is kept on the phone and sent with each clip as `voiceId`; the server only accepts voices on its list (`CHOICES` in `src/voice/voices.ts`). All of them are ElevenLabs default voices or voices already in the account. A passage heard in one voice is voiced again in another, which uses credits.
+The default voices are Marcus (Scripture), Sarah (host), George (Henry), William (Spurgeon), Bill (Augustine and the other Fathers) and Daniel (Chrysostom). In the app, Choose the voices (in settings) lists twelve voices for each part, each with ElevenLabs' free sample. A choice is kept on the phone and sent with each clip as `voiceId`; the server only accepts voices on its list (`CHOICES` in `src/voice/voices.ts`). All of them are ElevenLabs default voices or voices already in the account. A passage heard in one voice is voiced again in another, which uses credits.
 
 Margin reads the plan's credits from ElevenLabs and keeps its own tally of what it has spent, one entry per clip. Once the next clip would pass `MARGIN_TTS_SHARE` of the period's credits, less a 300-credit reserve, new sentences are read by the phone's own voice. Clips already made still play. The Listen tab shows how much of the allowance is used.
 

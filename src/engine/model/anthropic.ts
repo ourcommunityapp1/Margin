@@ -33,6 +33,8 @@ const EFFORT: Record<JsonRoute | 'answer' | 'repair', Record<Tier, Effort>> = {
   grade: { standard: 'medium', hard: 'medium' },
   // Someone is waiting for a playlist, and the host stops a request at 30 seconds.
   playlist: { standard: 'low', hard: 'medium' },
+  // Putting a note into plain words is close reading, not judgment.
+  plain: { standard: 'low', hard: 'low' },
   answer: { standard: 'low', hard: 'medium' },
   repair: { standard: 'medium', hard: 'medium' },
 };
