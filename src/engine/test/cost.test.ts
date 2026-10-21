@@ -152,3 +152,15 @@ test('guides made ahead in a batch pass the same checks and are stored like live
   const served = await ask({ corpus, model: mockAdapter(), guides }, { question: 'What does Psalm 23 mean?' });
   assert.equal(served.guide, 'saved');
 });
+
+test('the grader sees the passages an answer names and the facts the writer was given', async () => {
+  const model = mockAdapter({
+    json: { plan: plan(['Psalm 22:1-21', 'Matthew 27:45-50'], { intent: 'topic', contested: true }) },
+    answer: () => ({ blocks: [{ text: 'In Matthew 27:46 Jesus cries out the first words of the psalm. Henry and Spurgeon share one tradition. ', citations: [] }] }),
+  });
+  await ask({ corpus, model }, { question: 'Why did Jesus cry out that God had forsaken him?' });
+  const prompt = model.calls.find((c) => c.route === 'grade')?.prompt ?? '';
+  assert.match(prompt, /^\[bsb:MAT\.27\./m, 'the passage named without a citation');
+  assert.match(prompt, /both Calvinists/);
+  assert.match(prompt, /Matthew Henry \(1662–1714\)/);
+});

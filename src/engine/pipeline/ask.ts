@@ -11,7 +11,7 @@ import { booksNamed, findRefs, formatSpan, overlaps, parseRef, spans as refSpans
 import { ABSENT_VOICES, authorOf, isPersona, type Speaker } from '../corpus/sources.ts';
 import type { Corpus } from '../corpus/store.ts';
 import { ModelRefusal, type CitedAnswer, type ModelAdapter, type Tier, type Turn } from '../model/types.ts';
-import { GRADE_SCHEMA, GRADE_SYSTEM, gradePrompt, HOST_SYSTEM, personaSystem, PLAN_SCHEMA, PLAN_SYSTEM, planPrompt } from '../prompts.ts';
+import { GRADE_SCHEMA, GRADE_SYSTEM, gradePrompt, HOST_SYSTEM, LEAN, personaSystem, PLAN_SCHEMA, PLAN_SYSTEM, planPrompt } from '../prompts.ts';
 import { contentWords, gather, type Gathered, type Source } from '../retrieve/gather.ts';
 import { knownPassages } from '../retrieve/known.ts';
 import type { PassageIndex } from '../retrieve/search.ts';
@@ -264,13 +264,19 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
 
   // 4. Answer with citations, check, grade where needed, and repair once.
   const system = speaker === 'host' ? HOST_SYSTEM : personaSystem(speaker);
-  // The grader reads only what the answer cited or attributed, not every source gathered.
+  // The grader reads only what the answer used: what it cited, the writers it names, and the
+  // passages it refers to by reference, not every source gathered.
   const forGrader = (answer: CitedAnswer): Source[] => {
     const cited = new Set(answer.blocks.flatMap((b) => b.citations.map((c) => c.sourceId)));
     const text = answerText(answer);
-    const used = sources.filter((s) => cited.has(s.id) || (s.who !== 'bsb' && surname(s.who).test(text)));
+    const referred = findRefs(text, vs).flatMap(({ ref }) => (ref ? refSpans(ref, vs) : []));
+    const used = sources.filter((s) => cited.has(s.id)
+      || (s.who !== 'bsb' && surname(s.who).test(text))
+      || (s.who === 'bsb' && referred.some((r) => overlaps(r, s.span))));
     return used.length ? used : sources;
   };
+  // The facts about its writers the answering model was given, so repeating them isn't flagged.
+  const facts = [LEAN, ...commentators.map((w) => { const a = authorOf(w); return `${a.name}${a.years ? ` (${a.years})` : ''}: ${a.label}.`; })].join('\n');
   const check = async (answer: CitedAnswer): Promise<CheckReport> => {
     step('Checking every quotation…');
     let report = verify({ answer, sources, question, speaker, spans: got.spans, versification: vs, contested });
@@ -278,7 +284,7 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
       try {
         const grade = await model.json<GradeReport>({
           route: 'grade', system: GRADE_SYSTEM, schema: GRADE_SCHEMA as unknown as Record<string, unknown>, signal: input.signal,
-          prompt: gradePrompt(answerText(answer), sourcesForGrader(forGrader(answer)), contested), tier: contested ? 'hard' : 'standard',
+          prompt: gradePrompt(answerText(answer), sourcesForGrader(forGrader(answer)), contested, facts), tier: contested ? 'hard' : 'standard',
         });
         report = withGrade(report, grade, contested);
       } catch (e) {

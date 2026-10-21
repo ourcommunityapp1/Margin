@@ -62,10 +62,15 @@ A live run of 10 test questions measured the result. It cost 51¢ in all, 5.1¢ 
 | Persona, false-premise and missing-writer questions | 7–8¢. Each needed a repair round on Opus. |
 | Replayed study guide, command, or over the daily cap | free |
 
-Four of the eleven answers in that run went to a repair round, and two ended in the free answer. The causes were fixed afterwards; a new live run will measure the fixes:
+Four of the eleven answers in that run went to a repair round, and two ended in the free answer. The causes were fixed afterwards:
 - **Speech marks inside a quotation.** The quotation checker misread a quotation containing the Bible's own speech marks ("“If anyone is unwilling to work…”"). It now handles quotes within quotes, and never ends a sentence inside an open quotation (`text.ts`).
 - **A paraphrase rejected at low effort.** The grading call, at low effort, rejected a faithful paraphrase of Spurgeon. It now runs at medium effort.
 - **The wrong notes for a short passage.** A persona missed his note on the verse quoted in the question. Notes are now ranked by relevance on passages of any length, and a quoted line points at its verse.
+
+Re-running those four questions after the fixes cost 34¢. All four gave full, checked answers and none ended in the free answer.
+- **Fixed with no repair round.** The Spurgeon persona now quotes his own note on Psalm 23:4, at 5.6¢. The false-premise answer cost 6.2¢.
+- **A genuine catch.** One repair was a real error the checks caught: a phrase of Chrysostom's credited to Henry.
+- **The grader lacked context.** One repair came from the grader marking two true statements unsupported. One named a passage the answer hadn't tagged with a citation. The other repeated what Margin tells the model about Henry and Spurgeon. The grader now also receives any passage the answer names by reference, and the same library facts, including each writer's dates and tradition (`pipeline/ask.ts`, `prompts.ts`).
 
 Each answer reports its cost in `costUsd`, and what sent it to repair in `repairedFor`. `npm run engine:eval -- --live --concurrency 1 --ids …` prints the cost of each item and the total.
 

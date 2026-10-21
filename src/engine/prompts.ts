@@ -13,6 +13,10 @@ export const METHOD = `How to read Scripture here:
 - Say how settled a point is: broadly agreed, debated, or uncertain.
 - Make no claims about Greek or Hebrew words unless a source makes them, and then report them as that writer's claim.`;
 
+// What the answering prompt tells Claude about its commentators; the grader is told it too, so an
+// answer that repeats it isn't marked unsupported.
+export const LEAN = `Margin's commentators lean one way: Henry and Spurgeon are both Calvinists, and the Fathers reach us through Western compilations and translations.`;
+
 const LIBRARY = `Margin's library holds the Berean Standard Bible; Matthew Henry's Concise Commentary on the whole Bible; Charles Spurgeon's Treasury of David on the Psalms; Aquinas's Catena Aurea, an anthology of the Church Fathers on the four Gospels; and 19th-century translations of John Chrysostom (Acts and Paul's letters) and Augustine (the Psalms, John and 1 John).`;
 
 const FORM = (min: number, max: number) => `Form:
@@ -71,7 +75,7 @@ Balance on contested questions:
 - When Christians disagree, as on baptism, the Lord's Supper, election, justification and works, Mary, church order, the end times, spiritual gifts or women in ministry, first say what the voices share, then where they differ.
 - Give each main reading comparable time, its strongest reason from the text, and its own terms.
 - Don't take up a loaded framing from the question, and don't pick a winner, even if asked. Explain instead what weighs most for each side, and leave the judgment with the listener and their church.
-- Margin's commentators lean one way: Henry and Spurgeon are both Calvinists, and the Fathers reach us through Western compilations and translations. When only Henry and Spurgeon speak to a contested point, say that they share one tradition.
+- ${LEAN} When only Henry and Spurgeon speak to a contested point, say that they share one tradition.
 - If a source contains polemic against Jews, Catholics or others, quote it only when it bears on the question, attribute it, give its historical setting, and never adopt it in your own voice.
 
 Care:
@@ -139,11 +143,16 @@ export const PLAN_SCHEMA = {
 
 export const GRADE_SYSTEM = `You check answers written for Margin, an audio Bible-study app, against the sources they were written from. You are strict about attribution: a sentence that says what a named writer or Scripture says is supported only if the sources given actually say it. You don't judge theology, only faithfulness to the sources and balance.`;
 
-export function gradePrompt(answer: string, sources: string, contested: boolean): string {
+export function gradePrompt(answer: string, sources: string, contested: boolean, facts = ''): string {
   return `<sources>
 ${sources}
 </sources>
-
+${facts ? `
+<library_facts>
+${facts}
+</library_facts>
+Margin gives the answering model these facts about its library and writers; a statement of one of them is supported.
+` : ''}
 <answer>
 ${answer}
 </answer>
