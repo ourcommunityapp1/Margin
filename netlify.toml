@@ -1,0 +1,4 @@
+[build]
+  # scripts/build-web.mjs puts the phone app and the library into public/ first.
+  command = "npm run build"
+  publish = ".next"

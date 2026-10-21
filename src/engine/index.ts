@@ -18,7 +18,7 @@ export interface EngineOptions {
   search?: boolean;
   // Where study guides are kept (default: in memory, for this process only).
   guides?: GuideStore;
-  // A daily spending limit in US dollars for questions, and where the day's total is kept.
+  // A daily spending limit in US dollars for questions and playlists, and where the day's total is kept.
   dailyBudgetUsd?: number;
   spend?: SpendStore;
 }
@@ -50,7 +50,17 @@ export async function createEngine(opts: EngineOptions): Promise<Engine> {
       if (cost > 0) await spend.add(cost);
       return opts.model.usage ? { ...result, costUsd: result.costUsd ?? cost } : result;
     },
-    playlist: (input) => draftPlaylist({ corpus, model: opts.model }, input),
+    // Drafting a playlist goes on the same tally, and waits for tomorrow once the day's limit is reached.
+    async playlist(input) {
+      if (overBudget && await overBudget()) throw new Error('Margin has reached today’s spending limit for Claude. Try again tomorrow.');
+      const before = spent();
+      try {
+        return await draftPlaylist({ corpus, model: opts.model }, input);
+      } finally {
+        const cost = spent() - before;
+        if (cost > 0) await spend.add(cost);
+      }
+    },
     session: (spec) => buildSession(corpus, spec),
   };
 }

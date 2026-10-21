@@ -43,3 +43,8 @@ next-env.d.ts
 # study engine: browser bundle and eval run outputs
 /dist/
 /evals/results/
+
+# phone app: copied into public/ by scripts/build-web.mjs
+/public/margin.html
+/public/paths.js
+/public/data/

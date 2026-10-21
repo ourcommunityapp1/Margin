@@ -119,12 +119,16 @@ node scripts/precompute-guides.ts "Psalm 23" "John 3:1-21"   # study guides ahea
 | Variable | Needed for | Default |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | `/api/ask`, `/api/playlist`, `--live` evals | none |
-| `MARGIN_API_TOKEN` | Every API route requires `Authorization: Bearer <token>`. In production the routes return 503 until it is set, because they spend API credit. | none |
+| `MARGIN_API_TOKEN` | The access code. Every API route requires it, as `Authorization: Bearer <token>` or as the cookie `/api/login` sets. In production the routes return 503 until it is set, because they spend API credit. | none |
 | `MARGIN_MODEL` | Contested, persona and premise-checking answers, repairs, study guides, playlists | `claude-opus-5-5` |
 | `MARGIN_FAST_MODEL` | Planning and ordinary answers | `claude-sonnet-5-5` |
 | `MARGIN_GRADER_MODEL` | The grading call | same as `MARGIN_FAST_MODEL` |
-| `MARGIN_DAILY_BUDGET_USD` | What questions may spend in a day before free answers take over | `2` |
-| `MARGIN_DATA_DIR` | Where study guides and the day's spending are kept. Point it at lasting storage on a serverless host. | the system's temporary folder |
+| `MARGIN_DAILY_BUDGET_USD` | What questions and playlists may spend in a day before free answers take over | `2` |
+| `ELEVENLABS_API_KEY` | ElevenLabs voices (`/api/tts`). Without it the phone app reads with the device's voice. | none |
+| `MARGIN_TTS_SHARE` | The share of the ElevenLabs plan's credits Margin may spend in a billing period | `0.05` |
+| `MARGIN_TTS_CREDITS` | The voice allowance in credits when the API key can't read the plan | `1500` |
+| `MARGIN_TTS_MODEL`, `MARGIN_TTS_FAST_MODEL` | Override the reading model (Scripture, commentary, introductions) and the answer model | `eleven_v4`, `eleven_v4_turbo` |
+| `MARGIN_DATA_DIR` | Where study guides, the day's spending and voice clips are kept off Netlify (on Netlify they go to Netlify Blobs) | the system's temporary folder |
 
 All live calls use the server-side fallback beta (`server-side-fallback-2026-07-01`). If the chosen model declines a request, the API retries it on another model within the same call. Batch requests can't use it, so the study-guide script leaves it off.
 
@@ -139,6 +143,30 @@ All routes take a `POST` with a JSON body.
 | `/api/session` | `{refs: ["Romans 8"], title?, format?: "read" \| "verse"}` | a listening session |
 
 Send each earlier answer's `passages` back as `refs` in `history`. That way, a follow-up stays on the same text.
+
+The phone app also uses these:
+
+| Route | Body | Returns |
+|---|---|---|
+| `POST /api/login` | `{code}` | sets the access cookie (`GET` says whether this device is signed in) |
+| `POST /api/tts` | `{text, voice: "bsb" \| "host" \| "henry" \| …, kind: "scripture" \| "comment" \| "intro" \| "answer"}` | `{id, url, cached}` for a voiced clip; 402 once Margin's voice allowance is used |
+| `GET /api/tts/<id>` | | the clip's MP3, with byte ranges for Safari |
+| `GET /api/voice` | | whether ElevenLabs is on, the allowance and what's spent |
+
+## The phone app
+
+`web/app.html` is the whole app: Listen, Read and Ask in one page. `scripts/build-web.mjs` copies it into `public/` with the built-in playlists and the library as plain JSON, and `next.config.ts` serves it at `/`. It can be added to an iPhone's home screen (Share, then Add to Home Screen) and plays from the lock screen.
+
+Voices come from ElevenLabs through `/api/tts` (`src/voice/`). Each sentence is a clip, voiced once and kept in Netlify Blobs, so replays cost nothing.
+
+| What is read | Model | Why |
+|---|---|---|
+| Scripture, commentary, introductions | Eleven v4 (`eleven_v4`), else Multilingual v2 | Read the same way every time, so each clip is made once and kept. It gets the most natural model. |
+| Spoken answers | Eleven v4 Turbo (`eleven_v4_turbo`), else Flash v2.5 | New every time, and someone is waiting. It gets the fast model, at about half the credits. |
+
+The voices are Marcus (Scripture), Sarah (host), George (Henry), William (Spurgeon), Bill (Augustine and the other Fathers) and Daniel (Chrysostom). They are all ElevenLabs default voices or voices already in the account (`src/voice/voices.ts`).
+
+Margin reads the plan's credits from ElevenLabs and keeps its own tally of what it has spent, one entry per clip. Once the next clip would pass `MARGIN_TTS_SHARE` of the period's credits, less a 300-credit reserve, new sentences are read by the phone's own voice. Clips already made still play. The Listen tab shows how much of the allowance is used.
 
 ## Measuring it
 

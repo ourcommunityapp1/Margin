@@ -3,16 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/build-web.mjs && next dev",
+    "build": "node scripts/build-web.mjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "engine:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/engine/test/*.test.ts",
+    "engine:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/engine/test/*.test.ts src/voice/test/*.test.ts",
     "engine:eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/engine/eval/run.ts",
     "corpus:audit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-polemic.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.137.0",
+    "@netlify/blobs": "^11.1.6",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "geist": "^1.7.2",
