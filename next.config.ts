@@ -1,7 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // The study API reads the gzipped library from disk at request time.
+  outputFileTracingIncludes: {
+    "/api/*": ["./data/corpus/**/*"],
+  },
 };
 
 export default nextConfig;

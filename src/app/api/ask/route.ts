@@ -1,0 +1,33 @@
+import { authorize, readJson, serverEngine } from '@/engine/server';
+import { isPersona, type Speaker } from '@/engine/corpus/sources';
+import type { Turn } from '@/engine/model/types';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+interface Body {
+  question?: string;
+  speaker?: string;
+  history?: Turn[];
+  context?: { refs?: string[]; label?: string };
+  voices?: string[];
+  grade?: boolean;
+}
+
+// POST /api/ask — a grounded, checked answer with audio segments.
+export async function POST(request: Request) {
+  const denied = authorize(request);
+  if (denied) return denied;
+  const body = await readJson<Body>(request);
+  const question = body?.question?.trim();
+  if (!question || question.length > 1000) return Response.json({ error: 'Send a question of up to 1,000 characters.' }, { status: 400 });
+  const speaker: Speaker = body?.speaker && (body.speaker === 'host' || isPersona(body.speaker)) ? body.speaker : 'host';
+  const history = (body?.history ?? []).filter((t) => (t.role === 'user' || t.role === 'assistant') && typeof t.text === 'string').slice(-12);
+  const refs = (body?.context?.refs ?? []).filter((r) => typeof r === 'string').slice(0, 6);
+  const engine = await serverEngine();
+  const result = await engine.ask({
+    question, speaker, history, voices: body?.voices?.slice(0, 6), grade: body?.grade, signal: request.signal,
+    context: refs.length ? { refs, label: body?.context?.label } : undefined,
+  });
+  return Response.json(result, { status: result.status === 'error' ? 502 : 200 });
+}

@@ -6,9 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "engine:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/engine/test/*.test.ts",
+    "engine:eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/engine/eval/run.ts",
+    "corpus:audit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-polemic.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.137.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
     "geist": "^1.7.2",
@@ -21,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.25.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.7",
     "tailwindcss": "^4",
