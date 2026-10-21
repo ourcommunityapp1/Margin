@@ -3,7 +3,8 @@
 // and grades everything as supported. It exercises the pipeline, not answer quality.
 
 import { findBook } from '../bible/canon.ts';
-import type { CitedAnswer, CiteRequest, JsonRequest, ModelAdapter } from './types.ts';
+import type { Source } from '../retrieve/gather.ts';
+import type { CitedAnswer, CiteRequest, JsonRequest, ModelAdapter, Tier } from './types.ts';
 
 export interface MockOptions {
   // Override any route's JSON reply, or the answer, for a specific test.
@@ -13,12 +14,14 @@ export interface MockOptions {
 
 const REF_IN_TEXT = /\b((?:[123]\s?)?[A-Z][a-z]+)\.?\s(\d{1,3})(?::(\d{1,3})(?:\s?[-–]\s?(\d{1,3}))?)?/g;
 
-export function mockAdapter(opts: MockOptions = {}): ModelAdapter & { calls: { route: string; prompt?: string }[] } {
-  const calls: { route: string; prompt?: string }[] = [];
+interface Call { route: string; prompt?: string; tier?: Tier; sources?: Source[] }
+
+export function mockAdapter(opts: MockOptions = {}): ModelAdapter & { calls: Call[] } {
+  const calls: Call[] = [];
   return {
     calls,
     async json<T>(req: JsonRequest): Promise<T> {
-      calls.push({ route: req.route, prompt: req.prompt });
+      calls.push({ route: req.route, prompt: req.prompt, tier: req.tier });
       if (opts.json?.[req.route] !== undefined) return opts.json[req.route] as T;
       if (req.route === 'plan') {
         const q = req.prompt.split('\nQuestion: ')[1]?.split('\n')[0] ?? '';
@@ -29,7 +32,7 @@ export function mockAdapter(opts: MockOptions = {}): ModelAdapter & { calls: { r
       return { title: 'Study', description: '', contested: false, sessions: [] } as T;
     },
     async cite(req: CiteRequest): Promise<CitedAnswer> {
-      calls.push({ route: req.route, prompt: req.question });
+      calls.push({ route: req.route, prompt: req.question, tier: req.tier, sources: req.sources });
       if (opts.answer) return opts.answer(req);
       const scripture = req.sources.findIndex((s) => s.who === 'bsb' && s.blocks.length);
       const note = req.sources.findIndex((s) => s.who !== 'bsb' && s.blocks.length);

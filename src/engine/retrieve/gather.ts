@@ -5,7 +5,7 @@ import { BOOKS, PSALMS } from '../bible/canon.ts';
 import { formatSpan, type Span } from '../bible/refs.ts';
 import { Corpus, type Chunk, type ChapterData } from '../corpus/store.ts';
 import { authorOf, WORKS, type Speaker, type Tradition } from '../corpus/sources.ts';
-import { blocks, clipWords, words } from '../text.ts';
+import { blocks, sentences, words } from '../text.ts';
 import { tokenize } from './bm25.ts';
 
 export interface Source {
@@ -43,11 +43,28 @@ const FATHER_RANK = ['chrysostom', 'augustine', 'jerome', 'ambrose', 'gregory', 
   'basil', 'athanasius', 'gregory_naz', 'gregory_nyssa', 'leo', 'chrysologus', 'cyprian', 'eusebius', 'remigius', 'rabanus', 'alcuin', 'haymo'];
 
 const MAX_SCRIPTURE_VERSES = 30;
-const PER_SOURCE_WORDS = 600;
+
+// How much text an answer gets. Claude is billed for every word it reads, and a spoken answer
+// quotes two to four excerpts, so each excerpt is cut to its most relevant passage and the
+// commentary as a whole is capped. Passages after the first are read as asked (often the other
+// side's key text on a debated question), widened only when that stays short.
+export interface GatherBudget {
+  commentaryWords: number;
+  excerptWords: number;
+  // A later passage is widened to its paragraph only up to this many verses...
+  secondaryVerses: number;
+  // ...and kept as requested up to this many.
+  secondaryMax: number;
+}
+export const ANSWER_BUDGET: GatherBudget = { commentaryWords: 1300, excerptWords: 200, secondaryVerses: 8, secondaryMax: 15 };
 // Past this many verses, notes are chosen by what the question asks rather than taken in order.
 const FOCUS_ABOVE_VERSES = 12;
 // Words that say nothing about which verses a question means.
-const GENERIC = new Set(tokenize('mean meaning explain tell think verse chapter passage bible scripture understand talk read help question make right wrong true really actually'));
+const GENERIC = new Set(tokenize('mean meaning explain tell think verse chapter passage bible scripture understand talk read help question make right wrong true really actually summarize summary recap overview walk through about say main point gist teach teaching lesson'));
+
+// The words of a question that say what it is about, once its reference and words like "mean"
+// or "explain" are set aside. None left means it asks about the passage as a whole.
+export const contentWords = (text: string): string[] => tokenize(text).filter((t) => !GENERIC.has(t));
 
 interface Focus { words: Set<string>; spans: Span[] }
 
@@ -125,11 +142,34 @@ export function sourceTitle(k: Chunk): string {
   return `${who}, as excerpted in Aquinas’s Catena Aurea (1841 Oxford translation), on ${on}`;
 }
 
-function toSource(k: Chunk, polemic: Set<string>): Source {
-  const clipped = clipWords(k.text.replace(/\s*\[…\]\s*$/, ''), PER_SOURCE_WORDS);
+// The run of whole sentences, up to `max` words, that shares the most words with the question;
+// the opening when nothing matches. Marked with ellipses where it cuts the note short.
+export function excerpt(text: string, max: number, focus: Set<string>): { text: string; cut: boolean } {
+  const all = sentences(text);
+  if (words(text) <= max || !all.length) return { text, cut: false };
+  let best = { from: 0, to: 0, score: -1 };
+  for (let from = 0; from < all.length; from++) {
+    let n = 0;
+    let to = from;
+    while (to < all.length && (to === from || n + words(all[to]) <= max)) n += words(all[to++]);
+    const hits = new Set(tokenize(all.slice(from, to).join(' ')));
+    const opening = new Set(tokenize(all[from]));
+    let score = 0;
+    // Shared words count; a window that opens on one wins a tie, so it starts on the point.
+    for (const t of focus) if (hits.has(t)) score += opening.has(t) ? 1.1 : 1;
+    if (score > best.score) best = { from, to, score };
+    if (!focus.size) break;
+  }
+  let body = all.slice(best.from, best.to).join(' ');
+  if (words(body) > max) body = body.split(/\s+/).slice(0, max).join(' ');
+  return { text: `${best.from > 0 ? '… ' : ''}${body}${best.to < all.length ? ' …' : ''}`, cut: true };
+}
+
+function toSource(k: Chunk, polemic: Set<string>, max = 600, focus: Set<string> = new Set()): Source {
+  const clipped = excerpt(k.text.replace(/\s*\[…\]\s*$/, ''), max, focus);
   const flags: string[] = [];
   if (k.posthumous) flags.push('posthumous');
-  if (clipped.clipped || /\[…\]\s*$/.test(k.text)) flags.push('clipped');
+  if (clipped.cut || /\[…\]\s*$/.test(k.text)) flags.push('clipped');
   if (polemic.has(k.id)) flags.push('polemic');
   if (k.work === 'catena') flags.push('anthology');
   return {
@@ -149,45 +189,57 @@ function scriptureSource(cd: ChapterData, s: Span, vs: number[][]): Source {
   };
 }
 
-// Collects Scripture and commentary for up to four passages within a word budget.
-export async function gather(corpus: Corpus, spans: Span[], policy: VoicePolicy, budgetWords = 6500): Promise<Gathered> {
+// Collects Scripture and commentary for up to three passages within a word budget. Each voice
+// gets a turn before any voice gets a second, so a tight budget still hears more than one.
+export async function gather(corpus: Corpus, spans: Span[], policy: VoicePolicy, budget: GatherBudget = ANSWER_BUDGET): Promise<Gathered> {
   const polemic = await corpus.reviewFlags();
   const focusWords = new Set(tokenize(policy.focus ?? '').filter((t) => !GENERIC.has(t)));
   const focusSpans = policy.focusSpans ?? [];
   // Only a question that says something beyond its reference can choose among notes.
   const focus: Focus | null = focusWords.size || focusSpans.length ? { words: focusWords, spans: focusSpans } : null;
-  const sources: Source[] = [];
-  const used = new Set<string>();
+  const scripture: Source[] = [];
   const widened: Span[] = [];
-  let budget = budgetWords;
-  let commentary = 0;
-  const add = (src: Source) => {
-    // An empty source can't be cited (and the API rejects one), so it is never sent.
-    if (used.has(src.id) || budget <= 0 || !src.blocks.some((b) => b.trim())) return;
-    used.add(src.id); budget -= src.blocks.reduce((n, b) => n + words(b), 0); sources.push(src);
-    if (src.who !== 'bsb') commentary++;
-  };
-
-  for (const raw of spans.slice(0, 4)) {
+  // Candidate notes in the order they should be heard: per passage, one from each voice, then
+  // the second from each, so the budget runs out on repeats rather than on whole traditions.
+  const queue: Chunk[] = [];
+  for (const [i, raw] of spans.slice(0, 3).entries()) {
     const cd = await corpus.chapter(raw.bi, raw.c);
-    const s = widen(corpus, cd, raw);
+    let s = widen(corpus, cd, raw);
+    if (i > 0 && s.b - s.a + 1 > budget.secondaryVerses) s = raw.b - raw.a + 1 > budget.secondaryMax ? { ...raw, b: raw.a + budget.secondaryMax - 1 } : raw;
     widened.push(s);
-    add(scriptureSource(cd, s, corpus.versification));
+    const src = scriptureSource(cd, s, corpus.versification);
+    if (src.blocks.length) scripture.push(src);
     const near = Corpus.touching(cd, s.a, s.b).filter((k) => allowed(policy, k));
     const f = s.b - s.a + 1 > FOCUS_ABOVE_VERSES ? focus : null;
-    const henry = pick(near.filter((k) => k.work === 'mhcc'), 2, cd, f);
-    const spurgeon = pick(near.filter((k) => k.work === 'tdavid'), 3, cd, f);
+    const henry = pick(near.filter((k) => k.work === 'mhcc'), i ? 1 : 2, cd, f);
+    const spurgeon = pick(near.filter((k) => k.work === 'tdavid'), i ? 1 : 3, cd, f);
     // On a long passage, a Father's note must touch the question: the verse it names, a word
     // from the verses the note covers, or two of its own.
     const relevant = (k: Chunk) => !f || relevance(k, cd, f) >= 2;
-    const npnf = near.filter((k) => k.work === 'npnf' && relevant(k));
-    const catena = near.filter((k) => k.work === 'catena' && relevant(k));
-    if (cd.bi === PSALMS && cd.spurgeonOverview && allowed(policy, cd.spurgeonOverview) && s.b - s.a + 1 >= cd.nv / 2) add(toSource(cd.spurgeonOverview, polemic));
-    for (const k of [...henry, ...spurgeon]) add(toSource(k, polemic));
-    const fatherSlots = policy.speaker === 'host' ? 4 : 6;
-    for (const k of rankFathers([...npnf, ...catena], fatherSlots)) add(toSource(k, polemic));
+    const fathers = rankFathers(near.filter((k) => (k.work === 'npnf' || k.work === 'catena') && relevant(k)), i ? 1 : policy.speaker === 'host' ? 4 : 6);
+    const overview = cd.bi === PSALMS && cd.spurgeonOverview && allowed(policy, cd.spurgeonOverview) && s.b - s.a + 1 >= cd.nv / 2 ? [cd.spurgeonOverview] : [];
+    const lanes = [henry, [...overview, ...spurgeon], fathers];
+    for (let round = 0; lanes.some((l) => l[round]); round++) for (const lane of lanes) if (lane[round]) queue.push(lane[round]);
   }
 
-  const traditions = [...new Set(sources.filter((x) => x.who !== 'bsb').map((x) => authorOf(x.who).tradition))];
-  return { sources, spans: widened, traditions, silent: commentary === 0 };
+  const notes: Source[] = [];
+  const used = new Set<string>();
+  let left = budget.commentaryWords;
+  for (const k of queue) {
+    if (used.has(k.id) || left < 40) continue;
+    const src = toSource(k, polemic, Math.min(budget.excerptWords, left), focusWords);
+    // An empty source can't be cited (and the API rejects one), so it is never sent.
+    if (!src.blocks.some((b) => b.trim())) continue;
+    used.add(k.id);
+    left -= src.blocks.reduce((n, b) => n + words(b), 0);
+    notes.push(src);
+  }
+  // Each passage's Scripture, then its notes, in passage order, as the listener would hear them.
+  const order = (x: Source) => {
+    const i = widened.findIndex((w) => w.bi === x.span.bi && w.c === x.span.c && x.span.a <= w.b && Math.max(x.span.b, x.span.a) >= w.a);
+    return (i < 0 ? widened.length : i) * 2 + (x.who === 'bsb' ? 0 : 1);
+  };
+  const sources = [...scripture, ...notes].map((x, n) => ({ x, n })).sort((p, q) => order(p.x) - order(q.x) || p.n - q.n).map((p) => p.x);
+  const traditions = [...new Set(notes.map((x) => authorOf(x.who).tradition))];
+  return { sources, spans: widened, traditions, silent: notes.length === 0 };
 }

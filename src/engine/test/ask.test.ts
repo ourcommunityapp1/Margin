@@ -18,12 +18,19 @@ test('answers a passage question with verified quotations and marked audio', asy
   assert.ok(r.segments.some((s) => s.kind === 'scripture' && s.voice === 'bsb'));
   assert.ok(r.segments.some((s) => s.kind === 'quote' && s.voice === 'henry'));
   assert.ok(r.passages[0].startsWith('Romans 3'));
+  assert.deepEqual(model.calls.map((c) => c.route), ['answer'], 'the passage is named and the question is plain: one call');
+});
+
+test('a topic question is planned, and a sensitive one is graded too', async () => {
+  const model = mockAdapter({ json: { plan: plan(['Romans 3:21-26'], { intent: 'topic', contested: true }) } });
+  const r = await ask({ corpus, model }, { question: 'How are sinners made right with God?' });
+  assert.equal(r.status, 'answered', JSON.stringify(r.checks?.problems));
   assert.deepEqual(model.calls.map((c) => c.route), ['plan', 'answer', 'grade']);
 });
 
 test('logs planner references that do not exist', async () => {
   const model = mockAdapter({ json: { plan: plan(['Hezekiah 3:1', 'John 3:16']) } });
-  const r = await ask({ corpus, model }, { question: 'Tell me about John 3:16' });
+  const r = await ask({ corpus, model }, { question: 'Tell me about God’s love for the whole world' });
   assert.deepEqual(r.invalidRefs, ['Hezekiah 3:1']);
   assert.ok(r.passages[0].startsWith('John 3:'), 'John 3:16 widens to its paragraph');
 });
@@ -131,11 +138,11 @@ test('a follow-up stays on the passages the last answer read', async () => {
   assert.ok(r.passages[0].startsWith('John 2'), r.passages.join(', '));
 });
 
-test('passages named by title, quoted or recalled are read even when the planner forgets them', async () => {
+test('a passage named by title is read without a planning call', async () => {
   const model = mockAdapter({ json: { plan: { intent: 'topic', passages: ['Luke 6:27-36'], contested: false, false_premise: false, search: '' } } });
   const r = await ask({ corpus, model }, { question: 'What was the point of the Good Samaritan?' });
   assert.ok(r.passages[0].startsWith('Luke 10'), r.passages.join(', '));
-  assert.ok(r.passages.some((p) => p.startsWith('Luke 6')), 'the planner’s choice still follows');
+  assert.ok(!model.calls.some((c) => c.route === 'plan'));
 });
 
 test('a question about a voice Margin lacks tells the model to say so before answering', async () => {

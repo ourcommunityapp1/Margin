@@ -5,14 +5,24 @@ import path from 'node:path';
 import { createEngine, type Engine } from './index.ts';
 import { fileLoader } from './corpus/loaders.ts';
 import { anthropicAdapter } from './model/anthropic.ts';
+import { fileGuides } from './pipeline/guides.ts';
+import { fileSpend } from './pipeline/spend.ts';
 
 let engine: Promise<Engine> | undefined;
 
+// Study guides and the day's spending are kept under MARGIN_DATA_DIR (default: the system's
+// temporary folder, which a serverless host may clear; point it at lasting storage to keep them).
+// MARGIN_DAILY_BUDGET_USD caps what questions can spend in a day (default $2).
 export function serverEngine(): Promise<Engine> {
+  const dir = process.env.MARGIN_DATA_DIR ?? path.join(process.env.TMPDIR ?? '/tmp', 'margin');
+  const limit = Number(process.env.MARGIN_DAILY_BUDGET_USD ?? 2);
   engine ??= createEngine({
     loader: fileLoader(path.join(process.cwd(), 'data/corpus')),
     model: anthropicAdapter(),
     search: true,
+    guides: fileGuides(path.join(dir, 'guides')),
+    dailyBudgetUsd: Number.isFinite(limit) && limit > 0 ? limit : undefined,
+    spend: fileSpend(path.join(dir, 'spend.json')),
   });
   engine.catch(() => { engine = undefined; });
   return engine;

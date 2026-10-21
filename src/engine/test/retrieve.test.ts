@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openTestCorpus } from './helpers.ts';
 import { booksNamed, parseRef, spans, formatSpan } from '../bible/refs.ts';
-import { gather, rankFathers } from '../retrieve/gather.ts';
+import { ANSWER_BUDGET, excerpt, gather, rankFathers } from '../retrieve/gather.ts';
+import { tokenize } from '../retrieve/bm25.ts';
 import { PassageIndex } from '../retrieve/search.ts';
 import { knownPassages } from '../retrieve/known.ts';
 
@@ -99,4 +100,29 @@ test('Fathers come only from 19th-century translations', async () => {
     const cd = await corpus.chapter(bi, c);
     for (const k of cd.fathers) assert.match(k.label ?? '', /^(expositions? (on|of) (the )?psalms?|on the psalms|tractates? on|ten homilies|(the )?harmony|homil|concerning the statues)/i, k.id);
   }
+});
+
+test('an excerpt is the most relevant run of sentences, marked where it is cut', () => {
+  const text = 'Grace is free. It cannot be earned. Many things follow from this. The shepherd seeks the lost sheep. He carries it home rejoicing. The end.';
+  const e = excerpt(text, 12, new Set(tokenize('Why does the shepherd seek the lost sheep?')));
+  assert.match(e.text, /^… The shepherd seeks the lost sheep\./);
+  assert.ok(e.cut);
+  assert.match(excerpt(text, 8, new Set()).text, /^Grace is free\./, 'with no question, the opening');
+  assert.equal(excerpt('Short note.', 50, new Set()).cut, false);
+});
+
+test('an answer gets every voice within a capped number of words', async () => {
+  const words = (b: string[]) => b.join(' ').split(/\s+/).length;
+  for (const ref of ['Psalm 23', 'Romans 3:21-26', 'John 1:1-5']) {
+    const g = await gather(corpus, span(ref), { speaker: 'host', focus: 'What does this mean for me?' });
+    const notes = g.sources.filter((x) => x.who !== 'bsb');
+    assert.ok(notes.reduce((n, x) => n + words(x.blocks), 0) <= ANSWER_BUDGET.commentaryWords + 20, ref);
+    assert.ok(notes.every((x) => words(x.blocks) <= ANSWER_BUDGET.excerptWords + 4), ref);
+    assert.ok(new Set(notes.map((x) => x.who === 'henry' ? 'henry' : x.who === 'spurgeon' ? 'spurgeon' : 'fathers')).size >= 2, `${ref}: more than one voice`);
+    assert.equal(g.sources[0].who, 'bsb', 'Scripture comes first');
+  }
+  const two = await gather(corpus, [...span('Psalm 23'), ...span('James 2:14-26'), ...span('John 10:1-18')], { speaker: 'host' });
+  assert.deepEqual(two.spans.slice(1).map((x) => [x.a, x.b]), [[14, 26], [1, ANSWER_BUDGET.secondaryMax]], 'later passages are read as asked, up to a limit');
+  const verse = await gather(corpus, [...span('Psalm 23'), ...span('John 10:11')], { speaker: 'host' });
+  assert.deepEqual([verse.spans[1].a, verse.spans[1].b], [11, 11], 'and not widened past a few verses');
 });

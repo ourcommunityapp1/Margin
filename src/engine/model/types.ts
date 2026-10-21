@@ -11,7 +11,12 @@ export interface JsonRequest {
   prompt: string;
   schema: Record<string, unknown>;
   signal?: AbortSignal;
+  tier?: Tier;
 }
+
+// How hard a question is. Ordinary ones go to a cheaper model with little thinking; contested,
+// premise-checking, persona and repair work goes to the strongest model.
+export type Tier = 'standard' | 'hard';
 
 export interface Turn {
   role: 'user' | 'assistant';
@@ -28,6 +33,7 @@ export interface CiteRequest {
   question: string;
   history?: Turn[];
   signal?: AbortSignal;
+  tier?: Tier;
 }
 
 export interface Citation {
@@ -55,12 +61,27 @@ export interface ModelAdapter {
   usage?: Usage;
 }
 
-export interface Usage {
-  calls: number;
+export interface TokenCounts {
   input: number;
   output: number;
   cacheRead: number;
   cacheWrite: number;
+  batch?: boolean;
+}
+
+export interface Usage {
+  calls: number;
+  // Keyed by the model that served the call, which a fallback can change.
+  byModel: Record<string, TokenCounts>;
+}
+
+export const newUsage = (): Usage => ({ calls: 0, byModel: {} });
+
+export function addUsage(u: Usage, model: string, t: TokenCounts): void {
+  const key = t.batch ? `${model} (batch)` : model;
+  const m = (u.byModel[key] ??= { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, batch: t.batch });
+  u.calls++;
+  m.input += t.input; m.output += t.output; m.cacheRead += t.cacheRead; m.cacheWrite += t.cacheWrite;
 }
 
 // The model declined. Margin answers with Scripture and a verified note instead.

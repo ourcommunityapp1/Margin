@@ -26,7 +26,7 @@ test('the artifact adapter turns tagged pieces into citations the verifier check
   assert.equal(r.status, 'answered', JSON.stringify(r.checks?.problems));
   assert.equal(r.quotes.filter((q) => q.ok).length, 2);
   assert.ok(r.quotes.every((q) => q.cited));
-  assert.ok(prompts[1].includes('[S1.1]') && prompts[1].includes('</search_results>'));
-  assert.deepEqual(steps.slice(0, 2), ['Choosing passages…', 'Reading Romans 3:24…']);
+  assert.ok(prompts[0].includes('[S1.1]') && prompts[0].includes('</search_results>'), 'a named passage needs no planning call');
+  assert.deepEqual(steps.slice(0, 2), ['Reading Romans 3:24…', 'Writing the answer…']);
   assert.ok(r.passages[0] === 'Romans 3:21–26', 'the named verse is read with its paragraph');
 });

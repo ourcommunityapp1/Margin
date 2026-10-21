@@ -20,17 +20,49 @@ Each stage is either a separate model call or code. A model call is followed by 
 | Stage | What happens | Code |
 |---|---|---|
 | 1. Guard | Fixed replies, with no model call, for these cases: a crisis (the reply gives 988), a request for a sacrament or a prayer, asking Margin to act as someone's pastor, a ruling on church practice ("can I baptize my baby with Gatorade?"), "are you real?" put to a persona, and a commentator's own views on other faiths. Personal decisions, grief and passage questions about other faiths move from a commentator to the host. | `pipeline/guard.ts` |
-| 2. Plan | A short JSON call picks up to four passages. It also flags contested questions and false premises. Code finds, in the question, the references, the passages named by title ("the Good Samaritan"), and the lines of Scripture quoted or remembered ("lean not on your own understanding"). Those always come first. Each reference is checked against the Bible's real chapter and verse numbers, and planner references that don't exist are dropped and counted. A follow-up such as "Are you sure?" stays on the passages the last answer read. | `pipeline/ask.ts`, `bible/refs.ts`, `retrieve/known.ts`, `retrieve/search.ts` |
-| 3. Gather | Each passage is widened to its whole paragraph, up to 30 verses. Then commentary is added: Henry, Spurgeon on the Psalms, and the Fathers, with doubtful attributions last. On a long passage, notes are chosen by what the question asks: the verse it names, and the words it shares with the notes and their verses. A topic question with no passage searches the library by keyword, looking first in any book the question names. Each source carries its true author, its work and any caveats. | `retrieve/` |
+| 2. Plan | A short JSON call picks up to three passages. It also flags contested questions and false premises. It is skipped when the question already names its passage, or asks about what is playing ("what does this mean?"). Code finds, in the question, the references, the passages named by title ("the Good Samaritan"), and the lines of Scripture quoted or remembered ("lean not on your own understanding"). Those always come first. Each reference is checked against the Bible's real chapter and verse numbers, and planner references that don't exist are dropped and counted. A follow-up such as "Are you sure?" stays on the passages the last answer read. | `pipeline/ask.ts`, `bible/refs.ts`, `retrieve/known.ts`, `retrieve/search.ts` |
+| 3. Gather | The first passage is widened to its whole paragraph, up to 30 verses; later ones are read as asked. Then commentary is added: Henry, Spurgeon on the Psalms, and the Fathers, with doubtful attributions last. Each voice gets a turn before any gets a second, each note is cut to its most relevant 200 words, and the commentary is capped at 1,300 words. On a long passage, notes are chosen by what the question asks: the verse it names, and the words it shares with the notes and their verses. A topic question with no passage searches the library by keyword, looking first in any book the question names. Each source carries its true author, its work and any caveats. | `retrieve/` |
 | 4. Answer | Claude answers with the sources as `search_result` blocks, with citations on. The system prompt carries the method: plain sense first, exact quotation, naming writers honestly, balance, and when to say less. Notes from the pipeline travel with the question, such as "contested", "the library holds no Calvin", or "only Reformed voices here". | `model/anthropic.ts`, `prompts.ts` |
 | 5. Verify | Code checks that every quotation matches a supplied source word for word, and comes from the writer the sentence names. It flags writers Margin doesn't hold (Calvin, Wesley and others), Aquinas named as an author, and Pseudo-Chrysostom called Chrysostom. It also checks references, a 240-word limit, list formatting, and persona limits. | `pipeline/verify.ts` |
-| 6. Grade | A second JSON call checks each claim against the sources. For a contested question, it also checks whether the answer picked a winner or gave only one side. | `pipeline/ask.ts` |
+| 6. Grade | For contested, premise-checking, persona and sensitive answers, a second JSON call checks each claim against the sources the answer cited. For a contested question, it also checks whether the answer picked a winner or gave only one side. Plain answers rely on the code checks. | `pipeline/ask.ts` |
 | 7. Repair or fall back | The model gets one repair round with the problems listed. If the answer still fails, the listener hears the passage and one exact note instead. | `pipeline/ask.ts` |
 | 8. Audio | The answer is split into spoken segments: an AI disclosure before a persona, then speech, quotations and Scripture. References are written out for the voice. | `pipeline/audio.ts` |
 
 Playlists use a JSON call. Each passage is checked against the Bible, trimmed to 25 verses, and annotated with which voices cover it. With no Claude available, the engine can still lay out a passage as sessions (`pipeline/playlist.ts`).
 
 Sessions need no model at all (`pipeline/session.ts`).
+
+## What a question costs
+
+Claude is billed by the text it reads and writes. The first live run measured **12.2¢ a question**:
+- **Three calls on Opus 5.5:** passage choice, the answer, and the check.
+- **Sources sent twice:** about 3,600 words of them.
+- **Thinking:** about 2,000 tokens of Claude's private reasoning.
+
+The pipeline now spends only where a question needs it:
+
+| Step | What it saves | Code |
+|---|---|---|
+| Send less | Each note is cut to its most relevant 200 words and commentary to 1,300 words: about 1,800 words a question instead of 3,600, with the same eval results. | `retrieve/gather.ts` |
+| Check only what's needed | The grading call runs only on contested, premise-checking, persona or sensitive answers, and reads only the sources the answer cited. | `pipeline/ask.ts` |
+| Skip planning | No planning call when the question names its passage, or asks about what is playing. | `pipeline/ask.ts` |
+| Model by difficulty | Sonnet 5.5 (half Opus's price) plans, grades and writes ordinary answers. Opus 5.5 writes contested, persona and premise-checking answers, repairs, study guides and playlists. | `model/anthropic.ts` |
+| Less thinking | Effort is set on every call: low for ordinary work, medium for hard answers. Sonnet 5.5 would otherwise think at its default, high. | `model/anthropic.ts` |
+| Study guides | A plain "what does this passage mean?" is answered once by Opus, checked, stored, and replayed free. `scripts/precompute-guides.ts` makes them ahead of time through the Batches API at half price. It only estimates unless given `--yes`. | `pipeline/guides.ts`, `pipeline/precompute.ts` |
+| Cached follow-ups | Sources go first in the conversation with a cache marker. A follow-up on the same passages gathers exactly the same sources, so it reads them at 5% of the price. | `model/anthropic.ts`, `pipeline/ask.ts` |
+| Free commands, daily cap | "Read me Psalm 23" plays the passage with no call. Each answer's cost goes on the day's tally. Past `MARGIN_DAILY_BUDGET_USD`, questions get the free answer (the passage and a checked note) until the next day. | `pipeline/ask.ts`, `pipeline/spend.ts`, `index.ts` |
+
+Estimated costs per question, from the measured run's token counts and published prices (not yet measured live):
+
+| Question | Estimate |
+|---|---|
+| Plain question about a named or playing passage | 1½–3¢ |
+| Follow-up on the same passages | about 1¢ |
+| Topic question that needs planning | 2–3¢ |
+| Contested, persona or premise-checking question | 5–6¢ |
+| Replayed study guide, command, or over the daily cap | free |
+
+Each answer reports its cost in `costUsd`, and `npm run engine:eval -- --live` prints the measured total and the cost per item.
 
 ## Rules from the research
 
@@ -71,16 +103,20 @@ npm run engine:eval      # eval set through the full pipeline, mock model (check
 npm run engine:eval -- --live --limit 20   # real Claude; needs ANTHROPIC_API_KEY and spends credit
 npm run corpus:audit     # rebuild the polemic review list
 node scripts/build-browser.mjs dist/margin-engine.js   # browser bundle (window.MarginEngine)
+node scripts/precompute-guides.ts "Psalm 23" "John 3:1-21"   # study guides ahead of time: estimate only; add --yes to send
 ```
 
 | Variable | Needed for | Default |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | `/api/ask`, `/api/playlist`, `--live` evals | none |
 | `MARGIN_API_TOKEN` | Every API route requires `Authorization: Bearer <token>`. In production the routes return 503 until it is set, because they spend API credit. | none |
-| `MARGIN_MODEL` | Model for every call | `claude-opus-5-5` |
-| `MARGIN_GRADER_MODEL` | Model for the grading call | same as `MARGIN_MODEL` |
+| `MARGIN_MODEL` | Contested, persona and premise-checking answers, repairs, study guides, playlists | `claude-opus-5-5` |
+| `MARGIN_FAST_MODEL` | Planning and ordinary answers | `claude-sonnet-5-5` |
+| `MARGIN_GRADER_MODEL` | The grading call | same as `MARGIN_FAST_MODEL` |
+| `MARGIN_DAILY_BUDGET_USD` | What questions may spend in a day before free answers take over | `2` |
+| `MARGIN_DATA_DIR` | Where study guides and the day's spending are kept. Point it at lasting storage on a serverless host. | the system's temporary folder |
 
-All calls use the server-side fallback beta (`server-side-fallback-2026-07-01`). If the chosen model declines a request, the API retries it on another model within the same call. Effort is low for planning and medium for everything else, to keep spoken answers quick.
+All live calls use the server-side fallback beta (`server-side-fallback-2026-07-01`). If the chosen model declines a request, the API retries it on another model within the same call. Batch requests can't use it, so the study-guide script leaves it off.
 
 ### API
 
@@ -88,7 +124,7 @@ All routes take a `POST` with a JSON body.
 
 | Route | Body | Returns |
 |---|---|---|
-| `/api/ask` | `{question, speaker?: "host" \| "henry" \| "spurgeon" \| "augustine" \| "chrysostom", history?: [{role, text, refs?}], context?: {refs, label}}` | text, audio segments, checked quotations, passages, sources, notes |
+| `/api/ask` | `{question, speaker?: "host" \| "henry" \| "spurgeon" \| "augustine" \| "chrysostom", history?: [{role, text, refs?}], context?: {refs, label}}` | text, audio segments, checked quotations, passages, sources, notes, cost; `command` for "read me…" requests; `guide` when a study guide was made or replayed |
 | `/api/playlist` | `{topic, from?: "all" \| "henry" \| "spurgeon" \| "fathers", sessions?}` | a checked draft playlist |
 | `/api/session` | `{refs: ["Romans 8"], title?, format?: "read" \| "verse"}` | a listening session |
 

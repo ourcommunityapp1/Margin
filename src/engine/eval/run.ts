@@ -16,6 +16,7 @@ import { anthropicAdapter } from '../model/anthropic.ts';
 import { mockAdapter } from '../model/mock.ts';
 import type { AskResult } from '../pipeline/ask.ts';
 import type { Usage } from '../model/types.ts';
+import { costOf } from '../model/pricing.ts';
 import { grade, wilson, type Check, type EvalItem } from './graders.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -42,10 +43,11 @@ async function compare(a: string, b: string) {
   console.log(changed.join('\n'));
 }
 
-// Cost at Claude Opus 5.5 rates ($4 in, $20 out per million tokens; cache reads 10%, writes 125%).
-function usageLine(u: Usage): string {
-  const cost = (u.input * 4 + u.cacheRead * 0.4 + u.cacheWrite * 5 + u.output * 20) / 1e6;
-  return `- Tokens: ${u.input + u.cacheRead + u.cacheWrite} in (${u.cacheRead} from cache), ${u.output} out over ${u.calls} calls; about $${cost.toFixed(2)} at Opus 5.5 rates`;
+// Tokens by model and what they cost at published rates.
+function usageLine(u: Usage, items: number): string {
+  const models = Object.entries(u.byModel).map(([m, t]) => `${m}: ${t.input + t.cacheRead + t.cacheWrite} in (${t.cacheRead} cached), ${t.output} out`).join('; ');
+  const usd = costOf(u);
+  return `- Tokens over ${u.calls} calls: ${models || 'none'}\n- Cost: about $${usd.toFixed(2)}, ${((usd / Math.max(1, items)) * 100).toFixed(1)}¢ per item`;
 }
 
 async function main() {
@@ -106,7 +108,7 @@ async function main() {
     `- Fallback answers: ${answers.filter((a) => a.status === 'fallback').length}; errors: ${answers.filter((a) => a.status === 'error').length}`,
     `- Answers needing a repair round: ${answers.filter((a) => a.attempts > 1).length}`,
     `- Median time per item: ${rows.map((r) => r.ms).sort((a, b) => a - b)[Math.floor(rows.length / 2)] ?? 0} ms`,
-    model.usage ? usageLine(model.usage) : '',
+    model.usage ? usageLine(model.usage, rows.length) : '',
     live ? '' : '\nMock mode checks the pipeline, not answer quality. Run with --live for real scores.',
   ].join('\n');
   console.log('\n' + summary);
