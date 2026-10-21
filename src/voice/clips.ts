@@ -24,6 +24,9 @@ export interface VoiceDeps {
   share: number;
   // The allowance when the plan can't be read (the API key lacks permission to see it).
   fallbackCredits: number;
+  // Whether the tally outlives this process. Without that, a restarted server would forget
+  // what Margin had spent, so no new clips are made.
+  durable: boolean;
 }
 
 export interface Allowance {
@@ -96,6 +99,10 @@ export async function makeClip(deps: VoiceDeps, req: { text: string; speaker: st
   const id = clipId(text, req.speaker, req.kind);
   if (await deps.store.has(clipKey(id))) return { ok: true, id, cached: true };
   if (!deps.api) return { ok: false, status: 503, error: 'ElevenLabs isn’t set up.' };
+  if (!deps.durable) {
+    console.error('[voice] no lasting storage for the allowance tally, so no new clips are made');
+    return { ok: false, status: 503, error: 'The voice allowance can’t be tracked here.' };
+  }
 
   const voice = voiceFor(req.speaker);
   for (const model of await candidates(deps, req.kind)) {

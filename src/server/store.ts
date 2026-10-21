@@ -8,6 +8,8 @@
 import path from 'node:path';
 
 export interface Store {
+  // Blobs last across deploys and servers; files last only as long as the folder does.
+  kind: 'blobs' | 'files';
   get(key: string): Promise<Uint8Array<ArrayBuffer> | null>;
   has(key: string): Promise<boolean>;
   getJSON<T>(key: string): Promise<T | null>;
@@ -35,6 +37,7 @@ async function netlifyStore(name: string): Promise<Store | null> {
     const { getStore } = await import('@netlify/blobs');
     const blobs = getStore({ name, consistency: 'strong' });
     return {
+      kind: 'blobs',
       async get(key) {
         const v = await blobs.get(key, { type: 'arrayBuffer' });
         return v ? new Uint8Array(v) : null;
@@ -64,6 +67,7 @@ export function fileStore(dir: string): Store {
     return p;
   };
   return {
+    kind: 'files',
     async get(key) {
       try {
         const { readFile } = await import('node:fs/promises');

@@ -30,7 +30,7 @@ function fakeApi(o: { plan?: Plan | Error; models?: ModelInfo[] | Error; fail?: 
 }
 
 const deps = (api: ElevenLabs | null, extra: Partial<VoiceDeps> = {}): VoiceDeps => ({
-  store: fileStore(mkdtempSync(path.join(tmpdir(), 'margin-voice-'))), api, share: 0.05, fallbackCredits: 1500, ...extra,
+  store: fileStore(mkdtempSync(path.join(tmpdir(), 'margin-voice-'))), api, share: 0.05, fallbackCredits: 1500, durable: true, ...extra,
 });
 
 beforeEach(() => forgetCached());
@@ -115,6 +115,18 @@ test('an exhausted account, a bad voice or no key means the device voice', async
   assert.ok(!r3.ok && r3.status === 503);
   const r4 = await makeClip(deps(null), { text: ' ', speaker: 'host', kind: 'intro' });
   assert.ok(!r4.ok && r4.status === 400);
+});
+
+test('without lasting storage for the tally, no new clips are made; made ones still play', async () => {
+  const { api, calls } = fakeApi();
+  const d = deps(api);
+  const made = await makeClip(d, { text: 'Grace and peace to you.', speaker: 'host', kind: 'intro' });
+  const forgetful = { ...d, durable: false };
+  const again = await makeClip(forgetful, { text: 'Grace and peace to you.', speaker: 'host', kind: 'intro' });
+  assert.ok(made.ok && again.ok && again.cached);
+  const fresh = await makeClip(forgetful, { text: 'A new sentence.', speaker: 'host', kind: 'intro' });
+  assert.ok(!fresh.ok && fresh.status === 503);
+  assert.equal(calls.length, 1);
 });
 
 test('the client speaks the ElevenLabs API: key header, model, format, errors', async () => {
