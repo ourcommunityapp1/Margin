@@ -23,7 +23,7 @@ export function mockAdapter(opts: MockOptions = {}): ModelAdapter & { calls: { r
       if (req.route === 'plan') {
         const q = req.prompt.split('\nQuestion: ')[1]?.split('\n')[0] ?? '';
         const passages = [...q.matchAll(REF_IN_TEXT)].filter((m) => findBook(m[1]) >= 0).map((m) => m[0]);
-        return { intent: passages.length ? 'passage' : 'topic', passages, contested: /baptis|predestin|election|supper/i.test(q), false_premise: false, search: q } as T;
+        return { intent: passages.length ? 'passage' : 'topic', passages, contested: false, false_premise: false, search: '' } as T;
       }
       if (req.route === 'grade') return { claims: [], takes_side: false, one_sided: false, self_help: false } as T;
       return { title: 'Study', description: '', contested: false, sessions: [] } as T;
@@ -31,8 +31,8 @@ export function mockAdapter(opts: MockOptions = {}): ModelAdapter & { calls: { r
     async cite(req: CiteRequest): Promise<CitedAnswer> {
       calls.push({ route: req.route, prompt: req.question });
       if (opts.answer) return opts.answer(req);
-      const scripture = req.sources.findIndex((s) => s.who === 'bsb');
-      const note = req.sources.findIndex((s) => s.who !== 'bsb');
+      const scripture = req.sources.findIndex((s) => s.who === 'bsb' && s.blocks.length);
+      const note = req.sources.findIndex((s) => s.who !== 'bsb' && s.blocks.length);
       const blocks: CitedAnswer['blocks'] = [{ text: 'Here is what the passage and its commentators say. ', citations: [] }];
       if (scripture >= 0) {
         const s = req.sources[scripture];

@@ -1,0 +1,68 @@
+// Passages people name by title rather than reference ("the Good Samaritan", "the road to
+// Damascus"). A short, high-precision list: it needs no index, so it works in the browser too.
+
+const KNOWN: [RegExp, string[]][] = [
+  [/\bgood samaritan\b/i, ['Luke 10:25–37']],
+  [/\bprodigal son\b|\blost son\b/i, ['Luke 15:11–32']],
+  [/\bsermon on the mount\b/i, ['Matthew 5:1–12', 'Matthew 7:24–29']],
+  [/\bbeatitudes\b|\bblessed are the poor in spirit\b/i, ['Matthew 5:1–12']],
+  [/\blord'?s prayer\b|\bour father,? who art\b/i, ['Matthew 6:5–15']],
+  [/\bgreat commission\b/i, ['Matthew 28:16–20']],
+  [/\bgolden rule\b/i, ['Matthew 7:7–12']],
+  [/\bten commandments\b/i, ['Exodus 20:1–17']],
+  [/\bshema\b/i, ['Deuteronomy 6:4–9']],
+  [/\blast supper\b/i, ['Luke 22:7–23']],
+  [/\b(road to damascus|damascus road)\b|\bconversion of (saul|paul)\b/i, ['Acts 9:1–19']],
+  [/\bfruit of the spirit\b/i, ['Galatians 5:16–26']],
+  [/\barmou?r of god\b/i, ['Ephesians 6:10–20']],
+  [/\blove chapter\b/i, ['1 Corinthians 13']],
+  [/\bfaith (hall of fame|chapter)\b|\bhall of faith\b/i, ['Hebrews 11:1–16']],
+  [/\btransfiguration\b/i, ['Matthew 17:1–13']],
+  [/\bday of pentecost\b|\bpentecost\b/i, ['Acts 2:1–21']],
+  [/\btower of babel\b/i, ['Genesis 11:1–9']],
+  [/\bnoah'?s ark\b|\bthe flood\b/i, ['Genesis 6:9–22', 'Genesis 9:8–17']],
+  [/\bburning bush\b/i, ['Exodus 3:1–15']],
+  [/\bcross(ing)? the red sea\b|\bparting of the red sea\b/i, ['Exodus 14:15–31']],
+  [/\bdavid and goliath\b|\bgoliath\b/i, ['1 Samuel 17:32–51']],
+  [/\blions'? den\b/i, ['Daniel 6:10–23']],
+  [/\bfiery furnace\b/i, ['Daniel 3:13–30']],
+  [/\b(feeding of the|fed the) (five|5),?000\b|\bfive loaves\b/i, ['John 6:1–15']],
+  [/\bwedding (at|in) cana\b|\bcana\b|\bwater into (wine|grape juice)\b/i, ['John 2:1–11']],
+  [/\brich man and lazarus\b|\blazarus and the rich man\b/i, ['Luke 16:19–31']],
+  [/\braising of lazarus\b|^(?![\s\S]*\brich man\b)[\s\S]*\blazarus\b/i, ['John 11:17–44']],
+  [/\bnicodemus\b|\bborn again\b/i, ['John 3:1–21']],
+  [/\bwoman at the well\b|\bsamaritan woman\b/i, ['John 4:1–26']],
+  [/\bzacchaeus\b/i, ['Luke 19:1–10']],
+  [/\bmary and martha\b|\bmartha and mary\b/i, ['Luke 10:38–42']],
+  [/\bbinding of isaac\b|\babraham and isaac\b|\bsacrifice (of )?isaac\b/i, ['Genesis 22:1–19']],
+  [/\bjacob wrestl\w*\b/i, ['Genesis 32:22–32']],
+  [/\bsuffering servant\b/i, ['Isaiah 52:13–15', 'Isaiah 53']],
+  [/\bvalley of (the )?dry bones\b|\bdry bones\b/i, ['Ezekiel 37:1–14']],
+  [/\bnew covenant\b/i, ['Jeremiah 31:31–34']],
+  [/\bmagnificat\b/i, ['Luke 1:46–56']],
+  [/\bnativity\b|\bbirth of jesus\b|\bchristmas story\b/i, ['Luke 2:1–20']],
+  [/\btemptation of (jesus|christ)\b|\bjesus (was )?tempted\b/i, ['Matthew 4:1–11']],
+  [/\bgethsemane\b/i, ['Matthew 26:36–46']],
+  [/\bdoubting thomas\b/i, ['John 20:24–31']],
+  [/\bpeter'?s denial\b|\bpeter denie[sd]\b/i, ['Luke 22:54–62']],
+  [/\bempty tomb\b/i, ['John 20:1–10', 'Luke 24:1–12']],
+  [/\bkenosis\b|\bchrist hymn\b|\bemptied himself\b/i, ['Philippians 2:5–11']],
+  [/\bnew heaven and (a )?new earth\b/i, ['Revelation 21:1–8']],
+  [/\bproverbs 31 woman\b|\bwife of noble character\b/i, ['Proverbs 31:10–31']],
+  [/\bstill small voice\b|\bgentle whisper\b/i, ['1 Kings 19:9–18']],
+  [/\bmount carmel\b/i, ['1 Kings 18:20–40']],
+  [/\bwalls of jericho\b|\bbattle of jericho\b/i, ['Joshua 6:1–21']],
+  [/\bseventy weeks\b|\b70 weeks\b/i, ['Daniel 9:20–27']],
+  [/\bunforgivable sin\b|\bblasphemy against the (holy )?spirit\b/i, ['Mark 3:20–30', 'Matthew 12:22–32']],
+  [/\bfaith without works\b|\bfaith and works\b/i, ['James 2:14–26', 'Romans 3:21–31']],
+  [/\bhouseholds?\b[^.?!]*\bbaptiz\w*|\bbaptiz\w*[^.?!]*\bhouseholds?\b/i, ['Acts 16:11–15', 'Acts 16:25–34']],
+  [/\bjesus['’]?s? (brothers|siblings)\b|\b(brothers|brethren|siblings) of (jesus|the lord|christ)\b|\bmary\b[^.?!]*\bvirgin\b[^.?!]*\b(whole life|always|perpetual|forever)/i, ['Matthew 1:18–25', 'Matthew 13:53–58']],
+  [/\bjudge not\b|\bdo not judge\b|\bdon'?t judge\b/i, ['Matthew 7:1–6']],
+];
+
+// Returns the references for any well-known passage the text names, most specific first.
+export function knownPassages(text: string): string[] {
+  const out: string[] = [];
+  for (const [re, refs] of KNOWN) if (re.test(text)) for (const r of refs) if (!out.includes(r)) out.push(r);
+  return out;
+}

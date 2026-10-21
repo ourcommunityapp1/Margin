@@ -46,7 +46,7 @@ export const WORKS: Record<'bsb' | 'mhcc' | 'tdavid' | 'catena' | 'npnf', Work> 
   },
   npnf: {
     title: 'Nicene and Post-Nicene Fathers, First Series',
-    edition: 'Schaff’s 19th-century translations (1886–1889), via New Advent and the Historical Christian Faith commentaries database.',
+    edition: 'Schaff’s 19th-century translations (1886–1889), via the Historical Christian Faith commentaries database: Augustine’s Expositions on the Psalms, Tractates on John, Homilies on 1 John and Harmony of the Gospels, and Chrysostom’s homilies. The database’s other entries for these writers read as modern translations and are left out.',
     license: 'Public-domain translation. Check the online editions’ own terms before redistributing.',
   },
 };

@@ -100,7 +100,8 @@ export const spanKey = (s: Span): string => `${BOOKS[s.bi].code}.${s.c}.${s.a}-$
 export const overlaps = (x: Span, y: Span): boolean => x.bi === y.bi && x.c === y.c && x.a <= y.b && y.a <= x.b;
 
 // Finds references written in free text ("as Paul says in Romans 4:5"), for checking what an answer cites.
-const BOOK_PATTERN = '(?:Song of (?:Songs|Solomon)|(?:[123]\\s?)?[A-Z][a-z]+)';
+const ORDINAL = '(?:[123]|First|Second|Third|1st|2nd|3rd)';
+const BOOK_PATTERN = `(?:Song of (?:Songs|Solomon)|(?:${ORDINAL}\\s?)?[A-Z][a-z]+)`;
 const IN_TEXT = new RegExp(`\\b(${BOOK_PATTERN})\\.?\\s(\\d{1,3})(?::(\\d{1,3})(?:\\s?[-–—]\\s?(\\d{1,3}))?)?\\b`, 'g');
 
 const IN_SPEECH = new RegExp(IN_TEXT.source.replace('[A-Z][a-z]+', '[A-Za-z][a-z]{2,}'), 'gi');
@@ -115,4 +116,33 @@ export function findRefs(text: string, vs: Versification, loose = false): { raw:
     out.push({ raw, ref: parseRef(raw, vs) });
   }
   return out;
+}
+
+// Books named without a chapter ("Philippians says…", "in Second Peter"), so a search can look
+// there first. Only capitalized names count, and names that are also everyday words (Acts, Job,
+// Numbers, Mark) not at the start of a sentence. "Peter" alone is the apostle, not his letters;
+// "Kings" or "Corinthians" without a number means both books.
+const SHARED = ['Samuel', 'Kings', 'Chronicles', 'Corinthians', 'Thessalonians', 'Timothy', 'Peter', 'John'];
+const BASES = [...new Set(BOOKS.map((b) => b.name.replace(/^[123] /, '')))].sort((a, b) => b.length - a.length);
+const NAMED = new RegExp(`(^|[.!?]\\s+|\\S\\s+)(?:([123]|[Ff]irst|[Ss]econd|[Tt]hird|1st|2nd|3rd)\\s)?(${BASES.join('|')})(?!\\s*\\d|\\w)`, 'g');
+const EVERYDAY = new Set(['Acts', 'Job', 'Numbers', 'Mark', 'Lamentations']);
+
+export function booksNamed(text: string): number[] {
+  const out = new Set<number>();
+  for (const m of String(text).matchAll(NAMED)) {
+    const [, before, ord, base] = m;
+    const sentenceStart = !before || /[.!?]\s+$/.test(before);
+    if (EVERYDAY.has(base) && sentenceStart && !ord) continue;
+    if (ord) {
+      const bi = findBook(`${ord} ${base}`);
+      if (bi >= 0) out.add(bi);
+    } else if (SHARED.includes(base)) {
+      if (base === 'Peter' || base === 'John') { if (base === 'John') out.add(findBook('John')); continue; }
+      for (const n of ['1', '2']) { const bi = findBook(`${n} ${base}`); if (bi >= 0) out.add(bi); }
+    } else {
+      const bi = findBook(base);
+      if (bi >= 0) out.add(bi);
+    }
+  }
+  return [...out];
 }

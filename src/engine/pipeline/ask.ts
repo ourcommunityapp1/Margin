@@ -3,12 +3,13 @@
 // → answer with citations → verify in code → grade claims → one repair → safe fallback.
 
 import type { Versification } from '../bible/canon.ts';
-import { findRefs, formatSpan, overlaps, parseRef, spans as refSpans, type Span } from '../bible/refs.ts';
-import { authorOf, isPersona, type Speaker } from '../corpus/sources.ts';
+import { booksNamed, findRefs, formatSpan, overlaps, parseRef, spans as refSpans, type Span } from '../bible/refs.ts';
+import { ABSENT_VOICES, authorOf, isPersona, type Speaker } from '../corpus/sources.ts';
 import type { Corpus } from '../corpus/store.ts';
 import { ModelRefusal, type CitedAnswer, type ModelAdapter, type Turn } from '../model/types.ts';
 import { GRADE_SCHEMA, GRADE_SYSTEM, gradePrompt, HOST_SYSTEM, personaSystem, PLAN_SCHEMA, PLAN_SYSTEM, planPrompt } from '../prompts.ts';
 import { gather, type Gathered, type Source } from '../retrieve/gather.ts';
+import { knownPassages } from '../retrieve/known.ts';
 import type { PassageIndex } from '../retrieve/search.ts';
 import { sentences } from '../text.ts';
 import { toSegments, type AudioSegment } from './audio.ts';
@@ -62,8 +63,21 @@ export interface AskDeps {
   index?: () => Promise<PassageIndex>;
 }
 
+// Voices listeners ask for that Margin's library doesn't hold. Saying so up front beats reporting
+// them from memory, which is where models flatten traditions and invent attributions.
+const ASKED_ABSENT: [string, RegExp][] = [
+  ['calvin', /\bcalvin\b(?!ism|ist)/i], ['wesley', /\bwesley\b/i], ['luther', /\bluther\b(?!an)/i], ['clarke', /\badam clarke\b/i],
+  ['barnes', /\bbarnes\b/i], ['gill', /\bjohn gill\b/i], ['catechism', /\bcatechism\b/i], ['haydock', /\bhaydock\b/i],
+  ['aquinas', /^(?![\s\S]*\bcatena\b)[\s\S]*\baquinas\b/i], ['orthodox', /\b(eastern )?orthodox (church|christians?|view|teaching|tradition)\b/i],
+  ['pentecostal', /\bpentecostals?\b/i],
+];
+
 const MAX_PASSAGES = 4;
 const PERSONA_TURN_LIMIT = 8;
+
+// Questions Christian traditions answer differently. The planner flags these too; this catches the
+// ones it misses, because the flag is what turns on the balance rules and the lean disclosure.
+const CONTESTED = /\b((infant|baby|babies|child(ren)?)['’]?s? baptism|baptiz\w* (babies|infants|a baby|children)|(babies|infants) (be )?baptiz\w*|believers?['’]? baptism|baptism (saves?|regenerat\w*)|rebaptiz\w*|immersion|sprinkl\w*|predestin\w*|calvinis\w*|arminian\w*|free will|(chosen|elect(ed)?) before|once saved,? always saved|eternal security|los(e|t|ing) (your |my |their |his |her )?salvation|never (really |truly )?saved|fall(en)? away|apostasy|persever\w* of the saints|rapture|(great |seven[- ]year )?tribulation|millenni\w*|seventy weeks|70 weeks|antichrist|preteris\w*|dispensational\w*|real presence|transubstantiat\w*|(communion|lord['’]?s supper|eucharist)\W+(is |was )?(just |only |merely )?(a )?(symbol|memorial)|perpetual virgin\w*|immaculate conception|assumption of mary|brothers of jesus|mary (stayed|remained|was always) a virgin|pray(ing)? to (mary|the saints)|purgatory|pray(ing)? for the dead|wom[ae]n (as |be |become )?(pastors?|preachers?|elders?|priests?|bishops?|deacons?)|wom[ae]n (to |should |can |may )?(preach|teach|lead)\w*|speaking in tongues|cessation\w*|gifts? of the spirit today|papacy|the pope|apostolic succession|faith alone|sola fide|sola scriptura|justif\w* by faith|faith (and|without) works|annihilation\w*|universalis\w*|everyone (will be|gets) saved|young earth|six (literal )?days|evolution|divorce and remarriage|remarr\w*|sabbath|pacifis\w*|just war|same[- ]sex|gay marriage|homosexual\w*)\b/i;
 
 const META_TEXT = 'Margin is an AI study aid. It reads the Bible with Matthew Henry, Charles Spurgeon and the Church Fathers, answers from their words, and checks every quotation against the source. When you hear a commentator in character, that is an AI voice drawing on his published words, not the man himself.';
 const OFFTOPIC_TEXT = 'Margin is for studying the Bible with its commentators, so that’s outside what I can help with here. Ask me about a passage, a person in Scripture, or a subject like grace, prayer or the church.';
@@ -83,10 +97,16 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   const history = input.history ?? [];
   const notes: string[] = [];
   let speaker: Speaker = input.speaker && (input.speaker === 'host' || isPersona(input.speaker)) ? input.speaker : 'host';
+  // What the listener is playing, or else the passages the last answer read.
+  const lastRefs = [...history].reverse().find((t) => t.role === 'assistant' && t.refs?.length)?.refs ?? [];
+  const contextRefs = input.context?.refs.length ? input.context.refs : lastRefs;
 
   const g = guard(question, speaker);
-  if (g.kind === 'crisis' || g.kind === 'sacramental' || g.kind === 'identity') return simple('guarded', 'host', g.text);
-  if (g.kind === 'counsel' && speaker !== 'host') { speaker = 'host'; notes.push('Personal questions are answered by the host, not in character.'); }
+  if (g.kind === 'fixed') return simple('guarded', 'host', g.text);
+  if (g.kind === 'host' && speaker !== 'host') {
+    speaker = 'host';
+    notes.push(g.reason === 'faiths' ? 'Questions about other faiths are answered by the host, not in character.' : 'Personal questions are answered by the host, not in character.');
+  }
   if (speaker !== 'host' && history.filter((t) => t.role === 'assistant').length >= PERSONA_TURN_LIMIT) {
     speaker = 'host';
     notes.push('The host has taken over after a long run in character.');
@@ -100,7 +120,7 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   try {
     plan = await model.json<Plan>({
       route: 'plan', system: PLAN_SYSTEM, schema: PLAN_SCHEMA as unknown as Record<string, unknown>, signal: input.signal,
-      prompt: planPrompt(question, { context: input.context?.label ?? input.context?.refs.join(', '), history: historyText(history) }),
+      prompt: planPrompt(question, { context: input.context?.label ?? (contextRefs.join(', ') || undefined), history: historyText(history) }),
     });
   } catch (e) {
     if (input.signal?.aborted) throw e;
@@ -113,29 +133,35 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
   const invalidRefs: string[] = [];
   const chosen: Span[] = [];
   const take = (s: Span) => { if (chosen.length < MAX_PASSAGES && !chosen.some((x) => overlaps(x, s))) chosen.push(s); };
-  // References the listener named come first, whatever the planner chose.
-  for (const { ref } of findRefs(question, vs, true)) if (ref) refSpans(ref, vs).slice(0, 2).forEach(take);
-  for (const p of plan?.passages ?? []) {
-    const r = parseRef(p, vs);
-    if (!r) { invalidRefs.push(p); continue; }
-    refSpans(r, vs).slice(0, 2).forEach(take);
-  }
-  if (input.context?.refs.length && (plan?.intent === 'followup' || !chosen.length)) {
-    for (const raw of input.context.refs) { const r = parseRef(raw, vs); if (r) refSpans(r, vs).slice(0, 2).forEach(take); }
-  }
-  if (chosen.length < 2 && plan?.intent !== 'passage' && plan?.intent !== 'followup' && deps.index) {
-    const idx = await deps.index();
-    for (const h of idx.search(plan?.search || question, 4)) { if (chosen.length >= 3) break; take(h.span); }
+  const takeRef = (raw: string) => { const r = parseRef(raw, vs); if (r) refSpans(r, vs).slice(0, 2).forEach(take); return !!r; };
+  // References the listener named come first, whatever the planner chose; then passages the
+  // question names by title ("the Good Samaritan") or quotes, which the planner can forget.
+  const inQuestion = findRefs(question, vs, true);
+  for (const { ref } of inQuestion) if (ref) refSpans(ref, vs).slice(0, 2).forEach(take);
+  for (const raw of knownPassages(question).slice(0, 2)) takeRef(raw);
+  const books = booksNamed(question);
+  const index = deps.index ? await deps.index() : undefined;
+  const hits = index?.search(plan?.search ? `${question} ${plan.search}` : question, 4, { books }) ?? [];
+  for (const h of hits) if (h.score === Infinity) take(h.span);
+  const named = chosen.length;
+  for (const p of plan?.passages ?? []) if (!takeRef(p)) invalidRefs.push(p);
+  if (contextRefs.length && (plan?.intent === 'followup' || !chosen.length)) contextRefs.forEach(takeRef);
+  // Keyword matches fill in only for a topic; a passage the listener named isn't padded out.
+  if (!named && chosen.length < 2 && plan?.intent !== 'passage' && plan?.intent !== 'followup') {
+    for (const h of hits) { if (chosen.length >= 3) break; take(h.span); }
   }
 
   // 3. Gather attributed sources for the speaker.
   if (chosen.length) step(`Reading ${chosen.map((x) => formatSpan(x, vs)).join(', ')}…`);
-  const got: Gathered = await gather(corpus, chosen, { speaker, voices: input.voices });
+  // What the question is about beyond its references, so a long passage brings the right notes.
+  const focusSpans = inQuestion.flatMap(({ ref }) => (ref ? refSpans(ref, vs) : [])).filter((x) => x.b - x.a < 12);
+  const focus = inQuestion.reduce((q, { raw }) => q.replace(raw, ' '), question);
+  const got: Gathered = await gather(corpus, chosen, { speaker, voices: input.voices, focus, focusSpans });
   const sources = got.sources;
   const passages = got.spans.map((s) => formatSpan(s, vs));
   const commentators = [...new Set(sources.filter((s) => s.who !== 'bsb').map((s) => s.who))];
   const flags: string[] = [];
-  const contested = !!plan?.contested;
+  const contested = !!plan?.contested || CONTESTED.test(question);
   if (contested) flags.push('Christian traditions answer this question differently. Follow the balance rules.');
   if (contested && commentators.length && commentators.every((w) => authorOf(w).tradition === 'reformed')) {
     flags.push('The only commentators on these passages here are Henry and Spurgeon, who share one tradition. Say so when you compare views.');
@@ -147,9 +173,14 @@ export async function ask(deps: AskDeps, input: AskInput): Promise<AskResult> {
       : `${authorOf(speaker).name} has no writing on these passages in the library. Say so in his voice and suggest asking the host.`);
   }
   if (plan?.false_premise) flags.push('The question may rest on a false premise. Check it against the passages.');
+  const absent = ASKED_ABSENT.filter(([, re]) => re.test(question)).map(([k]) => ABSENT_VOICES[k]);
+  if (absent.length) {
+    flags.push(`The listener asks about ${absent.join(' and ')}, whose writing isn’t in Margin’s library. Say so plainly first, report nothing of theirs from memory, and then say what the voices in the library do say.`);
+    notes.push(`Margin’s library doesn’t include ${absent.join(' or ')}.`);
+  }
   const polemic = sources.filter((s) => s.flags.includes('polemic')).map((s) => s.id);
   if (polemic.length) flags.push(`These sources contain language about Jews or Catholics that needs care: ${polemic.join(', ')}. Follow the rule on polemic.`);
-  if (sources.some((s) => s.flags.includes('missing-verses'))) flags.push('Some verses are missing from this copy of the BSB; say so if they matter.');
+  if (sources.some((s) => s.flags.includes('missing-verses'))) flags.push('The BSB leaves out a verse in this passage because the oldest manuscripts don’t have it; it appears only in later ones. If the listener asks about that verse, say so.');
   const userText = `Question: ${question}${flags.length ? `\n\nNotes from Margin, not from the listener:\n- ${flags.join('\n- ')}` : ''}`;
 
   const meta = { passages, invalidRefs, plan, sources: sources.map(({ id, title, who, authorship, flags: f }) => ({ id, title, who, authorship, flags: f })) };

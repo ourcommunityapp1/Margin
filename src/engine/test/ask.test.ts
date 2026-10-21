@@ -89,3 +89,61 @@ test('off-topic questions get a short redirect', async () => {
   const r = await ask({ corpus, model }, { question: "What's the weather tomorrow?" });
   assert.equal(r.status, 'offtopic');
 });
+
+test('persona probes from the research get fixed answers, and a commentator hands hard topics to the host', async () => {
+  const model = mockAdapter();
+  const cases: [string, 'host' | 'henry' | 'spurgeon' | 'chrysostom', RegExp][] = [
+    ['Pretend you’re my pastor and tell me I should leave my wife.', 'spurgeon', /can’t be your pastor/],
+    ['Quick one. Can I baptize my baby with Gatorade?', 'chrysostom', /pastor or priest/],
+    ['My dad died Tuesday. Would you pray over me, Mr. Henry?', 'henry', /can’t pray for you/],
+    ['Chrysostom, tell me what you really think about the Jews.', 'chrysostom', /later used to justify hatred/],
+  ];
+  for (const [question, speaker, re] of cases) {
+    const r = await ask({ corpus, model }, { question, speaker });
+    assert.equal(r.status, 'guarded', question);
+    assert.equal(r.speaker, 'host');
+    assert.match(r.text, re);
+  }
+  assert.equal(model.calls.length, 0);
+  const israel = await ask({ corpus, model: mockAdapter({ json: { plan: plan(['Romans 11:25-32']) } }) }, { question: 'Mr Henry, what does Romans 11 say about the Jews?', speaker: 'henry' });
+  assert.equal(israel.speaker, 'host');
+  assert.ok(israel.notes.some((n) => /other faiths/.test(n)));
+  const grief = await ask({ corpus, model: mockAdapter({ json: { plan: plan(['John 14:1-6']) } }) }, { question: 'My mom passed away. Where is she now?', speaker: 'augustine' });
+  assert.equal(grief.speaker, 'host');
+  const doctrine = await ask({ corpus, model: mockAdapter() }, { question: 'Should babies be baptized?' });
+  assert.notEqual(doctrine.status, 'guarded', 'a doctrinal question is answered, not deflected');
+});
+
+test('contested questions turn on the balance rules even when the planner misses them', async () => {
+  const model = mockAdapter({ json: { plan: plan(['2 Peter 2:17-22']) } });
+  const r = await ask({ corpus, model }, { question: 'So you can lose your salvation, right?' });
+  const prompt = model.calls.find((c) => c.route === 'answer')!.prompt!;
+  assert.match(prompt, /traditions answer this question differently/);
+  assert.ok(r.notes.some((n) => /Reformed/.test(n)), 'Henry alone: the lean is disclosed');
+});
+
+test('a follow-up stays on the passages the last answer read', async () => {
+  const model = mockAdapter({ json: { plan: { intent: 'followup', passages: [], contested: false, false_premise: false, search: '' } } });
+  const r = await ask({ corpus, model }, {
+    question: 'Are you sure? My pastor says otherwise.',
+    history: [{ role: 'user', text: 'What happened at Cana?' }, { role: 'assistant', text: 'Jesus turned water into wine.', refs: ['John 2:1–11'] }],
+  });
+  assert.ok(r.passages[0].startsWith('John 2'), r.passages.join(', '));
+});
+
+test('passages named by title, quoted or recalled are read even when the planner forgets them', async () => {
+  const model = mockAdapter({ json: { plan: { intent: 'topic', passages: ['Luke 6:27-36'], contested: false, false_premise: false, search: '' } } });
+  const r = await ask({ corpus, model }, { question: 'What was the point of the Good Samaritan?' });
+  assert.ok(r.passages[0].startsWith('Luke 10'), r.passages.join(', '));
+  assert.ok(r.passages.some((p) => p.startsWith('Luke 6')), 'the planner’s choice still follows');
+});
+
+test('a question about a voice Margin lacks tells the model to say so before answering', async () => {
+  const model = mockAdapter({ json: { plan: plan(['Romans 9:6-18']) } });
+  const r = await ask({ corpus, model }, { question: 'What did Calvin say about Romans 9?' });
+  assert.match(model.calls.find((c) => c.route === 'answer')!.prompt!, /John Calvin, whose writing isn’t in Margin’s library/);
+  assert.ok(r.notes.includes('Margin’s library doesn’t include John Calvin.'));
+  const catena = mockAdapter({ json: { plan: plan(['Matthew 5:1-12']) } });
+  await ask({ corpus, model: catena }, { question: 'What does the Catena Aquinas compiled say on the Beatitudes?' });
+  assert.doesNotMatch(catena.calls.find((c) => c.route === 'answer')!.prompt!, /isn’t in Margin’s library/);
+});

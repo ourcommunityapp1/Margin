@@ -9,6 +9,7 @@ import os
 import re
 import sys
 import tomllib
+import unicodedata
 
 bsb_dir, canon_path, mhcc_path, tdavid_path, catena_path, hcf_root, out_dir = sys.argv[1:8]
 os.makedirs(out_dir, exist_ok=True)
@@ -60,6 +61,18 @@ for ref, txt in zip(refs, txts):
         b, cv = ref.split(' ')
         c, v = cv.split(':')
         have[(b, int(c), int(v))] = txt.strip()
+# The eBible file follows the original-language verse numbering, so 136 English verses with no
+# slot there (Malachi 4, Joel 2:28-32, Numbers 16:36-50 and others) come through empty. An
+# English-numbered copy of the same translation (scrollmapper's BSB.json) fills them if present.
+fill_path = os.path.join(bsb_dir, 'BSB.json')
+if os.path.exists(fill_path):
+    for fbi, fbook in enumerate(json.load(open(fill_path, encoding='utf-8'))['books']):
+        for fch in fbook['chapters']:
+            for fv in fch['verses']:
+                key = (CODES[fbi], int(fch['chapter']), int(fv['verse']))
+                text = re.sub(r'\s+', ' ', unicodedata.normalize('NFC', fv['text'])).strip()
+                if text and key not in have:
+                    have[key] = text
 
 # ---------- Henry (MHCC) ----------
 mh = json.load(open(mhcc_path, encoding='utf-8'))
@@ -251,7 +264,16 @@ BOOKNAME['Song of Solomon'] = 21
 FN = re.compile(r'^(.+?) (\d+)_(\d+)(?:-(\d+)(?:_(\d+))?)?\.toml$')
 
 
-def pd_entry(c):
+# The database links each quotation to a public-domain copy of the work, but the quoted text is
+# sometimes a modern translation (its Confessions, City of God, sermons, letters and treatises
+# read like 20th-century versions). Only these series match the 19th-century NPNF wording.
+NPNF_SERIES = {
+    'augustine': re.compile(r'^(expositions? (on|of) (the )?psalms?|on the psalms|tractates? on (the gospel of )?john|ten homilies on|(the )?harmony of the gospels)', re.I),
+    'chrysostom': re.compile(r'^(homil(y|ies)\b|(homily )?concerning the statues)', re.I),
+}
+
+
+def pd_entry(c, key):
     url = (c.get('source_url') or '').strip()
     title = (c.get('source_title') or '').strip()
     if not url or not ('historicalchristian.faith' in url or 'newadvent.org' in url):
@@ -260,7 +282,7 @@ def pd_entry(c):
         return False
     if 'catena' in title.lower():
         return False
-    return True
+    return bool(NPNF_SERIES[key].match(title))
 
 
 def hcf_books():
@@ -272,8 +294,8 @@ def hcf_books():
             if not m or m.group(1) not in BOOKNAME:
                 continue
             bi = BOOKNAME[m.group(1)]
-            if bi in GOSPELS:
-                continue
+            # The Gospels also have the Catena, but a persona never speaks from it, so this is
+            # where Augustine's Tractates on John and Chrysostom's homilies reach the Gospels.
             c0, v0 = int(m.group(2)), int(m.group(3))
             if c0 > len(KJV[bi]):
                 continue
@@ -291,7 +313,7 @@ def hcf_books():
                 continue
             kept, seen = 0, set()
             for c in data.get('commentary', []):
-                if kept >= 2 or not pd_entry(c):
+                if kept >= 2 or not pd_entry(c, key):
                     continue
                 q = plain(c.get('quote') or '')
                 n = len(q.split())

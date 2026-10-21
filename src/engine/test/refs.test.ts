@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openTestCorpus } from './helpers.ts';
-import { parseRef, formatRef, spans, spokenSpan, findRefs, formatSpan } from '../bible/refs.ts';
+import { parseRef, formatRef, spans, spokenSpan, findRefs, formatSpan, booksNamed } from '../bible/refs.ts';
+import { BOOKS } from '../bible/canon.ts';
 
 const corpus = await openTestCorpus();
 const vs = corpus.versification;
@@ -36,4 +37,30 @@ test('speaks and finds references', () => {
   const found = findRefs('As Paul says in Romans 4:5, and in Song of Songs 2:4, but not in Hezekiah 3:1.', vs);
   assert.deepEqual(found.map((f) => [f.raw, !!f.ref]), [['Romans 4:5', true], ['Song of Songs 2:4', true]]);
   assert.deepEqual(findRefs('what does psalm 23 mean, and is 5 enough?', vs, true).map((f) => f.raw), ['psalm 23']);
+});
+
+test('reads ordinal book names and books named without a chapter', () => {
+  const said = (q: string) => findRefs(q, vs, true).map((r) => r.ref && formatRef(r.ref));
+  assert.deepEqual(said('Second Peter 2 says they are worse off'), ['2 Peter 2']);
+  assert.deepEqual(said('what does first John 4:8 mean'), ['1 John 4:8']);
+  const named = (q: string) => booksNamed(q).map((b) => BOOKS[b].name);
+  assert.deepEqual(named('Philippians says not to be anxious'), ['Philippians']);
+  assert.deepEqual(named('In Acts, why did Paul go to Jerusalem?'), ['Acts']);
+  assert.deepEqual(named('Acts of kindness matter, right?'), [], 'an everyday word opening a sentence');
+  assert.deepEqual(named('What does Corinthians say about love?'), ['1 Corinthians', '2 Corinthians']);
+  assert.deepEqual(named('Did Peter really deny Jesus?'), [], 'Peter alone is the apostle');
+  assert.deepEqual(named('Romans 8 is my favorite'), [], 'a chapter makes it a reference instead');
+});
+
+test('the library holds every verse the BSB prints, and only the BSB\'s omissions are empty', async () => {
+  const empty: string[] = [];
+  for (let bi = 0; bi < BOOKS.length; bi++) {
+    for (let c = 1; c <= corpus.chapterCount(bi); c++) {
+      const cd = await corpus.chapter(bi, c);
+      cd.verses.forEach((t, i) => { if (!t) empty.push(`${BOOKS[bi].name} ${c}:${i + 1}`); });
+    }
+  }
+  assert.deepEqual(empty, ['Matthew 17:21', 'Matthew 18:11', 'Matthew 23:14', 'Mark 7:16', 'Mark 9:44', 'Mark 9:46', 'Mark 11:26', 'Mark 15:28',
+    'Luke 17:36', 'Luke 23:17', 'John 5:4', 'Acts 8:37', 'Acts 15:34', 'Acts 24:7', 'Acts 28:29', 'Romans 16:24']);
+  assert.match((await corpus.chapter(38, 4)).verses[4], /Elijah the prophet/);
 });

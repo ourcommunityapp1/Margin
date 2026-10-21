@@ -62,7 +62,7 @@ async function main() {
     const result = await engine.ask(input);
     let followup: AskResult | undefined;
     if (item.followup) {
-      followup = await engine.ask({ ...input, question: item.followup, history: [{ role: 'user', text: item.question }, { role: 'assistant', text: result.text }] });
+      followup = await engine.ask({ ...input, question: item.followup, history: [{ role: 'user', text: item.question }, { role: 'assistant', text: result.text, refs: result.passages }] });
     }
     const judged = followup ?? result;
     const checks = grade(item, judged, vs);

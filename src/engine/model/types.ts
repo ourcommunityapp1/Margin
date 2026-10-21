@@ -16,6 +16,8 @@ export interface JsonRequest {
 export interface Turn {
   role: 'user' | 'assistant';
   text: string;
+  // On an answer: the passages it read, so "Are you sure?" stays on the same text.
+  refs?: string[];
 }
 
 export interface CiteRequest {

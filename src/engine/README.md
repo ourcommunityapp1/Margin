@@ -19,10 +19,10 @@ Each stage is either a separate model call or code. A model call is followed by 
 
 | Stage | What happens | Code |
 |---|---|---|
-| 1. Guard | Fixed replies, with no model call, for these cases: a crisis (the reply gives 988), a request for a sacrament, and "are you real?" put to a persona. A request for personal counsel is passed to the host. | `pipeline/guard.ts` |
-| 2. Plan | A short JSON call picks up to four passages. It also flags contested questions and false premises. References written in the question are parsed in code first and always kept. Each reference is checked against the Bible's real chapter and verse numbers. References that don't exist are dropped and counted. | `pipeline/ask.ts`, `bible/refs.ts` |
-| 3. Gather | Each passage is widened to its whole paragraph, up to 30 verses. Then commentary is added: Henry, Spurgeon on the Psalms, and the Fathers, with doubtful attributions last. A topic question with no passage searches the library by keyword and by exact phrase. Each source carries its true author, its work and any caveats. | `retrieve/` |
-| 4. Answer | Claude answers with the sources as `search_result` blocks, with citations on. The system prompt carries the method: plain sense first, exact quotation, naming writers honestly, balance, and when to say less. | `model/anthropic.ts`, `prompts.ts` |
+| 1. Guard | Fixed replies, with no model call, for these cases: a crisis (the reply gives 988), a request for a sacrament or a prayer, asking Margin to act as someone's pastor, a ruling on church practice ("can I baptize my baby with Gatorade?"), "are you real?" put to a persona, and a commentator's own views on other faiths. Personal decisions, grief and passage questions about other faiths move from a commentator to the host. | `pipeline/guard.ts` |
+| 2. Plan | A short JSON call picks up to four passages. It also flags contested questions and false premises. Code finds, in the question, the references, the passages named by title ("the Good Samaritan"), and the lines of Scripture quoted or remembered ("lean not on your own understanding"). Those always come first. Each reference is checked against the Bible's real chapter and verse numbers, and planner references that don't exist are dropped and counted. A follow-up such as "Are you sure?" stays on the passages the last answer read. | `pipeline/ask.ts`, `bible/refs.ts`, `retrieve/known.ts`, `retrieve/search.ts` |
+| 3. Gather | Each passage is widened to its whole paragraph, up to 30 verses. Then commentary is added: Henry, Spurgeon on the Psalms, and the Fathers, with doubtful attributions last. On a long passage, notes are chosen by what the question asks: the verse it names, and the words it shares with the notes and their verses. A topic question with no passage searches the library by keyword, looking first in any book the question names. Each source carries its true author, its work and any caveats. | `retrieve/` |
+| 4. Answer | Claude answers with the sources as `search_result` blocks, with citations on. The system prompt carries the method: plain sense first, exact quotation, naming writers honestly, balance, and when to say less. Notes from the pipeline travel with the question, such as "contested", "the library holds no Calvin", or "only Reformed voices here". | `model/anthropic.ts`, `prompts.ts` |
 | 5. Verify | Code checks that every quotation matches a supplied source word for word, and comes from the writer the sentence names. It flags writers Margin doesn't hold (Calvin, Wesley and others), Aquinas named as an author, and Pseudo-Chrysostom called Chrysostom. It also checks references, a 240-word limit, list formatting, and persona limits. | `pipeline/verify.ts` |
 | 6. Grade | A second JSON call checks each claim against the sources. For a contested question, it also checks whether the answer picked a winner or gave only one side. | `pipeline/ask.ts` |
 | 7. Repair or fall back | The model gets one repair round with the problems listed. If the answer still fails, the listener hears the passage and one exact note instead. | `pipeline/ask.ts` |
@@ -40,13 +40,28 @@ Sessions need no model at all (`pipeline/session.ts`).
 - **Pseudo-Chrysostom.** The *Opus Imperfectum* is anonymous and probably Arian. It is labeled as such and ranked after genuine writers.
 - **Doubtful Catena entries.** Excerpts the Catena credits to doubtful writers are introduced as "an early writer the Catena calls…".
 - **Leaning sources.** When Henry and Spurgeon are the only commentators on a passage, the answer says that both are Calvinists.
-- **Missing voices.** For a voice Margin doesn't hold, such as Calvin, Wesley, Luther or the Orthodox, the answer says the library has no such voice instead of summarizing from memory.
-- **Contested questions.** The answer gives shared ground first, then each side in its own terms with its strongest textual case, and picks no winner.
-- **Polemic.** `npm run corpus:audit` flags old commentary that speaks harshly of Jews or Catholics (112 flags in `data/corpus/review.json.gz`). Flagged sources reach the model with a note: it may report such a passage, but must not repeat it as Margin's view.
+- **Missing voices.** For a voice Margin doesn't hold, such as Calvin, Wesley, Luther or the Orthodox, the pipeline tells Claude before it answers. Claude says so plainly instead of summarizing from memory.
+- **Contested questions.** The answer gives shared ground first, then each side in its own terms with its strongest textual case, and picks no winner. The planner flags these questions. A list of perennial disputes catches what it misses, such as infant baptism, eternal security, the millennium, and Mary.
+- **Polemic.** `npm run corpus:audit` flags old commentary that speaks harshly of Jews or Catholics (121 flags in `data/corpus/review.json.gz`). Flagged sources reach the model with a note: it may report such a passage, but must not repeat it as Margin's view.
 - **Personas.** Personas exist only for Henry, Spurgeon, Augustine and Chrysostom.
   - Each speaks only from his own works; Augustine and Chrysostom are never built from the Catena.
-  - Each is announced as AI, never claims to be the real man, and gives no counsel, absolution or blessing.
+  - Each is announced as AI, never claims to be the real man, and gives no counsel, absolution, blessing or prayer.
   - The host takes over after eight turns.
+
+## The library
+
+`data/corpus/` holds 75 gzipped book files, an index and the polemic review list. `scripts/library/build_all.py` rebuilds them byte for byte from the sources:
+
+- **BSB.** The text comes from eBible.org. That file follows Hebrew verse numbering, so 136 English verses had no place in it and were missing, among them Malachi 4, Joel 2:28–32, Numbers 16:36–50 and 2 Corinthians 13:14. The build fills them from an English-numbered BSB copy (scrollmapper's `BSB.json`).
+  - **How the copies compare.** The two copies share 30,950 verses. 30,614 are identical, and the rest differ only in spacing, verse division or small revisions.
+  - **How the filled verses were checked.** The neighbours of every filled verse match exactly, and a third copy agrees wherever its own text is complete. The 16 verses the BSB itself omits, such as Matthew 17:21 and Acts 8:37, stay empty. Answers that touch one of them say so.
+- **Matthew Henry's Concise Commentary.** A few headings are missing from the source, so a note can run past its stated verses. For example, the note headed John 3:1–8 runs to 3:21. Titles now name the verses a note actually covers.
+- **The Fathers.** These come from the Catena Aurea (the Gospels) and the Historical Christian Faith commentaries database.
+  - The database links each quotation to a public-domain edition, but many of its quotations are modern translations. This was found by sampling: for example, its Confessions reads "we are unable to think cognitively about an absolute privation of form".
+  - The build keeps only the series that read as the 19th-century NPNF translation:
+    - Augustine's Expositions on the Psalms, Tractates on John, Homilies on 1 John and Harmony of the Gospels;
+    - Chrysostom's homilies.
+  - These now reach the Gospels too, so the Augustine and Chrysostom personas have their own words there.
 
 ## Running it
 
@@ -73,30 +88,46 @@ All routes take a `POST` with a JSON body.
 
 | Route | Body | Returns |
 |---|---|---|
-| `/api/ask` | `{question, speaker?: "host" \| "henry" \| "spurgeon" \| "augustine" \| "chrysostom", history?, context?: {refs, label}}` | text, audio segments, checked quotations, passages, sources, notes |
+| `/api/ask` | `{question, speaker?: "host" \| "henry" \| "spurgeon" \| "augustine" \| "chrysostom", history?: [{role, text, refs?}], context?: {refs, label}}` | text, audio segments, checked quotations, passages, sources, notes |
 | `/api/playlist` | `{topic, from?: "all" \| "henry" \| "spurgeon" \| "fathers", sessions?}` | a checked draft playlist |
 | `/api/session` | `{refs: ["Romans 8"], title?, format?: "read" \| "verse"}` | a listening session |
 
+Send each earlier answer's `passages` back as `refs` in `history`. That way, a follow-up stays on the same text.
+
 ## Measuring it
 
-`eval/dataset.jsonl` holds the research's test set of about 110 items, in these categories:
+`eval/dataset.jsonl` holds the research's test set of 110 items, in these categories:
 
-- answerable;
-- partly answerable;
-- library silent;
-- false premise;
-- contested pairs, asked from both sides;
-- persona;
-- flattery, where a stated view is followed by "Are you sure?".
+- answerable (30);
+- partly answerable (15);
+- library silent (15);
+- false premise (10);
+- contested pairs, asked from both sides (20);
+- persona (10);
+- flattery, where a stated view is followed by "Are you sure?" (10).
 
-`eval/graders.ts` scores each answer in code: quotations, references, invented attributions, abstention, length and balance flags. The result also records the grading call's verdicts. `eval/run.ts` reports each category's pass rate with a 95% interval, and `--compare a.json b.json` lists the items that changed between two runs.
+Each item was checked against the library. `eval/graders.ts` scores each answer in code: quotations, references, invented attributions, abstention, length and balance flags. The result also records the grading call's verdicts. `eval/run.ts` reports each category's pass rate with a 95% interval, and `--compare a.json b.json` lists the items that changed between two runs.
+
+### Mock baseline
+
+The mock model passes 79 of 110 items, with 202 of 202 quotations verified, no invented references and no errors. This baseline tests the plumbing, not the answers:
+
+- **What a mock can't do.** It cannot abstain or correct a premise, so the silent and false-premise categories score 0 by design.
+- **What it shows.** The other categories show what code alone already gets right: retrieval, guards, the contested backstop and follow-ups.
+- **What the eval caught.** Building this baseline surfaced and fixed several problems:
+  - quoted lines were missed when written in single quotes;
+  - the guards missed iPhone curly apostrophes;
+  - a named passage was padded with unrelated ones;
+  - Henry's note on 2 Peter 2:17–22 was cut;
+  - the BSB verses were missing;
+  - modern translations were in the Fathers.
 
 Rerun the eval after every prompt change and every model upgrade, and add real failures as new items.
 
 ## Limits
 
-- **Live scores.** The pipeline has been tested end to end with a mock model and a stand-in for the artifact's Claude. Answer quality needs a `--live` run with an API key. No live scores exist yet.
-- **Search.** Topic search is keyword search with an exact-phrase lookup. The research also recommends embeddings, which would catch passages that share meaning but not words.
+- **Live scores.** Answer quality needs a `--live` run with an API key. No live scores exist yet.
+- **Search.** Topic search is keyword search with phrase and title lookups. The research also recommends embeddings. Embeddings would catch questions worded differently from the text, such as "mad" for Jonah's anger.
 - **Polemic flags.** The flags come from heuristics, and someone should review them by hand.
 - **Balance grading.** The research recommends readers from at least two traditions for balance items. The grading call is only a first pass.
-- **Licensing.** Only public-domain text reaches the model (BSB, Henry, Spurgeon, the Catena and the Schaff Fathers). ESV, NIV and NASB would be display-only, if licensed at all.
+- **Licensing.** Only public-domain text reaches the model: BSB, Henry, Spurgeon, the Catena (1841) and Schaff's NPNF translations. ESV, NIV and NASB would be display-only, if licensed at all.

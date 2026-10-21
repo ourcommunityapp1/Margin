@@ -6,6 +6,7 @@ import { formatSpan, type Span } from '../bible/refs.ts';
 import { Corpus, type Chunk, type ChapterData } from '../corpus/store.ts';
 import { authorOf, WORKS, type Speaker, type Tradition } from '../corpus/sources.ts';
 import { blocks, clipWords, words } from '../text.ts';
+import { tokenize } from './bm25.ts';
 
 export interface Source {
   id: string;
@@ -23,6 +24,10 @@ export interface VoicePolicy {
   speaker: Speaker;
   // Optional narrowing, e.g. ['henry'] or ['fathers'] from a playlist's "From" setting.
   voices?: string[];
+  // The question with its references taken out, and the short spans it names, so a long
+  // passage brings the notes on what the listener asked about.
+  focus?: string;
+  focusSpans?: Span[];
 }
 
 export interface Gathered {
@@ -39,6 +44,31 @@ const FATHER_RANK = ['chrysostom', 'augustine', 'jerome', 'ambrose', 'gregory', 
 
 const MAX_SCRIPTURE_VERSES = 30;
 const PER_SOURCE_WORDS = 600;
+// Past this many verses, notes are chosen by what the question asks rather than taken in order.
+const FOCUS_ABOVE_VERSES = 12;
+// Words that say nothing about which verses a question means.
+const GENERIC = new Set(tokenize('mean meaning explain tell think verse chapter passage bible scripture understand talk read help question make right wrong true really actually'));
+
+interface Focus { words: Set<string>; spans: Span[] }
+
+// How much a note bears on the question: a verse the listener named, words they share, and
+// (counting double) words of the verses the note covers, which a question often paraphrases.
+function relevance(k: Chunk, cd: ChapterData, focus: Focus): number {
+  const end = Math.max(k.span.b, k.reach);
+  let n = focus.spans.some((s) => s.bi === cd.bi && s.c === cd.c && k.span.a <= s.b && end >= s.a) ? 3 : 0;
+  if (!focus.words.size) return n;
+  const own = new Set(tokenize(k.text));
+  const verses = new Set(tokenize(cd.verses.slice(k.span.a - 1, end).join(' ')));
+  for (const t of focus.words) n += (own.has(t) ? 1 : 0) + (verses.has(t) ? 2 : 0);
+  return n;
+}
+
+// The n notes most relevant to the question, back in verse order; with no question, the first n.
+function pick(list: Chunk[], n: number, cd: ChapterData, focus: Focus | null): Chunk[] {
+  if (!focus || list.length <= n) return list.slice(0, n);
+  const top = list.map((k, i) => ({ k, i, r: relevance(k, cd, focus) })).sort((x, y) => y.r - x.r || x.i - y.i).slice(0, n);
+  return top.sort((x, y) => x.i - y.i).map((x) => x.k);
+}
 
 // Ranks early-church excerpts: named Fathers first, distinct writers before repeats, doubtful last.
 export function rankFathers(list: Chunk[], n: number): Chunk[] {
@@ -84,7 +114,9 @@ export function sourceTitle(k: Chunk): string {
   const a = authorOf(k.who);
   const on = formatSpan(k.span);
   if (k.work === 'mhcc') {
-    const title = k.kind === 'intro' ? `introduction to ${BOOKS[k.span.bi].name}` : `on ${on}`;
+    // A Henry note runs to the next heading; a few headings are missing from the source.
+    const covers = formatSpan({ ...k.span, b: Math.max(k.span.b, k.reach) });
+    const title = k.kind === 'intro' ? `introduction to ${BOOKS[k.span.bi].name}` : `on ${covers}`;
     return `Matthew Henry, Concise Commentary, ${title}${k.posthumous ? ' (this part of Henry’s Exposition was completed from his notes by other ministers)' : ''}`;
   }
   if (k.work === 'tdavid') return `Charles Spurgeon, The Treasury of David, ${k.kind === 'overview' ? `introduction to ${on}` : `on ${on}`}`;
@@ -112,7 +144,7 @@ function scriptureSource(cd: ChapterData, s: Span, vs: number[][]): Source {
   const missing = s.b - s.a + 1 - verseBlocks.length;
   return {
     id: `bsb:${BOOKS[s.bi].code}.${s.c}.${s.a}-${s.b}`,
-    title: `${formatSpan(s, vs)} (${WORKS.bsb.title})${missing ? `; ${missing} verse${missing > 1 ? 's are' : ' is'} missing from this copy` : ''}`,
+    title: `${formatSpan(s, vs)} (${WORKS.bsb.title})${missing ? `; the BSB leaves out ${missing > 1 ? `${missing} verses` : 'one verse'} here, as the oldest manuscripts do` : ''}`,
     blocks: verseBlocks, who: 'bsb', work: 'bsb', span: s, authorship: 'genuine', flags: missing ? ['missing-verses'] : [],
   };
 }
@@ -120,13 +152,18 @@ function scriptureSource(cd: ChapterData, s: Span, vs: number[][]): Source {
 // Collects Scripture and commentary for up to four passages within a word budget.
 export async function gather(corpus: Corpus, spans: Span[], policy: VoicePolicy, budgetWords = 6500): Promise<Gathered> {
   const polemic = await corpus.reviewFlags();
+  const focusWords = new Set(tokenize(policy.focus ?? '').filter((t) => !GENERIC.has(t)));
+  const focusSpans = policy.focusSpans ?? [];
+  // Only a question that says something beyond its reference can choose among notes.
+  const focus: Focus | null = focusWords.size || focusSpans.length ? { words: focusWords, spans: focusSpans } : null;
   const sources: Source[] = [];
   const used = new Set<string>();
   const widened: Span[] = [];
   let budget = budgetWords;
   let commentary = 0;
   const add = (src: Source) => {
-    if (used.has(src.id) || budget <= 0) return;
+    // An empty source can't be cited (and the API rejects one), so it is never sent.
+    if (used.has(src.id) || budget <= 0 || !src.blocks.some((b) => b.trim())) return;
     used.add(src.id); budget -= src.blocks.reduce((n, b) => n + words(b), 0); sources.push(src);
     if (src.who !== 'bsb') commentary++;
   };
@@ -137,10 +174,14 @@ export async function gather(corpus: Corpus, spans: Span[], policy: VoicePolicy,
     widened.push(s);
     add(scriptureSource(cd, s, corpus.versification));
     const near = Corpus.touching(cd, s.a, s.b).filter((k) => allowed(policy, k));
-    const henry = near.filter((k) => k.work === 'mhcc').slice(0, 2);
-    const spurgeon = near.filter((k) => k.work === 'tdavid').slice(0, 3);
-    const npnf = near.filter((k) => k.work === 'npnf');
-    const catena = near.filter((k) => k.work === 'catena');
+    const f = s.b - s.a + 1 > FOCUS_ABOVE_VERSES ? focus : null;
+    const henry = pick(near.filter((k) => k.work === 'mhcc'), 2, cd, f);
+    const spurgeon = pick(near.filter((k) => k.work === 'tdavid'), 3, cd, f);
+    // On a long passage, a Father's note must touch the question: the verse it names, a word
+    // from the verses the note covers, or two of its own.
+    const relevant = (k: Chunk) => !f || relevance(k, cd, f) >= 2;
+    const npnf = near.filter((k) => k.work === 'npnf' && relevant(k));
+    const catena = near.filter((k) => k.work === 'catena' && relevant(k));
     if (cd.bi === PSALMS && cd.spurgeonOverview && allowed(policy, cd.spurgeonOverview) && s.b - s.a + 1 >= cd.nv / 2) add(toSource(cd.spurgeonOverview, polemic));
     for (const k of [...henry, ...spurgeon]) add(toSource(k, polemic));
     const fatherSlots = policy.speaker === 'host' ? 4 : 6;
