@@ -32,27 +32,30 @@ export function openStore(name: string): Promise<Store> {
 export const dataDir = () => process.env.MARGIN_DATA_DIR ?? path.join(process.env.TMPDIR ?? '/tmp', 'margin');
 
 // Netlify injects the Blobs credentials into its functions; anywhere else getStore throws.
+// The credentials are renewed for each request and expire, while a warm server lives on, so
+// every call reads them afresh rather than keeping the first request's.
 async function netlifyStore(name: string): Promise<Store | null> {
   try {
     const { getStore } = await import('@netlify/blobs');
-    const blobs = getStore({ name, consistency: 'strong' });
+    const blobs = () => getStore({ name, consistency: 'strong' });
+    blobs();
     return {
       kind: 'blobs',
       async get(key) {
-        const v = await blobs.get(key, { type: 'arrayBuffer' });
+        const v = await blobs().get(key, { type: 'arrayBuffer' });
         return v ? new Uint8Array(v) : null;
       },
       async has(key) {
-        return (await blobs.getMetadata(key)) !== null;
+        return (await blobs().getMetadata(key)) !== null;
       },
       async getJSON<T>(key: string) {
-        return ((await blobs.get(key, { type: 'json' })) as T | null) ?? null;
+        return ((await blobs().get(key, { type: 'json' })) as T | null) ?? null;
       },
       async set(key, value) {
-        await blobs.set(key, typeof value === 'string' ? value : new Blob([value as BlobPart]));
+        await blobs().set(key, typeof value === 'string' ? value : new Blob([value as BlobPart]));
       },
       async list(prefix) {
-        return (await blobs.list({ prefix })).blobs.map((b) => b.key);
+        return (await blobs().list({ prefix })).blobs.map((b) => b.key);
       },
     };
   } catch {

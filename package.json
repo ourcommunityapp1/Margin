@@ -7,7 +7,7 @@
     "build": "node scripts/build-web.mjs && next build",
     "start": "next start",
     "lint": "eslint",
-    "engine:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/engine/test/*.test.ts src/voice/test/*.test.ts",
+    "engine:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test src/engine/test/*.test.ts src/voice/test/*.test.ts src/server/test/*.test.ts",
     "engine:eval": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/engine/eval/run.ts",
     "corpus:audit": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/audit-polemic.ts"
   },
