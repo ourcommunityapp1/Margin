@@ -1,6 +1,18 @@
-# Journal: strategy notes
+# Deep Think: strategy notes
 
 A journal that helps you think out loud, then shows your thoughts back to you in a clean, organized form. It coaches you toward clearer thinking, but it never writes for you.
+
+## Decisions so far
+
+- **Name:** Deep Think.
+- **Audience:** just me, for now. No spoken coaching prompts yet.
+- **Core:** a notes app with folders and notes. Onboarding asks what you think about (these become the first folders) and what you want help with.
+- **Capture:** one New note button. It starts listening right away, and typing is one tap away. No title needed: it fills in as you talk and stays fixed once you edit it.
+- **Auto-formatting:** on. Punctuation, paragraphs and headings appear while you talk.
+- **Suggestions:** one place for everything: thinking prompts (shaped by the kind of writing: Express, Explore, Explain, Persuade, Tell), threads, alternative words, real links to read further, and writing tips.
+- **Word suggestions** loosen the "every word is yours" rule below: words are offered, never inserted.
+- **Reformat:** a separate action with 16 formats in four groups (Organize, Interpret, Decide, Reflect). It replaces the note, and you can always go back to the original.
+- **Mockups:** https://claude.ai/artifact/9jPJjzoCUHMXnNVtUhEdeW
 
 ## The one rule: every word on the page is yours
 
