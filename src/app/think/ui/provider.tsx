@@ -5,7 +5,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { getStatus, supabase, type Status } from '@/think/client/session';
+import { getStatus, hasAccessCode, supabase, type Status } from '@/think/client/session';
+import { AccessCode } from './access-code';
 import { cloudStore, deviceStore, type Store } from '@/think/client/store';
 import type { Profile } from '@/think/types';
 
@@ -35,6 +36,8 @@ export function ThinkProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   // undefined: not loaded yet. null: loaded, and onboarding hasn't happened.
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
+  // Only checked when there are no accounts: undefined while checking.
+  const [access, setAccess] = useState<boolean | undefined>(undefined);
 
   useEffect(() => {
     let live = true;
@@ -42,6 +45,7 @@ export function ThinkProvider({ children }: { children: React.ReactNode }) {
     const db = supabase();
     if (!db) {
       Promise.resolve().then(() => { if (live) setSession({ userId: null, email: null }); });
+      hasAccessCode().then((ok) => { if (live) setAccess(ok); });
       return () => { live = false; };
     }
     db.auth.getSession().then(({ data }) => {
@@ -93,6 +97,8 @@ export function ThinkProvider({ children }: { children: React.ReactNode }) {
   }, [status, store, profile, email]);
 
   if (path === '/think/signin') return <>{children}</>;
+  if (!accounts && access === false) return <AccessCode onDone={() => setAccess(true)} />;
+  if (!accounts && access === undefined) return <div className="dt-screen" aria-busy="true" />;
   if (!value || needsSignIn || (needsWelcome && path !== '/think/welcome')) return <div className="dt-screen" aria-busy="true" />;
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

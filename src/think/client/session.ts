@@ -1,14 +1,38 @@
 // The browser's connection to Supabase (sign-in) and to Deep Think's own API routes.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { getSupabase } from '@/lib/supabase';
+import { createBrowserClient } from '@supabase/ssr';
+import { THINK_SUPABASE_KEY, THINK_SUPABASE_URL, thinkAccountsConfigured } from '@/think/env';
 
-export const accountsConfigured = () =>
-  !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+export const accountsConfigured = thinkAccountsConfigured;
 
-// Null when Supabase isn't set up; the app then keeps notes on this device.
+let client: SupabaseClient | null = null;
+
+// Null when Deep Think's Supabase isn't set up; the app then keeps notes on this device.
 export function supabase(): SupabaseClient | null {
-  return accountsConfigured() ? getSupabase() : null;
+  if (!accountsConfigured()) return null;
+  client ??= createBrowserClient(THINK_SUPABASE_URL, THINK_SUPABASE_KEY);
+  return client;
+}
+
+// Without accounts, the API is guarded by the listening app's access code, kept in a cookie.
+export async function hasAccessCode(): Promise<boolean> {
+  try {
+    const r = await fetch('/api/login');
+    return !!(await r.json())?.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function enterAccessCode(code: string): Promise<string | null> {
+  try {
+    const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+    const data = await r.json().catch(() => ({}));
+    return r.ok && data?.ok ? null : (data?.error ?? 'That code isn’t right.');
+  } catch {
+    return 'Couldn’t reach the server. Try again.';
+  }
 }
 
 export class ApiError extends Error {

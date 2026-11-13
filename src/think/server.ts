@@ -3,16 +3,17 @@
 // the routes fall back to the repo's existing access code (open in local dev only).
 
 import { createClient } from '@supabase/supabase-js';
+import { THINK_SUPABASE_KEY, THINK_SUPABASE_URL, thinkAccountsConfigured } from './env.ts';
 import Anthropic from '@anthropic-ai/sdk';
 import { authorize } from '../engine/server.ts';
 
-export const supabaseConfigured = () => !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+export const supabaseConfigured = thinkAccountsConfigured;
 
 export async function guard(request: Request): Promise<Response | null> {
   if (!supabaseConfigured()) return authorize(request);
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!token) return Response.json({ error: 'Sign in to use Deep Think.' }, { status: 401 });
-  const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+  const supabase = createClient(THINK_SUPABASE_URL, THINK_SUPABASE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data, error } = await supabase.auth.getUser(token);

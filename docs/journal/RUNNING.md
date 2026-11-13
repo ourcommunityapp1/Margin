@@ -17,7 +17,7 @@ Set these in `.env.local` for local work (the file is git-ignored) and in the ho
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Punctuation and paragraphs, titles, the coach's prompts, reformat versions, reading links | Notes get plain spacing only (a capital at the start of each paragraph, a break at each long pause). The title is the note's opening words. Suggestions still recommends a next move but has no prompts. Reformat offers basic built-in arrangements. |
 | `ELEVENLABS_API_KEY` | Speech to text | The browser's built-in speech recognition is used instead, with a quiet notice. If the browser has none, the note opens for typing. |
-| `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Sign-in, and notes that sync and stay private to their owner | No sign-in. Notes are kept in the browser on that one device, and the library says so. |
+| `NEXT_PUBLIC_THINK_SUPABASE_URL` and `NEXT_PUBLIC_THINK_SUPABASE_PUBLISHABLE_KEY` | Sign-in, and notes that sync and stay private to their owner. These are Deep Think's own settings, separate from the listening app's `NEXT_PUBLIC_SUPABASE_*`, because the two may use different projects. | No sign-in. Notes are kept in the browser on that one device, and the API asks for the listening app's access code (`MARGIN_API_TOKEN`) once per device. |
 
 Optional:
 
@@ -32,7 +32,7 @@ Optional:
 The `/api/think/*` routes spend API credit, so they are locked:
 
 - **With Supabase set up:** a request must come from a signed-in user. This is the intended setup.
-- **Without Supabase:** the routes are open in local development (`npm run dev`). On a deployed site they fall back to the listening app's access code (`MARGIN_API_TOKEN`), so in practice the AI features stay off until Supabase is set up. The app still works; it uses the fallbacks in the table above.
+- **Without Supabase:** the routes are open in local development (`npm run dev`). On a deployed site they use the listening app's access code (`MARGIN_API_TOKEN`). Deep Think asks for it once, and a device that already entered it for the listening app on the same site skips that step.
 
 ## 2. Set up Supabase
 
