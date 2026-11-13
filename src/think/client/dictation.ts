@@ -24,6 +24,8 @@ export interface DictationEvents {
   onNotice(message: string): void;
   // Number of recorded stretches still being turned into words.
   onWaiting?(count: number): void;
+  // The server can't turn speech into words (a missing or refused key). Switch engines.
+  onUnavailable?(): void;
 }
 
 export interface Dictation {
@@ -50,8 +52,20 @@ export const browserRecognitionAvailable = () => !!recognitionCtor();
 export const recorderAvailable = () =>
   typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
 
+// Once the server refuses speech to text, stop sending it audio for the rest of this visit.
+const BROKEN_KEY = 'think-server-speech-broken';
+export function markServerSpeechBroken() {
+  try { sessionStorage.setItem(BROKEN_KEY, '1'); } catch { /* private mode: the flag below still holds */ }
+  serverSpeechBroken = true;
+}
+let serverSpeechBroken = false;
+const serverSpeechWorks = () => {
+  if (serverSpeechBroken) return false;
+  try { return sessionStorage.getItem(BROKEN_KEY) !== '1'; } catch { return true; }
+};
+
 export function pickEngine(serverHasSpeech: boolean): Engine | null {
-  if (serverHasSpeech && recorderAvailable()) return 'recorder';
+  if (serverHasSpeech && serverSpeechWorks() && recorderAvailable()) return 'recorder';
   if (browserRecognitionAvailable()) return 'browser';
   return null;
 }
@@ -139,6 +153,11 @@ function recorderDictation(ev: DictationEvents): Dictation {
         const r = await postAudio<{ text: string; unclear: Unclear[] }>('transcribe', blob);
         if (r.text) ev.onFinal(r.text, r.unclear ?? []);
       } catch (e) {
+        if (e instanceof ApiError && e.unavailable && ev.onUnavailable) {
+          markServerSpeechBroken();
+          ev.onUnavailable();
+          return;
+        }
         ev.onNotice(e instanceof ApiError ? `${e.message} That stretch wasn’t written down.` : 'A stretch of speech couldn’t be sent. Check your connection.');
       } finally {
         waiting--;

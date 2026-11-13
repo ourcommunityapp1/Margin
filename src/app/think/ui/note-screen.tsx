@@ -166,6 +166,8 @@ export function NoteScreen({ id, fresh, folder }: { id: string; fresh: boolean; 
     await flushAll();
   }, [flushAll]);
 
+  const switchEngine = useRef<(() => Promise<void>) | null>(null);
+
   const startListening = useCallback(async () => {
     if (dictation.current) return;
     const engine = pickEngine(status.speech);
@@ -176,7 +178,8 @@ export function NoteScreen({ id, fresh, folder }: { id: string; fresh: boolean; 
       setDraft(noteRef.current ? noteText(noteRef.current) : '');
       return;
     }
-    if (engine === 'browser' && status.speech) setNotice('Using this browser’s built-in speech recognition.');
+    if (engine === 'browser' && status.speech && !switching.current) setNotice('Using this browser’s built-in speech recognition.');
+    switching.current = false;
     const d = createDictation(engine, {
       onInterim: setInterim,
       onFinal(text: string, unclear: Unclear[]) {
@@ -196,6 +199,11 @@ export function NoteScreen({ id, fresh, folder }: { id: string; fresh: boolean; 
       },
       onNotice: setNotice,
       onWaiting: setWaiting,
+      onUnavailable() {
+        // The server's speech to text failed: carry on with the phone's own dictation.
+        setNotice('Switched to your phone’s dictation. Say that last bit again.');
+        setTimeout(() => { switchEngine.current?.(); }, 0);
+      },
     });
     dictation.current = d;
     lastActivity.current = Date.now();
@@ -204,6 +212,15 @@ export function NoteScreen({ id, fresh, folder }: { id: string; fresh: boolean; 
     listeningRef.current = true;
     setListening(true);
   }, [status.speech, update, refreshLive, flush]);
+
+  const switching = useRef(false);
+  useEffect(() => {
+    switchEngine.current = async () => {
+      switching.current = true;
+      await stopListening();
+      await startListening();
+    };
+  }, [stopListening, startListening]);
 
   const enter = useCallback(async (next: Mode) => {
     if (next !== 'talk') await stopListening();
