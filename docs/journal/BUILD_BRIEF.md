@@ -26,6 +26,8 @@ A phone web app that the owner **uses every day** to think out loud. It should r
    - Listening is shown by a soft breathing orb at the bottom, with the live transcript just above it. There is no waveform bar.
    - **Auto-formatting while you talk: punctuation and paragraph spacing only.** No headings, labels or anything else that draws conclusions about what you mean. Headings would shape your thinking before you've finished it, and they clutter the screen. Keep the screen calm.
    - Structure (headings, sections) comes later, and only when you choose it, through Reformat.
+   - **Long pause while talking:** your last few sentences quietly come back into focus so you can reread where you left off. No question pops up, and coaching waits until you tap Suggestions.
+   - **Typing works the same way as talking,** except that pauses get no reaction, since pausing is normal when you type.
 4. **Note at rest (layout 3A):** back on the left. On the right: **Reformat**, **Suggestions · N** and a new-note icon. There's a small orb at the bottom to keep talking.
 5. **Suggestions sheet:** opens only when tapped, never on its own. It holds three things:
    - **Think it through:** up to 3 prompts.
