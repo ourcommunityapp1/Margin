@@ -8,7 +8,7 @@ A journal that helps you think out loud, then shows your thoughts back to you in
 - **Audience:** just me, for now. No spoken coaching prompts yet.
 - **Core:** a notes app with folders and notes. Onboarding asks what you think about (these become the first folders) and what you want help with.
 - **Capture:** one New note button. It starts listening right away, and typing is one tap away. No title needed: it fills in as you talk and stays fixed once you edit it.
-- **Auto-formatting:** on. Punctuation, paragraphs and headings appear while you talk.
+- **Auto-formatting:** on, but light. Only punctuation and paragraph spacing appear while you talk. No headings or conclusions mid-thought. Structure comes later, through Reformat, when you choose it.
 - **Suggestions:** one place for everything: thinking prompts (shaped by the kind of writing: Express, Explore, Explain, Persuade, Tell), small fixes (such as a word the transcription couldn't resolve), real links to read further, and a writing tip.
 - **Parked for now:** grouping into threads, and alternative-word suggestions.
 - **Reformat:** a separate action. It shows three ready-made versions of the note, chosen to fit it (for example: as a decision, as a story, as questions); there's no menu of formats to pick from. Tapping one replaces the note, and you can always go back to the original.

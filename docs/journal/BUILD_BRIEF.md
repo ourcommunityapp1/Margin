@@ -6,7 +6,7 @@ This brief is for whoever builds the first working version. Read `STRATEGY.md` f
 
 A phone web app that the owner **uses every day** to think out loud. It should replace Apple Notes for that. The users are the owner only, for now.
 
-**The moment that has to land: talk → a beautiful page.** You ramble for two minutes, and a clean note appears with punctuation, paragraphs and headings, set in lovely type. If only one thing works well, it's this.
+**The moment that has to land: talk → a beautiful page.** You ramble for two minutes, and a clean note appears, with punctuation and paragraph spacing, set in lovely type. If only one thing works well, it's this.
 
 ## Where and how
 
@@ -24,7 +24,8 @@ A phone web app that the owner **uses every day** to think out loud. It should r
    - It starts listening immediately, and the keyboard is one tap away.
    - No title is needed. The title fills itself in, shown in gray, as the topic becomes clear. **Once the user edits it, it never changes again.**
    - Listening is shown by a soft breathing orb at the bottom, with the live transcript just above it. There is no waveform bar.
-   - **Auto-formatting:** punctuation, paragraph breaks and headings appear while you talk. Headings should come from the user's own words where possible.
+   - **Auto-formatting while you talk: punctuation and paragraph spacing only.** No headings, labels or anything else that draws conclusions about what you mean. Headings would shape your thinking before you've finished it, and they clutter the screen. Keep the screen calm.
+   - Structure (headings, sections) comes later, and only when you choose it, through Reformat.
 4. **Note at rest (layout 3A):** back on the left. On the right: **Reformat**, **Suggestions · N** and a new-note icon. There's a small orb at the bottom to keep talking.
 5. **Suggestions sheet:** opens only when tapped, never on its own. It holds three things:
    - **Think it through:** up to 3 prompts.
@@ -53,7 +54,7 @@ Over time, as the coach earns trust, it can predict the right next move. It neve
 
 **It never makes you sound good. It helps you think.** The moment of truth is when you read the page back and it feels like your own writing, because it is. The coach's role is closer to a Socratic "midwife" or a developmental editor than a ghostwriter: it draws out what's already there.
 
-**Authorship trail (secondary feature).** You can open a simple record of what the app touched: punctuation added, paragraphs split, headings taken from your phrases, unclear words flagged as questions. It also states that no new ideas or concepts were added: you did this. It doesn't need to show every change, just enough to prove that.
+**Authorship trail (secondary feature).** You can open a simple record of what the app touched: punctuation added, paragraphs split, unclear words flagged as questions. It also states that no new ideas or concepts were added: you did this. It doesn't need to show every change, just enough to prove that.
 
 **The stance is "a friend who listens."** The coach is mostly quiet and reflects back what you said so you can hear yourself. It isn't a mentor who argues or a therapist who interprets.
 
