@@ -1,7 +1,7 @@
 'use client';
 
 // Shown when Deep Think has no sign-in set up and this device hasn't entered the access code
-// yet. It's the same code as the listening app on this site, so most devices skip this.
+// yet. Deep Think's own code works, and so does the listening app's.
 
 import { useState } from 'react';
 import { enterAccessCode } from '@/think/client/session';
@@ -27,7 +27,7 @@ export function AccessCode({ onDone }: { onDone(): void }) {
         <p className="serif m-0 text-[19px] leading-[1.5] text-[var(--body)]">A private place to think out loud. Every word on the page is yours.</p>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-2 text-[13px] text-[var(--muted)]">Access code (the same one as Margin)
+        <label className="flex flex-col gap-2 text-[13px] text-[var(--muted)]">Access code
           <input required autoCapitalize="none" autoCorrect="off" value={code} onChange={(e) => setCode(e.target.value)} className="h-14 rounded-xl border border-[var(--rule)] bg-white px-4 text-[17px]" />
         </label>
         <button disabled={busy} className="h-14 rounded-[28px] bg-[var(--ink)] text-[16px] font-medium text-[var(--paper)] disabled:opacity-60">{busy ? 'Checking…' : 'Continue'}</button>

@@ -25,14 +25,15 @@ Optional:
 |---|---|
 | `THINK_STT_MODEL` | Use a specific ElevenLabs speech-to-text model. If the account can't use it, the built-in choices are tried next. |
 | `MARGIN_MODEL`, `MARGIN_FAST_MODEL` | Override which AI models are used. Deep Think shares these with the listening app: the fast one punctuates and titles, the strong one coaches and reformats. |
-| `MARGIN_API_TOKEN` | Only matters when Supabase is **not** set up. See "Who can call the API" below. |
+| `THINK_ACCESS_CODE` | Deep Think's own access code, used when its Supabase is **not** set up. Entered once per device. |
+| `MARGIN_API_TOKEN` | The listening app's access code. Deep Think accepts it too. |
 
 ### Who can call the API
 
 The `/api/think/*` routes spend API credit, so they are locked:
 
 - **With Supabase set up:** a request must come from a signed-in user. This is the intended setup.
-- **Without Supabase:** the routes are open in local development (`npm run dev`). On a deployed site they use the listening app's access code (`MARGIN_API_TOKEN`). Deep Think asks for it once, and a device that already entered it for the listening app on the same site skips that step.
+- **Without Supabase:** the routes are open in local development (`npm run dev`). On a deployed site they need an access code: Deep Think's own (`THINK_ACCESS_CODE`) or the listening app's (`MARGIN_API_TOKEN`). Deep Think asks for it once per device, and a device that already entered the listening app's code on the same site skips that step.
 
 ## 2. Set up Supabase
 

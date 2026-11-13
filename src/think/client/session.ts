@@ -15,10 +15,10 @@ export function supabase(): SupabaseClient | null {
   return client;
 }
 
-// Without accounts, the API is guarded by the listening app's access code, kept in a cookie.
+// Without accounts, the API is guarded by an access code, kept in a cookie.
 export async function hasAccessCode(): Promise<boolean> {
   try {
-    const r = await fetch('/api/login');
+    const r = await fetch('/api/think/login');
     return !!(await r.json())?.ok;
   } catch {
     return false;
@@ -27,7 +27,7 @@ export async function hasAccessCode(): Promise<boolean> {
 
 export async function enterAccessCode(code: string): Promise<string | null> {
   try {
-    const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
+    const r = await fetch('/api/think/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ code }) });
     const data = await r.json().catch(() => ({}));
     return r.ok && data?.ok ? null : (data?.error ?? 'That code isn’t right.');
   } catch {
