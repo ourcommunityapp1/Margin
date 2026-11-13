@@ -27,6 +27,7 @@ function fakeApi(o: { plan?: Plan | Error; models?: ModelInfo[] | Error; fail?: 
       calls.push({ text, voice, model });
       return new TextEncoder().encode(`mp3:${model}:${text}`);
     },
+    transcribe: async () => ({ text: '', words: [] }),
   };
   return { api, calls };
 }

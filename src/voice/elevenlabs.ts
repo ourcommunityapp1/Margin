@@ -1,5 +1,5 @@
 // A small ElevenLabs client: the models the account can use and what each costs, the plan's
-// credits for this billing period, and speech as MP3.
+// credits for this billing period, speech as MP3, and speech to text.
 
 export interface ModelInfo { id: string; tts: boolean; rate: number }
 export interface Plan { tier?: string; limit: number; used: number; resetsAt?: number }
@@ -21,10 +21,17 @@ export class ElevenLabsError extends Error {
   }
 }
 
+// One heard word. `logprob` is how sure the model was (0 is certain; more negative is less sure).
+export interface HeardWord { text: string; start?: number; end?: number; logprob?: number }
+export interface Transcript { text: string; language?: string; words: HeardWord[] }
+export interface TranscribeOptions { modelId: string; filename?: string; language?: string; signal?: AbortSignal }
+
 export interface ElevenLabs {
   models(): Promise<ModelInfo[]>;
   plan(): Promise<Plan>;
   speak(text: string, voiceId: string, modelId: string, signal?: AbortSignal): Promise<Uint8Array>;
+  // Speech to text for one recording. The text is verbatim: no sound-effect tags are added.
+  transcribe(audio: Blob, opts: TranscribeOptions): Promise<Transcript>;
 }
 
 // 64 kbps keeps a clip small for a phone on cellular; speech loses nothing audible.
@@ -71,6 +78,23 @@ export function elevenLabs(opts: { apiKey: string; base?: string; fetch?: typeof
         signal,
       });
       return new Uint8Array(await r.arrayBuffer());
+    },
+    async transcribe(audio, o) {
+      const form = new FormData();
+      form.append('model_id', o.modelId);
+      form.append('file', audio, o.filename ?? 'speech.webm');
+      form.append('tag_audio_events', 'false');
+      form.append('timestamps_granularity', 'word');
+      if (o.language) form.append('language_code', o.language);
+      // No content-type header: fetch sets the multipart boundary itself.
+      const body = (await (await call('/v1/speech-to-text', { method: 'POST', body: form, signal: o.signal })).json()) as {
+        text?: string; language_code?: string;
+        words?: { text: string; type?: string; start?: number; end?: number; logprob?: number }[];
+      };
+      const words = (body.words ?? [])
+        .filter((w) => (w.type ?? 'word') === 'word')
+        .map((w) => ({ text: w.text, start: w.start, end: w.end, logprob: w.logprob }));
+      return { text: (body.text ?? '').trim(), language: body.language_code, words };
     },
   };
 }
