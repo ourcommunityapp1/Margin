@@ -2,7 +2,7 @@
 // format, going back to the original. Each keeps the user's words exactly as they are.
 
 import type { Layout, Note, NoteVersion, Unclear } from './types.ts';
-import { punctuationCount } from './words.ts';
+import { containsWords, punctuationCount, wordsOf } from './words.ts';
 
 // Add a stretch of speech that has been punctuated and spaced. `raw` is what was heard;
 // `paragraphs` is the same words, formatted (already checked by acceptFormatting).
@@ -34,7 +34,10 @@ export function addUnclear(n: Note, unclear: Unclear[]): Note {
 // Typed text: paragraphs are whatever the user separated with a blank line.
 export function withTypedText(n: Note, text: string): Note {
   const paragraphs = text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
-  return { ...n, paragraphs, layout: null };
+  // A flagged word the user has since typed over no longer needs asking about.
+  const words = wordsOf(text);
+  const unclear = n.unclear.filter((u) => containsWords(words, u.word));
+  return { ...n, paragraphs, layout: null, unclear };
 }
 
 // The note as it stands, kept so it can always be brought back.

@@ -48,19 +48,24 @@ export function ThinkProvider({ children }: { children: React.ReactNode }) {
       if (live) setSession({ userId: data.session?.user.id ?? null, email: data.session?.user.email ?? null });
     });
     const { data: sub } = db.auth.onAuthStateChange((_event, s) => {
-      setSession({ userId: s?.user.id ?? null, email: s?.user.email ?? null });
+      const next = { userId: s?.user.id ?? null, email: s?.user.email ?? null };
+      setSession((cur) => (cur && cur.userId === next.userId && cur.email === next.email ? cur : next));
     });
     return () => { live = false; sub.subscription.unsubscribe(); };
   }, []);
 
   const accounts = !!supabase();
+  const known = !!session;
   const userId = session?.userId ?? null;
+  const email = session?.email ?? null;
+  // Keyed on who is signed in, not on each token refresh, so a note being written is never
+  // interrupted by one.
   const store = useMemo<Store | null>(() => {
-    if (!session) return null;
+    if (!known) return null;
     const db = supabase();
     if (!db) return deviceStore();
     return userId ? cloudStore(db, userId) : null;
-  }, [session, userId]);
+  }, [known, userId]);
 
   useEffect(() => {
     if (!store) return;
@@ -79,13 +84,13 @@ export function ThinkProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<Think | null>(() => {
     if (!status || !store || profile === undefined) return null;
     return {
-      status, store, email: session?.email ?? null, profile, setProfile,
+      status, store, email, profile, setProfile,
       async signOut() {
         await supabase()?.auth.signOut();
         setProfile(undefined);
       },
     };
-  }, [status, store, profile, session]);
+  }, [status, store, profile, email]);
 
   if (path === '/think/signin') return <>{children}</>;
   if (!value || needsSignIn || (needsWelcome && path !== '/think/welcome')) return <div className="dt-screen" aria-busy="true" />;

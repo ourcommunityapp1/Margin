@@ -62,3 +62,10 @@ test('unclear words are counted in the trail and never change the text', () => {
   assert.deepEqual(flagged.paragraphs, n.paragraphs);
   assert.equal(addUnclear(n, []), n);
 });
+
+test('typing over a flagged word clears its question', () => {
+  let n = addUnclear(addSpeech(newNote('n1'), 'about weather to move', ['About weather to move'], false), [{ word: 'weather', context: 'about weather to move' }]);
+  n = withTypedText(n, 'About whether to move');
+  assert.deepEqual(n.unclear, []);
+  assert.equal(n.trail.flagged, 1);
+});
