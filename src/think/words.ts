@@ -69,12 +69,15 @@ export function lightFormat(raw: string): string[] {
     .map((p) => p.replace(/^(\P{L}*)(\p{Ll})/u, (_, lead: string, c: string) => lead + c.toUpperCase()));
 }
 
+const HANGING = new Set(['the', 'a', 'an', 'its', 'my', 'our', 'and', 'but', 'or', 'so', 'to', 'of', 'that', 'is', 'was', 'for', 'with', 'in', 'on', 'i', 'it']);
+
 // A stand-in title when the AI isn't available: the opening words of the note.
 export function fallbackTitle(text: string): string {
-  const all = wordsOf(text);
-  if (all.length < 6) return '';
-  const first = sentencesOf(text)[0] ?? '';
-  const words = first.split(/\s+/).slice(0, 6).join(' ').replace(/[.,;:!?…—–-]+$/u, '');
+  if (wordsOf(text).length < 6) return '';
+  const first = (sentencesOf(text)[0] ?? '').split(/\s+/).slice(0, 6);
+  // Don't stop on a word that leaves the title hanging ("...its the").
+  while (first.length > 3 && HANGING.has(wordsOf(first[first.length - 1])[0] ?? '')) first.pop();
+  const words = first.join(' ').replace(/[^\p{L}\p{N}]+$/u, '');
   return words.replace(/^(\p{Ll})/u, (c) => c.toUpperCase());
 }
 

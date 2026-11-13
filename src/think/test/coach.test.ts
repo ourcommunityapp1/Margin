@@ -113,7 +113,8 @@ test('a reformat version is only kept if every sentence is the user’s own', ()
 
 test('the built-in arrangements are always faithful', () => {
   const versions = localVersions(MOVE);
-  assert.ok(versions.length >= 2);
+  assert.equal(versions.length, 2);
+  assert.deepEqual(localVersions(['One whole paragraph with no stops', 'And another one']).map((v) => v.label), ['Last thought first']);
   for (const v of versions) assert.equal(unfaithful(v, MOVE.join('\n\n')), null, v.label);
   assert.deepEqual(localVersions(['One']), []);
 });

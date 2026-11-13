@@ -81,5 +81,5 @@ test('rereading splits off the last few sentences without changing a word', () =
 
 test('a stand-in title is the opening words, and waits until there is something to go on', () => {
   assert.equal(fallbackTitle('i keep'), '');
-  assert.equal(fallbackTitle('i keep telling people it’s the money, but I don’t think so'), 'I keep telling people it’s the');
+  assert.equal(fallbackTitle('i keep telling people it’s the money, but I don’t think so'), 'I keep telling people');
 });

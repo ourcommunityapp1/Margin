@@ -1,0 +1,121 @@
+/* Deep Think: warm paper, ink, one accent. Newsreader for the user's words, Inter for the UI. */
+
+/* Same order as Tailwind's own layers, so the element rules below never outrank a utility. */
+@layer theme, base, components, utilities;
+
+body:has(.dt) {
+  background: #f7f5f0;
+  overscroll-behavior-y: none;
+}
+
+.dt {
+  --paper: #f7f5f0;
+  --ink: #1c1b19;
+  --body: #2a2824;
+  --muted: #5f5b54;
+  --faint: #8a857c;
+  --line: #e4e0d8;
+  --rule: #d9d4ca;
+  --accent: #7a4e24;
+  --accent-deep: #5c3a1a;
+  --accent-wash: #ede3d3;
+  --well: #edeae3;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dt .serif {
+  font-family: var(--font-newsreader), Newsreader, Georgia, serif;
+}
+
+@layer base {
+  .dt button {
+    cursor: pointer;
+  }
+
+  .dt :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .dt input:focus-visible,
+  .dt textarea:focus-visible {
+    outline: none;
+  }
+}
+
+/* The phone-width column. On a wider screen the app stays a centred page. */
+.dt-screen {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dt-top {
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+}
+
+.dt-bottom {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--pb, 24px));
+}
+
+@keyframes dtBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@keyframes dtSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes dtBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes dtRise {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes dtFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dtMark {
+  0%, 60% { background-color: rgba(201, 138, 85, 0.32); }
+  100% { background-color: rgba(201, 138, 85, 0); }
+}
+
+.dt-orb-fill {
+  background: radial-gradient(circle at 35% 30%, #f4d9b8, #c98a55 55%, #7a4e24);
+}
+.dt-orb { animation: dtBreathe 2.4s ease-in-out infinite; }
+.dt-orb-still { opacity: 0.55; }
+.dt-swirl {
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 40%, rgba(255, 255, 255, 0.3) 70%, rgba(255, 255, 255, 0));
+  animation: dtSpin 7s linear infinite;
+}
+.dt-caret { animation: dtBlink 1s step-end infinite; }
+.dt-rise { animation: dtRise 0.28s ease-out both; }
+.dt-fade { animation: dtFade 0.25s ease-out both; }
+.dt-mark { animation: dtMark 3.2s ease-out both; border-radius: 4px; }
+
+.dt-words p,
+.dt-words span {
+  transition: color 0.6s ease;
+}
+
+.dt-rail {
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.dt-rail::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dt-orb, .dt-swirl, .dt-caret, .dt-rise, .dt-fade { animation: none; }
+  .dt-words p, .dt-words span { transition: none; }
+}

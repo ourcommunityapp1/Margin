@@ -40,7 +40,7 @@ export function faithfulVersions(versions: Layout[], text: string, max = 3): Lay
 export function localVersions(paragraphs: string[]): Layout[] {
   const sentences = sentencesOf(paragraphs.join('\n'));
   const out: Layout[] = [];
-  if (sentences.length >= 2) out.push({ label: 'Line by line', blocks: sentences.map((v) => ({ v })) });
+  if (sentences.length > paragraphs.length) out.push({ label: 'Line by line', blocks: sentences.map((v) => ({ v })) });
   if (paragraphs.length >= 2) {
     out.push({
       label: 'Last thought first',
