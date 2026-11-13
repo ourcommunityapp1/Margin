@@ -48,3 +48,4 @@ next-env.d.ts
 /public/margin.html
 /public/paths.js
 /public/data/
+.netlify
