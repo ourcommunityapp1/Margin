@@ -38,6 +38,23 @@ A phone web app that the owner **uses every day** to think out loud. It should r
 
 This is the long-term advantage. Get it right before adding anything else.
 
+**Momentum first.** The most valuable thing the coach can do is keep you talking. Jumping in too early squashes the thought. While you're in flow, the coach does nothing: no reframing, no grammar, no polishing a single sentence.
+
+**Getting you to reread is the highest-value move.** Most people never read their own thinking back. Rereading is where they notice the gaps, the contradictions and the real point. Design for it: when you pause, the app gently brings your words back into view, rather than handing you an answer.
+
+**The default suggestion is "keep talking."** When you open Suggestions, the coach recommends one next move, ranked:
+1. **Keep going:** "You're mid-thought. Keep talking." (the most common)
+2. **Come back to it:** "You left something unfinished here: '…but when'." The coach links to the spot.
+3. **Read it over:** "You've said a lot. Read it back from the top."
+4. **Stuck?** First it asks *what kind* of stuck: "Not sure what I'm trying to say," or "stuck on one thought." Then it offers the matching help: finding the point, or working on that one thought.
+5. **Reframe:** only once there's enough material, and only when you choose it.
+
+Over time, as the coach earns trust, it can predict the right next move. It never forces one.
+
+**It never makes you sound good. It helps you think.** The moment of truth is when you read the page back and it feels like your own writing, because it is. The coach's role is closer to a Socratic "midwife" or a developmental editor than a ghostwriter: it draws out what's already there.
+
+**Authorship trail (secondary feature).** You can open a simple record of what the app touched: punctuation added, paragraphs split, headings taken from your phrases, unclear words flagged as questions. It also states that no new ideas or concepts were added: you did this. It doesn't need to show every change, just enough to prove that.
+
 **The stance is "a friend who listens."** The coach is mostly quiet and reflects back what you said so you can hear yourself. It isn't a mentor who argues or a therapist who interprets.
 
 **It infers the note's perspective.** From the note itself, it works out what you're trying to do: express a feeling, explore a question, explain something, persuade, or tell what happened. Then it asks what would actually help you think *this* note through. This applies to every topic, including faith. Draw on Scripture or tradition when the note itself is working within that frame, and not otherwise.
@@ -58,7 +75,7 @@ This is the long-term advantage. Get it right before adding anything else.
 
 ## Out of scope for the prototype
 
-Spoken prompts, threads, alternative-word suggestions, connections across notes, a native app, sharing.
+Spoken prompts, threads, a full change-by-change view (the summary authorship trail is in scope), alternative-word suggestions, connections across notes, a native app, sharing.
 
 ## Done means
 
