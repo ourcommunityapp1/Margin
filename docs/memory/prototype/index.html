@@ -1,0 +1,168 @@
+<title>Heir Living Background</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Figtree:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: one phone-sized lesson screen over a photograph that drifts and follows the time of day; preview controls sit beside it on wide screens, below it on phones. */
+:root {
+  --page: #E6E3DC; --page-ink: #22272A; --page-muted: #5A6266; --page-rule: #CBC7BC;
+  --glass: rgba(250, 249, 246, 0.74); --glass-edge: rgba(255, 255, 255, 0.6); --ink: #1F2421; --muted: #55605A;
+  --accent: #2F5D50; --accent-ink: #F7F4EC; --chip: rgba(255, 255, 255, 0.9); --chip-edge: #DCD6C8; --shade: rgba(20, 24, 28, 0);
+  --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif; --body: "Figtree", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #121517; --page-ink: #E6E3DC; --page-muted: #A0A8AC; --page-rule: #2E3437; color-scheme: dark; } }
+:root[data-theme="dark"] { --page: #121517; --page-ink: #E6E3DC; --page-muted: #A0A8AC; --page-rule: #2E3437; color-scheme: dark; }
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--page); color: var(--page-ink); font-family: var(--body); margin: 0; }
+.stage { min-height: 100%; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 32px 56px; padding-block: 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* The phone */
+.phone { position: relative; width: min(390px, 100%); height: 844px; max-height: calc(100vh - 64px); min-height: 640px; border-radius: 40px; overflow: hidden; box-shadow: 0 30px 80px rgba(20, 24, 28, .28); isolation: isolate; color: var(--ink); }
+.scene { position: absolute; inset: -6%; background-size: cover; background-position: center; opacity: 0; transition: opacity 2.4s ease; will-change: transform, opacity; }
+.scene.on { opacity: 1; }
+.scene.mist { filter: blur(14px) saturate(.9); mix-blend-mode: screen; inset: -10%; }
+.scene.mist.on { opacity: .28; }
+.shade { position: absolute; inset: 0; background: var(--shade); transition: background 2.4s ease; pointer-events: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .scene { animation: drift 70s ease-in-out infinite alternate; }
+  .scene.mist { animation: drift-back 50s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: scale(1.04) translate3d(-2%, 0, 0); } to { transform: scale(1.1) translate3d(2%, -1.5%, 0); } }
+  @keyframes drift-back { from { transform: scale(1.12) translate3d(3%, 1%, 0); } to { transform: scale(1.06) translate3d(-3%, -1%, 0); } }
+}
+.ui { position: relative; z-index: 2; height: 100%; display: flex; flex-direction: column; padding: 54px 18px 28px; gap: 16px; }
+.top { display: flex; align-items: center; gap: 12px; }
+.icon-btn { width: 44px; height: 44px; border-radius: 22px; border: 0; background: var(--glass); color: var(--ink); display: grid; place-items: center; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.bar { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.45); overflow: hidden; }
+.bar span { display: block; height: 100%; width: 40%; border-radius: 4px; background: var(--accent); transition: width .5s ease; }
+.when { align-self: flex-start; font-size: 13px; font-weight: 700; letter-spacing: .3px; padding: 6px 12px; border-radius: 14px; background: var(--glass); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.card { margin-top: auto; background: var(--glass); border: 1px solid var(--glass-edge); border-radius: 26px; padding: 22px 20px 20px; backdrop-filter: blur(22px) saturate(1.1); -webkit-backdrop-filter: blur(22px) saturate(1.1); display: flex; flex-direction: column; gap: 14px; transition: background 2.4s ease, color 2.4s ease; }
+.lead { margin: 0; font-family: var(--display); font-size: 27px; line-height: 1.12; font-weight: 500; text-wrap: balance; }
+.lead b { font-weight: 600; }
+.lead span { color: var(--muted); }
+.q { margin: 0; font-size: 15px; font-weight: 700; color: var(--muted); }
+.given { font-family: var(--display); font-size: 22px; line-height: 1.35; margin: 0; }
+.slots { min-height: 54px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; border-bottom: 1.5px solid var(--chip-edge); padding-bottom: 10px; }
+.bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.chip { height: 44px; padding: 0 15px; border-radius: 14px; border: 1px solid var(--chip-edge); border-bottom-width: 3px; background: var(--chip); color: var(--ink); font-family: var(--display); font-size: 20px; cursor: pointer; }
+.chip[disabled] { opacity: .25; cursor: default; }
+.chip:focus-visible, .icon-btn:focus-visible, .go:focus-visible, .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.go { height: 54px; border-radius: 27px; border: 0; background: var(--accent); color: var(--accent-ink); font-family: var(--body); font-size: 17px; font-weight: 800; cursor: pointer; transition: opacity .2s; }
+.go[disabled] { opacity: .45; cursor: default; }
+.result { margin: 0; font-size: 15px; font-weight: 700; min-height: 20px; }
+
+/* Night: the card turns to dark glass */
+.phone[data-time="night"] { --glass: rgba(14, 20, 28, 0.58); --glass-edge: rgba(255,255,255,.12); --ink: #EEF0F2; --muted: #B6C0C8; --accent: #E0B45C; --accent-ink: #14181C; --chip: rgba(255,255,255,.1); --chip-edge: rgba(255,255,255,.22); --shade: rgba(6, 10, 16, .35); }
+.phone[data-time="dusk"] { --shade: rgba(30, 18, 10, .12); }
+
+/* Controls beside the phone */
+.panel { width: min(360px, 100%); display: flex; flex-direction: column; gap: 18px; }
+.panel h1 { font-family: var(--display); font-weight: 500; font-size: 46px; line-height: 1; margin: 0; }
+.panel p { margin: 0; color: var(--page-muted); line-height: 1.55; font-size: 15px; }
+.seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.seg button { height: 44px; border-radius: 12px; border: 1px solid var(--page-rule); background: transparent; color: var(--page-ink); font: 600 14px var(--body); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-ink); color: var(--page); border-color: var(--page-ink); }
+.note { font-size: 13px; }
+.credits { font-size: 12px; color: var(--page-muted); line-height: 1.6; }
+.credits a { color: inherit; }
+</style>
+
+<div class="stage">
+  <div class="phone" id="phone" data-time="day">
+    <div class="scene" data-scene="dawn" style="background-image:url('img/dawn.jpg')"></div>
+    <div class="scene" data-scene="day" style="background-image:url('img/day.jpg')"></div>
+    <div class="scene" data-scene="dusk" style="background-image:url('img/dusk.jpg')"></div>
+    <div class="scene" data-scene="night" style="background-image:url('img/night.jpg')"></div>
+    <div class="scene mist" data-scene-mist style="background-image:url('img/dawn.jpg')"></div>
+    <div class="shade"></div>
+    <div class="ui">
+      <div class="top">
+        <button class="icon-btn" type="button" aria-label="End lesson"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <div class="bar" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="10" aria-valuenow="4"><span id="bar"></span></div>
+      </div>
+      <span class="when" id="when">Morning practice · 4 min</span>
+      <div class="card">
+        <p class="lead"><b>Recall.</b> <span>Finish the answer from memory.</span></p>
+        <p class="q">What is the chief end of man?</p>
+        <p class="given">Man’s chief end is to glorify God,</p>
+        <div class="slots" id="slots" aria-label="Your answer" aria-live="polite"></div>
+        <div class="bank" id="bank" aria-label="Word bank"></div>
+        <p class="result" id="result" role="status"></p>
+        <button class="go" id="go" type="button" disabled>Check</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h1>Heir</h1>
+    <p>The background follows the time of day where you are, and drifts slowly the whole time. At night the photo goes dark and the card turns to dark glass for the bedtime review.</p>
+    <div class="seg" role="group" aria-label="Preview a time of day">
+      <button type="button" data-pick="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-pick="dawn" aria-pressed="false">Dawn</button>
+      <button type="button" data-pick="day" aria-pressed="false">Day</button>
+      <button type="button" data-pick="dusk" aria-pressed="false">Dusk</button>
+      <button type="button" data-pick="night" aria-pressed="false">Night</button>
+    </div>
+    <p class="note" id="note"></p>
+    <p class="credits">Photos from Wikimedia Commons: dawn, <a href="https://commons.wikimedia.org/wiki/File:Hommikune_udu_Kakerdaja_rabas.jpg" target="_blank" rel="noopener">Abrget47j</a> (CC BY-SA 3.0); day, <a href="https://commons.wikimedia.org/wiki/File:Stuor_D%C3%A1ht%C3%A1_lake_along_the_Kungsleden_trail_during_golden_hour_in_Kvikkjokk-Kabla_fj%C3%A4llurskog_(DSCF2557).jpg" target="_blank" rel="noopener">Trougnouf (Benoit Brummer)</a> (CC BY 4.0); dusk, <a href="https://commons.wikimedia.org/wiki/File:Vallee-brouillard.jpg" target="_blank" rel="noopener">Thomas Bresson</a> (CC BY 3.0); night, <a href="https://commons.wikimedia.org/wiki/File:036_Milky_Way_during_Perseids_seen_from_Oeschinensee_with_water_reflections_Photo_by_Giles_Laurent.jpg" target="_blank" rel="noopener">Giles Laurent</a> (CC BY-SA 4.0).</p>
+  </div>
+</div>
+
+<script>
+(() => {
+  const phone = document.getElementById('phone');
+  const when = document.getElementById('when');
+  const note = document.getElementById('note');
+  const LABEL = { dawn: 'Morning practice · 4 min', day: 'Practice · 4 min', dusk: 'Evening practice · 3 min', night: 'Bedtime review · 2 min' };
+  const NOTE = { dawn: 'Dawn: mist on still water. New pieces are offered in the morning.', day: 'Day: the clearest scene, for the most readable card.', dusk: 'Dusk: a sea of fog under a gold band, as the day winds down.', night: 'Night: stars over a dark lake, a dark card, and only the review of what you learned today.' };
+  const fromClock = () => { const h = new Date().getHours(); return h >= 5 && h < 9 ? 'dawn' : h >= 9 && h < 17 ? 'day' : h >= 17 && h < 20 ? 'dusk' : 'night'; };
+  let choice = 'auto';
+  try { choice = localStorage.getItem('heir-time') || 'auto'; } catch (e) {}
+  function show() {
+    const t = choice === 'auto' ? fromClock() : choice;
+    phone.dataset.time = t;
+    document.querySelectorAll('[data-scene]').forEach((el) => el.classList.toggle('on', el.dataset.scene === t));
+    document.querySelector('[data-scene-mist]').classList.toggle('on', t === 'dawn' || t === 'day');
+    when.textContent = LABEL[t];
+    note.textContent = (choice === 'auto' ? 'Following your clock. ' : '') + NOTE[t];
+    document.querySelectorAll('[data-pick]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === choice)));
+  }
+  document.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
+    choice = b.dataset.pick;
+    try { localStorage.setItem('heir-time', choice); } catch (e) {}
+    show();
+  }));
+  setInterval(() => { if (choice === 'auto') show(); }, 60000);
+  show();
+
+  // The word bank
+  const WORDS = ['forever.', 'serve', 'and', 'him', 'always', 'to enjoy'];
+  const ANSWER = 'and to enjoy him forever.';
+  const slots = document.getElementById('slots'), bank = document.getElementById('bank');
+  const go = document.getElementById('go'), result = document.getElementById('result'), bar = document.getElementById('bar');
+  let placed = [], checked = false;
+  function render() {
+    slots.replaceChildren(...placed.map((w, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = w;
+      b.addEventListener('click', () => { if (!checked) { placed.splice(i, 1); render(); } });
+      return b;
+    }));
+    bank.replaceChildren(...WORDS.map((w) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = w;
+      b.disabled = placed.includes(w) || checked;
+      b.addEventListener('click', () => { placed.push(w); render(); });
+      return b;
+    }));
+    go.disabled = !placed.length;
+    go.textContent = checked ? 'Try again' : 'Check';
+  }
+  go.addEventListener('click', () => {
+    if (checked) { placed = []; checked = false; result.textContent = ''; bar.style.width = '40%'; render(); return; }
+    checked = true;
+    const right = placed.join(' ') === ANSWER;
+    result.textContent = right ? 'Yes. “…and to enjoy him forever.”' : 'Almost. It ends: “and to enjoy him forever.”';
+    if (right) bar.style.width = '50%';
+    render();
+  });
+  render();
+})();
+</script>
