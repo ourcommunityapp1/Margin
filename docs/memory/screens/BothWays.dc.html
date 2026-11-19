@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson both ways</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5D50}a:hover{color:#234A3F}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.h-bg{animation:none}}
+.h-glass{background:rgba(250,249,246,.8);border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(22px) saturate(1.1);-webkit-backdrop-filter:blur(22px) saturate(1.1)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #1F2421; background: #9AA9B8">
+  <img class="h-bg" src="/_blob/28e755a0302c29516d621a89038fb5d1" alt="" style="object-position: 40% center">
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 54px 18px 28px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <a href="TodayDay.dc.html" aria-label="End lesson" class="h-glass" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #1F2421"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.5)" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="9"><div style="width: 75%; height: 8px; border-radius: 4px; background: #2F5D50"></div></div>
+    </div>
+    <span class="h-glass" style="align-self: flex-start; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; padding: 6px 12px 6px 10px; border-radius: 14px; color: #1E5E45"><span style="width: 12px; height: 12px; border-radius: 3px; transform: rotate(45deg); background: #2E9A6E"></span>Working toward Emerald</span>
+    <div class="h-glass" style="margin-top: auto; border-radius: 26px; padding: 22px 20px; display: flex; flex-direction: column; gap: 14px">
+      <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; line-height: 1.12"><b style="font-weight: 600">Find it.</b> <span style="color: #55605A">Which verse is this?</span></p>
+      <p style="margin: 0; font-size: 16px; font-weight: 700; line-height: 1.45; padding: 12px 14px; background: rgba(255,255,255,.7); border-radius: 16px">“The one about keeping God’s word in your heart so you won’t sin.”</p>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{opts}}" as="o" hint-placeholder-count="4">
+          <button onClick="{{o.pick}}" aria-pressed="{{o.on}}" style="{{o.style}}">{{o.label}}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="{{msgStyle}}">{{msg}}</span>
+          <span style="font-size: 14px; font-weight: 700; color: #55605A">Next: say the whole verse. Then it goes the other way: you hear the verse and name the reference.</span>
+        </div>
+      </sc-if>
+      <a href="LevelUp.dc.html" style="{{next}}">Continue</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { pick: null }; }
+  renderVals() {
+    const opts = [['Psalm 119:105', false], ['Psalm 119:11', true], ['Joshua 1:8', false], ['Psalm 1:2', false]];
+    const pick = this.state.pick;
+    const right = opts.some(([l, r]) => r && l === pick);
+    return {
+      opts: opts.map(([label, r]) => ({ label, on: pick === label ? 'true' : 'false', pick: () => !pick && this.setState({ pick: label }),
+        style: 'height: 52px; border-radius: 16px; font-weight: 800; font-size: 15px; cursor: pointer; ' + (!pick ? 'border: 1px solid #DCD6C8; background: #FFFFFF; color: #1F2421' : r ? 'border: 2px solid #2E9A6E; background: #E1F2EA; color: #1E5E45' : label === pick ? 'border: 2px solid #C9852B; background: #F6E9C8; color: #6B4A10' : 'border: 1px solid #DCD6C8; background: rgba(255,255,255,.5); color: #7A827E') })),
+      answered: !!pick,
+      msg: right ? 'Yes, Psalm 119:11.' : 'It’s Psalm 119:11. Psalm 119:105 is the lamp to your feet.',
+      msgStyle: 'font-weight: 800; font-size: 16px; color: ' + (right ? '#1E5E45' : '#6B4A10'),
+      next: 'height: 54px; border-radius: 27px; text-decoration: none; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; ' + (pick ? 'background: #2F5D50; color: #F7F4EC' : 'background: rgba(0,0,0,.06); color: #7A827E; pointer-events: none')
+    };
+  }
+}
+</script>
+</body>
+</html>

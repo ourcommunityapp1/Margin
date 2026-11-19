@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson word bank</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5D50}a:hover{color:#234A3F}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.h-bg{animation:none}}
+.h-glass{background:rgba(250,249,246,.78);border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(22px) saturate(1.1);-webkit-backdrop-filter:blur(22px) saturate(1.1)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #1F2421; background: #C8B48A">
+  <img class="h-bg" src="/_blob/454ea225b40ad6c86dd7d279a18cf289" alt="">
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 54px 18px 28px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <a href="TodayDay.dc.html" aria-label="End lesson" class="h-glass" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #1F2421"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.5)" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="2"><div style="{{bar}}"></div></div>
+    </div>
+    <span class="h-glass" style="align-self: flex-start; font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 14px">Morning practice · 4 min</span>
+    <div class="h-glass" style="margin-top: auto; border-radius: 26px; padding: 22px 20px 20px; display: flex; flex-direction: column; gap: 14px">
+      <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; line-height: 1.12"><b style="font-weight: 600">Recall.</b> <span style="color: #55605A">Finish the answer from memory.</span></p>
+      <p style="margin: 0; font-size: 15px; font-weight: 700; color: #55605A">What is the chief end of man?</p>
+      <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; line-height: 1.35">Man’s chief end is to glorify God,</p>
+      <div style="min-height: 54px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; border-bottom: 1.5px solid #DCD6C8; padding-bottom: 10px" aria-label="Your answer">
+        <sc-for list="{{placed}}" as="w" hint-placeholder-count="0">
+          <button onClick="{{w.take}}" style="height: 44px; padding: 0 15px; border-radius: 14px; border: 1px solid #DCD6C8; border-bottom-width: 3px; background: #FFFFFF; color: #1F2421; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 20px; cursor: pointer">{{w.word}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center" aria-label="Word bank">
+        <sc-for list="{{bank}}" as="w" hint-placeholder-count="6">
+          <button onClick="{{w.put}}" disabled="{{w.used}}" style="{{w.style}}">{{w.word}}</button>
+        </sc-for>
+      </div>
+      <p style="{{resultStyle}}" role="status">{{result}}</p>
+      <sc-if value="{{checking}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{check}}" disabled="{{cantCheck}}" style="{{checkStyle}}">Check</button>
+      </sc-if>
+      <sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+        <a href="Meaning.dc.html" style="height: 54px; border-radius: 27px; background: #2F5D50; color: #F7F4EC; text-decoration: none; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center">Continue</a>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { placed: [], checked: false }; }
+  renderVals() {
+    const words = ['forever.', 'serve', 'and', 'him', 'always', 'to enjoy'];
+    const answer = 'and to enjoy him forever.';
+    const { placed, checked } = this.state;
+    const right = placed.join(' ') === answer;
+    const chip = 'height: 44px; padding: 0 15px; border-radius: 14px; border: 1px solid #DCD6C8; border-bottom-width: 3px; background: #FFFFFF; color: #1F2421; font-family: Cormorant Garamond, Georgia, serif; font-size: 20px; cursor: pointer';
+    return {
+      bar: 'height: 8px; border-radius: 4px; background: #2F5D50; width: ' + (checked && right ? 25 : 17) + '%',
+      placed: placed.map((w, i) => ({ word: w, take: () => !checked && this.setState({ placed: placed.filter((_, k) => k !== i) }) })),
+      bank: words.map((w) => { const used = placed.includes(w) || checked; return { word: w, used, style: chip + (used ? '; opacity: .25; cursor: default' : ''), put: () => !used && this.setState({ placed: [...placed, w] }) }; }),
+      checking: !checked, done: checked, cantCheck: !placed.length,
+      checkStyle: 'height: 54px; border-radius: 27px; border: 0; font-weight: 800; font-size: 17px; cursor: pointer; background: #2F5D50; color: #F7F4EC; opacity: ' + (placed.length ? 1 : .45),
+      check: () => this.setState({ checked: true }),
+      result: checked ? (right ? 'Yes. “…and to enjoy him forever.”' : 'Almost. It ends: “and to enjoy him forever.”') : '',
+      resultStyle: 'margin: 0; font-size: 15px; font-weight: 700; min-height: 20px; color: ' + (right ? '#1E4A3E' : '#6B4A10')
+    };
+  }
+}
+</script>
+</body>
+</html>

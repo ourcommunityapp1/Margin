@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>First plan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5D50}a:hover{color:#234A3F}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.h-bg{animation:none}}
+.h-glass{background:rgba(250,249,246,.8);border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(22px) saturate(1.1);-webkit-backdrop-filter:blur(22px) saturate(1.1)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #1F2421; background: #8C9AA0">
+  <img class="h-bg" src="/_blob/f0e34ab78cd573929237cd80a02d7b70" alt="" style="object-position: 35% center">
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 18px 28px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; gap: 6px; padding: 0 6px" aria-hidden="true">
+      <span style="flex: 1; height: 4px; border-radius: 2px; background: #2F5D50"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: #2F5D50"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.6)"></span>
+    </div>
+    <div class="h-glass" style="border-radius: 26px; padding: 20px 18px; display: flex; flex-direction: column; gap: 14px; margin-top: 8px">
+      <h1 style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 30px; line-height: 1.1">Your first family goal</h1>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #55605A">What</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.75); border-radius: 16px; padding: 12px 14px">
+          <span style="display: flex; flex-direction: column"><span style="font-weight: 800">Westminster Shorter, Q1–10</span><span style="font-size: 13px; color: #55605A; font-weight: 600">Suggested first goal for families</span></span>
+          <span style="font-size: 14px; font-weight: 800; color: #2F5D50">Change</span>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #55605A">How much at once</span>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{sizes}}" as="s" hint-placeholder-count="3">
+            <button onClick="{{s.pick}}" aria-pressed="{{s.on}}" style="{{s.style}}"><span style="font-weight: 800; font-size: 15px">{{s.label}}</span><span style="font-size: 12px; font-weight: 600">{{s.hint}}</span></button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #55605A">How fast</span>
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px">
+          <sc-for list="{{paces}}" as="p" hint-placeholder-count="4">
+            <button onClick="{{p.pick}}" aria-pressed="{{p.on}}" style="{{p.style}}">{{p.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="background: #2F5D50; color: #F7F4EC; border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; line-height: 1.25">{{headline}}</span>
+        <span style="font-size: 13px; line-height: 1.45; color: #DDE9E2; font-weight: 600">The plan slows new pieces by itself if reviews start to pile up.</span>
+      </div>
+    </div>
+    <a href="TodayDay.dc.html" style="margin-top: auto; height: 56px; border-radius: 28px; background: #F7F4EC; color: #1F2421; text-decoration: none; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center">Start this plan</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { size: 'phrase', pace: 1 }; }
+  renderVals() {
+    const sizes = [
+      { id: 'phrase', label: 'Phrases', hint: 'for children', pieces: 34, per: [1, 2, 3, 4] },
+      { id: 'clause', label: 'Clauses', hint: 'balanced', pieces: 20, per: [1, 1, 2, 3] },
+      { id: 'whole', label: 'Answers', hint: 'for adults', pieces: 10, per: [0.5, 1, 1, 2] }
+    ];
+    const paces = [3, 5, 10, 15];
+    const s = sizes.find((x) => x.id === this.state.size), i = this.state.pace, per = s.per[i];
+    const weeks = Math.max(1, Math.round((Math.ceil(s.pieces / per) + 4) / 7));
+    const on = 'border: 2px solid #2F5D50; background: #E3EEE8; color: #1E4A3E; ';
+    const off = 'border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.75); color: #1F2421; ';
+    return {
+      sizes: sizes.map((x) => ({ label: x.label, hint: x.hint, on: x.id === s.id ? 'true' : 'false', style: 'min-height: 58px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; ' + (x.id === s.id ? on : off), pick: () => this.setState({ size: x.id }) })),
+      paces: paces.map((m, k) => ({ label: m + ' min', on: k === i ? 'true' : 'false', style: 'height: 46px; border-radius: 14px; font-weight: 800; font-size: 14px; cursor: pointer; ' + (k === i ? on : off), pick: () => this.setState({ pace: k }) })),
+      headline: (per < 1 ? 'A new piece every other day' : per === 1 ? '1 new piece a day' : per + ' new pieces a day') + ', done in about ' + (weeks === 1 ? 'a week.' : weeks + ' weeks.')
+    };
+  }
+}
+</script>
+</body>
+</html>
