@@ -139,3 +139,17 @@ Each phase ends with something usable on a phone.
 2. **Database:** a new Supabase project for Heir.
 3. **Content review:** the owner reviews each item in a checklist before it goes live. Drafts are marked unreviewed.
 4. **Start:** phase 1 now, on this branch, with Westminster Shorter Q1–10 drafted for review.
+
+## Accounts and sync (built, switched off until configured)
+
+- Heir uses its own two settings, so it can't touch Sermon Notes' sign-in by accident:
+  `NEXT_PUBLIC_HEIR_SUPABASE_URL` and `NEXT_PUBLIC_HEIR_SUPABASE_PUBLISHABLE_KEY`. Without them, Heir keeps
+  the household on the device only, exactly as in phase 1.
+- Database: `supabase/migrations/20261119000000_heir.sql` (households, members, reviews; each row readable
+  only by the parent who owns the household).
+- Sign-in: a 6-digit code sent by email (works inside the home-screen app). The Supabase "Magic Link"
+  email template must include `{{ .Token }}`; keep the existing link for Sermon Notes and add a line such as
+  `Or enter this code: {{ .Token }}`.
+- First sign-in: if the account has no family yet, the one already on the phone is carried up; if it has one,
+  that family is used. Changes save to the phone at once and to the account about half a second later.
+- Pages other than welcome, sign-in and about ask for sign-in when accounts are on.

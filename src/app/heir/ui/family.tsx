@@ -7,10 +7,12 @@ import { Tabs } from './tabs';
 import { addMember, removeMember, setActive, updateMember } from '@/heir/household';
 import type { Track } from '@/heir/types';
 
-const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now() + Math.random()));
+// Member ids are UUIDs so they can be stored as they are when the household syncs.
+const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => ((c === 'x' ? Math.random() * 16 : 8 + Math.random() * 4) | 0).toString(16)));
 
 export function FamilyScreen({ setup }: { setup: boolean }) {
-  const { ready, household, update } = useHeir();
+  const { ready, household, update, accounts, email, sync, signOut } = useHeir();
   const [name, setName] = useState('');
   const [track, setTrack] = useState<Track>('adult');
 
@@ -67,6 +69,12 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
         {setup && (
           <Link className="hr-btn" href={members.length ? '/heir/plan?setup=1' : '#'} aria-disabled={!members.length}
             style={{ marginTop: 'auto', opacity: members.length ? 1 : 0.45, pointerEvents: members.length ? 'auto' : 'none' }}>Continue</Link>
+        )}
+        {!setup && accounts && email && (
+          <p style={{ margin: 0, textAlign: 'center', fontSize: 14 }}>
+            Signed in as {email}{sync === 'offline' ? ' · couldn’t reach the server; changes are kept on this phone' : ''} ·{' '}
+            <button type="button" onClick={signOut} style={{ background: 'none', border: 0, padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>Sign out</button>
+          </p>
         )}
         {!setup && (
           <Link href="/heir/about" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>About Heir and photo credits</Link>
