@@ -1,4 +1,6 @@
-# Christian memory app: strategy notes
+# Heir: strategy notes
+
+*Working name: Heir, as in heirs to the kingdom (Romans 8:17, James 2:5).*
 
 An app for memorizing Scripture, catechisms and creeds, built on what memory research shows actually works: speaking the words from memory, on a schedule that lets you almost forget.
 
@@ -8,6 +10,13 @@ An app for memorizing Scripture, catechisms and creeds, built on what memory res
 - **ESV first** for Scripture. Its license terms for apps need checking before launch (see Content and licensing).
 - **Lessons decide the format, not the learner.** Each lesson mixes exercises (word bank, meaning questions, first letters, typing, saying it aloud) and gets harder as the words fade. Nobody picks a mode.
 - **Mockups:** https://claude.ai/artifact/Cnq9NYGMSYbtWmaT8UTBFj
+
+## Look and feel
+
+- **Photography, not painting,** behind clean cards. Calm nature: water, mist, stone, clay, light through glass.
+- **Backgrounds move slowly** (a drift over about a minute) and **follow the time of day**: dawn, day, dusk, and a properly dark night for the bedtime review.
+- **Three registers** from the mood boards: Still Water for practice, Potter's Clay for family and kids, Living Stones for levels and reward.
+- Mood boards: https://claude.ai/artifact/GacGSbXcZR8JbuXjU89GGt
 
 ## Profiles and lessons
 
