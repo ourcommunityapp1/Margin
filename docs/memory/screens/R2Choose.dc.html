@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson what it means</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}
+button{font:inherit}
+@keyframes rdrift{from{transform:scale(1.25) translate3d(-2%,0,0)}to{transform:scale(1.3) translate3d(2%,-1%,0)}}
+.r-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(26px) saturate(.55) brightness(1.06);animation:rdrift 90s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.r-bg{animation:none;transform:scale(1.25)}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #1D2327; background: #DCD4C3">
+  <img class="r-bg" src="/_blob/454ea225b40ad6c86dd7d279a18cf289" alt="">
+  <div style="position: absolute; inset: 0; background: rgba(242,240,235,.48)"></div>
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 24px 32px; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <a href="R2Today.dc.html" aria-label="End lesson" style="width: 44px; height: 44px; border-radius: 22px; background: #F7F5F0; display: flex; align-items: center; justify-content: center; color: #1D2327"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(29,35,39,.15)" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="3"><div style="width: 25%; height: 4px; border-radius: 2px; background: #1D2327"></div></div>
+    </div>
+    <div style="margin-top: 96px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center">
+      <span style="font-size: 14px; font-weight: 600; color: #3E474C">Westminster Shorter · Q1</span>
+      <p style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; line-height: 1.45; color: #3E474C; max-width: 320px">“Man’s chief end is to glorify God, and to enjoy him forever.”</p>
+      <h1 style="margin: 6px 0 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 500; line-height: 1.2">What does “chief end” mean?</h1>
+    </div>
+    <div style="margin-top: 28px; display: flex; flex-direction: column; gap: 12px">
+      <sc-for list="{{opts}}" as="o" hint-placeholder-count="4">
+        <button onClick="{{o.pick}}" aria-pressed="{{o.on}}" style="{{o.style}}">{{o.label}}</button>
+      </sc-for>
+    </div>
+    <p style="{{noteStyle}}" role="status">{{note}}</p>
+    <a href="R2Order.dc.html" style="{{next}}">Continue</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { pick: null }; }
+  renderVals() {
+    const opts = [['a', 'The last thing that happens to us'], ['b', 'The main reason we were made', true], ['c', 'The most important person'], ['d', 'A rule we must keep']];
+    const pick = this.state.pick, right = opts.some(([id, , r]) => r && id === pick);
+    return {
+      opts: opts.map(([id, label, r]) => ({ label, on: pick === id ? 'true' : 'false', pick: () => !pick && this.setState({ pick: id }),
+        style: 'min-height: 56px; border-radius: 16px; font-size: 17px; font-weight: 500; color: #1D2327; cursor: pointer; box-shadow: 0 2px 8px rgba(20,24,28,.06); ' +
+          (pick === id ? 'background: #F3D8B6; border: 1.5px solid #F3D8B6' : pick && r ? 'background: #F7F5F0; border: 1.5px solid #1D2327' : 'background: #F7F5F0; border: 1.5px solid #F7F5F0') })),
+      note: !pick ? '' : right ? 'Yes. It means the main reason we were made.' : 'Not quite. It means the main reason we were made.',
+      noteStyle: 'margin: 18px 0 0; min-height: 22px; text-align: center; font-size: 16px; font-weight: 500; color: #1D2327',
+      next: 'margin-top: auto; height: 56px; border-radius: 28px; text-decoration: none; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; ' + (pick ? 'background: #1D2327; color: #F7F5F0' : 'background: rgba(29,35,39,.12); color: #3E474C; pointer-events: none')
+    };
+  }
+}
+</script>
+</body>
+</html>
