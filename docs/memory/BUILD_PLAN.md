@@ -133,9 +133,9 @@ Each phase ends with something usable on a phone.
 - **One Playwright flow per phase,** at phone size.
 - **A content check:** every item has chunks for both tracks, meaning questions with exactly one answer, and a reviewer.
 
-## Decisions needed
+## Decisions
 
-1. Scripture: ESV via Crossway's API (terms to confirm), or a free translation to start.
-2. Database: a new Supabase project for Heir, or the existing family project.
-3. Who reviews the theological content (meaning questions, child versions) before it ships.
-4. Whether the first build should start now on this branch, or after the content for Q1–10 is reviewed.
+1. **Scripture:** catechisms and creeds first. Check the ESV API terms in parallel, then add verses.
+2. **Database:** a new Supabase project for Heir.
+3. **Content review:** the owner reviews each item in a checklist before it goes live. Drafts are marked unreviewed.
+4. **Start:** phase 1 now, on this branch, with Westminster Shorter Q1–10 drafted for review.
