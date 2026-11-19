@@ -153,3 +153,6 @@ Each phase ends with something usable on a phone.
 - First sign-in: if the account has no family yet, the one already on the phone is carried up; if it has one,
   that family is used. Changes save to the phone at once and to the account about half a second later.
 - Pages other than welcome, sign-in and about ask for sign-in when accounts are on.
+- Status (2026-11-19): tables are applied in the Sermon Notes project; the two settings were removed from
+  Netlify on purpose so the prototype runs without sign-in. To turn sync on: add both settings back
+  (same URL and publishable key as `NEXT_PUBLIC_SUPABASE_*`), add `{{ .Token }}` to the email template, republish.
