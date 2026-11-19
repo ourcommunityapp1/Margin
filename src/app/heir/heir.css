@@ -1,0 +1,256 @@
+/* Heir: a softened photo behind solid cards. Source Serif 4 for Scripture and headings, Inter for the interface.
+   Day: off-white cards, dark ink. Night: dark slate cards, light text. One soft peach marks what is selected. */
+
+@layer theme, base, components, utilities;
+
+body:has(.hr) {
+  background: #dcd4c3;
+  overscroll-behavior-y: none;
+}
+
+.hr {
+  --card: #f7f5f0;
+  --ink: #1d2327;
+  --muted: #5b6469;
+  --line: #e3dfd6;
+  --well: #ece8df;
+  --select: #f3d8b6;
+  --button: #1d2327;
+  --button-ink: #f7f5f0;
+  --wash: rgba(242, 240, 235, 0.48);
+  --ground: #dcd4c3;
+  position: relative;
+  min-height: 100dvh;
+  color: var(--ink);
+  background: var(--ground);
+  font-family: var(--font-inter), Inter, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  isolation: isolate;
+}
+
+.hr[data-time='night'] {
+  --card: #1e252b;
+  --ink: #eceef0;
+  --muted: #a9b3ba;
+  --line: #333c43;
+  --well: #2b343b;
+  --select: #6b5332;
+  --button: #ece8df;
+  --button-ink: #1d2327;
+  --wash: rgba(12, 16, 22, 0.5);
+  --ground: #11161c;
+}
+
+.hr .serif {
+  font-family: var(--font-source-serif), 'Source Serif 4', Georgia, serif;
+}
+
+/* The background: a softened photo for the time of day, drifting slowly. */
+.hr-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+}
+.hr-bg img {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  filter: saturate(0.6);
+}
+.hr-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--wash);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hr-bg img {
+    animation: hr-drift 90s ease-in-out infinite alternate;
+  }
+  @keyframes hr-drift {
+    from { transform: translate3d(-2%, 0, 0) scale(1); }
+    to { transform: translate3d(2%, -1%, 0) scale(1.04); }
+  }
+}
+
+.hr-page {
+  min-height: 100dvh;
+  box-sizing: border-box;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: calc(env(safe-area-inset-top, 0px) + 28px) max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 112px) max(20px, env(safe-area-inset-left, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.hr-page.bare {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
+}
+
+.hr-card {
+  background: var(--card);
+  border-radius: 28px;
+  box-shadow: 0 1px 2px rgba(20, 24, 28, 0.05), 0 8px 24px rgba(20, 24, 28, 0.06);
+  padding: 22px;
+}
+
+.hr-btn {
+  min-height: 56px;
+  border-radius: 28px;
+  border: 0;
+  background: var(--button);
+  color: var(--button-ink);
+  font: 600 17px/1 var(--font-inter), Inter, system-ui, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+  width: 100%;
+}
+.hr-btn[disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+.hr-btn.quiet {
+  background: transparent;
+  color: var(--ink);
+  font-weight: 500;
+  min-height: 48px;
+}
+
+.hr-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 16px;
+}
+.hr-row:first-child {
+  border-top: 0;
+}
+
+.hr-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hr-back {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--card);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hr-tabs {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+  width: min(492px, calc(100% - 28px));
+  box-sizing: border-box;
+  background: var(--card);
+  border-radius: 26px;
+  box-shadow: 0 8px 24px rgba(20, 24, 28, 0.1);
+  padding: 6px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  z-index: 5;
+}
+.hr-tabs a {
+  min-height: 56px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.hr-tabs a[aria-current='page'] {
+  color: var(--ink);
+  background: var(--well);
+}
+
+.hr input[type='text'] {
+  min-height: 52px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  padding: 0 16px;
+  font: 400 17px var(--font-inter), Inter, system-ui, sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.hr-seg {
+  display: grid;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 20px;
+  background: var(--card);
+}
+.hr-seg button {
+  min-height: 44px;
+  border-radius: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 600 15px var(--font-inter), Inter, system-ui, sans-serif;
+  cursor: pointer;
+}
+.hr-seg button[aria-pressed='true'] {
+  background: var(--button);
+  color: var(--button-ink);
+}
+
+.hr-choice {
+  min-height: 56px;
+  border-radius: 16px;
+  border: 1.5px solid var(--card);
+  background: var(--card);
+  color: var(--ink);
+  font: 500 17px var(--font-inter), Inter, system-ui, sans-serif;
+  box-shadow: 0 2px 8px rgba(20, 24, 28, 0.06);
+  cursor: pointer;
+  padding: 12px 16px;
+}
+.hr-choice[aria-pressed='true'] {
+  background: var(--select);
+  border-color: var(--select);
+}
+
+.hr-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 10px;
+  background: var(--well);
+  color: var(--ink);
+}
+
+.hr :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
