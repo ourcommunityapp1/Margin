@@ -27,7 +27,7 @@ export function setActive(h: Household, id: string): Household {
 }
 
 export function setPlan(h: Household, plan: Plan): Household {
-  return { ...h, plan: { ...plan, through: Math.max(1, Math.round(plan.through)), minutes: Math.max(1, Math.round(plan.minutes)) } };
+  return { ...h, plan: { course: plan.course } };
 }
 
 export function activeMember(h: Household): Member | null {
@@ -44,7 +44,9 @@ export function parseHousehold(raw: string | null): Household {
       .filter((m: unknown): m is Member => !!m && typeof (m as Member).id === 'string' && typeof (m as Member).name === 'string')
       .map((m: Member) => ({ id: m.id, name: m.name, track: m.track === 'child' ? 'child' : 'adult', createdAt: m.createdAt ?? new Date(0).toISOString() }));
     const activeMemberId = members.some((m) => m.id === v.activeMemberId) ? v.activeMemberId : (members[0]?.id ?? null);
-    const plan = v.plan && typeof v.plan.collection === 'string' ? { collection: v.plan.collection, through: Number(v.plan.through) || 10, minutes: Number(v.plan.minutes) || 5 } : null;
+    // Older plans named a collection; the Apostles' Creed now lives in the Creeds course.
+    const named = v.plan && (typeof v.plan.course === 'string' ? v.plan.course : typeof v.plan.collection === 'string' ? v.plan.collection : null);
+    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named } : null;
     return { members, activeMemberId, plan };
   } catch {
     return emptyHousehold();

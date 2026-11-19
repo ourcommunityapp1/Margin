@@ -48,12 +48,9 @@ export interface Member {
   createdAt: string;
 }
 
+// What the household is memorizing: a course id from content/index.ts.
 export interface Plan {
-  collection: string;
-  // The last item number in the goal (the goal runs from 1 to this).
-  through: number;
-  // Minutes a day the family has agreed to.
-  minutes: number;
+  course: string;
 }
 
 export interface Household {

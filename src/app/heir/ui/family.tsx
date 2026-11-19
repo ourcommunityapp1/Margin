@@ -6,10 +6,7 @@ import { useHeir } from './provider';
 import { Tabs } from './tabs';
 import { addMember, removeMember, setActive, updateMember } from '@/heir/household';
 import type { Track } from '@/heir/types';
-
-// Member ids are UUIDs so they can be stored as they are when the household syncs.
-const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID()
-  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => ((c === 'x' ? Math.random() * 16 : 8 + Math.random() * 4) | 0).toString(16)));
+import { newId } from './ids';
 
 export function FamilyScreen({ setup }: { setup: boolean }) {
   const { ready, household, update, accounts, email, sync, signOut } = useHeir();

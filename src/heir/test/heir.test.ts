@@ -62,9 +62,11 @@ test('household: the first member becomes active, removing them moves to the nex
   assert.equal(addMember(h, '   ', 'adult', 'c', now).members.length, 1);
 });
 
-test('household: plans are kept to sensible numbers', () => {
-  const h = setPlan(emptyHousehold(), { collection: 'westminster-shorter', through: 0, minutes: 4.6 });
-  assert.deepEqual(h.plan, { collection: 'westminster-shorter', through: 1, minutes: 5 });
+test('household: a plan is a course, and older plans that named a collection still load', () => {
+  assert.deepEqual(setPlan(emptyHousehold(), { course: 'creeds' }).plan, { course: 'creeds' });
+  const old = (collection: string) => parseHousehold(JSON.stringify({ members: [], plan: { collection, through: 10, minutes: 5 } })).plan;
+  assert.deepEqual(old('westminster-shorter'), { course: 'westminster-shorter' });
+  assert.deepEqual(old('apostles-creed'), { course: 'creeds' });
 });
 
 test('household: stored data that is broken becomes an empty household', () => {

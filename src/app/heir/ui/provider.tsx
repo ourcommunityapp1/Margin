@@ -9,10 +9,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Household } from '@/heir/types';
 import { emptyHousehold, parseHousehold } from '@/heir/household';
 import { chooseOnSignIn } from '@/heir/sync';
+import { parseProgress, type Progress } from '@/heir/progress';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
 import { cloud, loadRemote, saveRemote, type Remote } from './cloud';
 
 const KEY = 'heir-household-v1';
+const PROGRESS_KEY = 'heir-progress-v1';
 const OPEN_PAGES = ['/heir/welcome', '/heir/signin', '/heir/about'];
 
 type SyncState = 'local' | 'synced' | 'saving' | 'offline';
@@ -21,6 +23,9 @@ interface Heir {
   ready: boolean;
   household: Household;
   update(change: (h: Household) => Household): void;
+  // Everyone's progress on this device, by member id.
+  progress: Progress;
+  updateProgress(change: (p: Progress) => Progress): void;
   time: TimeOfDay;
   now: Date;
   accounts: boolean;
@@ -40,6 +45,9 @@ export function useHeir(): Heir {
 function loadLocal(): Household {
   try { return parseHousehold(localStorage.getItem(KEY)); } catch { return emptyHousehold(); }
 }
+function loadProgress(): Progress {
+  try { return parseProgress(localStorage.getItem(PROGRESS_KEY)); } catch { return {}; }
+}
 function saveLocal(h: Household) {
   try { localStorage.setItem(KEY, JSON.stringify(h)); } catch { /* private mode: keeps working for this visit */ }
 }
@@ -50,8 +58,10 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const db = cloud();
   const accounts = !!db;
   const [household, setHousehold] = useState<Household>(emptyHousehold);
+  const [progress, setProgress] = useState<Progress>({});
   const [ready, setReady] = useState(false);
-  const [now, setNow] = useState(() => new Date());
+  // Unknown until the page is running on the phone: pages are prebuilt, so the server's clock means nothing.
+  const [clock, setClock] = useState<Date | null>(null);
   // undefined while checking; null when signed out.
   const [email, setEmail] = useState<string | null | undefined>(accounts ? undefined : null);
   const [sync, setSync] = useState<SyncState>('local');
@@ -59,14 +69,15 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 60_000);
+    Promise.resolve().then(() => setClock(new Date()));
+    const t = setInterval(() => setClock(new Date()), 60_000);
     return () => clearInterval(t);
   }, []);
 
   // Device only: read the stored household once.
   useEffect(() => {
     if (accounts) return;
-    Promise.resolve().then(() => { setHousehold(loadLocal()); setReady(true); });
+    Promise.resolve().then(() => { setHousehold(loadLocal()); setProgress(loadProgress()); setReady(true); });
   }, [accounts]);
 
   // With accounts: follow the session, and on sign-in load (or carry up) the household.
@@ -75,6 +86,7 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     let live = true;
     const arrive = async (userEmail: string | null) => {
       if (!live) return;
+      setProgress(loadProgress());
       setEmail(userEmail);
       if (!userEmail) { remote.current = null; setHousehold(loadLocal()); setSync('local'); setReady(true); return; }
       try {
@@ -124,21 +136,30 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     });
   }, [db, email]);
 
+  const updateProgress = useCallback((change: (p: Progress) => Progress) => {
+    setProgress((p) => {
+      const next = change(p);
+      try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(next)); } catch { /* private mode: kept for this visit */ }
+      return next;
+    });
+  }, []);
+
   const signOut = useCallback(async () => {
     await db?.auth.signOut();
     try { localStorage.removeItem(KEY); } catch { /* nothing stored */ }
   }, [db]);
 
-  const time = timeOfDay(now);
-  const value = useMemo(() => ({ ready, household, update, time, now, accounts, email: email ?? null, sync, signOut }),
-    [ready, household, update, time, now, accounts, email, sync, signOut]);
+  const now = useMemo(() => clock ?? new Date(0), [clock]);
+  const time = clock ? timeOfDay(clock) : 'day';
+  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, sync, signOut }),
+    [ready, household, update, progress, updateProgress, time, now, accounts, email, sync, signOut]);
 
   return (
     <Ctx.Provider value={value}>
       <div className="hr" data-time={time}>
         <div className="hr-bg" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/heir/bg-${time}.jpg`} alt="" />
+          {clock && <img src={`/heir/bg-${time}.jpg`} alt="" />}
         </div>
         {children}
       </div>

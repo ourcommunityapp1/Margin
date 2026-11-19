@@ -9,7 +9,7 @@ const family = () => {
   let h = addMember(emptyHousehold(), 'June', 'child', 'm1', now);
   h = addMember(h, 'Dad', 'adult', 'm2', later);
   h = setActive(h, 'm2');
-  return setPlan(h, { collection: 'westminster-shorter', through: 10, minutes: 5 });
+  return setPlan(h, { course: 'westminster-shorter' });
 };
 
 test('a household survives the trip to rows and back', () => {
