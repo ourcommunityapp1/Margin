@@ -2,6 +2,13 @@
 
 An app for memorizing Scripture, catechisms and creeds, built on what memory research shows actually works: speaking the words from memory, on a schedule that lets you almost forget.
 
+## Decisions so far
+
+- **For a family first:** parents and children, each with their own profile and queue, plus a shared family goal (for example, a catechism section this month).
+- **ESV first** for Scripture. Its license terms for apps need checking before launch (see Content and licensing).
+- **Lessons decide the format, not the learner.** Each lesson mixes exercises (word bank, meaning questions, first letters, typing, saying it aloud) and gets harder as the words fade. Nobody picks a mode.
+- **Mockups:** https://claude.ai/artifact/Cnq9NYGMSYbtWmaT8UTBFj
+
 ## Library
 
 - **Bible:** passages grouped by category (prayers, promises, the gospel, comfort, character of God, and so on), plus any passage you pick.
