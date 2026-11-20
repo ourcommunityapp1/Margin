@@ -67,7 +67,6 @@ export default function Today() {
 
         {path.map((u) => <UnitCard key={u.group.key} unit={u} />)}
 
-        <Link href="/heir/review" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>Review the content (for the owner)</Link>
       </main>
       <Tabs />
     </>

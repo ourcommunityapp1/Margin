@@ -10,7 +10,7 @@ const PHOTOS = [
 export default function About() {
   return (
     <main className="hr-page bare">
-      <div style={{ marginTop: 8 }}><Back href="/heir/family" /></div>
+      <div style={{ marginTop: 8 }}><Back href="/heir" /></div>
       <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500 }}>About Heir</h1>
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>Heir helps a family memorize Scripture, catechisms and creeds using recall, spaced review and speaking aloud. Progress is kept on this phone for now.</p>

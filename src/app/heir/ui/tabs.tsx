@@ -5,9 +5,7 @@ import { usePathname } from 'next/navigation';
 
 const TABS = [
   { href: '/heir', label: 'Today', icon: <><circle cx="12" cy="12" r="4" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2" /></> },
-  { href: '/heir/memorize', label: 'Memorize', icon: <><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z" /><path d="M8 7h6" /></> },
   { href: '/heir/learn', label: 'Learn', icon: <path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z" /> },
-  { href: '/heir/family', label: 'Family', icon: <><circle cx="9" cy="8" r="3.5" /><circle cx="17" cy="9.5" r="2.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 20a4.5 4.5 0 0 1 7-3.7" /></> },
 ];
 
 export function Tabs() {
