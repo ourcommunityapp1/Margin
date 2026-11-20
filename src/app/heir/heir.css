@@ -786,7 +786,7 @@ body:has(.hr) {
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
 }
 .hr-hero-chip {
-  display: flex; align-items: center; min-height: 44px; height: 44px; padding: 0 14px; border-radius: 22px; flex: none;
+  display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 22px; flex: none; font-size: 17px;
   background: rgba(28, 22, 16, 0.55); color: #F6EEDF; font-weight: 600; text-decoration: none;
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
@@ -807,3 +807,22 @@ body:has(.hr) {
 }
 .hr-page.hr-after-hero { min-height: auto; padding-top: 16px; }
 .hr-hero.hr-hero-done { height: min(62svh, 560px); }
+
+/* The one call to action under the window: a quiet light pill with a dark go-button. */
+.hr-cta {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 64px; padding: 0 8px 0 26px; border-radius: 32px;
+  background: #1D2327; color: #F7F1E6; text-decoration: none;
+  font-size: 18px; font-weight: 600; letter-spacing: 0.005em;
+  box-shadow: 0 10px 30px rgba(20, 16, 10, 0.22);
+  transition: transform 0.15s ease;
+}
+.hr-cta:active { transform: scale(0.98); }
+.hr-cta-go {
+  width: 48px; height: 48px; border-radius: 24px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #FFE6B8, #F2B866); color: #2A1A08;
+  box-shadow: 0 0 22px rgba(255, 190, 110, 0.45);
+}
+/* Today: window, then the button, both on the first screen above the tab bar. */
+.hr-hero:not(.hr-hero-done) { height: min(calc(100svh - 196px - env(safe-area-inset-bottom, 0px)), 760px); min-height: 420px; }

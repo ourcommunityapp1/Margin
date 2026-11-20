@@ -236,7 +236,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
 
   return (
     <>
-    <DoneWindow session={session} kind={kind} />
+    <DoneWindow session={session} />
     <main className="hr-page bare hr-after-hero">
       {session.kind === 'checkpoint' && session.group ? (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -303,29 +303,21 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
 
 // The payoff: the window as it was before this lesson, then the glass just earned lights up while you watch.
 // A review wipes the dust from the glass it refreshed.
-function DoneWindow({ session, kind }: { session: Session; kind: string }) {
+function DoneWindow({ session }: { session: Session }) {
   const { items, track, mine, course } = useCourse();
   const { now } = useHeir();
   const win = useRef<WindowHandle>(null);
   const after = windowLight(items, track, mine, now);
   const fresh = items.filter((_, i) => after.lit[i] > (session.before.lit[i] ?? 0) + 1e-6);
-  const cleaned = items.filter((_, i) => session.before.dusty[i] && !after.dusty[i]).length;
   const [dusty, setDusty] = useState(session.before.dusty);
   const ready = () => {
     setTimeout(() => win.current?.revealTo(after.lit), 700);
     setTimeout(() => setDusty(after.dusty), 900);
   };
-  const names = fresh.slice(0, 3).map((i) => itemLabel(i)).join(', ') + (fresh.length > 3 ? ` and ${fresh.length - 3} more` : '');
+  const names = fresh.map((i) => itemLabel(i)).join(', ');
   return (
-    <section className="hr-hero hr-hero-done" aria-label="Your window">
-      <LivingWindow ref={win} base={windowFor(course.id).base} lit={session.before.lit} dusty={dusty} onReady={ready} bottomInset={120} />
-      <div className="hr-hero-bottom">
-        <span className="hr-hero-label">{kind}</span>
-        <span className="serif" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1.15 }}>
-          {fresh.length ? `New light: ${names}` : cleaned ? `${cleaned} ${cleaned === 1 ? 'pane' : 'panes'} wiped clean` : 'The light holds'}
-        </span>
-        <span style={{ fontSize: 14, opacity: 0.8 }}>{Math.round(after.share * 100)}% of the window lit</span>
-      </div>
+    <section className="hr-hero hr-hero-done" aria-label={names ? `Your window: new light for ${names}` : 'Your window'}>
+      <LivingWindow ref={win} base={windowFor(course.id).base} lit={session.before.lit} dusty={dusty} onReady={ready} />
     </section>
   );
 }

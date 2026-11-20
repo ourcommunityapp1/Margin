@@ -14,9 +14,9 @@ import { allItems, itemLabel } from '@/heir/content';
 import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
 import type { PathUnit } from '@/heir/path';
-import { describe, lessonsDone, planNext } from '@/heir/planner';
+import { lessonsDone, planNext } from '@/heir/planner';
 import { unitsFor } from '@/heir/lesson';
-import { dayName, greeting } from '@/heir/time';
+import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
 import { LivingWindow } from './ui/glass/window';
 import { windowFor, windowLight } from './ui/glass/light';
@@ -34,7 +34,6 @@ export default function Today() {
 
   if (!ready || !me || !chosen) return <main className="hr-page" aria-busy="true" />;
 
-  const currentUnit = path.find((u) => u.status === 'current');
   const ids = new Set(items.map((i) => i.id));
   const done = lessonsDone(mine, course.id, ids);
   const plan = planNext({ courseId: course.id, items, track, p: mine, now });
@@ -48,23 +47,20 @@ export default function Today() {
     <>
       {/* The course's window: lit glass is what you've learned, dull glass is still to come. */}
       <section className="hr-hero" aria-label={`Your window: ${Math.round(light.share * 100)}% lit`}>
-        <LivingWindow base={glass.base} lit={light.lit} dusty={light.dusty} bottomInset={plan ? 200 : 130} />
+        <LivingWindow base={glass.base} lit={light.lit} dusty={light.dusty} />
         <header className="hr-hero-top">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.85 }}>{dayName(now)}</span>
-            <h1 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.1 }}>{greeting(time)}, {me.name}</h1>
-          </div>
-          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} className="hr-hero-chip" style={{ width: 44, padding: 0, justifyContent: 'center', fontSize: 17 }}>{me.name[0]}</Link>
+          <h1 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name}</h1>
+          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} className="hr-hero-chip">{me.name[0]}</Link>
         </header>
-        <div className="hr-hero-bottom">
-          <span className="hr-hero-label">{plan ? `Up next${currentUnit ? ` · Unit ${currentUnit.number}, ${groupLabel(currentUnit.group)}` : ''}` : 'All caught up'}</span>
-          <span className="serif" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.1 }}>{plan ? lessonName : 'The light is in'}</span>
-          <span style={{ fontSize: 14, opacity: 0.8 }}>{Math.round(light.share * 100)}% of the window lit · {course.title}</span>
-          {plan && <Link className="hr-btn hr-btn-light" href="/heir/lesson">{plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : 'Start lesson'}</Link>}
-        </div>
       </section>
 
       <main className="hr-page hr-after-hero">
+        {plan ? (
+          <Link className="hr-cta" href="/heir/lesson">
+            <span>{plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`}</span>
+            <span className="hr-cta-go" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
+          </Link>
+        ) : <p className="serif" style={{ margin: '0 4px', fontSize: 18, textAlign: 'center' }}>All caught up for today.</p>}
 
         <DaysKept days={mine.days} today={today} now={now} dueCount={due.length} />
 
@@ -81,14 +77,6 @@ export default function Today() {
                 <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', lineHeight: 1.25 }}>{name}</span>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span className="hr-label">This lesson{currentUnit ? ` · Unit ${currentUnit.number}, ${groupLabel(currentUnit.group)}` : ''}</span>
-            <span className="serif" style={{ fontSize: 28, fontWeight: 600, lineHeight: 1.1 }}>{plan ? lessonName : 'All caught up'}</span>
-            <span className="serif" style={{ fontSize: 18, color: 'var(--muted)', lineHeight: 1.4 }}>{plan ? describe(plan, groupLabel) : 'Everything here is learned and nothing is due. Come back tomorrow, or pick another course.'}</span>
           </div>
         </section>
 
