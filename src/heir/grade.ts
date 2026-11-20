@@ -43,7 +43,7 @@ export function checkOrder(picked: string[], tiles: string[]): OrderCheck {
   picked.forEach((w, i) => { const k = left.indexOf(p[i]); if (k >= 0) left.splice(k, 1); else extra.push(w); });
   const missing = tiles.filter((w) => left.includes(normalizeWord(w)));
   const outOfPlace = p.filter((w, i) => w !== t[i]).length;
-  const close = extra.length <= 1 && outOfPlace <= 2;
+  const close = extra.length <= 1 && missing.length <= 1 && outOfPlace <= 2;
   return { ok: false, close, extra, missing, outOfPlace };
 }
 

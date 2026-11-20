@@ -91,7 +91,8 @@ interface Base { id: string; itemId: string; review: boolean }
 export type Step =
   | (Base & { kind: 'intro'; unit: Unit })
   // `tiles` in the right order; `bank` is tiles plus decoys, shuffled, as shown.
-  | (Base & { kind: 'order'; tiles: string[]; decoys: string[]; bank: string[]; pieces: boolean; lead: string })
+  // `slots`: the guided version, with a grey box for each word still to place.
+  | (Base & { kind: 'order'; tiles: string[]; decoys: string[]; bank: string[]; pieces: boolean; slots: boolean; lead: string })
   | (Base & { kind: 'meaning'; question: MeaningQuestion; options: string[] })
   | (Base & { kind: 'blanks'; text: string; blanks: number[]; lead: string })
   | (Base & { kind: 'letters'; text: string; lead: string })
@@ -192,11 +193,11 @@ function bankFor(tiles: string[], decoyWords: string[], rng: Rng): string[] {
 interface Ctx { n: number; rng: Rng; track: Track; pool: Item[] }
 const nextId = (c: Ctx, kind: StepKind, itemId: string) => `${kind}:${itemId}:${c.n++}`;
 
-function orderStep(c: Ctx, item: Item, tiles: string[], lead: string, pieces: boolean, review: boolean): Step {
+function orderStep(c: Ctx, item: Item, tiles: string[], lead: string, pieces: boolean, review: boolean, slots = false): Step {
   // Never a decoy that appears anywhere in this answer: that would be a trick, not a test.
   const extra = pieces ? [] : otherWords(c.pool.filter((i) => i.id !== item.id), item.text).slice(0, 40);
   const decoys = shuffle(extra, c.rng).slice(0, pieces ? 0 : tiles.length > 4 ? 2 : 1);
-  return { id: nextId(c, 'order', item.id), itemId: item.id, review, kind: 'order', tiles, decoys, bank: bankFor(tiles, decoys, c.rng), pieces, lead };
+  return { id: nextId(c, 'order', item.id), itemId: item.id, review, kind: 'order', tiles, decoys, bank: bankFor(tiles, decoys, c.rng), pieces, slots, lead };
 }
 
 // Swaps one word for a believable mix-up ("the only rule to guide us"), keeping its capital letter and
@@ -323,7 +324,8 @@ export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Ma
     const middle = ph.length > 2 && i === 1;
     const choose = middle ? nextPhraseStep(c, item, unit, false) : null;
     if (choose) learn.push(choose);
-    else if (tiles.length >= 2) learn.push(orderStep(c, item, tiles, lead, false, false));
+    // The first word bank is guided (a slot per word); later ones leave the count to memory.
+    else if (tiles.length >= 2) learn.push(orderStep(c, item, tiles, lead, false, false, !learn.some((s) => s.kind === 'order')));
     lead = p;
   });
   const lastPart = unit.part === unit.of;

@@ -60,6 +60,8 @@ test('a first lesson walks from seeing it to saying it', () => {
   const steps = buildLesson({ unit, item: wsc1, track: 'adult', mates: [], due: [], pool: allItems(), rng: seeded(1) });
   assert.deepEqual(steps.map((s) => s.kind), ['intro', 'order', 'order', 'meaning', 'order', 'blanks', 'letters', 'say', 'type']);
   assert.equal(new Set(steps.map((s) => s.id)).size, steps.length);
+  const banks = steps.filter((s) => s.kind === 'order' && !s.pieces);
+  assert.deepEqual(banks.map((s) => s.kind === 'order' && s.slots), [true, false], 'first word bank guided, later free');
 });
 
 test('later lessons practice every earlier item in the group, starting with a warm-up', () => {
@@ -147,6 +149,8 @@ test('feedback says what went wrong with a word bank', () => {
   const swapped = checkOrder(['how', 'may', 'we', 'glorify', 'and', 'enjoy', 'him.'], tiles);
   assert.deepEqual([swapped.close, swapped.outOfPlace], [true, 2]);
   assert.ok(!checkOrder([...tiles].reverse(), tiles).close);
+  const short = checkOrder(['how', 'we', 'may', 'glorify', 'and', 'enjoy'], tiles);
+  assert.deepEqual([short.ok, short.close, short.missing], [false, true, ['him.']]);
   assert.ok(closeWord('glorfiy', 'glorify'));
   assert.ok(!closeWord('glory', 'glorify'));
   assert.ok(!closeWord('glorify', 'glorify'));

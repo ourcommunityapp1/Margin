@@ -70,6 +70,7 @@ export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' 
     const r = checkOrder(picked.map((i) => step.bank[i]), step.tiles);
     const note = r.ok ? undefined
       : r.extra.length ? `${quoteList(r.extra)} ${plural(r.extra.length, 'isn’t', 'aren’t')} part of this answer.`
+      : r.missing.length ? `${r.missing.length} ${plural(r.missing.length, step.pieces ? 'phrase is' : 'word is', step.pieces ? 'phrases are' : 'words are')} missing.`
       : `${r.outOfPlace} ${plural(r.outOfPlace, step.pieces ? 'phrase is' : 'word is', step.pieces ? 'phrases are' : 'words are')} out of order.`;
     onReport({ ok: r.ok, close: r.close, note, reveal: <Answer lead={step.lead} text={answer} /> });
   };
@@ -82,6 +83,9 @@ export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' 
         {picked.map((i, at) => (
           <button key={`${i}-${at}`} type="button" className={tileClass} onClick={() => setPicked((p) => p.filter((_, k) => k !== at))}>{step.bank[i]}</button>
         ))}
+        {step.slots && step.tiles.slice(picked.length).map((t, k) => (
+          <span key={`slot-${k}`} className="hr-slot" aria-hidden="true" style={{ width: `${Math.max(3, t.length) + 2.2}ch` }} />
+        ))}
       </div>
       <div className="hr-bank" aria-label="Word bank" style={step.pieces ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}>
         {step.bank.map((t, i) => {
@@ -89,7 +93,7 @@ export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' 
           return <button key={i} type="button" className={tileClass} data-used={used} disabled={used} aria-hidden={used} onClick={() => setPicked((p) => [...p, i])}>{t}</button>;
         })}
       </div>
-      <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} disabled={picked.length !== step.tiles.length} onClick={check}>Check</button>
+      <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} disabled={!picked.length} onClick={check}>Check</button>
     </>
   );
 }

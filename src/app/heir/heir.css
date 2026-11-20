@@ -744,3 +744,11 @@ body:has(.hr) {
   color: var(--muted);
   border: 1.5px dashed var(--edge);
 }
+/* Guided word bank: a grey box for each word still to place */
+.hr-slot {
+  display: inline-block;
+  min-height: 44px;
+  border-radius: 14px;
+  background: var(--well);
+  box-sizing: border-box;
+}
