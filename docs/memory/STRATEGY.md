@@ -28,16 +28,22 @@ An app for memorizing Scripture, catechisms and creeds, built on what memory res
 
 Each item (a verse, a catechism question, a creed) climbs a ladder. A level counts only when you pass it **in several separate reviews on different days**, so it measures memory, not a good afternoon. Points are small and reward the same thing: a correct recall after a longer gap earns more than one right after practice.
 
-The names come from the foundation stones of the New Jerusalem (Revelation 21:19–20), with **Jasper** at the top: the city "had the glory of God, its radiance like a most rare jewel, like a jasper, clear as crystal" (Revelation 21:11).
+The names come from the foundation stones of the New Jerusalem (Revelation 21:19–20), climbed **from the twelfth foundation to the first**, so the ladder itself walks up the city's foundations and ends at Jasper: the city "had the glory of God, its radiance like a most rare jewel, like a jasper, clear as crystal" (Revelation 21:11). *Decided 2026-11-20.*
 
-| Level | Name | You can… | To earn it |
-|---|---|---|---|
-| 1 | **Carnelian** | Put the words in order from a word bank | Pass in 3 reviews on different days |
-| 2 | **Topaz** | Type or say the missing words (blanks) | Pass in 3 reviews, at least a day apart |
-| 3 | **Sapphire** | Type or say the whole text from its cue (the reference or the catechism question) | Pass in 3 reviews spread over a week or more |
-| 4 | **Emerald** | Go both ways: reference → text and text → reference, even from a vague cue ("the verse about storing up God's word") | Pass in 3 reviews spread over 2 weeks or more |
-| 5 | **Amethyst** | Do all of level 4 perfectly, kept over months | Every review perfect for 3 months, including one after a gap of a month or more |
-| 6 | **Jasper** | Amethyst, plus know what it means: word meanings, and the connected texts (a catechism's proof texts, a verse's cross-references) | Pass the meaning and connection questions in reviews spread over a month |
+| Level | Stone | Foundation | Earned when | Counts as |
+|---|---|---|---|---|
+| 1 | **Amethyst** | 12th | Typed in full, correctly, the first time | Know |
+| 2 | **Topaz** | 9th | Said or typed right on 3 different days | Memorized |
+| 3 | **Carnelian** | 6th | Recalled after a gap of 2+ weeks, both ways (question → answer, answer → question) | Mastered |
+| 4 | **Emerald** | 4th | Every review right for 3 months, including one after a month's gap | Long-term memory |
+| 5 | **Sapphire** | 2nd | Emerald, plus its meaning questions and connected Scripture | Long-term, and understood |
+| 6 | **Jasper** | 1st | Left open for now | |
+
+- Each level is shown as a rounded square holding a close-up photo of the real stone (red jasper for Jasper). Photos and credits: `docs/memory/awards/stones/`.
+- An overdue item keeps its level; its stone fades until the next good review ("Needs a refresh").
+- Counts shown on Today and Progress: Know, Memorized, Mastered, Long-term memory, split by kind (catechism questions, creed sections, verses later).
+- Also decided: a "days kept" streak where Sunday is a rest day that never breaks it; a Progress tab with the counts, stone shelf, month calendar and about a dozen dated awards; no points for now.
+- Mockups: https://claude.ai/artifact/VVUkYfBtARYJovpiUFKNLh
 
 **Clear feedback, every time:**
 - Word by word: which words you got, which needed a hint, which you missed.

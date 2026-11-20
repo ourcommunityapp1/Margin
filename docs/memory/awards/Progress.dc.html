@@ -40,9 +40,9 @@ a{color:#ECEEF0}a:hover{color:#FFFFFF}
               <span style="color: #A9B3BA">{{k.note}}</span>
             </div>
             <div style="height: 8px; border-radius: 4px; background: #2B343B; display: flex; overflow: hidden">
-              <span style="width: {{k.gold}}; background: #2F5DA8"></span>
+              <span style="width: {{k.gold}}; background: #B0442A"></span>
               <span style="width: {{k.silver}}; background: #D99A2B"></span>
-              <span style="width: {{k.bronze}}; background: #B0442A"></span>
+              <span style="width: {{k.bronze}}; background: #7B52B5"></span>
             </div>
           </div>
         </sc-for>
@@ -140,9 +140,9 @@ class Component extends DCLogic {
     const locked = { op: 0.6, seal: 'transparent', ring: '1.5px dashed #6B767E', ink: '#A9B3BA' };
     return {
       counts: [
-        { level: 'carnelian', n: 5, name: 'Know' },
+        { level: 'amethyst', n: 5, name: 'Know' },
         { level: 'topaz', n: 3, name: 'Memorized' },
-        { level: 'sapphire', n: 1, name: 'Mastered' },
+        { level: 'carnelian', n: 1, name: 'Mastered' },
         { level: 'emerald', n: 0, name: 'Long-term' },
       ],
       kinds: [
@@ -151,11 +151,11 @@ class Component extends DCLogic {
         { name: 'Bible passages', note: 'Coming later', gold: '0%', silver: '0%', bronze: '0%' },
       ],
       shelf: [
-        { level: 'carnelian', n: 2, name: 'Carnelian', dim: false },
+        { level: 'amethyst', n: 2, name: 'Amethyst', dim: false },
         { level: 'topaz', n: 2, name: 'Topaz', dim: false },
-        { level: 'sapphire', n: 1, name: 'Sapphire', dim: false },
+        { level: 'carnelian', n: 1, name: 'Carnelian', dim: false },
         { level: 'emerald', n: 0, name: 'Emerald', dim: true },
-        { level: 'amethyst', n: 0, name: 'Amethyst', dim: true },
+        { level: 'sapphire', n: 0, name: 'Sapphire', dim: true },
         { level: 'jasper', n: '·', name: 'Jasper', dim: true },
       ],
       dow: ['M', 'T', 'W', 'T', 'F', 'S', 'S'],
@@ -164,7 +164,7 @@ class Component extends DCLogic {
         { name: 'First lesson', when: '26 October', icon: 'M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2zM8 7h6', ...earned },
         { name: '7 days kept', when: '4 November', icon: 'M4 6h16v14H4zM4 10h16M9 3v4M15 3v4', ...earned },
         { name: 'First unit locked in', when: '9 November', icon: 'M3 20h18M5 20v-6h6v6M13 20v-9h6v9M8 14V9h8', ...earned },
-        { name: 'First Sapphire', when: '18 November', icon: 'M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z', ...earned },
+        { name: 'First Carnelian', when: '18 November', icon: 'M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z', ...earned },
         { name: 'Questions 1–10 memorized', when: '7 to go', icon: 'M5 12l5 5 9-10', ...locked },
         { name: '30 days kept', when: '24 to go', icon: 'M4 6h16v14H4zM4 10h16M9 3v4M15 3v4', ...locked },
         { name: 'First Emerald', when: 'Earliest 18 February', icon: 'M7 3h10l4 6-9 12L3 9z', ...locked },
