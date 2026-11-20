@@ -1,29 +1,170 @@
 {
-  "v": 3,
-  "attachments": {},
-  "boards": {
-    "Learn.dc.html": { "h": 844, "title": "Learn with levels", "w": 390, "x": 940, "y": 3400 },
-    "LevelUp.dc.html": { "h": 844, "title": "Lesson complete: level up", "w": 390, "x": 0, "y": 3400 },
-    "LockIn.dc.html": { "h": 844, "title": "Unit locked in", "w": 390, "x": 470, "y": 3400 },
-    "Main.dc.html": { "h": 900, "title": "The ladder", "w": 1280, "x": -160, "y": -300 },
-    "Medal.dc.html": { "h": 96, "title": "Medal (shared art)", "w": 96, "x": 1360, "y": 0 },
-    "Progress.dc.html": { "h": 1780, "title": "Progress (new tab)", "w": 390, "x": 470, "y": 1260 },
-    "Today.dc.html": { "h": 1500, "title": "Today", "w": 390, "x": 0, "y": 1260 },
-    "JourneyPath.dc.html": { "h": 1640, "title": "A · The path", "w": 390, "x": 0, "y": 4620 },
-    "JourneyWall.dc.html": { "h": 1300, "title": "B · The wall", "w": 390, "x": 470, "y": 4620 },
-    "JourneyParts.dc.html": { "h": 1300, "title": "C · Parts and milestones", "w": 390, "x": 940, "y": 4620 },
-    "UnitGuide.dc.html": { "h": 844, "title": "Unit guide (tap a unit)", "w": 390, "x": 1410, "y": 4620 }
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "Learn.dc.html": {
+   "h": 844,
+   "title": "Learn with levels",
+   "w": 390,
+   "x": 940,
+   "y": 3400
   },
-  "createdOnFiles": { "at": "2026-11-20T21:30:00Z", "v": 1 },
-  "designSystems": [],
-  "launch": { "view": "canvas" },
-  "notes": {
-    "t1": { "kind": "title1", "maxW": 1840, "text": "How a question grows", "w": 240, "x": 0, "y": -300 },
-    "t2": { "kind": "title1", "maxW": 1840, "text": "Where progress lives", "w": 240, "x": 0, "y": 1000 },
-    "t3": { "kind": "title1", "maxW": 1840, "text": "The moments", "w": 240, "x": 0, "y": 3130 },
-    "t4": { "kind": "title1", "maxW": 1840, "text": "The journey: three directions", "x": 0, "y": 4350 }
+  "LevelUp.dc.html": {
+   "h": 844,
+   "title": "Lesson complete: level up",
+   "w": 390,
+   "x": 0,
+   "y": 3400
   },
-  "order": ["Main.dc.html", "Medal.dc.html", "Today.dc.html", "Progress.dc.html", "LevelUp.dc.html", "LockIn.dc.html", "Learn.dc.html", "JourneyPath.dc.html", "JourneyWall.dc.html", "JourneyParts.dc.html", "UnitGuide.dc.html"],
-  "pages": [],
-  "title": "Heir Progress and Awards"
+  "LockIn.dc.html": {
+   "h": 844,
+   "title": "Unit locked in",
+   "w": 390,
+   "x": 470,
+   "y": 3400
+  },
+  "Main.dc.html": {
+   "h": 900,
+   "title": "The ladder",
+   "w": 1280,
+   "x": -160,
+   "y": -300
+  },
+  "Medal.dc.html": {
+   "h": 96,
+   "title": "Medal (shared art)",
+   "w": 96,
+   "x": 1360,
+   "y": 0
+  },
+  "Progress.dc.html": {
+   "h": 1780,
+   "title": "Progress (new tab)",
+   "w": 390,
+   "x": 470,
+   "y": 1260
+  },
+  "Today.dc.html": {
+   "h": 1500,
+   "title": "Today",
+   "w": 390,
+   "x": 0,
+   "y": 1260
+  },
+  "JourneyPath.dc.html": {
+   "h": 1640,
+   "title": "A · The path",
+   "w": 390,
+   "x": 0,
+   "y": 4620
+  },
+  "JourneyWall.dc.html": {
+   "h": 1300,
+   "title": "B · The wall",
+   "w": 390,
+   "x": 470,
+   "y": 4620
+  },
+  "JourneyParts.dc.html": {
+   "h": 1300,
+   "title": "C · Parts and milestones",
+   "w": 390,
+   "x": 940,
+   "y": 4620
+  },
+  "UnitGuide.dc.html": {
+   "h": 844,
+   "title": "Unit guide (tap a unit)",
+   "w": 390,
+   "x": 1410,
+   "y": 4620
+  },
+  "C1Quiet.dc.html": {
+   "x": 0,
+   "y": 6720,
+   "w": 390,
+   "h": 1000,
+   "title": "C1 · Quiet"
+  },
+  "C2Rings.dc.html": {
+   "x": 470,
+   "y": 6720,
+   "w": 390,
+   "h": 1100,
+   "title": "C2 · Two rings"
+  },
+  "C3Ascent.dc.html": {
+   "x": 940,
+   "y": 6720,
+   "w": 390,
+   "h": 1100,
+   "title": "C3 · The ascent"
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-11-20T21:30:00Z",
+  "v": 1
+ },
+ "designSystems": [],
+ "launch": {
+  "view": "canvas"
+ },
+ "notes": {
+  "t1": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "How a question grows",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t2": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "Where progress lives",
+   "w": 240,
+   "x": 0,
+   "y": 1000
+  },
+  "t3": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "The moments",
+   "w": 240,
+   "x": 0,
+   "y": 3130
+  },
+  "t4": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "The journey: three directions",
+   "x": 0,
+   "y": 4350
+  },
+  "t5": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "C, refined: three quieter variations",
+   "x": 0,
+   "y": 6440
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Medal.dc.html",
+  "Today.dc.html",
+  "Progress.dc.html",
+  "LevelUp.dc.html",
+  "LockIn.dc.html",
+  "Learn.dc.html",
+  "JourneyPath.dc.html",
+  "JourneyWall.dc.html",
+  "JourneyParts.dc.html",
+  "UnitGuide.dc.html",
+  "C1Quiet.dc.html",
+  "C2Rings.dc.html",
+  "C3Ascent.dc.html"
+ ],
+ "pages": [],
+ "title": "Heir Progress and Awards"
 }
