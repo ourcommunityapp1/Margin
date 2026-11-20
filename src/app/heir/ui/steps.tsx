@@ -1,31 +1,31 @@
 'use client';
 
 // The exercises. Each one reports a result once; the lesson shows the feedback and moves on.
+// Typing steps keep their words near the top of the card, so the phone keyboard never hides them.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Item, Track } from '@/heir/types';
 import type { Step } from '@/heir/lesson';
 import { unitText } from '@/heir/lesson';
 import { itemLabel } from '@/heir/content';
-import { firstLetter, gradeSpoken, SPOKEN_PASS, wordMatches } from '@/heir/grade';
-import { sameWords } from '@/heir/words';
+import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
-export type Report = (ok: boolean, hints: number, reveal?: ReactNode) => void;
-
-// Words before this part of a long answer, kept short.
-const tail = (lead: string, n = 8) => {
-  const w = lead.split(' ').filter(Boolean);
-  return w.length > n ? `…${w.slice(-n).join(' ')}` : lead;
-};
+export interface Outcome { ok: boolean; close?: boolean; hints?: number; note?: string; reveal?: ReactNode }
+export type Report = (o: Outcome) => void;
 
 // Splits "God," into the word to type and the punctuation around it.
 const parts = (token: string) => {
   const m = token.match(/^([“‘"'(]*)(.*?)([.,;:!?”’")]*)$/);
   return { before: m?.[1] ?? '', core: m?.[2] ?? token, after: m?.[3] ?? '' };
 };
+const quoteList = (list: string[]) => list.map((w) => `“${parts(w).core}”`).join(', ');
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
+
+// The words that come before the part being practiced: plain, bold, the start of the sentence.
+const Lead = ({ text }: { text: string }) => (text ? <strong className="hr-lead">{text} </strong> : null);
+const Answer = ({ lead, text }: { lead?: string; text: string }) => <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={lead ?? ''} />{text}</p>;
 
 export function Cue({ item, step, title }: { item: Item; step: Step; title: string }) {
-  const lead = 'lead' in step ? step.lead : '';
   return (
     <div className="hr-cue">
       <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -33,7 +33,6 @@ export function Cue({ item, step, title }: { item: Item; step: Step; title: stri
         {title}
       </span>
       <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>
-      {lead && <p className="serif" style={{ margin: 0, fontSize: 18, lineHeight: 1.4, color: 'var(--muted)' }}>{tail(lead)}</p>}
     </div>
   );
 }
@@ -66,12 +65,19 @@ export function Intro({ item, track, step, onNext }: { item: Item; track: Track;
 export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' }>; onReport: Report }) {
   const [picked, setPicked] = useState<number[]>([]);
   const answer = step.tiles.join(' ');
-  const check = () => onReport(sameWords(picked.map((i) => step.bank[i]).join(' '), answer), 0, <p className="hr-say-text" style={{ fontSize: 19 }}>{answer}</p>);
+  const check = () => {
+    const r = checkOrder(picked.map((i) => step.bank[i]), step.tiles);
+    const note = r.ok ? undefined
+      : r.extra.length ? `${quoteList(r.extra)} ${plural(r.extra.length, 'isn’t', 'aren’t')} part of this answer.`
+      : `${r.outOfPlace} ${plural(r.outOfPlace, step.pieces ? 'phrase is' : 'word is', step.pieces ? 'phrases are' : 'words are')} out of order.`;
+    onReport({ ok: r.ok, close: r.close, note, reveal: <Answer lead={step.lead} text={answer} /> });
+  };
   const tileClass = `hr-tile${step.pieces ? ' piece' : ''}`;
   return (
     <>
       <p style={{ margin: 0, fontWeight: 600 }}>{step.pieces ? 'Put the phrases in order' : 'Put the words in order'}</p>
       <div className="hr-answer" aria-label="Your answer" style={step.pieces ? { flexDirection: 'column', flexWrap: 'nowrap' } : undefined}>
+        {step.lead && <span className="hr-lead" style={{ alignSelf: step.pieces ? 'flex-start' : 'center' }}>{step.lead}</span>}
         {picked.map((i, at) => (
           <button key={`${i}-${at}`} type="button" className={tileClass} onClick={() => setPicked((p) => p.filter((_, k) => k !== at))}>{step.bank[i]}</button>
         ))}
@@ -82,26 +88,70 @@ export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' 
           return <button key={i} type="button" className={tileClass} data-used={used} disabled={used} aria-hidden={used} onClick={() => setPicked((p) => [...p, i])}>{t}</button>;
         })}
       </div>
-      <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} disabled={!picked.length} onClick={check}>Check</button>
+      <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} disabled={picked.length !== step.tiles.length} onClick={check}>Check</button>
     </>
   );
 }
 
-export function Meaning({ step, onReport }: { step: Extract<Step, { kind: 'meaning' }>; onReport: Report }) {
+function Choices({ options, onPick, serif }: { options: string[]; onPick(o: string): void; serif?: boolean }) {
   const [chosen, setChosen] = useState<string | null>(null);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {options.map((o) => (
+        <button key={o} type="button" className="hr-choice" aria-pressed={chosen === o} disabled={!!chosen}
+          style={{ textAlign: 'left', ...(serif ? { fontFamily: 'var(--font-source-serif), Georgia, serif', fontSize: 18 } : {}) }}
+          onClick={() => { setChosen(o); onPick(o); }}>{o}</button>
+      ))}
+    </div>
+  );
+}
+
+export function Meaning({ step, onReport }: { step: Extract<Step, { kind: 'meaning' }>; onReport: Report }) {
   const q = step.question;
   return (
     <>
       <p className="serif" style={{ margin: 0, fontSize: 22, lineHeight: 1.35, fontWeight: 600 }}>{q.question}</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {step.options.map((o) => (
-          <button key={o} type="button" className="hr-choice" aria-pressed={chosen === o} style={{ textAlign: 'left' }} disabled={!!chosen}
-            onClick={() => {
-              setChosen(o);
-              onReport(o === q.answer, 0, <>{o !== q.answer && <p style={{ margin: 0, fontWeight: 600 }}>{q.answer}</p>}<p style={{ margin: 0, lineHeight: 1.5 }}>{q.explain}</p></>);
-            }}>{o}</button>
+      <Choices options={step.options} onPick={(o) => onReport({ ok: o === q.answer, note: o === q.answer ? undefined : `The answer: ${q.answer}.`, reveal: <p style={{ margin: 0, lineHeight: 1.5 }}>{q.explain}</p> })} />
+    </>
+  );
+}
+
+export function Next({ step, onReport }: { step: Extract<Step, { kind: 'next' }>; onReport: Report }) {
+  return (
+    <>
+      <p style={{ margin: 0, fontWeight: 600 }}>What comes next?</p>
+      <p className="hr-passage"><Lead text={step.lead} /><span className="hr-hidden-word next" style={{ width: '3em' }} /></p>
+      <Choices serif options={step.options} onPick={(o) => onReport({ ok: o === step.answer, reveal: <Answer lead={step.lead} text={step.answer} /> })} />
+    </>
+  );
+}
+
+export function Match({ step, onReport }: { step: Extract<Step, { kind: 'match' }>; onReport: Report }) {
+  return (
+    <>
+      <span className="hr-label">Which question does this answer?</span>
+      <p className="hr-say-text">{step.text}</p>
+      <Choices options={step.options} onPick={(o) => onReport({ ok: o === step.answer, note: o === step.answer ? undefined : `It answers: ${step.answer}` })} />
+    </>
+  );
+}
+
+export function Spot({ step, onReport }: { step: Extract<Step, { kind: 'spot' }>; onReport: Report }) {
+  const tokens = step.text.split(' ');
+  const [tapped, setTapped] = useState<number | null>(null);
+  const wrong = parts(tokens[step.wrongIndex]).core, right = parts(step.rightWord).core;
+  const reveal = <p className="hr-say-text" style={{ fontSize: 19 }}>{step.correctText.split(' ').map((t, i) => <span key={i}>{i === step.wrongIndex ? <strong>{t}</strong> : t}{' '}</span>)}</p>;
+  return (
+    <>
+      <p style={{ margin: 0, fontWeight: 600 }}>One word is wrong. Tap it.</p>
+      <p className="hr-passage">
+        {tokens.map((t, i) => (
+          <span key={i}>
+            <button type="button" className="hr-word" aria-pressed={tapped === i} disabled={tapped !== null}
+              onClick={() => { setTapped(i); onReport({ ok: i === step.wrongIndex, note: `“${wrong}” should be “${right}”.`, reveal }); }}>{t}</button>{' '}
+          </span>
         ))}
-      </div>
+      </p>
     </>
   );
 }
@@ -111,11 +161,18 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
   const [values, setValues] = useState<Record<number, string>>({});
   const [hints, setHints] = useState(0);
   const refs = useRef<Record<number, HTMLInputElement | null>>({});
-  useEffect(() => { refs.current[step.blanks[0]]?.focus(); }, [step.blanks]);
+  useEffect(() => { refs.current[step.blanks[0]]?.focus({ preventScroll: true }); }, [step.blanks]);
 
   const check = () => {
-    const ok = step.blanks.every((i) => wordMatches(values[i] ?? '', parts(tokens[i]).core));
-    onReport(ok, hints, <p className="hr-say-text" style={{ fontSize: 19 }}>{tokens.map((t, i) => <span key={i}>{step.blanks.includes(i) ? <strong>{t}</strong> : t}{' '}</span>)}</p>);
+    const right = step.blanks.filter((i) => wordMatches(values[i] ?? '', parts(tokens[i]).core));
+    const near = step.blanks.filter((i) => closeWord(values[i] ?? '', parts(tokens[i]).core));
+    const missed = step.blanks.filter((i) => !right.includes(i) && !near.includes(i));
+    const reveal = <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={step.lead} />{tokens.map((t, i) => <span key={i}>{step.blanks.includes(i) ? <strong>{t}</strong> : t}{' '}</span>)}</p>;
+    if (!missed.length) {
+      onReport({ ok: true, hints, note: near.length ? `Check the spelling: ${quoteList(near.map((i) => tokens[i]))}.` : undefined, reveal: near.length ? reveal : undefined });
+      return;
+    }
+    onReport({ ok: false, hints, close: missed.length === 1 && step.blanks.length > 1, note: `${plural(missed.length, 'The missing word was', 'The missing words were')} ${quoteList(missed.map((i) => tokens[i]))}.`, reveal });
   };
   const hint = () => {
     setHints((h) => h + 1);
@@ -132,13 +189,14 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
     <>
       <p style={{ margin: 0, fontWeight: 600 }}>Fill in the missing words</p>
       <p className="hr-passage">
+        <Lead text={step.lead} />
         {tokens.map((t, i) => {
           if (!step.blanks.includes(i)) return <span key={i}>{t} </span>;
           const { before, core, after } = parts(t);
           const at = step.blanks.indexOf(i);
           return (
             <span key={i}>{before}
-              <input type="text" className="hr-blank" aria-label={`Missing word ${at + 1}`} autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
+              <input type="text" className="hr-blank" name={`heir-blank-${at}`} aria-label={`Missing word ${at + 1}`} autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
                 enterKeyHint={at === step.blanks.length - 1 ? 'done' : 'next'}
                 ref={(el) => { refs.current[i] = el; }} style={{ width: `${Math.max(3, core.length) + 1.5}ch` }}
                 value={values[i] ?? ''} onChange={(e) => setValues((v) => ({ ...v, [i]: e.target.value }))}
@@ -153,34 +211,37 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
           );
         })}
       </p>
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+        <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={hint}>Hint</button>
         <button type="button" className="hr-btn" onClick={check} disabled={step.blanks.some((i) => !(values[i] ?? '').trim())}>Check</button>
-        <button type="button" className="hr-btn quiet" onClick={hint}>Hint</button>
       </div>
     </>
   );
 }
 
+// The keyboard target sits on top of the words (invisible), so the words stay in view while typing.
 export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'letters' }>; onReport: Report }) {
   const tokens = step.text.split(' ');
   const [shown, setShown] = useState(0);
   const [misses, setMisses] = useState(0);
   const [hints, setHints] = useState(0);
   const [shake, setShake] = useState(0);
+  const [focused, setFocused] = useState(false);
   const reported = useRef(false);
   const input = useRef<HTMLInputElement>(null);
-  useEffect(() => { input.current?.focus(); }, []);
+  useEffect(() => { input.current?.focus({ preventScroll: true }); }, []);
 
   const finish = (m: number, h: number) => {
     if (reported.current) return;
     reported.current = true;
     const allowed = Math.max(1, Math.floor(tokens.length / 10));
-    onReport(m + h <= allowed, h, <p className="hr-say-text" style={{ fontSize: 19 }}>{step.text}</p>);
+    const ok = m + h <= allowed;
+    onReport({ ok, close: !ok && m + h <= allowed + 2, hints: h, note: m ? `${m} wrong ${plural(m, 'letter', 'letters')}${h ? `, ${h} ${plural(h, 'word', 'words')} shown` : ''}.` : h ? `${h} ${plural(h, 'word', 'words')} shown.` : undefined, reveal: m || h ? <Answer lead={step.lead} text={step.text} /> : undefined });
   };
   const advance = (m: number, h: number) => {
     const n = shown + 1;
     setShown(n);
-    if (n >= tokens.length) finish(m, h);
+    if (n >= tokens.length) { input.current?.blur(); finish(m, h); }
   };
   const press = (ch: string) => {
     if (shown >= tokens.length) return;
@@ -190,16 +251,56 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
   return (
     <>
       <p style={{ margin: 0, fontWeight: 600 }}>Type the first letter of each word</p>
-      <p key={shake} className={`hr-passage${shake ? ' hr-shake' : ''}`} aria-live="polite">
-        {tokens.map((t, i) => i < shown
-          ? <span key={i}>{t} </span>
-          : <span key={i}><span className={`hr-hidden-word${i === shown ? ' next' : ''}`} style={{ width: `${Math.max(2, parts(t).core.length) * 0.55}em` }} />{' '}</span>)}
-      </p>
-      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <input ref={input} type="text" className="hr-letters-input" aria-label="Next first letter" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
-          value="" placeholder={shown < tokens.length ? 'Type here' : ''} onChange={(e) => { const ch = e.target.value.slice(-1); if (ch.trim()) press(ch); }} />
-        <button type="button" className="hr-btn quiet" disabled={shown >= tokens.length} onClick={() => { setHints(hints + 1); advance(misses, hints + 1); }}>Show the next word</button>
+      <div style={{ position: 'relative' }} onClick={() => input.current?.focus()}>
+        <p key={shake} className={`hr-passage${shake ? ' hr-shake' : ''}`} aria-live="polite">
+          <Lead text={step.lead} />
+          {tokens.map((t, i) => i < shown
+            ? <span key={i}>{t} </span>
+            : <span key={i}><span className={`hr-hidden-word${i === shown ? ' next' : ''}`} style={{ width: `${Math.max(2, parts(t).core.length) * 0.55}em` }} />{' '}</span>)}
+        </p>
+        <input ref={input} type="text" className="hr-ghost-input" name="heir-letters" aria-label="Type the first letter of the next word"
+          autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false} inputMode="text"
+          value="" onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          onChange={(e) => { const ch = e.target.value.slice(-1); if (ch.trim()) press(ch); }} />
       </div>
+      {!focused && shown < tokens.length && <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Tap the words to bring up the keyboard.</p>}
+      <button type="button" className="hr-btn quiet" disabled={shown >= tokens.length}
+        onPointerDown={(e) => e.preventDefault()} onClick={() => { setHints(hints + 1); advance(misses, hints + 1); }}>Show the next word</button>
+    </>
+  );
+}
+
+function Heard({ lead, text, heard }: { lead?: string; text: string; heard: boolean[] }) {
+  const tokens = text.split(' ');
+  return <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={lead ?? ''} />{tokens.map((t, i) => <span key={i} className={heard[i] ? 'hr-heard' : 'hr-missed'}>{t}{' '}</span>)}</p>;
+}
+
+function scored(text: string, lead: string, said: string, pass: number, verb: string): Outcome {
+  const r = gradeSpoken(text, said);
+  const missed = r.heard.filter((h) => !h).length;
+  return {
+    ok: r.score >= pass,
+    close: r.score < pass && r.score >= NEARLY,
+    note: missed ? `${missed} ${plural(missed, 'word', 'words')} ${verb}. They’re underlined.` : undefined,
+    reveal: missed ? <Heard lead={lead} text={text} heard={r.heard} /> : undefined,
+  };
+}
+
+const ContinueFrom = ({ lead }: { lead: string }) => lead
+  ? <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Start after <span className="hr-lead" style={{ fontSize: 18, color: 'var(--ink)' }}>{lead}</span></p>
+  : null;
+
+export function Type({ step, onReport }: { step: Extract<Step, { kind: 'type' }>; onReport: Report }) {
+  const [value, setValue] = useState('');
+  const area = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => { area.current?.focus({ preventScroll: true }); }, []);
+  return (
+    <>
+      <p style={{ margin: 0, fontWeight: 600 }}>Type it from memory</p>
+      <ContinueFrom lead={step.lead} />
+      <textarea ref={area} className="hr-typed" name="heir-typed" rows={4} autoCapitalize="sentences" autoCorrect="off" autoComplete="off" spellCheck={false}
+        aria-label="Your answer" value={value} onChange={(e) => setValue(e.target.value)} />
+      <button type="button" className="hr-btn" disabled={!value.trim()} onClick={() => onReport(scored(step.text, step.lead, value, TYPED_PASS, 'missing or misspelled'))}>Check</button>
     </>
   );
 }
@@ -217,11 +318,6 @@ const recognizer = (): (new () => Recognition) | undefined => {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
 };
 
-function Heard({ text, heard }: { text: string; heard: boolean[] }) {
-  const tokens = text.split(' ');
-  return <p className="hr-say-text" style={{ fontSize: 19 }}>{tokens.map((t, i) => <span key={i} className={heard[i] ? 'hr-heard' : 'hr-missed'}>{t}{' '}</span>)}</p>;
-}
-
 export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kind: 'say' }>; onReport: Report; onCantSpeak(): void }) {
   const [mode, setMode] = useState<'mic' | 'self'>(() => (recognizer() ? 'mic' : 'self'));
   const [listening, setListening] = useState(false);
@@ -237,8 +333,7 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
     const text = finals.current.trim();
     if (!text) return;
     done.current = true;
-    const r = gradeSpoken(step.text, text);
-    onReport(r.score >= SPOKEN_PASS, 0, <>{r.score < 1 && <p style={{ margin: 0, fontSize: 14 }}>Underlined words weren’t heard.</p>}<Heard text={step.text} heard={r.heard} /></>);
+    onReport(scored(step.text, step.lead, text, SPOKEN_PASS, 'weren’t heard'));
   };
   const start = () => {
     const Ctor = recognizer();
@@ -265,6 +360,7 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
   return (
     <>
       <p style={{ margin: 0, fontWeight: 600 }}>Say it from memory</p>
+      <ContinueFrom lead={step.lead} />
       {mode === 'mic' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', textAlign: 'center' }}>
           <button type="button" className="hr-mic" data-on={listening} aria-label={listening ? 'Stop and check' : 'Start speaking'} onClick={listening ? stop : start}>
@@ -282,14 +378,14 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
         </>
       ) : (
         <>
-          <p className="hr-say-text">{step.text}</p>
+          <Answer lead={step.lead} text={step.text} />
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => onReport(false, 0)}>I missed some</button>
-            <button type="button" className="hr-btn" onClick={() => onReport(true, 0)}>I said it all</button>
+            <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => onReport({ ok: false })}>I missed some</button>
+            <button type="button" className="hr-btn" onClick={() => onReport({ ok: true })}>I said it all</button>
           </div>
         </>
       )}
-      <button type="button" className="hr-btn quiet" style={{ marginTop: 'auto' }} onClick={() => { rec.current?.abort(); onCantSpeak(); }}>Can’t speak now</button>
+      <button type="button" className="hr-btn quiet" style={{ marginTop: 'auto' }} onClick={() => { rec.current?.abort(); onCantSpeak(); }}>Can’t speak now, type it</button>
     </>
   );
 }

@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildLesson, buildReview, nextUnit, phrases, seeded, unitsFor, unitText, withoutSpeaking } from '../lesson.ts';
-import { gradeSpoken, wordMatches, firstLetter, SPOKEN_PASS } from '../grade.ts';
-import { dueCards, emptyProgress, finishSession, parseProgress, ratingFor, type StepResult } from '../progress.ts';
+import { buildCheckpoint, buildLesson, buildReview, groupsOf, nextActivity, nextUnit, phrases, practiceKinds, seeded, unitsFor, unitText, withoutSpeaking, type Mate } from '../lesson.ts';
+import { checkOrder, closeWord, gradeSpoken, wordMatches, firstLetter, SPOKEN_PASS } from '../grade.ts';
+import { dueCards, emptyProgress, finishSession, parseProgress, ratingFor, seenCounts, type StepResult } from '../progress.ts';
 import { courses, courseItems, getItem, allItems } from '../content/index.ts';
 import { words } from '../words.ts';
 
@@ -28,25 +28,73 @@ test('phrases: short pieces are joined so a word bank has something to arrange',
   assert.deepEqual(phrases(['Man’s chief end', 'is to glorify God,', 'and to enjoy him', 'forever.']), ['Man’s chief end is to glorify God,', 'and to enjoy him forever.']);
 });
 
-test('a first lesson walks from seeing it to saying it, with reviews mixed in', () => {
+const learnedAll = (ids: string[]) => new Set(ids.flatMap((id) => unitsFor(getItem(id)!, 'adult').map((u) => u.key)));
+const mate = (id: string, seen = 0): Mate => ({ item: getItem(id)!, units: unitsFor(getItem(id)!, 'adult'), seen });
+
+test('groups: five at a time, never mixing collections, as even as possible', () => {
+  const sizes = (id: string) => groupsOf(courseItems(courses.find((c) => c.id === id)!)).map((g) => [g.key, g.items.length]);
+  assert.deepEqual(sizes('westminster-shorter'), [['westminster-shorter:1-5', 5], ['westminster-shorter:6-10', 5]]);
+  assert.deepEqual(sizes('creeds'), [['apostles-creed:1-4', 4], ['nicene-creed:1-3', 3], ['nicene-creed:4-6', 3]]);
+});
+
+test('pacing: learn a group one item at a time, lock it in, then move to the next group', () => {
+  const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
+  const at = (learned: string[], checkpoints: string[] = []) => {
+    const a = nextActivity(items, 'adult', learnedAll(learned), new Set(checkpoints));
+    return a && (a.kind === 'learn' ? a.unit.key : `lock ${a.group.key}`);
+  };
+  assert.equal(at([]), 'wsc-1#1');
+  assert.equal(at(['wsc-1', 'wsc-2']), 'wsc-3#1');
+  assert.equal(at(['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4', 'wsc-5']), 'lock westminster-shorter:1-5');
+  assert.equal(at(['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4', 'wsc-5'], ['westminster-shorter:1-5']), 'wsc-6#1');
+  assert.equal(at(items.map((i) => i.id), ['westminster-shorter:1-5', 'westminster-shorter:6-10']), null);
+});
+
+test('a first lesson walks from seeing it to saying it', () => {
   const unit = unitsFor(wsc1, 'adult')[0];
-  const due = [{ item: getItem('wsc-2')!, strength: 1 }, { item: getItem('wsc-3')!, strength: 5 }, { item: getItem('wsc-4')!, strength: 20 }];
-  const steps = buildLesson({ unit, item: wsc1, track: 'adult', due, pool: allItems(), rng: seeded(1) });
-  const mine = steps.filter((s) => !s.review).map((s) => s.kind);
-  assert.deepEqual(mine, ['intro', 'order', 'order', 'meaning', 'order', 'blanks', 'letters', 'say']);
-  assert.deepEqual(steps.filter((s) => s.review).map((s) => s.kind), ['blanks', 'letters', 'say']);
-  assert.equal(steps[0].kind, 'intro');
-  assert.equal(steps[steps.length - 1].kind, 'say');
-  assert.ok(!steps[steps.length - 2].review || steps[steps.length - 2].itemId !== wsc1.id);
+  const steps = buildLesson({ unit, item: wsc1, track: 'adult', mates: [], due: [], pool: allItems(), rng: seeded(1) });
+  assert.deepEqual(steps.map((s) => s.kind), ['intro', 'order', 'order', 'meaning', 'order', 'blanks', 'letters', 'say']);
   assert.equal(new Set(steps.map((s) => s.id)).size, steps.length);
 });
 
-test('every part of every course builds a sensible lesson on both tracks', () => {
+test('later lessons practice every earlier item in the group, starting with a warm-up', () => {
+  const unit = unitsFor(getItem('wsc-3')!, 'adult')[0];
+  const steps = buildLesson({ unit, item: getItem('wsc-3')!, track: 'adult', mates: [mate('wsc-1', 2), mate('wsc-2', 1)], due: [{ item: getItem('wlc-1')!, strength: 3 }], pool: allItems(), rng: seeded(2) });
+  assert.equal(steps[0].itemId, 'wsc-1', 'warm up on an earlier item first');
+  assert.equal(steps.filter((s) => s.itemId === 'wsc-1').length, 2);
+  assert.equal(steps.filter((s) => s.itemId === 'wsc-2').length, 2);
+  assert.equal(steps.filter((s) => s.itemId === 'wlc-1').length, 1);
+  assert.equal(steps[steps.length - 1].kind, 'say');
+  assert.ok(steps.length <= 16);
+  // With four earlier items, each still gets practice, and the lesson stays short.
+  const five = buildLesson({ unit: unitsFor(getItem('wsc-5')!, 'adult')[0], item: getItem('wsc-5')!, track: 'adult', mates: ['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4'].map((id) => mate(id, 3)), due: [], pool: allItems(), rng: seeded(3) });
+  for (const id of ['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4']) assert.ok(five.some((s) => s.itemId === id), id);
+  assert.ok(five.length <= 16, `${five.length} steps`);
+});
+
+test('practice gets harder the more an item has been seen', () => {
+  assert.ok(practiceKinds(1).includes('blanks') && !practiceKinds(1).includes('type'));
+  assert.ok(practiceKinds(2).includes('letters') && !practiceKinds(3).includes('say'));
+  assert.ok(practiceKinds(4).includes('type') && practiceKinds(4).includes('say'));
+});
+
+test('lock it in: every part of every item in the group, typed or said, with a lighter check between', () => {
+  const group = groupsOf(courseItems(courses.find((c) => c.id === 'westminster-larger')!))[0];
+  const steps = buildCheckpoint({ group, track: 'adult', pool: allItems(), rng: seeded(4) });
+  const full = steps.filter((s) => s.kind === 'type' || s.kind === 'say');
+  const parts = group.items.reduce((n, i) => n + unitsFor(i, 'adult').length, 0);
+  assert.equal(full.length, parts);
+  assert.ok(full.some((s) => s.kind === 'type') && full.some((s) => s.kind === 'say'));
+  for (const i of group.items) assert.ok(steps.some((s) => s.itemId === i.id && ['match', 'spot', 'next'].includes(s.kind)), i.id);
+});
+
+test('every part of every course builds sensible steps on both tracks', () => {
   for (const course of courses) {
-    for (const item of courseItems(course)) {
+    const items = courseItems(course);
+    for (const item of items) {
       for (const track of ['adult', 'child'] as const) {
         for (const unit of unitsFor(item, track)) {
-          const steps = buildLesson({ unit, item, track, due: [], pool: allItems(), rng: seeded(7) });
+          const steps = buildLesson({ unit, item, track, mates: [], due: [], pool: allItems(), rng: seeded(7) });
           const { text } = unitText(item, track, unit);
           assert.ok(steps.length >= 5 && steps.length <= 13, `${unit.key} ${track}: ${steps.length} steps`);
           for (const s of steps) {
@@ -54,26 +102,49 @@ test('every part of every course builds a sensible lesson on both tracks', () =>
               assert.ok(text.includes(s.tiles.join(' ')), `${unit.key} tiles`);
               for (const d of s.decoys) assert.ok(!words(text).includes(words(d)[0]), `${unit.key} decoy ${d}`);
               assert.deepEqual([...s.bank].sort(), [...s.tiles, ...s.decoys].sort());
-              assert.notEqual(s.bank.slice(0, s.tiles.length).join(' '), s.tiles.join(' '), `${unit.key} bank already in order`);
             }
-            if (s.kind === 'blanks') {
-              assert.ok(s.blanks.length >= 1 && s.blanks.every((i) => i >= 0 && i < s.text.split(' ').length), `${unit.key} blanks`);
-            }
+            if (s.kind === 'blanks') assert.ok(s.blanks.length >= 1 && s.blanks.every((i) => i >= 0 && i < s.text.split(' ').length), `${unit.key} blanks`);
             if (s.kind === 'meaning') assert.equal(new Set(s.options).size, 4);
+            if (s.kind === 'next') assert.ok(s.options.includes(s.answer) && new Set(s.options).size === 3, `${unit.key} next`);
           }
+        }
+      }
+    }
+    for (const group of groupsOf(items)) {
+      for (const track of ['adult', 'child'] as const) {
+        for (const s of buildCheckpoint({ group, track, pool: allItems(), rng: seeded(9) })) {
+          if (s.kind === 'spot') {
+            assert.notEqual(s.text, s.correctText);
+            assert.equal(s.text.split(' ').length, s.correctText.split(' ').length);
+            assert.notEqual(s.text.split(' ')[s.wrongIndex], s.rightWord);
+          }
+          if (s.kind === 'match') assert.ok(s.options.includes(s.answer) && s.options.length >= 3);
         }
       }
     }
   }
 });
 
-test('a review session recalls each due item twice, written first, then said', () => {
+test('a review session recalls each due item twice, a quick recall first, then in full', () => {
   const due = ['wsc-1', 'wsc-2', 'wsc-3'].map((id) => ({ item: getItem(id)!, strength: 2 }));
-  const steps = buildReview({ due, track: 'adult', rng: seeded(3) });
+  const steps = buildReview({ due, track: 'adult', pool: allItems(), rng: seeded(3) });
   assert.equal(steps.length, 6);
-  assert.deepEqual(steps.slice(0, 3).map((s) => s.kind), ['blanks', 'blanks', 'blanks']);
-  assert.ok(steps.slice(3).every((s) => s.kind === 'say'));
-  assert.equal(withoutSpeaking(steps[3]).kind, 'letters');
+  assert.ok(steps.slice(3).every((s) => s.kind === 'say' || s.kind === 'type'));
+  const say = steps.find((s) => s.kind === 'say');
+  if (say) assert.equal(withoutSpeaking(say).kind, 'type');
+});
+
+test('feedback says what went wrong with a word bank', () => {
+  const tiles = ['how', 'we', 'may', 'glorify', 'and', 'enjoy', 'him.'];
+  assert.ok(checkOrder(tiles, tiles).ok);
+  const decoy = checkOrder(['how', 'we', 'may', 'glorify', 'but', 'enjoy', 'him.'], tiles);
+  assert.deepEqual([decoy.ok, decoy.close, decoy.extra, decoy.missing], [false, true, ['but'], ['and']]);
+  const swapped = checkOrder(['how', 'may', 'we', 'glorify', 'and', 'enjoy', 'him.'], tiles);
+  assert.deepEqual([swapped.close, swapped.outOfPlace], [true, 2]);
+  assert.ok(!checkOrder([...tiles].reverse(), tiles).close);
+  assert.ok(closeWord('glorfiy', 'glorify'));
+  assert.ok(!closeWord('glory', 'glorify'));
+  assert.ok(!closeWord('glorify', 'glorify'));
 });
 
 test('grading forgives punctuation, capitals, one slip in a long word, and split words', () => {
@@ -122,7 +193,14 @@ test('progress: ratings come from first-try answers and hints, not from reading'
   assert.equal(ratingFor([{ ...ok('x'), correct: false }, { ...ok('x'), correct: false }]), 1);
 });
 
+test('progress: practice is counted in sessions, not in single answers', () => {
+  const unit = unitsFor(wsc1, 'adult')[0];
+  let p = finishSession(emptyProgress(), { results: [ok('wsc-1', 'intro'), ok('wsc-1'), ok('wsc-1', 'letters')], learned: unit, now: at('2026-11-19T12:00:00Z') });
+  p = finishSession(p, { results: [ok('wsc-1'), ok('wsc-1', 'say')], now: at('2026-11-20T12:00:00Z') });
+  assert.equal(seenCounts(p).get('wsc-1'), 2);
+});
+
 test('progress: stored data that is broken is ignored', () => {
   assert.deepEqual(parseProgress('nope'), {});
-  assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], cards: {}, lessons: 0, days: [], log: [] });
+  assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], checkpoints: [], cards: {}, lessons: 0, days: [], log: [] });
 });

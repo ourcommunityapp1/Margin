@@ -22,6 +22,8 @@ export interface LogEntry {
 export interface MemberProgress {
   // Unit keys learned ("wsc-1#1").
   units: string[];
+  // Groups whose "lock it in" checkpoint is done ("westminster-shorter:1-5").
+  checkpoints: string[];
   // One schedule per fully learned item.
   cards: Record<string, SavedCard>;
   lessons: number;
@@ -32,7 +34,7 @@ export interface MemberProgress {
 
 export type Progress = Record<string, MemberProgress>;
 
-export const emptyProgress = (): MemberProgress => ({ units: [], cards: {}, lessons: 0, days: [], log: [] });
+export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, days: [], log: [] });
 
 export const memberProgress = (p: Progress, memberId: string | null | undefined): MemberProgress =>
   (memberId && p[memberId]) || emptyProgress();
@@ -64,7 +66,7 @@ export function ratingFor(results: StepResult[]): Grade {
   return Rating.Again;
 }
 
-export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | null; now: Date }): MemberProgress {
+export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | null; checkpoint?: string | null; now: Date }): MemberProgress {
   const cards = { ...p.cards };
   const byItem = new Map<string, StepResult[]>();
   for (const r of o.results) byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
@@ -79,11 +81,24 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   const day = localDay(o.now);
   return {
     units: o.learned && !p.units.includes(o.learned.key) ? [...p.units, o.learned.key] : p.units,
+    checkpoints: o.checkpoint && !p.checkpoints.includes(o.checkpoint) ? [...p.checkpoints, o.checkpoint] : p.checkpoints,
     cards,
     lessons: p.lessons + 1,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
     log: [...p.log, ...o.results.map((r) => ({ ...r, at }))].slice(-1500),
   };
+}
+
+// How many separate sessions each item has been practiced in (a session's answers share one timestamp).
+export function seenCounts(p: MemberProgress): Map<string, number> {
+  const sessions = new Map<string, Set<string>>();
+  for (const e of p.log) {
+    if (e.kind === 'intro') continue;
+    const set = sessions.get(e.itemId) ?? new Set<string>();
+    set.add(e.at);
+    sessions.set(e.itemId, set);
+  }
+  return new Map([...sessions].map(([id, set]) => [id, set.size]));
 }
 
 export interface DueCard { itemId: string; due: Date; strength: number }
@@ -115,6 +130,7 @@ export function parseProgress(raw: string | null): Progress {
       if (!m || typeof m !== 'object') continue;
       out[id] = {
         units: Array.isArray(m.units) ? m.units.filter((u) => typeof u === 'string') : [],
+        checkpoints: Array.isArray(m.checkpoints) ? m.checkpoints.filter((u) => typeof u === 'string') : [],
         cards: m.cards && typeof m.cards === 'object' ? m.cards : {},
         lessons: Number(m.lessons) || 0,
         days: Array.isArray(m.days) ? m.days : [],

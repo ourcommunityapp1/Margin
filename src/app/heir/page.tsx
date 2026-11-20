@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useHeir } from './ui/provider';
-import { useCourse } from './ui/course';
+import { groupLabel, useCourse } from './ui/course';
 import { Tabs } from './ui/tabs';
 import { allItems, getItem, itemLabel } from '@/heir/content';
 import { dayName, greeting } from '@/heir/time';
@@ -12,7 +12,7 @@ import { dayName, greeting } from '@/heir/time';
 export default function Today() {
   const { ready, household, time, now } = useHeir();
   const router = useRouter();
-  const { me, course, items, unit, due, learned, chosen, mine } = useCourse();
+  const { me, course, items, activity, group, groupLearned, due, learned, chosen, mine } = useCourse();
 
   useEffect(() => {
     if (!ready) return;
@@ -22,9 +22,9 @@ export default function Today() {
 
   if (!ready || !me || !chosen) return <main className="hr-page" aria-busy="true" />;
 
-  const next = unit ? getItem(unit.itemId) : null;
+  const next = activity?.kind === 'learn' ? getItem(activity.unit.itemId) : null;
   const unreviewed = allItems().filter((i) => !i.reviewed).length;
-  const pct = items.length ? Math.round((learned / items.length) * 100) : 0;
+  const pct = group ? Math.round((groupLearned / group.items.length) * 100) : 0;
 
   return (
     <>
@@ -39,11 +39,16 @@ export default function Today() {
 
         <section className="hr-card" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span className="hr-label">{course.title}</span>
-            {next && unit ? (
+            <span className="hr-label">{course.title}{group ? ` · ${groupLabel(group)}` : ''}</span>
+            {activity?.kind === 'learn' && next ? (
               <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.25 }}>
-                <span style={{ fontWeight: 600 }}>{itemLabel(next)}{unit.of > 1 ? `, part ${unit.part} of ${unit.of}` : ''}.</span>{' '}
+                <span style={{ fontWeight: 600 }}>Next: {itemLabel(next)}{activity.unit.of > 1 ? `, part ${activity.unit.part} of ${activity.unit.of}` : ''}.</span>{' '}
                 <span style={{ color: 'var(--muted)' }}>{next.prompt}</span>
+              </p>
+            ) : activity?.kind === 'checkpoint' ? (
+              <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.25 }}>
+                <span style={{ fontWeight: 600 }}>Lock in {groupLabel(activity.group)}.</span>{' '}
+                <span style={{ color: 'var(--muted)' }}>All of them from memory, the hard way, before moving on.</span>
               </p>
             ) : (
               <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.25 }}>
@@ -52,16 +57,18 @@ export default function Today() {
               </p>
             )}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div className="hr-progress" style={{ background: 'var(--well)', height: 8 }} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
-            <span style={{ fontSize: 14, color: 'var(--muted)' }}>{learned} of {items.length} learned{due.length ? ` · ${due.length} ready to review` : ''}</span>
-          </div>
-          {next ? (
-            <Link className="hr-btn" href="/heir/lesson">{mine.lessons ? 'Start the next lesson' : 'Start your first lesson'}</Link>
+          {group && activity && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="hr-progress" style={{ background: 'var(--well)', height: 8 }} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>
+              <span style={{ fontSize: 14, color: 'var(--muted)' }}>{groupLearned} of {group.items.length} learned in this group · {learned} of {items.length} overall{due.length ? ` · ${due.length} ready to review` : ''}</span>
+            </div>
+          )}
+          {activity ? (
+            <Link className="hr-btn" href="/heir/lesson">{activity.kind === 'checkpoint' ? 'Lock them in' : mine.lessons ? 'Start the next lesson' : 'Start your first lesson'}</Link>
           ) : (
             <Link className="hr-btn" href="/heir/lesson?mode=review">Review</Link>
           )}
-          {next && due.length > 0 && <Link className="hr-btn quiet" href="/heir/lesson?mode=review">Just review ({due.length})</Link>}
+          {activity && due.length > 0 && <Link className="hr-btn quiet" href="/heir/lesson?mode=review">Just review ({due.length})</Link>}
         </section>
 
         <section className="hr-card" style={{ padding: '4px 22px' }}>
