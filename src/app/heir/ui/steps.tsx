@@ -47,7 +47,10 @@ export function Intro({ item, track, step, onNext }: { item: Item; track: Track;
   return (
     <>
       <div className="hr-cue">
-        <span className="hr-label">New · {itemLabel(item)}{u.of > 1 ? ` · Part ${u.part} of ${u.of}` : ''}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <span className="hr-new">{u.part > 1 ? 'Next part' : 'New question'}</span>
+          <span className="hr-label">{itemLabel(item)}{u.of > 1 ? ` · Part ${u.part} of ${u.of}` : ''}</span>
+        </span>
         <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.3, fontWeight: 600 }}>{item.prompt}</p>
       </div>
       <p className="hr-say-text">

@@ -9,14 +9,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useHeir } from './provider';
 import { groupLabel, useCourse } from './course';
 import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report } from './steps';
-import { buildCheckpoint, buildLesson, buildReview, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
-import { finishSession, localDay, memberProgress, seenCounts, weakestCards, type StepResult } from '@/heir/progress';
+import { buildCheckpoint, buildLesson, buildLite, buildReview, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
+import { finishSession, localDay, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
+import { lessonsDone, planNext, riskOrder } from '@/heir/planner';
+import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, getItem, itemLabel } from '@/heir/content';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
-interface Session { kind: Kind; steps: Step[]; unit: Unit | null; group: Group | null; memberId: string; label: string }
+interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string }
 
 const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
@@ -25,7 +27,7 @@ interface Finished { right: number; total: number; minutes: number; ups: { itemI
 export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   const router = useRouter();
   const { ready, household, updateProgress, progress } = useHeir();
-  const { me, items, track, mine, due, activity, path } = useCourse();
+  const { me, items, track, mine, due, course } = useCourse();
   const [session, setSession] = useState<Session | null>(null);
   const [queue, setQueue] = useState<Step[]>([]);
   const [pos, setPos] = useState(0);
@@ -43,30 +45,43 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     const pool = allItems();
     const toDue = (list: { itemId: string; strength: number }[]) => list.flatMap((d) => { const item = getItem(d.itemId); return item ? [{ item, strength: d.strength }] : []; });
     const learnedUnits = new Set(mine.units);
-    // "Unit 1 · Lesson 3", from the path, so the lesson has the same name it has on Today.
-    const where = path.find((u) => u.status === 'current');
-    const lesson = where?.lessons.find((l) => l.status === 'current');
-    const label = where && lesson ? `Unit ${where.number} · Lesson ${lesson.number}` : '';
+    const ids = new Set(items.map((i) => i.id));
+    const done = lessonsDone(mine, course.id, ids);
+    const plan = mode === 'review'
+      ? (() => { const picks = riskOrder(mine, ids, new Date()); return picks.length ? { kind: 'practice' as const, picks: picks.slice(0, 6), why: 'catch-up' as const } : null; })()
+      : planNext({ courseId: course.id, items, track, p: mine, now: new Date() });
+    const seen = seenCounts(mine);
+    const fromPicks = (picks: { itemId: string; strength: number }[]) => toDue(picks);
+    const base = { memberId: me.id, courseId: course.id, label: done === 0 ? 'Welcome' : `Lesson ${done + 1}` };
     let next: Session;
-    if (mode === 'lesson' && activity?.kind === 'learn') {
-      const { unit, group } = activity;
+    if (plan?.kind === 'welcome') {
+      const unit = plan.units[0];
       const item = getItem(unit.itemId)!;
-      const seen = seenCounts(mine);
-      const mates: Mate[] = group.items.flatMap((i) => {
+      const intro = INTROS[course.id];
+      const steps = intro ? buildWelcome({ intro, unit, item, track, pool, rng: Math.random }) : buildLesson({ unit, item, track, mates: [], due: [], pool, rng: Math.random });
+      next = { ...base, kind: 'learn', steps, units: plan.units, group: plan.group };
+    } else if (plan?.kind === 'learn') {
+      const [unit, second] = plan.units;
+      const item = getItem(unit.itemId)!;
+      const fresh = new Set(plan.units.map((u) => u.itemId));
+      const mates: Mate[] = plan.group.items.flatMap((i) => {
         const units = unitsFor(i, track).filter((u) => learnedUnits.has(u.key));
-        return units.length && i.id !== item.id ? [{ item: i, units, seen: seen.get(i.id) ?? 0 }] : [];
+        return units.length && !fresh.has(i.id) ? [{ item: i, units, seen: seen.get(i.id) ?? 0 }] : [];
       });
       // Earlier parts of the item being learned count as practice too.
       const ownLearned = unitsFor(item, track).filter((u) => learnedUnits.has(u.key));
       if (ownLearned.length) mates.unshift({ item, units: ownLearned, seen: seen.get(item.id) ?? 0 });
-      const inGroup = new Set(group.items.map((i) => i.id));
+      const inGroup = new Set(plan.group.items.map((i) => i.id));
       const reviews = toDue(due.filter((d) => !inGroup.has(d.itemId)));
-      next = { kind: 'learn', steps: buildLesson({ unit, item, track, mates, due: reviews, pool, rng: Math.random }), unit, group, memberId: me.id, label };
-    } else if (mode === 'lesson' && activity?.kind === 'checkpoint') {
-      next = { kind: 'checkpoint', steps: buildCheckpoint({ group: activity.group, track, pool, rng: Math.random }), unit: null, group: activity.group, memberId: me.id, label: label ? `${label} · Lock it in` : 'Lock it in' };
+      let steps = buildLesson({ unit, item, track, mates: second ? mates.slice(0, 1) : mates, due: second ? [] : reviews, pool, rng: Math.random });
+      if (second) steps = [...steps, ...buildLite({ unit: second, item: getItem(second.itemId)!, track, pool, rng: Math.random })];
+      next = { ...base, kind: 'learn', steps, units: plan.units, group: plan.group };
+    } else if (plan?.kind === 'checkpoint') {
+      next = { ...base, kind: 'checkpoint', steps: buildCheckpoint({ group: plan.group, track, pool, rng: Math.random }), units: [], group: plan.group };
+    } else if (plan) {
+      next = { ...base, label: plan.kind === 'welcome-back' ? `Welcome back · ${base.label}` : base.label, kind: 'review', steps: buildReview({ due: fromPicks(plan.picks), track, pool, rng: Math.random, max: plan.picks.length }), units: [], group: null };
     } else {
-      const list = due.length ? due : weakestCards(mine, new Set(items.map((i) => i.id)));
-      next = { kind: 'review', steps: buildReview({ due: toDue(list), track, pool, rng: Math.random }), unit: null, group: null, memberId: me.id, label: 'Review' };
+      next = { ...base, kind: 'review', steps: [], units: [], group: null };
     }
     Promise.resolve().then(() => {
       setSession(next);
@@ -74,7 +89,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, activity, path, mode, router]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, router]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
@@ -97,6 +112,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   const report: Report = (o) => {
     const ms = Date.now() - startedAt.current;
     const key = step.id.replace(/:typed$/, '');
+    // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
+    if (step.kind === 'quiz') { setFeedback(o); return; }
     setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review } }));
     if (!o.ok && !retried.has(key)) {
       setRetried((s) => new Set(s).add(key));
@@ -112,7 +129,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     if (n < queue.length) { setPos(n); return; }
     const recorded = Object.values(results);
     const now = new Date();
-    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.unit, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now });
+    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now });
     // Raise levels the log now shows and stamp new awards, so the done screen can show what changed.
     const settled = settle(next, allItems(), track, now);
     updateProgress((p) => ({ ...p, [session.memberId]: settled.progress }));
@@ -125,7 +142,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     const prev = all[i - 1];
     return !(i > pos && prev && s.kind === 'type' && prev.kind === 'type' && prev.itemId === s.itemId && 'text' in prev && prev.text === s.text);
   }));
-  const part = !step.review && session.unit && session.unit.itemId === step.itemId && session.unit.of > 1 ? ` · Part ${session.unit.part} of ${session.unit.of}` : '';
+  const u = session.units.find((x) => x.itemId === step.itemId);
+  const part = !step.review && u && u.of > 1 ? ` · Part ${u.part} of ${u.of}` : '';
   const title = `${itemLabel(item)}${part}`;
   const retry = retried.has(step.id.replace(/:typed$/, '')) && queue.indexOf(step) !== pos;
   // A pass with a slip is "Good", not "Well done": praise should match what happened.
@@ -148,6 +166,18 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
       <section key={`${step.id}-${pos}`} className="hr-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, pointerEvents: feedback ? 'none' : undefined }}>
         {step.kind === 'intro' ? (
           <Intro item={item} track={track} step={step} onNext={advance} />
+        ) : step.kind === 'info' ? (
+          <>
+            <span className="hr-label">Welcome</span>
+            <h2 className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.2, fontWeight: 600 }}>{step.title}</h2>
+            <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55 }}>{step.body}</p>
+            <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} onClick={advance}>Continue</button>
+          </>
+        ) : step.kind === 'quiz' ? (
+          <>
+            <span className="hr-label">Welcome</span>
+            <Meaning step={{ ...step, kind: 'meaning' }} onReport={report} />
+          </>
         ) : (
           <>
             {step.kind === 'match' || step.kind === 'meaning'
@@ -171,7 +201,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
             <h2>{heading}</h2>
             {feedback.note && <p style={{ margin: 0, fontSize: 16, lineHeight: 1.45, fontWeight: 500 }}>{feedback.note}</p>}
             {feedback.reveal}
-            {!feedback.ok && !retry && <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>You’ll get another try at the end.</p>}
+            {!feedback.ok && !retry && step.kind !== 'quiz' && <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>You’ll get another try at the end.</p>}
             <button type="button" className="hr-btn" onClick={advance} autoFocus>Continue</button>
           </div>
         </div>
@@ -181,21 +211,24 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
 }
 
 function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
-  const { activity, group, groupLearned, mine } = useCourse();
-  const item = session.unit ? getItem(session.unit.itemId) : null;
-  const partial = session.unit && session.unit.part < session.unit.of;
+  const { activity, group, groupLearned, mine, items, track, course } = useCourse();
+  const { now } = useHeir();
+  const upNext = planNext({ courseId: course.id, items, track, p: mine, now });
+  const first = session.units[0];
+  const item = first ? getItem(first.itemId) : null;
+  const partial = first && first.part < first.of;
   const label = session.group ? groupLabel(session.group) : '';
   const top = finished.ups[0];
   const topItem = top ? getItem(top.itemId) : null;
   const topLevel = top ? levelInfo(top.to) : null;
-  const kind = session.kind === 'checkpoint' ? 'Checkpoint complete' : session.kind === 'review' ? 'Review complete' : 'Lesson complete';
+  const kind = session.label === 'Welcome' ? 'Welcome lesson complete' : session.label ? `${session.label} complete` : 'Lesson complete';
   const message =
     session.kind === 'checkpoint' ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
     : session.kind === 'review' ? 'Each review waits until you’re close to forgetting, which is when recalling it helps most.'
-    : partial ? `Part ${session.unit!.part} of ${session.unit!.of} learned. The next lesson continues it.`
+    : partial ? `Part ${first!.part} of ${first!.of} learned. The next lesson continues it.`
     : activity?.kind === 'checkpoint' ? `That’s all of ${groupLabel(activity.group)}. Next: lock them in, all together, from memory.`
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
-  const cta = activity?.kind === 'checkpoint' ? 'Lock them in now' : activity ? 'Another lesson' : null;
+  const cta = upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;
   const awardNames = finished.awards.map((id) => AWARDS.find((a) => a.id === id)?.name).filter(Boolean);
 
   return (
@@ -256,7 +289,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
       {message && <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.5 }}>{message}</p>}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <Link className="hr-btn" href="/heir">Done</Link>
-        {cta && session.kind !== 'review' && <button type="button" className="hr-btn quiet" style={{ background: 'var(--card)' }} onClick={again}>{cta}</button>}
+        {cta && <button type="button" className="hr-btn quiet" style={{ background: 'var(--card)' }} onClick={again}>{cta}</button>}
       </div>
     </main>
   );

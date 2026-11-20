@@ -752,3 +752,15 @@ body:has(.hr) {
   background: var(--well);
   box-sizing: border-box;
 }
+/* The callout when a lesson brings a new question */
+.hr-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--card);
+}

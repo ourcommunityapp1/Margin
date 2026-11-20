@@ -27,6 +27,8 @@ export interface MemberProgress {
   // One schedule per fully learned item.
   cards: Record<string, SavedCard>;
   lessons: number;
+  // Lessons finished in each course (course id → count), for numbering: Welcome, Lesson 2, …
+  courseLessons: Record<string, number>;
   // Highest stone level each item has earned (1 Amethyst … 6 Diamond). Levels never go down.
   levels: Record<string, number>;
   // Award id → ISO date it was first earned.
@@ -38,7 +40,7 @@ export interface MemberProgress {
 
 export type Progress = Record<string, MemberProgress>;
 
-export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, levels: {}, awards: {}, days: [], log: [] });
+export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, courseLessons: {}, levels: {}, awards: {}, days: [], log: [] });
 
 export const memberProgress = (p: Progress, memberId: string | null | undefined): MemberProgress =>
   (memberId && p[memberId]) || emptyProgress();
@@ -70,13 +72,14 @@ export function ratingFor(results: StepResult[]): Grade {
   return Rating.Again;
 }
 
-export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | null; checkpoint?: string | null; now: Date }): MemberProgress {
+export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date }): MemberProgress {
+  const newUnits = o.learned ? (Array.isArray(o.learned) ? o.learned : [o.learned]) : [];
   const cards = { ...p.cards };
   const byItem = new Map<string, StepResult[]>();
   for (const r of o.results) byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
   for (const [itemId, rs] of byItem) {
     const existing = cards[itemId];
-    const finishesItem = o.learned && o.learned.itemId === itemId && o.learned.part === o.learned.of;
+    const finishesItem = newUnits.some((u) => u.itemId === itemId && u.part === u.of);
     if (!existing && !finishesItem) continue;
     const card = existing ? toCard(existing) : createEmptyCard(o.now);
     cards[itemId] = fromCard(scheduler.next(card, o.now, ratingFor(rs)).card);
@@ -84,10 +87,11 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   const at = o.now.toISOString();
   const day = localDay(o.now);
   return {
-    units: o.learned && !p.units.includes(o.learned.key) ? [...p.units, o.learned.key] : p.units,
+    units: [...p.units, ...newUnits.map((u) => u.key).filter((k) => !p.units.includes(k))],
     checkpoints: o.checkpoint && !p.checkpoints.includes(o.checkpoint) ? [...p.checkpoints, o.checkpoint] : p.checkpoints,
     cards,
     lessons: p.lessons + 1,
+    courseLessons: o.courseId ? { ...p.courseLessons, [o.courseId]: (p.courseLessons[o.courseId] ?? lessonsBefore(p, o)) + 1 } : p.courseLessons,
     levels: p.levels,
     awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
@@ -105,6 +109,12 @@ export function seenCounts(p: MemberProgress): Map<string, number> {
     sessions.set(e.itemId, set);
   }
   return new Map([...sessions].map(([id, set]) => [id, set.size]));
+}
+
+// Older progress had no per-course count: start from the sessions already logged for the items in this one.
+function lessonsBefore(p: MemberProgress, o: { results: StepResult[] }): number {
+  const ids = new Set(o.results.map((r) => r.itemId));
+  return new Set(p.log.filter((e) => ids.has(e.itemId)).map((e) => e.at)).size;
 }
 
 export interface DueCard { itemId: string; due: Date; strength: number }
@@ -139,6 +149,7 @@ export function parseProgress(raw: string | null): Progress {
         checkpoints: Array.isArray(m.checkpoints) ? m.checkpoints.filter((u) => typeof u === 'string') : [],
         cards: m.cards && typeof m.cards === 'object' ? m.cards : {},
         lessons: Number(m.lessons) || 0,
+        courseLessons: m.courseLessons && typeof m.courseLessons === 'object' ? m.courseLessons : {},
         levels: m.levels && typeof m.levels === 'object' ? m.levels : {},
         awards: m.awards && typeof m.awards === 'object' ? m.awards : {},
         days: Array.isArray(m.days) ? m.days : [],

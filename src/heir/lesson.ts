@@ -84,12 +84,15 @@ export function nextActivity(items: Item[], track: Track, learned: Set<string>, 
   return null;
 }
 
-export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot';
+export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz';
 
 interface Base { id: string; itemId: string; review: boolean }
 // `lead` is the piece that comes just before the words being practiced, shown as the start of the answer.
 export type Step =
   | (Base & { kind: 'intro'; unit: Unit })
+  // Welcome lesson: a short card to read, and an easy question about it (neither is graded as memory).
+  | (Base & { kind: 'info'; title: string; body: string })
+  | (Base & { kind: 'quiz'; question: MeaningQuestion; options: string[] })
   // `tiles` in the right order; `bank` is tiles plus decoys, shuffled, as shown.
   // `slots`: the guided version, with a grey box for each word still to place.
   | (Base & { kind: 'order'; tiles: string[]; decoys: string[]; bank: string[]; pieces: boolean; slots: boolean; lead: string })
@@ -306,6 +309,33 @@ export interface Due { item: Item; strength: number }
 function dueStep(c: Ctx, d: Due, avoid?: StepKind): Step {
   const kinds: PracticeKind[] = d.strength < 7 ? ['letters', 'spot', 'match', 'blanks'] : ['type', 'say', 'match'];
   return practiceStep(c, d.item, unitsFor(d.item, c.track), kinds, true, avoid);
+}
+
+// A second new question in the same lesson, learned more briefly: see it, build it, fill it in, type it.
+export function buildLite(o: { unit: Unit; item: Item; track: Track; pool: Item[]; rng: Rng; idStart?: number }): Step[] {
+  const c: Ctx = { n: o.idStart ?? 500, rng: o.rng, track: o.track, pool: o.pool };
+  const { unit, item } = o;
+  const pieces = item.chunks[o.track].slice(unit.start, unit.end);
+  const steps: Step[] = [{ id: nextId(c, 'intro', item.id), itemId: item.id, review: false, kind: 'intro', unit }];
+  if (pieces.length >= 2) steps.push(orderStep(c, item, pieces, item.chunks[o.track][unit.start - 1] ?? '', true, false));
+  else steps.push(orderStep(c, item, pieces[0].split(' '), item.chunks[o.track][unit.start - 1] ?? '', false, false, true));
+  steps.push(textStep(c, 'blanks', item, unit, false), textStep(c, 'type', item, unit, false));
+  return steps;
+}
+
+export interface Intro { cards: { title: string; body: string }[]; quiz: MeaningQuestion[] }
+
+// The welcome lesson: a few cards on what this is, an easy question after each pair, then the first question.
+export function buildWelcome(o: { intro: Intro; unit: Unit; item: Item; track: Track; pool: Item[]; rng: Rng }): Step[] {
+  const c: Ctx = { n: 900, rng: o.rng, track: o.track, pool: o.pool };
+  const id = o.item.id;
+  const opening: Step[] = [];
+  o.intro.cards.forEach((card, i) => {
+    opening.push({ id: nextId(c, 'info', id), itemId: id, review: false, kind: 'info', title: card.title, body: card.body });
+    const q = o.intro.quiz[i];
+    if (q) opening.push({ id: nextId(c, 'quiz', id), itemId: id, review: false, kind: 'quiz', question: q, options: shuffle([q.answer, ...q.distractors], c.rng) });
+  });
+  return [...opening, ...buildLesson({ unit: o.unit, item: o.item, track: o.track, mates: [], due: [], pool: o.pool, rng: o.rng })];
 }
 
 export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Mate[]; due: Due[]; pool: Item[]; rng: Rng }): Step[] {

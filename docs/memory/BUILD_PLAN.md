@@ -162,3 +162,13 @@ Each phase ends with something usable on a phone.
 - **Westminster Shorter Catechism: all 107 questions.** Q1–10 hand-written (pieces, meaning questions, proof texts). Q11–107 from the 1647 text in Creeds.json, with pieces split by rule at the punctuation and the OPC proof texts (from ReformedDevs/hubot-wsc) as connected Scripture, book names written out. Meaning questions for Q11–107 are still to be written; until then those lessons skip the meaning step and those questions can't reach Sapphire. All of it awaits the owner's review.
 - Larger Catechism Q1–10, Apostles' Creed, Nicene Creed: as before.
 - Connected Scripture is shown as references only. Showing the verse text waits on the ESV license (or a public-domain translation such as the KJV).
+
+## Lessons (decided 2026-11-20)
+
+Lessons are just numbered (Welcome, Lesson 2, Lesson 3, …); the planner (`src/heir/planner.ts`) decides what each holds:
+- **Welcome** (lesson 1 of a course): what a catechism or creed is and how Heir works, a few easy questions (not graded), then the first question. Content in `src/heir/content/intros.ts`.
+- **New questions:** usually one; two short ones when the last two lessons were 90%+ right and nothing is due; a "New question" callout marks each.
+- **Practice only:** every 3rd lesson (once 3+ questions are learned), and whenever accuracy dips below 70% or 8+ reviews are due.
+- **Lock it in:** a unit's last lesson. **Welcome back:** after 21+ days away, catch-up first.
+- **Which questions practice picks:** highest risk first: the chance you've forgotten it now (FSRS forgetting curve), weighted up for lapses and past misses. Everything is reviewed over the following sessions; the riskiest come first.
+- Today shows "Up next: Lesson N" with a one-line description, and units as their questions with stones.

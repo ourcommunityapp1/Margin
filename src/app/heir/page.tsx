@@ -10,17 +10,19 @@ import { useHeir } from './ui/provider';
 import { groupLabel, useCourse } from './ui/course';
 import { Tabs } from './ui/tabs';
 import { Stone } from './ui/stone';
-import { allItems, getItem, itemLabel } from '@/heir/content';
+import { allItems, itemLabel } from '@/heir/content';
 import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
-import type { PathLesson, PathUnit } from '@/heir/path';
+import type { PathUnit } from '@/heir/path';
+import { describe, lessonsDone, planNext } from '@/heir/planner';
+import { unitsFor } from '@/heir/lesson';
 import { dayName, greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
 
 export default function Today() {
   const { ready, household, time, now } = useHeir();
   const router = useRouter();
-  const { me, course, mine, track, activity, due, path, chosen } = useCourse();
+  const { me, course, mine, track, items, path, due, chosen } = useCourse();
 
   useEffect(() => {
     if (!ready) return;
@@ -31,7 +33,10 @@ export default function Today() {
   if (!ready || !me || !chosen) return <main className="hr-page" aria-busy="true" />;
 
   const currentUnit = path.find((u) => u.status === 'current');
-  const current = currentUnit?.lessons.find((l) => l.status === 'current');
+  const ids = new Set(items.map((i) => i.id));
+  const done = lessonsDone(mine, course.id, ids);
+  const plan = planNext({ courseId: course.id, items, track, p: mine, now });
+  const lessonName = done === 0 ? 'Welcome' : plan?.kind === 'welcome-back' ? `Welcome back · Lesson ${done + 1}` : `Lesson ${done + 1}`;
   const today = localDay(now);
   const counts = countsFor(allItems(), mine);
 
@@ -66,14 +71,11 @@ export default function Today() {
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span className="hr-label">{current && currentUnit ? `Up next · Unit ${currentUnit.number}, lesson ${current.number}` : 'All lessons done for now'}</span>
-            {current && currentUnit ? <LessonTitle lesson={current} unit={currentUnit} big /> : (
-              <p className="serif" style={{ margin: 0, fontSize: 22, lineHeight: 1.3 }}><span style={{ fontWeight: 600 }}>You’ve learned every lesson in this course so far.</span> <span style={{ color: 'var(--muted)' }}>Reviews keep it fresh while more are added.</span></p>
-            )}
+            <span className="hr-label">Up next{currentUnit ? ` · Unit ${currentUnit.number}, ${groupLabel(currentUnit.group)}` : ''}</span>
+            <span className="serif" style={{ fontSize: 28, fontWeight: 600, lineHeight: 1.1 }}>{plan ? lessonName : 'All caught up'}</span>
+            <span className="serif" style={{ fontSize: 18, color: 'var(--muted)', lineHeight: 1.4 }}>{plan ? describe(plan, groupLabel) : 'Everything here is learned and nothing is due. Come back tomorrow, or pick another course.'}</span>
           </div>
-          {activity ? <Link className="hr-btn" href="/heir/lesson">{activity.kind === 'checkpoint' ? 'Lock them in' : mine.lessons ? 'Start lesson' : 'Start your first lesson'}</Link>
-            : <Link className="hr-btn" href="/heir/lesson?mode=review">Review</Link>}
-          {activity && due.length > 0 && <Link className="hr-btn quiet" href="/heir/lesson?mode=review">Review {due.length} due</Link>}
+          {plan && <Link className="hr-btn" href="/heir/lesson">{plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : 'Start lesson'}</Link>}
         </section>
 
         <Link href="/heir/plan" className="hr-course-chip" aria-label={`Course: ${course.title}. Change course`}>
@@ -142,28 +144,12 @@ function DaysKept({ days, today, now, dueCount }: { days: string[]; today: strin
   );
 }
 
-function LessonTitle({ lesson, unit, big }: { lesson: PathLesson; unit: PathUnit; big?: boolean }) {
-  const item = lesson.itemId ? getItem(lesson.itemId) : null;
-  const size = big ? 22 : 16;
-  if (lesson.kind === 'checkpoint') {
-    return (
-      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-        <span className={big ? 'serif' : undefined} style={{ fontWeight: 600, fontSize: size }}>Lock it in</span>
-        <span style={{ fontSize: big ? 16 : 14, color: 'var(--muted)' }}>All of {groupLabel(unit.group)}, from memory</span>
-      </span>
-    );
-  }
-  return (
-    <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-      <span className={big ? 'serif' : undefined} style={{ fontWeight: 600, fontSize: size }}>{item ? itemLabel(item) : ''}{lesson.unit && lesson.unit.of > 1 ? `, part ${lesson.unit.part}` : ''}</span>
-      <span className={big ? 'serif' : undefined} style={{ fontSize: big ? 18 : 14, color: 'var(--muted)', lineHeight: 1.35, ...(big ? {} : { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }) }}>{item?.prompt}</span>
-    </span>
-  );
-}
-
+// A unit is its questions: each shows the stone it has earned, the next one to learn, or nothing yet.
 function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProgress; track: Track; now: Date }) {
+  const learned = new Set(mine.units);
+  const nextUp = unit.lessons.find((l) => l.status === 'current');
+  const lockDone = unit.lessons[unit.lessons.length - 1].status === 'done';
   const pct = Math.round((unit.learned / unit.group.items.length) * 100);
-  const locked = unit.lessons[unit.lessons.length - 1].status === 'done';
   return (
     <section className="hr-card hr-unit" data-status={unit.status} aria-label={`Unit ${unit.number}`}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -171,32 +157,35 @@ function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProg
           <span className="hr-label">Unit {unit.number}</span>
           <span className="serif" style={{ fontSize: 20, fontWeight: 600 }}>{groupLabel(unit.group)}</span>
         </span>
-        <span className="hr-tag" style={{ flex: 'none' }}>{locked ? 'Locked in' : unit.status === 'upcoming' ? 'Not started' : `${unit.learned} of ${unit.group.items.length}`}</span>
+        <span className="hr-tag" style={{ flex: 'none' }}>{lockDone ? 'Locked in' : unit.status === 'upcoming' ? 'Not started' : `${unit.learned} of ${unit.group.items.length}`}</span>
       </div>
       {unit.status === 'current' && <div className="hr-progress" style={{ background: 'var(--well)', height: 6 }} aria-hidden="true"><span style={{ width: `${pct}%` }} /></div>}
       {unit.status !== 'upcoming' ? (
         <ol className="hr-lessons">
-          {unit.lessons.map((l) => {
-            const item = l.itemId ? getItem(l.itemId) : null;
-            const level = item ? mine.levels[item.id] ?? 0 : 0;
-            const dim = !!item && needsRefresh(mine, item.id, now);
-            const note = l.status !== 'done' || !item ? null : dim ? { text: 'Needs a refresh', tone: 'miss' } : l.unit && l.unit.part < l.unit.of ? null : level ? { text: levelInfo(level)!.name, tone: '' } : { text: nextStep(item, track, mine, now) ?? '', tone: 'muted' };
-            const icon = l.kind === 'checkpoint'
-              ? <span className={`hr-dot${l.status === 'done' ? ' done' : l.status === 'current' ? ' current' : ''}`} aria-hidden="true">{l.status === 'done' && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>
-              : l.status === 'current' ? <span className="hr-dot current" aria-label="Up next" /> : <Stone level={l.status === 'done' ? level : 0} size={26} dim={dim} />;
+          {unit.group.items.map((item) => {
+            const started = unitsFor(item, track).some((u) => learned.has(u.key));
+            const level = mine.levels[item.id] ?? 0;
+            const dim = needsRefresh(mine, item.id, now);
+            const isNext = nextUp?.itemId === item.id;
+            const note = dim ? { text: 'Needs a refresh', miss: true } : level ? { text: levelInfo(level)!.name, miss: false } : started ? { text: nextStep(item, track, mine, now) ?? '', miss: false } : isNext ? { text: 'Next', miss: false } : null;
             const body = (
               <>
-                {icon}
-                <LessonTitle lesson={l} unit={unit} />
-                {note && note.text && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: note.tone === 'miss' ? 'var(--miss)' : 'var(--muted)', textAlign: 'right', maxWidth: 110 }}>{note.text}</span>}
+                {isNext && !started ? <span className="hr-dot current" aria-label="Next" /> : <Stone level={level} size={26} dim={dim} />}
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                  <span style={{ fontWeight: 600 }}>{itemLabel(item)}</span>
+                  <span style={{ fontSize: 14, color: 'var(--muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.prompt}</span>
+                </span>
+                {note && note.text && <span style={{ flex: 'none', marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: note.miss ? 'var(--miss)' : 'var(--muted)', textAlign: 'right', maxWidth: 110 }}>{note.text}</span>}
               </>
             );
-            if (l.status === 'current') return <li key={l.key}><Link className="hr-lesson current" href="/heir/lesson">{body}</Link></li>;
-            if (l.status === 'done' && item) return <li key={l.key}><Link className="hr-lesson" href={`/heir/item/${item.id}`}>{body}</Link></li>;
-            return <li key={l.key}><div className="hr-lesson" data-status={l.status}>{body}</div></li>;
+            return <li key={item.id}>{started ? <Link className="hr-lesson" href={`/heir/item/${item.id}`}>{body}</Link> : <div className="hr-lesson" data-status={isNext ? undefined : 'upcoming'}>{body}</div>}</li>;
           })}
+          <li><div className="hr-lesson" data-status={lockDone ? undefined : 'upcoming'}>
+            <span className={`hr-dot${lockDone ? ' done' : ''}`} aria-hidden="true">{lockDone && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>Lock it in</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>All {unit.group.items.length} from memory</span></span>
+          </div></li>
         </ol>
-      ) : <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{unit.lessons.length} lessons. Opens when the unit before is locked in.</p>}
+      ) : <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{unit.group.items.length} questions. Opens when the unit before is locked in.</p>}
     </section>
   );
 }
