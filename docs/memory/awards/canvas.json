@@ -99,6 +99,27 @@
    "w": 390,
    "h": 1100,
    "title": "C3 · The ascent"
+  },
+  "Q1Arcs.dc.html": {
+   "x": 0,
+   "y": 8240,
+   "w": 390,
+   "h": 1000,
+   "title": "C1·a · Unit arcs"
+  },
+  "Q2Night.dc.html": {
+   "x": 470,
+   "y": 8240,
+   "w": 390,
+   "h": 1000,
+   "title": "C1·b · Night sky"
+  },
+  "Q3Beads.dc.html": {
+   "x": 940,
+   "y": 8240,
+   "w": 390,
+   "h": 1000,
+   "title": "C1·c · Beads"
   }
  },
  "createdOnFiles": {
@@ -147,6 +168,13 @@
    "text": "C, refined: three quieter variations",
    "x": 0,
    "y": 6440
+  },
+  "t6": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "C1, taken further",
+   "x": 0,
+   "y": 7960
   }
  },
  "order": [
@@ -163,7 +191,10 @@
   "UnitGuide.dc.html",
   "C1Quiet.dc.html",
   "C2Rings.dc.html",
-  "C3Ascent.dc.html"
+  "C3Ascent.dc.html",
+  "Q1Arcs.dc.html",
+  "Q2Night.dc.html",
+  "Q3Beads.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"

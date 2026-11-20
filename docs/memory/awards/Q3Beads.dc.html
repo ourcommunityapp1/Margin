@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Beads</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #CDBFA9; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/c00f12d584b6a1d23de811e119ab6941" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; border: 0; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #1D2327; min-height: 40px">
+        Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 5px; font-weight: 700; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 0 12px; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B0442A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: rgba(247,245,240,0.9); display: flex; align-items: center; justify-content: center; font-weight: 700">L</span>
+    </div>
+
+    <section style="background: #F7F5F0; border-radius: 34px; padding: 22px 18px 24px; display: flex; flex-direction: column; align-items: center; gap: 14px">
+      <span style="display: flex; justify-content: space-between; align-self: stretch; padding: 0 4px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: #5B6469">PART 1 · WHAT TO BELIEVE</span>
+        <span style="font-size: 12px; font-weight: 700; color: #5B6469">5 / 38</span>
+      </span>
+      <div style="position: relative; width: 310px; height: 310px">
+        <sc-for list="{{beads}}" as="b" hint-placeholder-count="38">
+          <span style="position: absolute; left: {{b.x}}; top: {{b.y}}; width: {{b.size}}; height: {{b.size}}; display: flex; align-items: center; justify-content: center">
+            <sc-if value="{{b.known}}" hint-placeholder-val="{{ false }}"><dc-import name="Medal" level="{{b.level}}" size="20" hint-size="20px,20px"></dc-import></sc-if>
+            <sc-if value="{{b.next}}" hint-placeholder-val="{{ false }}"><span style="width: 22px; height: 22px; border-radius: 11px; border: 2.5px solid #1D2327; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><span style="width: 7px; height: 7px; border-radius: 4px; background: #1D2327"></span></span></sc-if>
+            <sc-if value="{{b.later}}" hint-placeholder-val="{{ true }}"><span style="width: 9px; height: 9px; border-radius: 5px; background: {{b.dot}}"></span></sc-if>
+          </span>
+        </sc-for>
+        <div style="position: absolute; inset: 58px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.4px; color: #5B6469">UNIT 2</span>
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 21px; font-weight: 600; line-height: 1.15">God’s plan and creation</span>
+          <a href="#" style="margin-top: 6px; min-height: 48px; padding: 0 22px; border-radius: 24px; background: #1D2327; color: #F7F5F0; font-weight: 600; font-size: 16px; display: flex; align-items: center; gap: 8px; text-decoration: none">
+            Lesson 8
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+      <sc-for list="{{counts}}" as="c" hint-placeholder-count="4">
+        <div style="background: rgba(247,245,240,0.88); border-radius: 18px; padding: 12px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px">
+          <dc-import name="Medal" level="{{c.level}}" size="24" hint-size="24px,24px"></dc-import>
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1">{{c.n}}</span>
+          <span style="font-size: 11px; font-weight: 600; color: #5B6469">{{c.name}}</span>
+        </div>
+      </sc-for>
+    </section>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #F7F5F0; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(20,24,28,0.12)">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #ECE8DF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #1D2327">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // 38 beads, one per question in Part 1, grouped by unit with a little extra space between units.
+    const sizes = [5, 5, 5, 5, 5, 5, 4, 4];
+    const levels = ['topaz', 'amethyst', 'amethyst', 'amethyst', 'amethyst', 'amethyst', 'amethyst'];
+    const slots = 38 + sizes.length * 0.9;
+    const R = 140, c = 155, box = 24;
+    const beads = [];
+    let pos = 0.45, q = 0;
+    sizes.forEach((n, u) => {
+      for (let k = 0; k < n; k++, q++, pos++) {
+        const angle = -Math.PI / 2 + (pos / slots) * 2 * Math.PI;
+        const known = q < levels.length;
+        const next = q === levels.length;
+        beads.push({
+          x: `${c + R * Math.cos(angle) - box / 2}px`, y: `${c + R * Math.sin(angle) - box / 2}px`, size: `${box}px`,
+          known, next, later: !known && !next, level: levels[q] ?? 'none',
+          dot: u === 1 ? '#B9A9CF' : '#D6CFC2',
+        });
+      }
+      pos += 0.9;
+    });
+    return {
+      beads,
+      counts: [
+        { level: 'amethyst', n: 7, name: 'Know' },
+        { level: 'topaz', n: 1, name: 'Memorized' },
+        { level: 'carnelian', n: 0, name: 'Mastered' },
+        { level: 'emerald', n: 0, name: 'Long-term' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
