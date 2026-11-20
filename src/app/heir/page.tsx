@@ -18,6 +18,8 @@ import { describe, lessonsDone, planNext } from '@/heir/planner';
 import { unitsFor } from '@/heir/lesson';
 import { dayName, greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
+import { LivingWindow } from './ui/glass/window';
+import { windowFor, windowLight } from './ui/glass/light';
 
 export default function Today() {
   const { ready, household, time, now } = useHeir();
@@ -39,17 +41,30 @@ export default function Today() {
   const lessonName = done === 0 ? 'Welcome' : plan?.kind === 'welcome-back' ? `Welcome back · Lesson ${done + 1}` : `Lesson ${done + 1}`;
   const today = localDay(now);
   const counts = countsFor(allItems(), mine);
+  const glass = windowFor(course.id);
+  const light = windowLight(items, track, mine, now);
 
   return (
     <>
-      <main className="hr-page">
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '0 4px', marginTop: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <span style={{ fontSize: 15, fontWeight: 500 }}>{dayName(now)}</span>
-            <h1 className="serif" style={{ margin: 0, fontSize: 32, fontWeight: 500, lineHeight: 1.1 }}>{greeting(time)}, {me.name}</h1>
+      {/* The course's window: lit glass is what you've learned, dull glass is still to come. */}
+      <section className="hr-hero" aria-label={`Your window: ${Math.round(light.share * 100)}% lit`}>
+        <LivingWindow base={glass.base} lit={light.lit} dusty={light.dusty} bottomInset={plan ? 200 : 130} />
+        <header className="hr-hero-top">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.85 }}>{dayName(now)}</span>
+            <h1 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.1 }}>{greeting(time)}, {me.name}</h1>
           </div>
-          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
+          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} className="hr-hero-chip" style={{ width: 44, padding: 0, justifyContent: 'center', fontSize: 17 }}>{me.name[0]}</Link>
         </header>
+        <div className="hr-hero-bottom">
+          <span className="hr-hero-label">{plan ? `Up next${currentUnit ? ` · Unit ${currentUnit.number}, ${groupLabel(currentUnit.group)}` : ''}` : 'All caught up'}</span>
+          <span className="serif" style={{ fontSize: 26, fontWeight: 600, lineHeight: 1.1 }}>{plan ? lessonName : 'The light is in'}</span>
+          <span style={{ fontSize: 14, opacity: 0.8 }}>{Math.round(light.share * 100)}% of the window lit · {course.title}</span>
+          {plan && <Link className="hr-btn hr-btn-light" href="/heir/lesson">{plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : 'Start lesson'}</Link>}
+        </div>
+      </section>
+
+      <main className="hr-page hr-after-hero">
 
         <DaysKept days={mine.days} today={today} now={now} dueCount={due.length} />
 
@@ -71,11 +86,10 @@ export default function Today() {
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span className="hr-label">Up next{currentUnit ? ` · Unit ${currentUnit.number}, ${groupLabel(currentUnit.group)}` : ''}</span>
+            <span className="hr-label">This lesson{currentUnit ? ` · Unit ${currentUnit.number}, ${groupLabel(currentUnit.group)}` : ''}</span>
             <span className="serif" style={{ fontSize: 28, fontWeight: 600, lineHeight: 1.1 }}>{plan ? lessonName : 'All caught up'}</span>
             <span className="serif" style={{ fontSize: 18, color: 'var(--muted)', lineHeight: 1.4 }}>{plan ? describe(plan, groupLabel) : 'Everything here is learned and nothing is due. Come back tomorrow, or pick another course.'}</span>
           </div>
-          {plan && <Link className="hr-btn" href="/heir/lesson">{plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : 'Start lesson'}</Link>}
         </section>
 
         <Link href="/heir/plan" className="hr-course-chip" aria-label={`Course: ${course.title}. Change course`}>

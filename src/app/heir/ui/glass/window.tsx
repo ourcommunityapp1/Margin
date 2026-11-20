@@ -18,13 +18,29 @@ export type WindowHandle = {
   setDusty: (questions: number[]) => void;
   setSun: (x: number, y: number) => void;
   setZoom: (zoom: number) => void;
+  /** Animate from what is lit now to this: one fraction (0-1) per course question, in course order. */
+  revealTo: (lit: number[]) => void;
   meta: () => GlassMeta | null;
+};
+
+type Props = {
+  base: string;
+  /** Lab only: the first n window questions lit. */
+  learned?: number;
+  /** One fraction (0-1) per course question, in course order. Each course question owns an equal share of the glass. */
+  lit?: number[];
+  /** Course questions that need a refresh: their lit glass gathers dust. */
+  dusty?: boolean[];
+  onReady?: () => void;
+  /** CSS pixels at the bottom covered by a panel; the glass is framed above it. */
+  bottomInset?: number;
+  className?: string;
 };
 
 type Track = { id: number; t0: number };
 
-export const LivingWindow = forwardRef<WindowHandle, { base: string; learned?: number; className?: string }>(
-  function LivingWindow({ base, learned = 0, className }, ref) {
+export const LivingWindow = forwardRef<WindowHandle, Props>(
+  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, className }, ref) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const engine = useRef<GlassEngine | null>(null);
     const meta = useRef<GlassMeta | null>(null);
@@ -34,6 +50,43 @@ export const LivingWindow = forwardRef<WindowHandle, { base: string; learned?: n
     const learnedRef = useRef(learned);
     const [failed, setFailed] = useState(false);
     const reduce = useRef(false);
+
+    const litRef = useRef(lit), dustyRef = useRef(dusty), readyRef = useRef(onReady);
+    litRef.current = lit; dustyRef.current = dusty; readyRef.current = onReady;
+    const insetRef = useRef(bottomInset); insetRef.current = bottomInset;
+    const visible = useRef(true);
+    // All pieces in reveal order (bottom left to top right). Course question i of n owns slice i of n.
+    const flat = useRef<number[]>([]);
+    const itemPieces = (n: number, i: number) => {
+      const P = flat.current.length;
+      return flat.current.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n));
+    };
+    const idsFor = (fractions: number[]) => fractions.flatMap((f, i) => {
+      const ps = itemPieces(fractions.length, i);
+      return ps.slice(0, Math.round(Math.max(0, Math.min(1, f)) * ps.length));
+    });
+    // Keep the light front in view when the window is taller than its frame.
+    const followLight = () => {
+      const e = engine.current;
+      if (!e || !e.count) return;
+      let on = 0;
+      for (let i = 1; i <= e.count; i++) if (e.light[i] > 0.5) on++;
+      camera.current.targetFocus = Math.min(0.97, Math.max(0.08, 1 - on / e.count));
+    };
+    const applyLit = (fractions: number[]) => {
+      const e = engine.current;
+      if (!e) return;
+      e.light.fill(0); e.glow.fill(0); tracks.current = [];
+      for (const id of idsFor(fractions)) e.light[id] = 1;
+      followLight();
+      camera.current.focus = camera.current.targetFocus;
+    };
+    const applyDust = (flags: boolean[] | undefined) => {
+      const e = engine.current;
+      if (!e) return;
+      e.dust.fill(0);
+      flags?.forEach((on, i) => { if (on) for (const id of itemPieces(flags.length, i)) e.dust[id] = 1; });
+    };
 
     const piecesOf = (qs: number[]) => qs.flatMap((q) => meta.current?.questions[q] ?? []);
     // Height (0 top, 1 bottom) where the light front is, so a zoomed camera can follow it.
@@ -79,6 +132,21 @@ export const LivingWindow = forwardRef<WindowHandle, { base: string; learned?: n
       },
       setSun(x, y) { if (engine.current) engine.current.sun = [x, y]; },
       setZoom(z) { camera.current.targetZoom = z; },
+      revealTo(fractions) {
+        const e = engine.current;
+        if (!e) return;
+        const ids = idsFor(fractions).filter((id) => e.light[id] < 0.5);
+        if (!ids.length) return;
+        if (reduce.current) { for (const id of ids) e.light[id] = 1; return; }
+        // However much is new, the sweep takes about two to three seconds.
+        const stagger = Math.max(6, Math.min(130, 2400 / ids.length));
+        const t = performance.now();
+        ids.forEach((id, k) => tracks.current.push({ id, t0: t + k * stagger }));
+        let on = 0;
+        for (let i = 1; i <= e.count; i++) if (e.light[i] > 0.5) on++;
+        camera.current.targetFocus = Math.min(0.97, Math.max(0.08, 1 - (on + ids.length / 2) / e.count));
+        flash.current = { t0: t + ids.length * stagger + SETTLE * 0.6, amount: ids.length > 40 ? 0.35 : 0.22 };
+      },
       meta: () => meta.current,
     }));
 
@@ -90,8 +158,11 @@ export const LivingWindow = forwardRef<WindowHandle, { base: string; learned?: n
         if (!alive) return;
         try { engine.current = new GlassEngine(c, assets); } catch (err) { console.error('glass', err); setFailed(true); return; }
         meta.current = m;
+        flat.current = m.questions.flat();
         if (reduce.current) engine.current.cloud = 0;
-        applyLearned(learnedRef.current);
+        if (litRef.current) applyLit(litRef.current); else applyLearned(learnedRef.current);
+        applyDust(dustyRef.current);
+        readyRef.current?.();
         const loop = (now: number) => {
           const e = engine.current!;
           // Animate pieces.
@@ -123,17 +194,32 @@ export const LivingWindow = forwardRef<WindowHandle, { base: string; learned?: n
           const cam = camera.current;
           cam.zoom += (cam.targetZoom - cam.zoom) * 0.06;
           cam.focus += (cam.targetFocus - cam.focus) * 0.04;
-          e.zoom = cam.zoom; e.focus = cam.focus;
-          e.render(now);
+          e.zoom = cam.zoom; e.focus = cam.focus; e.inset = insetRef.current;
+          if (visible.current) e.render(now);
           raf = requestAnimationFrame(loop);
         };
         raf = requestAnimationFrame(loop);
       }).catch((err) => { console.error('glass', err); setFailed(true); });
-      const onResize = () => engine.current?.resize();
-      window.addEventListener('resize', onResize);
-      return () => { alive = false; cancelAnimationFrame(raf); window.removeEventListener('resize', onResize); engine.current?.dispose(); engine.current = null; };
+      // Follow the frame's size, and stop drawing while the window is scrolled out of sight.
+      const ro = new ResizeObserver(() => engine.current?.resize());
+      ro.observe(c);
+      const io = new IntersectionObserver(([en]) => { visible.current = en.isIntersecting; });
+      io.observe(c);
+      return () => { alive = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); engine.current?.dispose(); engine.current = null; };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [base]);
+
+    const litKey = lit?.map((f) => f.toFixed(3)).join(',');
+    const dustKey = dusty?.map((d) => (d ? 1 : 0)).join('');
+    useEffect(() => {
+      if (!engine.current || !lit || tracks.current.length) return;
+      applyLit(lit);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [litKey]);
+    useEffect(() => {
+      applyDust(dusty);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dustKey]);
 
     if (failed) return <div className={className} style={{ background: '#16130F' }} />;
     return <canvas ref={canvas} className={className} style={{ width: '100%', height: '100%', display: 'block' }} aria-label="Stained-glass window" role="img" />;

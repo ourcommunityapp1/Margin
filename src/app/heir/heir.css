@@ -764,3 +764,46 @@ body:has(.hr) {
   background: var(--ink);
   color: var(--card);
 }
+
+/* Today's window: the course's stained glass, full width at the top, with the greeting and next lesson over it. */
+.hr-hero {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  height: min(84svh, 760px);
+  background: #16130F;
+  overflow: hidden;
+  border-radius: 0 0 32px 32px;
+  color: #F6EEDF;
+}
+.hr-hero canvas { position: absolute; inset: 0; }
+.hr-hero-top {
+  position: absolute; left: 0; right: 0; top: 0;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) 20px 40px;
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+  background: linear-gradient(180deg, rgba(14, 11, 8, 0.7), rgba(14, 11, 8, 0));
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+}
+.hr-hero-chip {
+  display: flex; align-items: center; min-height: 44px; height: 44px; padding: 0 14px; border-radius: 22px; flex: none;
+  background: rgba(28, 22, 16, 0.55); color: #F6EEDF; font-weight: 600; text-decoration: none;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.hr-hero-bottom {
+  position: absolute; left: 12px; right: 12px; bottom: 12px;
+  padding: 18px 18px 16px; border-radius: 26px;
+  display: flex; flex-direction: column; gap: 6;
+  background: rgba(22, 17, 12, 0.62);
+  backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+.hr-hero-bottom { gap: 6px; }
+.hr-hero-label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.75; }
+.hr-btn.hr-btn-light {
+  margin-top: 8px;
+  background: linear-gradient(180deg, #FFE6B8, #F2B866);
+  color: #2A1A08;
+  box-shadow: 0 0 34px rgba(255, 190, 110, 0.3);
+}
+.hr-page.hr-after-hero { min-height: auto; padding-top: 16px; }
+.hr-hero.hr-hero-done { height: min(62svh, 560px); }

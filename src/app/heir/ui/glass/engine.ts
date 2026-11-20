@@ -219,6 +219,8 @@ export class GlassEngine {
   // Where the window sits: as tall as fits between the top bar and the button, centred. When zoomed in,
   // the point "focus" (0 = top of the window, 1 = bottom) is kept in view, so the camera can follow the light.
   zoom = 1; focus = 0.5;
+  /** CSS pixels at the bottom covered by a panel: the camera frames the glass above it. */
+  inset = 0;
   rect(): [number, number, number, number] {
     const cw = this.canvas.width, ch = this.canvas.height;
     if (this.fit === 'cover') {
@@ -226,7 +228,8 @@ export class GlassEngine {
       let w = cw, h = w / this.imgAspect;
       if (h < ch) { h = ch; w = h * this.imgAspect; }
       w *= this.zoom; h *= this.zoom;
-      const y = Math.min(0, Math.max(ch - h, ch / 2 - this.focus * h));
+      const vb = ch - this.inset * (cw / Math.max(1, this.canvas.clientWidth));
+      const y = Math.min(0, Math.max(vb - h, vb / 2 - this.focus * h));
       return [(cw - w) / 2 / cw, y / ch, w / cw, h / ch];
     }
     const top = ch * 0.035, bottom = ch * 0.865, availH = bottom - top, availW = cw * 0.9;
