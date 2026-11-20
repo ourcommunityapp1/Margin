@@ -5,7 +5,8 @@
 import { activeMember } from '@/heir/household';
 import { courseFor, courseItems, courses, getCollection } from '@/heir/content';
 import { groupsOf, nextActivity, unitsFor, type Group } from '@/heir/lesson';
-import { dueCards, memberProgress } from '@/heir/progress';
+import { dueCards, localDay, memberProgress } from '@/heir/progress';
+import { coursePath, courseStats, streak } from '@/heir/path';
 import { useHeir } from './provider';
 
 // "Questions 1–5", "Apostles’ Creed", "Nicene Creed, parts 1–3".
@@ -29,5 +30,8 @@ export function useCourse() {
   const learned = items.filter((i) => unitsFor(i, track).every((u) => learnedUnits.has(u.key))).length;
   const group = activity?.group ?? groupsOf(items).at(-1) ?? null;
   const groupLearned = group ? group.items.filter((i) => unitsFor(i, track).every((u) => learnedUnits.has(u.key))).length : 0;
-  return { me, course, items, track, mine, activity, group, groupLearned, due, learned, chosen: !!household.plan };
+  const path = coursePath(items, track, mine);
+  const stats = courseStats(items, track, mine);
+  const days = streak(mine.days, localDay(now));
+  return { me, course, items, track, mine, activity, group, groupLearned, due, learned, path, stats, days, chosen: !!household.plan };
 }

@@ -5,6 +5,7 @@ import { checkOrder, closeWord, gradeSpoken, wordMatches, firstLetter, SPOKEN_PA
 import { dueCards, emptyProgress, finishSession, parseProgress, ratingFor, seenCounts, type StepResult } from '../progress.ts';
 import { courses, courseItems, getItem, allItems } from '../content/index.ts';
 import { words } from '../words.ts';
+import { coursePath, courseStats, streak } from '../path.ts';
 
 const wsc1 = getItem('wsc-1')!;
 const wlc4 = getItem('wlc-4')!;
@@ -158,6 +159,10 @@ test('grading forgives punctuation, capitals, one slip in a long word, and split
   const half = gradeSpoken(wsc1.text, 'mans chief end is to glorify god');
   assert.ok(half.score < SPOKEN_PASS && half.score > 0.5);
   assert.deepEqual(half.heard.slice(-3), [false, false, false]);
+  const swapped = gradeSpoken('There is but one only, the living and true God.', 'there is but one only the true and living god');
+  const word = (i: number) => words('There is but one only, the living and true God.')[i];
+  assert.deepEqual(swapped.moved.flatMap((m, i) => (m ? [word(i)] : [])), ['living', 'true']);
+  assert.ok(swapped.score < 1);
 });
 
 const at = (iso: string) => new Date(iso);
@@ -203,4 +208,31 @@ test('progress: practice is counted in sessions, not in single answers', () => {
 test('progress: stored data that is broken is ignored', () => {
   assert.deepEqual(parseProgress('nope'), {});
   assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], checkpoints: [], cards: {}, lessons: 0, days: [], log: [] });
+});
+
+test('path: units of named lessons, with exactly one current lesson', () => {
+  const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
+  const p = { ...emptyProgress(), units: ['wsc-1#1', 'wsc-2#1'] };
+  const path = coursePath(items, 'adult', p);
+  assert.equal(path.length, 2);
+  assert.deepEqual(path[0].lessons.map((l) => `${l.kind === 'checkpoint' ? 'lock' : l.itemId}:${l.status}`),
+    ['wsc-1:done', 'wsc-2:done', 'wsc-3:current', 'wsc-4:upcoming', 'wsc-5:upcoming', 'lock:upcoming']);
+  assert.equal(path[0].status, 'current');
+  assert.equal(path[1].status, 'upcoming');
+  assert.equal(path.flatMap((u) => u.lessons).filter((l) => l.status === 'current').length, 1);
+  assert.equal(path[0].learned, 2);
+  const locked = coursePath(items, 'adult', { ...p, units: ['wsc-1#1', 'wsc-2#1', 'wsc-3#1', 'wsc-4#1', 'wsc-5#1'], checkpoints: ['westminster-shorter:1-5'] });
+  assert.equal(locked[0].status, 'done');
+  assert.equal(locked[1].lessons[0].status, 'current');
+});
+
+test('path: mastered means recalled well after long gaps; streaks count days in a row', () => {
+  const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
+  const card = (stability: number) => ({ due: '2027-01-01T00:00:00Z', stability, difficulty: 5, scheduled_days: 1, reps: 3, lapses: 0, learning_steps: 0, state: 2 as const });
+  const stats = courseStats(items, 'adult', { ...emptyProgress(), units: ['wsc-1#1', 'wsc-2#1'], cards: { 'wsc-1': card(30), 'wsc-2': card(4) } });
+  assert.deepEqual(stats, { learned: 2, mastered: 1, total: 10 });
+  assert.equal(streak(['2026-11-18', '2026-11-19', '2026-11-20'], '2026-11-20'), 3);
+  assert.equal(streak(['2026-11-18', '2026-11-19'], '2026-11-20'), 2);
+  assert.equal(streak(['2026-11-17'], '2026-11-20'), 0);
+  assert.equal(streak(['2026-02-28', '2026-03-01'], '2026-03-01'), 2);
 });

@@ -53,26 +53,52 @@ export function firstLetter(word: string): string {
 }
 
 export interface SpokenResult {
-  // For each expected word, whether it was heard.
+  // For each expected word, whether it was heard in its place.
   heard: boolean[];
+  // Expected words that were said, but somewhere else (a swap like "true and living" for "living and true").
+  moved: boolean[];
   score: number;
 }
 
-// Lines up what was said with what was expected, in order, allowing skipped or extra words and words the
-// recognizer split in two. Score is the share of expected words heard.
+// Small words are matched first when there is a choice, so a swap is blamed on the words that carry meaning.
+const SMALL = new Set(['the', 'and', 'of', 'to', 'in', 'is', 'a', 'an', 'that', 'by', 'for', 'with', 'who', 'which', 'as', 'unto', 'all', 'but', 'be']);
+
+// Lines up what was said with what was expected by best fit (a weighted longest common subsequence),
+// after rejoining words the recognizer split ("for ever"). Score is the share of expected words heard.
 export function gradeSpoken(expectedText: string, said: string): SpokenResult {
   const expected = words(expectedText).map((w) => w.replace(/'/g, ''));
-  const got = words(said).map((w) => w.replace(/'/g, ''));
-  const heard = expected.map(() => false);
-  let g = 0;
-  for (let e = 0; e < expected.length && g < got.length; e++) {
-    for (let k = g; k < Math.min(got.length, g + 4); k++) {
-      if (wordMatches(got[k], expected[e])) { heard[e] = true; g = k + 1; break; }
-      if (k + 1 < got.length && wordMatches(got[k] + got[k + 1], expected[e])) { heard[e] = true; g = k + 2; break; }
+  const raw = words(said).map((w) => w.replace(/'/g, ''));
+  const got: string[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const joined = raw[i] + (raw[i + 1] ?? '');
+    if (i + 1 < raw.length && !expected.some((e) => wordMatches(raw[i], e)) && expected.some((e) => wordMatches(joined, e))) { got.push(joined); i++; }
+    else got.push(raw[i]);
+  }
+  const E = expected.length, G = got.length;
+  const weight = (w: string) => (SMALL.has(w) ? 1.1 : 1);
+  const dp: number[][] = Array.from({ length: E + 1 }, () => new Array<number>(G + 1).fill(0));
+  for (let i = 1; i <= E; i++) {
+    for (let j = 1; j <= G; j++) {
+      const take = wordMatches(got[j - 1], expected[i - 1]) ? dp[i - 1][j - 1] + weight(expected[i - 1]) : -1;
+      dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1], take);
     }
   }
-  const score = expected.length ? heard.filter(Boolean).length / expected.length : 0;
-  return { heard, score };
+  const heard = expected.map(() => false);
+  const used = got.map(() => false);
+  for (let i = E, j = G; i > 0 && j > 0;) {
+    if (wordMatches(got[j - 1], expected[i - 1]) && dp[i][j] === dp[i - 1][j - 1] + weight(expected[i - 1])) { heard[i - 1] = true; used[j - 1] = true; i--; j--; }
+    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
+  }
+  const moved = expected.map((e, i) => {
+    if (heard[i]) return false;
+    const k = got.findIndex((g, j) => !used[j] && wordMatches(g, e));
+    if (k < 0) return false;
+    used[k] = true;
+    return true;
+  });
+  const score = E ? heard.filter(Boolean).length / E : 0;
+  return { heard, moved, score };
 }
 
 // Enough of the words, in order, to count as said.

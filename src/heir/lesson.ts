@@ -9,6 +9,7 @@
 
 import type { Item, MeaningQuestion, Track } from './types.ts';
 import { normalizeWord, words } from './words.ts';
+import { SWAPS } from './swaps.ts';
 
 export interface Unit {
   key: string;
@@ -198,6 +199,27 @@ function orderStep(c: Ctx, item: Item, tiles: string[], lead: string, pieces: bo
   return { id: nextId(c, 'order', item.id), itemId: item.id, review, kind: 'order', tiles, decoys, bank: bankFor(tiles, decoys, c.rng), pieces, lead };
 }
 
+// Swaps one word for a believable mix-up ("the only rule to guide us"), keeping its capital letter and
+// punctuation. Returns the changed phrase and which word changed, or null when no word has a mix-up.
+function mixUp(c: Ctx, phrase: string, avoid: string): { text: string; at: number } | null {
+  const tokens = phrase.split(' ');
+  const inAnswer = new Set(words(avoid));
+  const options = tokens.flatMap((t, at) => {
+    const core = normalizeWord(t).replace(/'/g, '');
+    return (SWAPS[core] ?? []).filter((w) => !inAnswer.has(w)).map((w) => ({ at, w }));
+  });
+  if (!options.length) return null;
+  const { at, w } = pick(options, c.rng);
+  const m = tokens[at].match(/^([“‘"'(]*)(.*?)([.,;:!?”’")]*)$/);
+  const [before, core, after] = [m?.[1] ?? '', m?.[2] ?? tokens[at], m?.[3] ?? ''];
+  const swap = core[0] === core[0].toUpperCase() ? w[0].toUpperCase() + w.slice(1) : w;
+  const out = [...tokens];
+  out[at] = `${before}${swap}${after}`;
+  return { text: out.join(' '), at };
+}
+
+// What comes next: the right phrase, the same phrase with one word changed, and a real phrase from
+// nearby (later in this answer, or from the same catechism or creed). Close calls, not giveaways.
 function nextPhraseStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null {
   const chunks = item.chunks[c.track];
   const choices: number[] = [];
@@ -205,18 +227,27 @@ function nextPhraseStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step |
   if (!choices.length) return null;
   const j = pick(choices, c.rng);
   const answer = chunks[j];
-  const seen = new Set([normalizeWord(answer)]);
-  const others = shuffle([
-    ...chunks.filter((x, k) => k !== j && k !== j - 1),
-    ...c.pool.filter((i) => i.id !== item.id).flatMap((i) => i.chunks[c.track]),
+  const near = c.pool.filter((i) => i.id !== item.id && i.collection === item.collection);
+  const others = near.length ? near : c.pool.filter((i) => i.id !== item.id);
+  // Two different mix-ups of the right phrase when the words allow it; real phrases fill any gap.
+  const mixed: string[] = [];
+  for (let t = 0; t < 8 && mixed.length < 2; t++) {
+    const m = mixUp(c, answer, item.text)?.text;
+    if (m && !mixed.includes(m)) mixed.push(m);
+  }
+  const seen = new Set([answer, ...mixed].map(normalizeWord));
+  const real = shuffle([
+    ...chunks.filter((_, k) => k > j + 1),
+    ...others.flatMap((i) => i.chunks[c.track]),
   ], c.rng).filter((x) => {
     const key = normalizeWord(x);
     if (seen.has(key) || words(x).length < 2) return false;
     seen.add(key);
     return true;
   });
-  if (others.length < 2) return null;
-  return { id: nextId(c, 'next', item.id), itemId: item.id, review, kind: 'next', lead: chunks[j - 1], answer, options: shuffle([answer, ...others.slice(0, 2)], c.rng) };
+  const wrong = [...mixed, ...real].slice(0, 2);
+  if (wrong.length < 2) return null;
+  return { id: nextId(c, 'next', item.id), itemId: item.id, review, kind: 'next', lead: chunks[j - 1], answer, options: shuffle([answer, ...wrong], c.rng) };
 }
 
 function matchStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null {
@@ -230,20 +261,9 @@ function matchStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null
 
 function spotStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null {
   const { text } = unitText(item, c.track, unit);
-  const tokens = text.split(' ');
-  const candidates = strongIndexes(tokens);
-  if (!candidates.length) return null;
-  const at = pick(candidates, c.rng);
-  const original = tokens[at];
-  const m = original.match(/^([“‘"'(]*)(.*?)([.,;:!?”’")]*)$/);
-  const [before, core, after] = [m?.[1] ?? '', m?.[2] ?? original, m?.[3] ?? ''];
-  const swaps = otherWords(c.pool.filter((i) => i.id !== item.id), text).filter((w) => Math.abs(w.length - core.length) <= 3);
-  if (!swaps.length) return null;
-  let swap = pick(swaps, c.rng);
-  swap = core[0] === core[0].toUpperCase() ? swap[0].toUpperCase() + swap.slice(1) : swap[0].toLowerCase() + swap.slice(1);
-  const changed = [...tokens];
-  changed[at] = `${before}${swap}${after}`;
-  return { id: nextId(c, 'spot', item.id), itemId: item.id, review, kind: 'spot', text: changed.join(' '), wrongIndex: at, rightWord: original, correctText: text };
+  const m = mixUp(c, text, item.text);
+  if (!m) return null;
+  return { id: nextId(c, 'spot', item.id), itemId: item.id, review, kind: 'spot', text: m.text, wrongIndex: m.at, rightWord: text.split(' ')[m.at], correctText: text };
 }
 
 function textStep(c: Ctx, kind: 'blanks' | 'letters' | 'say' | 'type', item: Item, unit: Unit, review: boolean, blankShare = 0.3): Step {

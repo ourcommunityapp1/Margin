@@ -14,14 +14,14 @@ import { finishSession, memberProgress, seenCounts, weakestCards, type StepResul
 import { allItems, getItem, itemLabel } from '@/heir/content';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
-interface Session { kind: Kind; steps: Step[]; unit: Unit | null; group: Group | null; memberId: string }
+interface Session { kind: Kind; steps: Step[]; unit: Unit | null; group: Group | null; memberId: string; label: string }
 
 const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
 export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   const router = useRouter();
   const { ready, household, updateProgress } = useHeir();
-  const { me, items, track, mine, due, activity } = useCourse();
+  const { me, items, track, mine, due, activity, path } = useCourse();
   const [session, setSession] = useState<Session | null>(null);
   const [queue, setQueue] = useState<Step[]>([]);
   const [pos, setPos] = useState(0);
@@ -39,6 +39,10 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     const pool = allItems();
     const toDue = (list: { itemId: string; strength: number }[]) => list.flatMap((d) => { const item = getItem(d.itemId); return item ? [{ item, strength: d.strength }] : []; });
     const learnedUnits = new Set(mine.units);
+    // "Unit 1 · Lesson 3", from the path, so the lesson has the same name it has on Today.
+    const where = path.find((u) => u.status === 'current');
+    const lesson = where?.lessons.find((l) => l.status === 'current');
+    const label = where && lesson ? `Unit ${where.number} · Lesson ${lesson.number}` : '';
     let next: Session;
     if (mode === 'lesson' && activity?.kind === 'learn') {
       const { unit, group } = activity;
@@ -53,12 +57,12 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
       if (ownLearned.length) mates.unshift({ item, units: ownLearned, seen: seen.get(item.id) ?? 0 });
       const inGroup = new Set(group.items.map((i) => i.id));
       const reviews = toDue(due.filter((d) => !inGroup.has(d.itemId)));
-      next = { kind: 'learn', steps: buildLesson({ unit, item, track, mates, due: reviews, pool, rng: Math.random }), unit, group, memberId: me.id };
+      next = { kind: 'learn', steps: buildLesson({ unit, item, track, mates, due: reviews, pool, rng: Math.random }), unit, group, memberId: me.id, label };
     } else if (mode === 'lesson' && activity?.kind === 'checkpoint') {
-      next = { kind: 'checkpoint', steps: buildCheckpoint({ group: activity.group, track, pool, rng: Math.random }), unit: null, group: activity.group, memberId: me.id };
+      next = { kind: 'checkpoint', steps: buildCheckpoint({ group: activity.group, track, pool, rng: Math.random }), unit: null, group: activity.group, memberId: me.id, label: label ? `${label} · Lock it in` : 'Lock it in' };
     } else {
       const list = due.length ? due : weakestCards(mine, new Set(items.map((i) => i.id)));
-      next = { kind: 'review', steps: buildReview({ due: toDue(list), track, pool, rng: Math.random }), unit: null, group: null, memberId: me.id };
+      next = { kind: 'review', steps: buildReview({ due: toDue(list), track, pool, rng: Math.random }), unit: null, group: null, memberId: me.id, label: 'Review' };
     }
     Promise.resolve().then(() => {
       setSession(next);
@@ -66,7 +70,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, activity, mode, router]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, activity, path, mode, router]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
@@ -112,7 +116,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   const part = !step.review && session.unit && session.unit.itemId === step.itemId && session.unit.of > 1 ? ` · Part ${session.unit.part} of ${session.unit.of}` : '';
   const title = `${itemLabel(item)}${part}`;
   const retry = retried.has(step.id.replace(/:typed$/, '')) && queue.indexOf(step) !== pos;
-  const heading = feedback?.ok ? PRAISE[pos % PRAISE.length] : feedback?.close ? 'Almost.' : 'Not quite.';
+  // A pass with a slip is "Good", not "Well done": praise should match what happened.
+  const heading = feedback?.ok ? (feedback.slip ? 'Good.' : PRAISE[pos % PRAISE.length]) : feedback?.close ? 'Almost.' : 'Not quite.';
 
   return (
     <main className="hr-page bare" style={{ paddingBottom: feedback ? 300 : undefined }}>
@@ -124,6 +129,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
           <span style={{ width: `${Math.round((pos / queue.length) * 100)}%` }} />
         </div>
       </div>
+      {session.label && <span className="hr-label" style={{ margin: '-4px 4px 0' }}>{session.label}</span>}
       {session.kind === 'checkpoint' && pos === 0 && !feedback && (
         <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.45 }}><strong>Lock it in.</strong> Each of {session.group ? groupLabel(session.group) : 'these'}, from memory. This is meant to be hard.</p>
       )}

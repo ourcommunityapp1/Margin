@@ -21,7 +21,7 @@ export const apostlesCreed: Collection = {
       },
       meaning: [
         { phrase: 'Almighty', question: 'What does “Almighty” mean?', answer: 'Having all power',
-          distractors: ['Very wise', 'The oldest of all', 'Living far away'],
+          distractors: ['Knowing all things', 'Being everywhere', 'Ruling over the angels'],
           explain: 'Nothing is too hard for God. He can do all that he wills.' },
       ],
       connected: ['Genesis 1:1', 'Psalm 121:2'],
@@ -36,7 +36,7 @@ export const apostlesCreed: Collection = {
       },
       meaning: [
         { phrase: 'suffered under Pontius Pilate', question: 'Why does the creed name Pontius Pilate?', answer: 'It marks a real time and place in history',
-          distractors: ['Pilate was one of the apostles', 'Pilate wrote the creed', 'To blame only Pilate'],
+          distractors: ['Pilate was the most to blame for Jesus’ death', 'Pilate later became a believer', 'Pilate was a leader in the early church'],
           explain: 'Pilate was the Roman governor of Judea. Naming him ties Jesus’ death to real history, not a legend.' },
       ],
       connected: ['John 3:16', 'Luke 1:35', '1 Corinthians 15:3–4'],
@@ -51,10 +51,10 @@ export const apostlesCreed: Collection = {
       },
       meaning: [
         { phrase: 'the quick and the dead', question: 'What does “the quick and the dead” mean?', answer: 'Those who are alive and those who have died',
-          distractors: ['Fast people and slow people', 'Angels and demons', 'The wise and the foolish'],
+          distractors: ['Those who believe and those who don’t', 'The righteous and the wicked', 'Those who are ready and those who aren’t'],
           explain: '“Quick” is an old word for “living.” Jesus will judge everyone, living and dead (Acts 10:42).' },
         { phrase: 'from thence', question: 'What does “from thence” mean?', answer: 'From there',
-          distractors: ['After that', 'From the start', 'Because of that'],
+          distractors: ['After that', 'From then on', 'Because of that'],
           explain: 'From heaven, where he sits at the Father’s right hand, Jesus will come again.' },
       ],
       connected: ['1 Corinthians 15:4', 'Acts 1:9–11', 'Acts 10:42'],
@@ -69,10 +69,10 @@ export const apostlesCreed: Collection = {
       },
       meaning: [
         { phrase: 'catholic', question: 'What does “catholic” mean in the creed?', answer: 'Universal: the whole church, in every place and time',
-          distractors: ['The Roman Catholic Church only', 'One local congregation', 'Very old'],
+          distractors: ['The Roman Catholic Church', 'The church’s oldest traditions', 'The church in one city or region'],
           explain: '“Catholic” means universal. It names all of Christ’s people everywhere, across every century.' },
         { phrase: 'communion of saints', question: 'What is “the communion of saints”?', answer: 'The fellowship all believers share in Christ',
-          distractors: ['Taking communion with famous saints', 'A church holiday', 'Prayers to people in heaven'],
+          distractors: ['Praying to believers who have died', 'Sharing the Lord’s Supper together', 'The fellowship of especially holy people'],
           explain: 'Everyone who belongs to Christ shares in him and in one another, as one family (1 John 1:3).' },
       ],
       connected: ['Ephesians 1:7', '1 John 1:3', '1 Corinthians 15:42–44', 'John 10:28'],
