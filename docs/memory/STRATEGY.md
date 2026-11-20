@@ -42,7 +42,7 @@ The names come from the foundation stones of the New Jerusalem (Revelation 21:19
 - Each level is shown as a rounded square holding a close-up photo of the real stone (red jasper for Jasper). Photos and credits: `docs/memory/awards/stones/`.
 - An overdue item keeps its level; its stone fades until the next good review ("Needs a refresh").
 - Counts shown on Today and Progress: Know, Memorized, Mastered, Long-term memory, split by kind (catechism questions, creed sections, verses later).
-- Also decided: a "days kept" streak where Sunday is a rest day that never breaks it; a Progress tab with the counts, stone shelf, month calendar and about a dozen dated awards; no points for now.
+- No points for now (decided). Proposed, not yet confirmed: a "days kept" streak where Sunday is a rest day that never breaks it, and a Progress tab with the counts, stone shelf, month calendar and about a dozen dated awards.
 - Mockups: https://claude.ai/artifact/VVUkYfBtARYJovpiUFKNLh
 
 **Clear feedback, every time:**
