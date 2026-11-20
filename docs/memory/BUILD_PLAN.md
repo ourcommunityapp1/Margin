@@ -156,3 +156,9 @@ Each phase ends with something usable on a phone.
 - Status (2026-11-19): tables are applied in the Sermon Notes project; the two settings were removed from
   Netlify on purpose so the prototype runs without sign-in. To turn sync on: add both settings back
   (same URL and publishable key as `NEXT_PUBLIC_SUPABASE_*`), add `{{ .Token }}` to the email template, republish.
+
+## Content status (2026-11-20)
+
+- **Westminster Shorter Catechism: all 107 questions.** Q1–10 hand-written (pieces, meaning questions, proof texts). Q11–107 from the 1647 text in Creeds.json, with pieces split by rule at the punctuation and the OPC proof texts (from ReformedDevs/hubot-wsc) as connected Scripture, book names written out. Meaning questions for Q11–107 are still to be written; until then those lessons skip the meaning step and those questions can't reach Sapphire. All of it awaits the owner's review.
+- Larger Catechism Q1–10, Apostles' Creed, Nicene Creed: as before.
+- Connected Scripture is shown as references only. Showing the verse text waits on the ESV license (or a public-domain translation such as the KJV).

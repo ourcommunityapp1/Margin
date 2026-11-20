@@ -84,7 +84,20 @@ export default function Today() {
           <span style={{ fontSize: 15, color: 'var(--muted)', flex: 'none' }}>Change</span>
         </Link>
 
-        {path.map((u) => <UnitCard key={u.group.key} unit={u} mine={mine} track={track} now={now} />)}
+        {(() => {
+          // Long courses: the last finished unit, the current one and the next; the rest summed up.
+          const at = Math.max(0, path.findIndex((u) => u.status !== 'done'));
+          const from = Math.max(0, at - 1), to = Math.min(path.length, at + 2);
+          const before = path.slice(0, from), after = path.slice(to);
+          const span = (list: PathUnit[]) => `${groupLabel(list[0].group).replace(/–.*$/, '')}–${list[list.length - 1].group.items[list[list.length - 1].group.items.length - 1].number}`;
+          return (
+            <>
+              {before.length > 0 && <Link href="/heir/learn" className="hr-course-chip"><span><b>{before.length === 1 ? 'Unit 1' : `Units 1–${before.length}`}</b> · locked in</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See in Learn</span></Link>}
+              {path.slice(from, to).map((u) => <UnitCard key={u.group.key} unit={u} mine={mine} track={track} now={now} />)}
+              {after.length > 0 && <Link href="/heir/learn" className="hr-course-chip"><span><b>{after.length} more {after.length === 1 ? 'unit' : 'units'}</b> · {span(after)}</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See all</span></Link>}
+            </>
+          );
+        })()}
       </main>
       <Tabs />
     </>

@@ -1,8 +1,10 @@
-// Westminster Shorter Catechism (1647), questions 1–10. Public domain.
+// Westminster Shorter Catechism (1647), all 107 questions. Public domain.
+// Questions 1–10 are written by hand below; 11–107 are in westminster-shorter-rest.ts.
 // Proof texts follow the original Westminster Assembly's citations.
 // Meaning questions and child pieces are drafts: `reviewed` stays false until the owner approves each item.
 
 import type { Collection } from '../types.ts';
+import { shorterRest } from './westminster-shorter-rest.ts';
 
 export const westminsterShorter: Collection = {
   id: 'westminster-shorter',
@@ -173,5 +175,6 @@ export const westminsterShorter: Collection = {
       ],
       connected: ['Genesis 1:26–28', 'Colossians 3:10', 'Ephesians 4:24'],
     },
+      ...shorterRest,
   ],
 };

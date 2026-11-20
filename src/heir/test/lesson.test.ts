@@ -34,7 +34,11 @@ const mate = (id: string, seen = 0): Mate => ({ item: getItem(id)!, units: units
 
 test('groups: five at a time, never mixing collections, as even as possible', () => {
   const sizes = (id: string) => groupsOf(courseItems(courses.find((c) => c.id === id)!)).map((g) => [g.key, g.items.length]);
-  assert.deepEqual(sizes('westminster-shorter'), [['westminster-shorter:1-5', 5], ['westminster-shorter:6-10', 5]]);
+  const wsc = sizes('westminster-shorter');
+  assert.equal(wsc.length, 22);
+  assert.deepEqual(wsc.slice(0, 2), [['westminster-shorter:1-5', 5], ['westminster-shorter:6-10', 5]]);
+  assert.ok(wsc.every(([, n]) => n === 4 || n === 5));
+  assert.equal(wsc.reduce((t, [, n]) => t + Number(n), 0), 107);
   assert.deepEqual(sizes('creeds'), [['apostles-creed:1-4', 4], ['nicene-creed:1-3', 3], ['nicene-creed:4-6', 3]]);
 });
 
@@ -48,7 +52,7 @@ test('pacing: learn a group one item at a time, lock it in, then move to the nex
   assert.equal(at(['wsc-1', 'wsc-2']), 'wsc-3#1');
   assert.equal(at(['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4', 'wsc-5']), 'lock westminster-shorter:1-5');
   assert.equal(at(['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4', 'wsc-5'], ['westminster-shorter:1-5']), 'wsc-6#1');
-  assert.equal(at(items.map((i) => i.id), ['westminster-shorter:1-5', 'westminster-shorter:6-10']), null);
+  assert.equal(at(items.map((i) => i.id), groupsOf(items).map((g) => g.key)), null);
 });
 
 test('a first lesson walks from seeing it to saying it', () => {
@@ -214,7 +218,7 @@ test('path: units of named lessons, with exactly one current lesson', () => {
   const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
   const p = { ...emptyProgress(), units: ['wsc-1#1', 'wsc-2#1'] };
   const path = coursePath(items, 'adult', p);
-  assert.equal(path.length, 2);
+  assert.equal(path.length, 22);
   assert.deepEqual(path[0].lessons.map((l) => `${l.kind === 'checkpoint' ? 'lock' : l.itemId}:${l.status}`),
     ['wsc-1:done', 'wsc-2:done', 'wsc-3:current', 'wsc-4:upcoming', 'wsc-5:upcoming', 'lock:upcoming']);
   assert.equal(path[0].status, 'current');
@@ -230,7 +234,7 @@ test('path: mastered means recalled well after long gaps; streaks count days in 
   const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
   const card = (stability: number) => ({ due: '2027-01-01T00:00:00Z', stability, difficulty: 5, scheduled_days: 1, reps: 3, lapses: 0, learning_steps: 0, state: 2 as const });
   const stats = courseStats(items, 'adult', { ...emptyProgress(), units: ['wsc-1#1', 'wsc-2#1'], cards: { 'wsc-1': card(30), 'wsc-2': card(4) } });
-  assert.deepEqual(stats, { learned: 2, mastered: 1, total: 10 });
+  assert.deepEqual(stats, { learned: 2, mastered: 1, total: 107 });
   assert.equal(streak(['2026-11-18', '2026-11-19', '2026-11-20'], '2026-11-20'), 3);
   assert.equal(streak(['2026-11-18', '2026-11-19'], '2026-11-20'), 2);
   assert.equal(streak(['2026-11-17'], '2026-11-20'), 0);
