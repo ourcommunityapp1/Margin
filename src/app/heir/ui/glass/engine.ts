@@ -304,5 +304,5 @@ export async function loadGlass(base: string) {
 }
 
 export type GlassMeta = {
-  count: number; questions: number[][]; title: string; fit?: 'cover' | 'contain'; credit: { who: string; license: string; page: string; place: string };
+  count: number; width: number; height: number; questions: number[][]; title: string; fit?: 'cover' | 'contain'; centres?: [number, number][]; credit: { who: string; license: string; page: string; place: string };
 };

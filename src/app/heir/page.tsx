@@ -20,11 +20,13 @@ import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
 import { LivingWindow } from './ui/glass/window';
 import { windowFor, windowLight } from './ui/glass/light';
+import { GlassCta, useGlassMeta } from './ui/glass/cta';
 
 export default function Today() {
   const { ready, household, time, now } = useHeir();
   const router = useRouter();
   const { me, course, mine, track, items, path, due, chosen } = useCourse();
+  const meta = useGlassMeta(windowFor(course.id).base);
 
   useEffect(() => {
     if (!ready) return;
@@ -42,12 +44,18 @@ export default function Today() {
   const counts = countsFor(allItems(), mine);
   const glass = windowFor(course.id);
   const light = windowLight(items, track, mine, now);
+  const next = light.lit.findIndex((f) => f < 1);
+  const cta = !plan ? null
+    : plan.kind === 'welcome' ? { label: 'Light the first pane', sub: 'Welcome lesson' }
+    : plan.kind === 'learn' ? { label: 'Light the next pane', sub: lessonName }
+    : plan.kind === 'checkpoint' ? { label: 'Set these panes', sub: `Lock in ${groupLabel(plan.group)}` }
+    : { label: 'Polish the glass', sub: `${lessonName} · review` };
 
   return (
     <>
       {/* The course's window: lit glass is what you've learned, dull glass is still to come. */}
       <section className="hr-hero" aria-label={`Your window: ${Math.round(light.share * 100)}% lit`}>
-        <LivingWindow base={glass.base} lit={light.lit} dusty={light.dusty} />
+        <LivingWindow base={glass.base} lit={light.lit} dusty={light.dusty} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') ? next : undefined} />
         <header className="hr-hero-top">
           <h1 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name}</h1>
           <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} className="hr-hero-chip">{me.name[0]}</Link>
@@ -55,12 +63,8 @@ export default function Today() {
       </section>
 
       <main className="hr-page hr-after-hero">
-        {plan ? (
-          <Link className="hr-cta" href="/heir/lesson">
-            <span>{plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`}</span>
-            <span className="hr-cta-go" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
-          </Link>
-        ) : <p className="serif" style={{ margin: '0 4px', fontSize: 18, textAlign: 'center' }}>All caught up for today.</p>}
+        {cta ? <GlassCta base={glass.base} meta={meta} next={next} total={items.length} href="/heir/lesson" label={cta.label} sub={cta.sub} />
+          : <p className="serif" style={{ margin: '0 4px', fontSize: 18, textAlign: 'center' }}>All caught up for today.</p>}
 
         <DaysKept days={mine.days} today={today} now={now} dueCount={due.length} />
 

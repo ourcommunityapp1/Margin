@@ -126,5 +126,7 @@ cv2.imwrite(os.path.join(a.out, "glass.webp"), img if a.surround else img * wind
 palette = rng.integers(40, 255, (count + 1, 3), dtype=np.uint8); palette[0] = 0
 cv2.imwrite(os.path.join(a.out, "debug.jpg"), palette[full], [cv2.IMWRITE_JPEG_QUALITY, 85])
 json.dump({"count": count, "width": W, "height": H, "title": a.title, "fit": "cover" if a.surround else "contain", "credit": json.loads(a.credit),
-           "questions": questions}, open(os.path.join(a.out, "pieces.json"), "w"), separators=(",", ":"))
+           "questions": questions,
+           # Each piece's centre (x, y as fractions of the image), so the app can frame or crop any pane.
+           "centres": [[round(float(cx[i]) / W, 4), round(float(cy[i]) / H, 4)] for i in range(count)]}, open(os.path.join(a.out, "pieces.json"), "w"), separators=(",", ":"))
 print(f"{W}x{H}  pieces={count}  per question ~{count / a.questions:.1f}")

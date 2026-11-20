@@ -826,3 +826,44 @@ body:has(.hr) {
 }
 /* Today: window, then the button, both on the first screen above the tab bar. */
 .hr-hero:not(.hr-hero-done) { height: min(calc(100svh - 196px - env(safe-area-inset-bottom, 0px)), 760px); min-height: 420px; }
+
+/* The call to action as a pane of the window: real glass lit from behind, edged in lead, a sheen crossing it. */
+.hr-glass-cta {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; align-items: center; gap: 14px;
+  height: 88px; padding: 0 12px 0 22px; border-radius: 26px;
+  background: #120E0A; color: #FFF8EC; text-decoration: none;
+  border: 3px solid #0D0A07;
+  box-shadow: inset 0 0 0 1px rgba(255, 226, 180, 0.22), 0 14px 36px rgba(255, 168, 80, 0.28), 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.hr-glass-cta:active { transform: scale(0.985); }
+.hr-glass-cta-glass {
+  position: absolute; inset: 0; z-index: -2;
+  background-repeat: no-repeat; background-color: #2A1E14;
+  filter: saturate(1.3) brightness(1.15) contrast(1.05);
+  animation: hr-pane-breathe 5s ease-in-out infinite;
+}
+.hr-glass-cta::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(90deg, rgba(12, 9, 6, 0.82) 0%, rgba(12, 9, 6, 0.5) 52%, rgba(12, 9, 6, 0.1) 100%);
+}
+.hr-glass-cta-sheen {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 45%; z-index: -1;
+  background: linear-gradient(100deg, transparent, rgba(255, 240, 210, 0.22), transparent);
+  transform: translateX(-120%); animation: hr-pane-sheen 6s 1.5s ease-in-out infinite;
+}
+.hr-glass-cta-text { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); }
+.hr-glass-cta-label { font-size: 22px; font-weight: 600; line-height: 1.1; }
+.hr-glass-cta-sub { font-size: 13px; font-weight: 600; opacity: 0.78; letter-spacing: 0.01em; }
+.hr-glass-cta-go {
+  width: 56px; height: 56px; border-radius: 28px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 40%, #FFF3D6, #F6C276 70%); color: #2A1A08;
+  box-shadow: 0 0 0 3px rgba(13, 10, 7, 0.6), 0 0 26px rgba(255, 196, 120, 0.7);
+}
+@keyframes hr-pane-breathe { 0%, 100% { filter: saturate(1.3) brightness(1.08) contrast(1.05); } 50% { filter: saturate(1.4) brightness(1.3) contrast(1.05); } }
+@keyframes hr-pane-sheen { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .hr-glass-cta-glass, .hr-glass-cta-sheen { animation: none; } }
+.hr-hero:not(.hr-hero-done) { height: min(calc(100svh - 220px - env(safe-area-inset-bottom, 0px)), 760px); }
+button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: pointer; }

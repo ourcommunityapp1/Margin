@@ -34,13 +34,15 @@ type Props = {
   onReady?: () => void;
   /** CSS pixels at the bottom covered by a panel; the glass is framed above it. */
   bottomInset?: number;
+  /** The course question learned next: the lead around its glass glows softly, beckoning. */
+  hint?: number;
   className?: string;
 };
 
 type Track = { id: number; t0: number };
 
 export const LivingWindow = forwardRef<WindowHandle, Props>(
-  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, className }, ref) {
+  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, className }, ref) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const engine = useRef<GlassEngine | null>(null);
     const meta = useRef<GlassMeta | null>(null);
@@ -54,6 +56,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
     const litRef = useRef(lit), dustyRef = useRef(dusty), readyRef = useRef(onReady);
     litRef.current = lit; dustyRef.current = dusty; readyRef.current = onReady;
     const insetRef = useRef(bottomInset); insetRef.current = bottomInset;
+    const hintRef = useRef(hint); hintRef.current = hint;
     const visible = useRef(true);
     // All pieces in reveal order (bottom left to top right). Course question i of n owns slice i of n.
     const flat = useRef<number[]>([]);
@@ -178,6 +181,13 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
             else { e.light[id] = 1; e.glow[id] = 0; return false; }
             return true;
           });
+          // The next pane beckons: warm light breathes along its lead while it waits to be lit.
+          const h = hintRef.current, n = litRef.current?.length;
+          if (h != null && h >= 0 && n && !tracks.current.length) {
+            const ids = itemPieces(n, h);
+            const wave = 0.5 + 0.5 * Math.sin(now / 700);
+            ids.forEach((id, k) => { if (e.light[id] < 0.5) e.glow[id] = 0.18 + 0.5 * wave * (0.6 + 0.4 * Math.sin(k * 1.7)); });
+          }
           // Rays flare while light is arriving; the sun breaks through at the end.
           e.rayAmount += ((active ? 1.15 : 0.75) - e.rayAmount) * 0.05;
           const f = flash.current;

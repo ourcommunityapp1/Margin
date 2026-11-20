@@ -18,6 +18,7 @@ import { Stone } from './stone';
 import { allItems, getItem, itemLabel } from '@/heir/content';
 import { LivingWindow, type WindowHandle } from './glass/window';
 import { windowFor, windowLight } from './glass/light';
+import { GlassCta, useGlassMeta } from './glass/cta';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
 interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] } }
@@ -216,6 +217,9 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
 function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
   const { activity, group, groupLearned, mine, items, track, course } = useCourse();
   const { now } = useHeir();
+  const glassBase = windowFor(course.id).base;
+  const glassMeta = useGlassMeta(glassBase);
+  const nextPane = windowLight(items, track, mine, now).lit.findIndex((f) => f < 1);
   const upNext = planNext({ courseId: course.id, items, track, p: mine, now });
   const first = session.units[0];
   const item = first ? getItem(first.itemId) : null;
@@ -231,7 +235,9 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
     : partial ? `Part ${first!.part} of ${first!.of} learned. The next lesson continues it.`
     : activity?.kind === 'checkpoint' ? `That’s all of ${groupLabel(activity.group)}. Next: lock them in, all together, from memory.`
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
-  const cta = upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;
+  const cta = upNext?.kind === 'checkpoint' ? { label: 'Set these panes', sub: `Lock in ${groupLabel(upNext.group)}` }
+    : upNext?.kind === 'learn' ? { label: 'Light the next pane', sub: 'Next lesson' }
+    : upNext ? { label: 'Polish the glass', sub: 'Next lesson · review' } : null;
   const awardNames = finished.awards.map((id) => AWARDS.find((a) => a.id === id)?.name).filter(Boolean);
 
   return (
@@ -293,8 +299,8 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
       </div>
       {message && <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.5 }}>{message}</p>}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <Link className="hr-btn" href="/heir">Done</Link>
-        {cta && <button type="button" className="hr-btn quiet" style={{ background: 'var(--card)' }} onClick={again}>{cta}</button>}
+        {cta && <GlassCta base={glassBase} meta={glassMeta} next={nextPane} total={items.length} onClick={again} label={cta.label} sub={cta.sub} />}
+        <Link className={cta ? 'hr-btn quiet' : 'hr-btn'} style={cta ? { background: 'var(--card)' } : undefined} href="/heir">Done</Link>
       </div>
     </main>
     </>
