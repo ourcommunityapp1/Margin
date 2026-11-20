@@ -246,6 +246,34 @@
    "w": 390,
    "h": 844,
    "title": "10 \u00b7 The glass's colours"
+  },
+  "H1EditHold.dc.html": {
+   "x": 0,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H1 \u00b7 Editorial + hold"
+  },
+  "H2Lancets.dc.html": {
+   "x": 470,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H2 \u00b7 Lancets, compact"
+  },
+  "H3FrostLight.dc.html": {
+   "x": 940,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H3 \u00b7 Frosted, on light"
+  },
+  "H4HoldHalf.dc.html": {
+   "x": 1410,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H4 \u00b7 Hold, half and half"
   }
  },
  "createdOnFiles": {
@@ -322,6 +350,13 @@
    "text": "The window, modern: ten ways to begin",
    "x": 0,
    "y": 11920
+  },
+  "t10": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "Round two: the window at half the screen",
+   "x": 0,
+   "y": 14200
   }
  },
  "order": [
@@ -359,7 +394,11 @@
   "G07Lancets.dc.html",
   "G08Mosaic.dc.html",
   "G09Candle.dc.html",
-  "G10Palette.dc.html"
+  "G10Palette.dc.html",
+  "H1EditHold.dc.html",
+  "H2Lancets.dc.html",
+  "H3FrostLight.dc.html",
+  "H4HoldHalf.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"

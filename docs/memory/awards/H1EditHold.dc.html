@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Editorial and hold</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#16181A}a:hover{color:#000}
+@keyframes h1-fill{0%,15%{stroke-dasharray:0 100}70%,85%{stroke-dasharray:100 100}100%{stroke-dasharray:0 100}}
+@keyframes h1-glow{0%,15%{filter:brightness(.6) saturate(.7)}70%,85%{filter:brightness(1.2) saturate(1.3)}100%{filter:brightness(.6) saturate(.7)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F4F0E8; color: #16181A; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 22px; right: 22px; top: 52px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; letter-spacing: 1.6px; border-bottom: 1px solid #16181A; padding-bottom: 10px">
+    <span>HEIR</span><span>FRIDAY 20 NOVEMBER</span>
+  </div>
+
+  <div style="position: absolute; left: 22px; top: 92px; display: flex; flex-direction: column; gap: 4px">
+    <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.6px">LESSON</span>
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 120px; font-weight: 300; line-height: 0.85; letter-spacing: -5px">08</span>
+  </div>
+  <p style="position: absolute; left: 22px; top: 240px; width: 190px; margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; line-height: 1.38">Two new panes tonight: God’s decrees, and how he carries them out.</p>
+
+  <div style="position: absolute; left: 22px; top: 370px; width: 190px; display: flex; flex-direction: column; gap: 10px">
+    <span style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; letter-spacing: 1.2px"><span>2 DAYS KEPT</span><span style="color: #8A8E91">BEST 4</span></span>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center">
+      <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+          <span style="font-size: 10px; font-weight: 600; color: #8A8E91">{{d.l}}</span>
+          <span style="width: 18px; height: 18px; border-radius: 9px; box-sizing: border-box; background: {{d.bg}}; border: {{d.border}}"></span>
+        </span>
+      </sc-for>
+    </div>
+    <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.2px; margin-top: 8px">7 OF 107 PANES LIT</span>
+    <span style="height: 3px; background: #DDD6CA; position: relative"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: 6.5%; background: #16181A"></span></span>
+  </div>
+
+  <div style="position: absolute; left: 238px; top: 92px; width: 130px; height: 427px; border-radius: 65px 65px 0 0; overflow: hidden; background: #0E0C0A">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/73cfbf251d6b66f5ef2df21a5c1859b0); background-size: 217px 469px; background-position: -43px -12px"></div>
+  </div>
+  <span style="position: absolute; left: 238px; width: 130px; top: 528px; text-align: center; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-size: 12px; color: #5B6064">The Good Shepherd</span>
+
+  <div style="position: absolute; left: 22px; right: 22px; top: 584px; height: 1px; background: #16181A"></div>
+
+  <a href="#" aria-label="Hold to light lesson 8" style="position: absolute; left: 22px; right: 22px; top: 608px; height: 108px; display: flex; align-items: center; gap: 18px; text-decoration: none">
+    <span style="position: relative; width: 104px; height: 104px; flex: none">
+      <svg width="104" height="104" viewBox="0 0 104 104" aria-hidden="true" style="position: absolute; inset: 0; transform: rotate(-90deg)">
+        <circle cx="52" cy="52" r="49" fill="none" stroke="#DDD6CA" stroke-width="3"></circle>
+        <circle cx="52" cy="52" r="49" pathLength="100" fill="none" stroke="#C98A2E" stroke-width="3.5" stroke-linecap="round" style="animation: h1-fill 4s ease-in-out infinite"></circle>
+      </svg>
+      <span style="position: absolute; inset: 9px; border-radius: 50%; border: 4px solid #16181A; background-image: url(/_blob/4423f54f58552653a8210bcd7aed723d); background-size: 560px 1212px; background-position: -238px -1003px; animation: h1-glow 4s ease-in-out infinite"></span>
+    </span>
+    <span style="display: flex; flex-direction: column; gap: 4px">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; font-weight: 400; line-height: 1.05">Hold to light</span>
+      <span style="font-size: 12px; font-weight: 600; color: #5B6064">Lesson 8 · about 12 minutes</span>
+    </span>
+  </a>
+
+  <nav aria-label="Main" style="position: absolute; left: 22px; right: 22px; bottom: 22px; display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; letter-spacing: 1.4px; border-top: 1px solid #16181A; padding-top: 12px">
+    <a href="#" aria-current="page" style="text-decoration: none">TODAY</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">LEARN</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">PROGRESS</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const states = ['missed', 'missed', 'missed', 'kept', 'today', 'later', 'rest'];
+    const week = states.map((s, i) => ({
+      l: 'MTWTFSS'[i],
+      bg: s === 'kept' ? '#16181A' : s === 'today' ? '#C98A2E' : 'transparent',
+      border: s === 'rest' ? '1.5px dashed #B9B1A3' : s === 'kept' || s === 'today' ? 'none' : '1.5px solid #CFC7BA',
+    }));
+    return { week };
+  }
+}
+</script>
+</body>
+</html>
