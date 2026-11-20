@@ -120,6 +120,62 @@
    "w": 390,
    "h": 1000,
    "title": "C1·c · Beads"
+  },
+  "A1Dawn.dc.html": {
+   "x": 0,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs · Dawn draw"
+  },
+  "A2Glass.dc.html": {
+   "x": 470,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs · Stained glass"
+  },
+  "A3Rose.dc.html": {
+   "x": 940,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs · Rose window"
+  },
+  "A4Week.dc.html": {
+   "x": 1410,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs · The week and the work"
+  },
+  "N1Stars.dc.html": {
+   "x": 0,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night · Constellation"
+  },
+  "N2Aurora.dc.html": {
+   "x": 470,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night · Aurora"
+  },
+  "N3Lamp.dc.html": {
+   "x": 940,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night · Lamp"
+  },
+  "N4Morning.dc.html": {
+   "x": 1410,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night · Morning star"
   }
  },
  "createdOnFiles": {
@@ -175,6 +231,20 @@
    "text": "C1, taken further",
    "x": 0,
    "y": 7960
+  },
+  "t7": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "Unit arcs, alive",
+   "x": 0,
+   "y": 9280
+  },
+  "t8": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "Night sky, alive",
+   "x": 0,
+   "y": 10600
   }
  },
  "order": [
@@ -194,7 +264,15 @@
   "C3Ascent.dc.html",
   "Q1Arcs.dc.html",
   "Q2Night.dc.html",
-  "Q3Beads.dc.html"
+  "Q3Beads.dc.html",
+  "A1Dawn.dc.html",
+  "A2Glass.dc.html",
+  "A3Rose.dc.html",
+  "A4Week.dc.html",
+  "N1Stars.dc.html",
+  "N2Aurora.dc.html",
+  "N3Lamp.dc.html",
+  "N4Morning.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"
