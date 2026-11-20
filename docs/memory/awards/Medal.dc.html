@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Medal</title>
+<title>Stone</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -12,81 +12,41 @@
 body{margin:0}
 </style>
 </helmet>
-<div style="width: {{px}}; height: {{px}}; display: inline-flex; align-items: center; justify-content: center; opacity: {{opacity}}; filter: {{filter}}">
-<sc-if value="{{coin}}" hint-placeholder-val="{{ true }}">
-<svg viewBox="0 0 48 48" width="{{size}}" height="{{size}}" aria-hidden="true">
-<circle cx="24" cy="24" r="22.5" fill="{{dark}}"></circle>
-<circle cx="24" cy="24" r="19" fill="{{base}}"></circle>
-<circle cx="24" cy="24" r="16.2" fill="none" stroke="{{dark}}" stroke-width="0.8" opacity="0.55"></circle>
-<path d="M10.5 19.5 A 14.5 14.5 0 0 1 33 10.8" fill="none" stroke="{{light}}" stroke-width="2.4" stroke-linecap="round" opacity="0.85"></path>
-<text x="24" y="29.2" text-anchor="middle" font-family="Source Serif 4, Georgia, serif" font-size="14" font-weight="700" fill="{{dark}}">{{numeral}}</text>
-</svg>
+<div style="width: {{px}}; height: {{px}}; display: inline-block; vertical-align: middle; flex: none">
+<sc-if value="{{photo}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: {{px}}; height: {{px}}; border-radius: {{radius}}; overflow: hidden; background: #2B343B; box-shadow: 0 1px 2px rgba(20,24,28,0.14), 0 3px 8px rgba(20,24,28,0.10); opacity: {{opacity}}; filter: {{filter}}">
+<img src="{{src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover">
+<div style="position: absolute; inset: 0; border-radius: {{radius}}; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.32), inset 0 -3px 8px rgba(0,0,0,0.22)"></div>
+</div>
 </sc-if>
-<sc-if value="{{step}}" hint-placeholder-val="{{ false }}">
-<svg viewBox="0 0 48 48" width="{{size}}" height="{{size}}" aria-hidden="true">
-<polygon points="14,4 34,4 44,14 44,34 34,44 14,44 4,34 4,14" fill="{{base}}"></polygon>
-<polygon points="4,14 14,4 18,12 12,18" fill="{{light}}" opacity="0.9"></polygon>
-<polygon points="14,4 34,4 30,12 18,12" fill="{{light}}" opacity="0.55"></polygon>
-<polygon points="44,14 44,34 36,30 36,18" fill="{{dark}}" opacity="0.55"></polygon>
-<polygon points="44,34 34,44 30,36 36,30" fill="{{dark}}" opacity="0.85"></polygon>
-<polygon points="34,44 14,44 18,36 30,36" fill="{{dark}}" opacity="0.6"></polygon>
-<polygon points="18,12 30,12 36,18 36,30 30,36 18,36 12,30 12,18" fill="{{table}}"></polygon>
-<polygon points="14,4 34,4 44,14 44,34 34,44 14,44 4,34 4,14" fill="none" stroke="{{dark}}" stroke-width="1.2"></polygon>
-<path d="M17 16 L 24 15" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity="0.7"></path>
-</svg>
-</sc-if>
-<sc-if value="{{brilliant}}" hint-placeholder-val="{{ false }}">
-<svg viewBox="0 0 48 48" width="{{size}}" height="{{size}}" aria-hidden="true">
-<polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="{{base}}"></polygon>
-<polygon points="24,3 42,13.5 33,18.5 24,13" fill="{{light}}" opacity="0.6"></polygon>
-<polygon points="6,13.5 24,3 24,13 15,18.5" fill="{{light}}" opacity="0.95"></polygon>
-<polygon points="42,13.5 42,34.5 33,29.5 33,18.5" fill="{{dark}}" opacity="0.5"></polygon>
-<polygon points="42,34.5 24,45 24,35 33,29.5" fill="{{dark}}" opacity="0.85"></polygon>
-<polygon points="24,45 6,34.5 15,29.5 24,35" fill="{{dark}}" opacity="0.6"></polygon>
-<polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="{{table}}"></polygon>
-<polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="none" stroke="{{dark}}" stroke-width="1.2"></polygon>
-<path d="M18.5 19.5 L 23 17" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" opacity="0.8"></path>
-</svg>
-</sc-if>
-<sc-if value="{{open}}" hint-placeholder-val="{{ false }}">
-<svg viewBox="0 0 48 48" width="{{size}}" height="{{size}}" aria-hidden="true">
-<polygon points="24,3.5 41.5,13.8 41.5,34.2 24,44.5 6.5,34.2 6.5,13.8" fill="none" stroke="{{dark}}" stroke-width="1.6" stroke-dasharray="3 3"></polygon>
-<polygon points="24,13 33,18.5 33,29.5 24,35 15,29.5 15,18.5" fill="none" stroke="{{dark}}" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.7"></polygon>
-</svg>
-</sc-if>
-<sc-if value="{{none}}" hint-placeholder-val="{{ false }}">
-<svg viewBox="0 0 48 48" width="{{size}}" height="{{size}}" aria-hidden="true">
-<circle cx="24" cy="24" r="21" fill="none" stroke="{{dark}}" stroke-width="2"></circle>
-</svg>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="width: {{px}}; height: {{px}}; box-sizing: border-box; border-radius: {{radius}}; border: 2px dashed #C9C2B5"></div>
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"level":{"editor":"enum","options":["bronze","silver","gold","emerald","amethyst","jasper","open","none"],"default":"gold"},"size":{"editor":"int","default":96,"min":12,"max":200},"dim":{"editor":"boolean","default":false},"$preview":{"width":96,"height":96}}'>
+<script type="text/x-dc" data-dc-script data-props='{"level":{"editor":"enum","options":["carnelian","topaz","sapphire","emerald","amethyst","jasper","jasper-red","none"],"default":"sapphire"},"size":{"editor":"int","default":96,"min":12,"max":200},"dim":{"editor":"boolean","default":false},"$preview":{"width":96,"height":96}}'>
 class Component extends DCLogic {
   renderVals() {
-    const level = this.props.level ?? 'gold';
+    const level = this.props.level ?? 'sapphire';
     const size = Number(this.props.size ?? 96);
-    const P = {
-      bronze: { dark: '#7A4A26', base: '#B5733F', light: '#E9B07C', table: '#C98552', numeral: 'I' },
-      silver: { dark: '#5F6870', base: '#A7B0B8', light: '#EEF1F3', table: '#BCC4CA', numeral: 'II' },
-      gold: { dark: '#7E5A12', base: '#C99A2E', light: '#F5DB8A', table: '#D9AE45', numeral: 'III' },
-      emerald: { dark: '#0D4A33', base: '#1E8657', light: '#7DDCAE', table: '#34A06E', numeral: '' },
-      amethyst: { dark: '#46277A', base: '#8257C0', light: '#CDB0F2', table: '#9A72D3', numeral: '' },
-      jasper: { dark: '#7F9CA3', base: '#D9E8EA', light: '#FFFFFF', table: '#EEF6F7', numeral: '' },
-      open: { dark: '#8B8F92', base: 'none', light: 'none', table: 'none', numeral: '' },
-      none: { dark: '#C9C2B5', base: 'none', light: 'none', table: 'none', numeral: '' },
+    const SRC = {
+      carnelian: '/_blob/fac2096b2a56bfc1ff21c5cd5b67c080',
+      topaz: '/_blob/ad83f7e5a62be416f6e3b5dee2c41c51',
+      sapphire: '/_blob/1979c4be847f6bb9b3be068e25cdc213',
+      emerald: '/_blob/7f0d01d19bff44f42d85bb367635ec0c',
+      amethyst: '/_blob/f763d14908b506007e53b64dbc39dab5',
+      jasper: '/_blob/500227e910405a9d72382bac6250fe94',
+      'jasper-red': '/_blob/b65da9dded71dba9b6bcac10740a96f4',
     };
-    const c = P[level] ?? P.gold;
     const dim = !!this.props.dim;
     return {
-      ...c, size, px: size + 'px',
-      coin: level === 'bronze' || level === 'silver' || level === 'gold',
-      step: level === 'emerald',
-      brilliant: level === 'amethyst' || level === 'jasper',
-      open: level === 'open',
-      none: level === 'none',
-      opacity: dim ? 0.45 : 1,
-      filter: dim ? 'saturate(0.35)' : 'none',
+      src: SRC[level] ?? '',
+      photo: !!SRC[level],
+      empty: !SRC[level],
+      px: size + 'px',
+      radius: Math.round(size * 0.27) + 'px',
+      opacity: dim ? 0.5 : 1,
+      filter: dim ? 'grayscale(0.85)' : 'none',
     };
   }
 }

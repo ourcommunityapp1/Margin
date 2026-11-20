@@ -18,7 +18,7 @@ body{margin:0}
   <header style="display: flex; flex-direction: column; gap: 10px; max-width: 900px">
     <span style="font-size: 13px; font-weight: 700; letter-spacing: 1.6px; color: #5B6469">HEIR · PROGRESS</span>
     <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 48px; font-weight: 600; line-height: 1.05">How a question grows</h1>
-    <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #4A5257">Six levels, each earned across separate days, so a level measures memory, not one good afternoon. Metals for getting it into memory. Stones for keeping it there.</p>
+    <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #4A5257">Six stones from the foundations of the city in Revelation 21, each earned across separate days, so a level measures memory, not one good afternoon. The first three get it into memory; the last three keep it there.</p>
   </header>
 
   <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px">
@@ -37,7 +37,7 @@ body{margin:0}
     </sc-for>
   </div>
 
-  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 14px">
+  <div style="display: grid; grid-template-columns: 1.55fr 1fr 1fr; gap: 14px">
     <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
       <span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #5B6469">YOUR COUNTS, SHOWN ON TODAY AND PROGRESS</span>
       <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
@@ -53,11 +53,19 @@ body{margin:0}
       </div>
     </div>
     <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 24px; display: flex; gap: 16px; align-items: center">
-      <dc-import name="Medal" level="gold" size="56" dim="{{ true }}" hint-size="56px,56px"></dc-import>
+      <dc-import name="Medal" level="sapphire" size="56" dim="{{ true }}" hint-size="56px,56px"></dc-import>
       <span style="display: flex; flex-direction: column; gap: 4px">
         <span style="font-weight: 700; font-size: 16px">Needs a refresh</span>
-        <span style="font-size: 14px; color: #4A5257; line-height: 1.45">Overdue for review. The level stays; the medal dims until the next good review.</span>
+        <span style="font-size: 14px; color: #4A5257; line-height: 1.45">Overdue for review. The level stays; the stone fades until the next good review.</span>
       </span>
+    </div>
+    <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px">
+      <span style="font-weight: 700; font-size: 16px">Which Jasper?</span>
+      <div style="display: flex; gap: 14px; align-items: center">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #4A5257"><dc-import name="Medal" level="jasper" size="44" hint-size="44px,44px"></dc-import>Clear crystal</span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #4A5257"><dc-import name="Medal" level="jasper-red" size="44" hint-size="44px,44px"></dc-import>Red jasper</span>
+      </div>
+      <span style="font-size: 13px; color: #4A5257; line-height: 1.4">Revelation 21:11 says “clear as crystal”; the stone sold as jasper today is opaque.</span>
     </div>
   </div>
 </div>
@@ -67,17 +75,17 @@ class Component extends DCLogic {
   renderVals() {
     return {
       levels: [
-        { n: 1, id: 'bronze', name: 'Bronze', rule: 'Typed in full, correctly, the first time.', counts: 'Counts as: Know it', tagBg: '#F1DCC8' },
-        { n: 2, id: 'silver', name: 'Silver', rule: 'Said or typed right on 3 different days.', counts: 'Counts as: Memorized', tagBg: '#E3E7EA' },
-        { n: 3, id: 'gold', name: 'Gold', rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question.', counts: 'Counts as: Mastered', tagBg: '#F3E3B5' },
+        { n: 1, id: 'carnelian', name: 'Carnelian', rule: 'Typed in full, correctly, the first time.', counts: 'Counts as: Know it', tagBg: '#F3D6CC' },
+        { n: 2, id: 'topaz', name: 'Topaz', rule: 'Said or typed right on 3 different days.', counts: 'Counts as: Memorized', tagBg: '#F6E3BC' },
+        { n: 3, id: 'sapphire', name: 'Sapphire', rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question.', counts: 'Counts as: Mastered', tagBg: '#D9E3F4' },
         { n: 4, id: 'emerald', name: 'Emerald', rule: 'Every review right for 3 months, including one after a gap of a month.', counts: 'Counts as: Long-term memory', tagBg: '#CDEBDC' },
         { n: 5, id: 'amethyst', name: 'Amethyst', rule: 'Emerald, plus its meaning and the Scripture it rests on.', counts: 'Long-term, and understood', tagBg: '#E5D9F5' },
-        { n: 6, id: 'open', name: 'Jasper', rule: 'Left open: the top of the ladder, still to be decided. “Like a jasper, clear as crystal” (Revelation 21:11).', counts: 'Coming', tagBg: '#E5E1D8' },
+        { n: 6, id: 'jasper', name: 'Jasper', rule: 'Left open: the top of the ladder, still to be decided. “Like a jasper, clear as crystal” (Revelation 21:11).', counts: 'To be decided', tagBg: '#E5E1D8' },
       ],
       counts: [
-        { level: 'bronze', name: 'Know', rule: 'Bronze and up' },
-        { level: 'silver', name: 'Memorized', rule: 'Silver and up' },
-        { level: 'gold', name: 'Mastered', rule: 'Gold and up' },
+        { level: 'carnelian', name: 'Know', rule: 'Carnelian and up' },
+        { level: 'topaz', name: 'Memorized', rule: 'Topaz and up' },
+        { level: 'sapphire', name: 'Mastered', rule: 'Sapphire and up' },
         { level: 'emerald', name: 'Long-term memory', rule: 'Emerald and up' },
       ],
     };
