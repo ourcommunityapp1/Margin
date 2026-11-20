@@ -24,11 +24,23 @@ ap.add_argument("--width", type=int, default=1024)
 ap.add_argument("--title", default="")
 ap.add_argument("--credit", default="{}")
 ap.add_argument("--seed", type=int, default=3)
+ap.add_argument("--mask", help="optional .npy (or image) marking the glass at the photo's resolution; otherwise found automatically")
+ap.add_argument("--crop", help="x0,y0,x1,y1 in photo pixels, applied to the photo and the mask")
+ap.add_argument("--surround", action="store_true", help="keep the real wall around the glass (the app fills the screen with it)")
+ap.add_argument("--peaks", type=float, default=20, help="how bright a core must be to start its own piece; higher = fewer, bigger pieces")
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
 rng = np.random.default_rng(a.seed)
 
 full_img = cv2.imread(a.photo, cv2.IMREAD_COLOR)
+given = None
+if a.mask:
+    given = np.load(a.mask) if a.mask.endswith(".npy") else (cv2.imread(a.mask, cv2.IMREAD_GRAYSCALE) > 127)
+    given = given.astype(np.uint8)
+if a.crop:
+    x0, y0, x1, y1 = map(int, a.crop.split(","))
+    full_img = full_img[y0:y1, x0:x1].copy()
+    if given is not None: given = given[y0:y1, x0:x1].copy()
 h0, w0 = full_img.shape[:2]
 W = a.width; H = round(h0 * W / w0)
 img = cv2.resize(full_img, (W, H), interpolation=cv2.INTER_AREA)
@@ -38,7 +50,7 @@ SW, SH = w0, h0
 peak = full_img.max(axis=2).astype(np.float32)
 s = SW / 1024  # scale kernel sizes to the cutting resolution
 
-# 1. The window: everything that isn't the dark surround. Close the lead gaps, fill holes, keep the biggest part.
+# 1. The window: given, or everything that isn't the dark surround. Close the lead gaps, fill holes, keep the biggest part.
 on = (cv2.GaussianBlur(peak, (0, 0), 3 * s) > 28).astype(np.uint8)
 k = int(31 * s) | 1
 on = cv2.morphologyEx(on, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
@@ -47,6 +59,8 @@ window = (lab == 1 + np.argmax(stats[1:, cv2.CC_STAT_AREA])).astype(np.uint8)
 ff = window.copy(); mask = np.zeros((SH + 2, SW + 2), np.uint8); cv2.floodFill(ff, mask, (0, 0), 1)
 window = window | (1 - ff)
 window = cv2.erode(window, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(5 * s) | 1,) * 2))
+if given is not None:
+    window = given
 
 # 2. Pieces by watershed. Treat brightness as terrain: each piece of glass is a bright basin and the lead
 # between pieces is the dark valley floor, so flooding from the bright cores puts the borders on the lead.
@@ -54,7 +68,7 @@ window = cv2.erode(window, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(5 *
 from skimage.segmentation import watershed, find_boundaries
 from skimage.morphology import h_maxima
 smooth = cv2.GaussianBlur(peak, (0, 0), 1.6 * s)
-cores = h_maxima(smooth, 20) & window.astype(bool)
+cores = h_maxima(smooth, a.peaks) & window.astype(bool)
 n, markers = cv2.connectedComponents(cores.astype(np.uint8))
 full = watershed(-smooth, markers, mask=window.astype(bool), compactness=0.001).astype(np.int32)
 count = n - 1
@@ -108,9 +122,9 @@ out[..., 1] = (full >> 8).astype(np.uint8)         # G
 out[..., 0] = (edge * 255).astype(np.uint8)        # B
 out[..., 3] = window * 255
 cv2.imwrite(os.path.join(a.out, "ids.png"), out, [cv2.IMWRITE_PNG_COMPRESSION, 9])
-cv2.imwrite(os.path.join(a.out, "glass.webp"), img * window[..., None], [cv2.IMWRITE_WEBP_QUALITY, 90])
+cv2.imwrite(os.path.join(a.out, "glass.webp"), img if a.surround else img * window[..., None], [cv2.IMWRITE_WEBP_QUALITY, 90])
 palette = rng.integers(40, 255, (count + 1, 3), dtype=np.uint8); palette[0] = 0
 cv2.imwrite(os.path.join(a.out, "debug.jpg"), palette[full], [cv2.IMWRITE_JPEG_QUALITY, 85])
-json.dump({"count": count, "width": W, "height": H, "title": a.title, "credit": json.loads(a.credit),
+json.dump({"count": count, "width": W, "height": H, "title": a.title, "fit": "cover" if a.surround else "contain", "credit": json.loads(a.credit),
            "questions": questions}, open(os.path.join(a.out, "pieces.json"), "w"), separators=(",", ":"))
 print(f"{W}x{H}  pieces={count}  per question ~{count / a.questions:.1f}")

@@ -115,6 +115,10 @@ export const LivingWindow = forwardRef<WindowHandle, { base: string; learned?: n
             e.flash = x < 0 ? 0 : x > 1 ? 0 : f.amount * Math.sin(Math.PI * x);
             if (x > 1) flash.current = null;
           }
+          // The room brightens as more of the window lets light in.
+          let sum = 0;
+          for (let i = 1; i <= e.count; i++) sum += Math.min(1, e.light[i]);
+          e.room += (0.34 + 0.32 * (sum / Math.max(1, e.count)) - e.room) * 0.05;
           // Camera eases toward its target.
           const cam = camera.current;
           cam.zoom += (cam.targetZoom - cam.zoom) * 0.06;

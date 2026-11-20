@@ -4,7 +4,7 @@
 // Passes: scene (glass + stone) -> bright parts at 1/4 size -> blur (glow past the lead) ->
 // light rays (radial blur from the sun) -> final mix with clouds, dust, grain.
 
-export type GlassAssets = { photo: ImageBitmap; ids: ImageBitmap; count: number };
+export type GlassAssets = { photo: ImageBitmap; ids: ImageBitmap; count: number; fit?: 'cover' | 'contain' };
 
 const VERT = `#version 300 es
 in vec2 aPos; out vec2 vUv;
@@ -23,7 +23,7 @@ const SCENE = `#version 300 es
 precision highp float;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uPhoto, uIds, uState;
-uniform vec2 uRes; uniform vec4 uRect; uniform float uTime, uCloud, uFlash, uStateW;
+uniform vec2 uRes; uniform vec4 uRect; uniform float uTime, uCloud, uFlash, uStateW, uSurround, uRoom;
 ${NOISE}
 float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 vec4 state(float id) { return texture(uState, vec2((mod(id, uStateW) + 0.5) / uStateW, (floor(id / uStateW) + 0.5) / float(textureSize(uState, 0).y))); }
@@ -44,7 +44,11 @@ void main() {
   float inside = 0.0;
   for (int i = 0; i < 8; i++) { float a = float(i) * 0.785; inside += texture(uIds, uv + vec2(cos(a), sin(a)) * px * 14.0).a; }
   inside /= 8.0;
-  if (idt.a < 0.5) { o = vec4(wall * (1.0 - 0.55 * inside), 1.0); return; }
+  if (idt.a < 0.5) {
+    // The real wall from the photo, in a dim room that brightens as more of the window is lit.
+    if (uSurround > 0.5) { vec3 w = texture(uPhoto, uv).rgb; o = vec4(mix(vec3(lum(w)), w, 0.85) * uRoom, 1.0); return; }
+    o = vec4(wall * (1.0 - 0.55 * inside), 1.0); return;
+  }
 
   float id = floor(idt.r * 255.0 + 0.5) + floor(idt.g * 255.0 + 0.5) * 256.0;
   vec4 s = state(id);
@@ -61,7 +65,7 @@ void main() {
   // Lit glass: richer, with uneven thickness shimmering slightly and clouds passing outside.
   float colourIn = clamp(a * 1.25 - 0.25, 0.0, 1.0);   // colour arrives just after the light
   vec3 lit = mix(vec3(l), c, 1.0 + 0.28 * colourIn);
-  lit = mix(vec3(lum(lit)), lit, colourIn) * 1.12;
+  lit = mix(vec3(lum(lit)), lit, colourIn) * 1.0;
   lit *= 0.94 + 0.12 * noise(uv * vec2(140.0, 280.0) + uTime * 0.03);
   float cloud = mix(1.0, 0.8 + 0.3 * fbm(uv * 1.3 + vec2(uTime * 0.025, uTime * 0.008)), uCloud);
   lit *= cloud * (1.0 + uFlash);
@@ -74,7 +78,7 @@ void main() {
 // Keep only what is bright: lit glass. Dull glass and stone fall below the threshold.
 const BRIGHT = `#version 300 es
 precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uTex;
-void main() { vec3 c = texture(uTex, vUv).rgb; float m = max(c.r, max(c.g, c.b)); o = vec4(c * smoothstep(0.28, 0.75, m), 1.0); }`;
+void main() { vec3 c = texture(uTex, vUv).rgb; float m = max(c.r, max(c.g, c.b)); o = vec4(c * smoothstep(0.45, 1.0, m) * 0.8, 1.0); }`;
 
 const BLUR = `#version 300 es
 precision highp float; in vec2 vUv; out vec4 o; uniform sampler2D uTex; uniform vec2 uDir;
@@ -106,13 +110,13 @@ void main() {
   vec3 r = texture(uRays, vUv).rgb;
   // Rays read in the air in front of the stone; over bright glass they would only haze it.
   float over = smoothstep(0.08, 0.5, dot(c, vec3(0.2126, 0.7152, 0.0722)));
-  c += g * mix(0.85, 0.45, over) + r * uRayAmt * 1.8 * (1.0 - 0.75 * over);
+  c += g * mix(0.7, 0.25, over) + r * uRayAmt * 1.4 * (1.0 - 0.8 * over);
   // Dust drifting in the light: one mote per cell, only visible where rays fall.
   vec2 cell = vUv * uRes / 26.0; vec2 id = floor(cell);
   vec2 pos = vec2(hash(id), hash(id + 7.1)) + 0.25 * vec2(sin(uTime * 0.21 + hash(id) * 6.3), cos(uTime * 0.17 + hash(id + 3.0) * 6.3));
   float mote = smoothstep(0.06, 0.0, length(fract(cell) - fract(pos))) * step(0.82, hash(id + 1.7));
   c += mote * dot(r, vec3(0.33)) * 2.2;
-  c = c / (1.0 + max(c - 1.0, 0.0) * 0.6);        // soft shoulder so bright glass doesn't clip flat
+  c = mix(c, c / (1.0 + max(c - 0.75, 0.0) * 1.2), step(0.75, c));        // soft shoulder so bright glass doesn't clip flat
   vec2 q = vUv - 0.5; c *= 1.0 - 0.35 * dot(q, q) * 2.0;
   c += (hash(vUv * uRes + fract(uTime)) - 0.5) * 0.018;
   o = vec4(c, 1.0);
@@ -130,6 +134,9 @@ export class GlassEngine {
   readonly count: number;
   light: Float32Array; glow: Float32Array; dust: Float32Array;
   flash = 0; cloud = 1; rayAmount = 0.75; sun: [number, number] = [0.12, -0.25];
+  /** How bright the room is (only for photos that keep their real wall). */
+  room = 0.4;
+  readonly fit: 'cover' | 'contain';
   private start = performance.now();
 
   constructor(private canvas: HTMLCanvasElement, assets: GlassAssets) {
@@ -143,6 +150,7 @@ export class GlassEngine {
     this.stateH = Math.ceil((this.count + 1) / this.stateW);
     this.stateBytes = new Uint8Array(this.stateW * this.stateH * 4);
     this.imgAspect = assets.photo.width / assets.photo.height;
+    this.fit = assets.fit ?? 'contain';
 
     const quad = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, quad);
@@ -213,6 +221,14 @@ export class GlassEngine {
   zoom = 1; focus = 0.5;
   rect(): [number, number, number, number] {
     const cw = this.canvas.width, ch = this.canvas.height;
+    if (this.fit === 'cover') {
+      // The photo's own wall fills the whole screen; the window stands in it.
+      let w = cw, h = w / this.imgAspect;
+      if (h < ch) { h = ch; w = h * this.imgAspect; }
+      w *= this.zoom; h *= this.zoom;
+      const y = Math.min(0, Math.max(ch - h, ch / 2 - this.focus * h));
+      return [(cw - w) / 2 / cw, y / ch, w / cw, h / ch];
+    }
     const top = ch * 0.035, bottom = ch * 0.865, availH = bottom - top, availW = cw * 0.9;
     let h = availH, w = h * this.imgAspect;
     if (w > availW) { w = availW; h = w / this.imgAspect; }
@@ -257,6 +273,7 @@ export class GlassEngine {
       gl.uniform4f(u(p, 'uRect'), ...this.rect());
       gl.uniform1f(u(p, 'uTime'), t); gl.uniform1f(u(p, 'uCloud'), this.cloud);
       gl.uniform1f(u(p, 'uFlash'), this.flash); gl.uniform1f(u(p, 'uStateW'), this.stateW);
+      gl.uniform1f(u(p, 'uSurround'), this.fit === 'cover' ? 1 : 0); gl.uniform1f(u(p, 'uRoom'), this.room);
     });
     this.draw('bright', T.bright, (p) => this.bind(p, 'uTex', 0, T.scene.tex));
     for (let i = 0; i < 2; i++) {
@@ -280,9 +297,9 @@ export async function loadGlass(base: string) {
     fetch(`${base}/glass.webp`).then((r) => r.blob()).then((b) => createImageBitmap(b)),
     fetch(`${base}/ids.png`).then((r) => r.blob()).then((b) => createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' })),
   ]);
-  return { assets: { photo, ids, count: meta.count as number }, meta: meta as GlassMeta };
+  return { assets: { photo, ids, count: meta.count as number, fit: meta.fit }, meta: meta as GlassMeta };
 }
 
 export type GlassMeta = {
-  count: number; questions: number[][]; title: string; credit: { who: string; license: string; page: string; place: string };
+  count: number; questions: number[][]; title: string; fit?: 'cover' | 'contain'; credit: { who: string; license: string; page: string; place: string };
 };

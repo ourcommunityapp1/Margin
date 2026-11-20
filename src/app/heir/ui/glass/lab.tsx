@@ -33,7 +33,7 @@ export function WindowLab() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#16130F', overflow: 'hidden' }}>
-      <LivingWindow ref={win} base="/heir/glass/wsc" />
+      <LivingWindow ref={win} base="/heir/glass/good-shepherd" />
 
       <div style={{ position: 'absolute', top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
         <span style={{ ...chip, display: 'flex', alignItems: 'center' }}>Shorter · {learned} of {total}</span>
@@ -53,7 +53,7 @@ export function WindowLab() {
           <button type="button" style={{ ...chip, background: 'transparent', padding: '0 4px' }} onClick={() => win.current?.setDusty([])}>Clean</button>
         </div>
         <p style={{ margin: 0, textAlign: 'center', font: '500 11px var(--font-inter), sans-serif', color: 'rgba(243,234,219,0.6)' }}>
-          The Good Samaritan window, Chartres Cathedral, c. 1205–1215. Photo from Wikimedia Commons (public domain).
+          “I am the good shepherd.” St Barnabas, Mount Eden, Auckland. Photo: Bjankuloski06, CC BY 4.0, via Wikimedia Commons.
         </p>
       </div>
     </div>
