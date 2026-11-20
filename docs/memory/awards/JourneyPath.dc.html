@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The path</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+</style>
+</helmet>
+<div style="width: 390px; height: 1640px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 14px">
+
+    <div style="background: #F7F5F0; border-radius: 24px; padding: 6px 8px 6px 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 6px 18px rgba(20,24,28,0.08)">
+      <button type="button" style="display: flex; align-items: center; gap: 8px; border: 0; background: #ECE8DF; border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #1D2327; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"></path><path d="M8 7h6"></path></svg>
+        Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="flex: 1"></span>
+      <span title="Days kept" style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; padding: 0 8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B0442A" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>
+        2
+      </span>
+      <span title="Questions you know" style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; padding: 0 8px">
+        <dc-import name="Medal" level="amethyst" size="20" hint-size="20px,20px"></dc-import>
+        5
+      </span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: #ECE8DF; display: flex; align-items: center; justify-content: center; font-weight: 700">L</span>
+    </div>
+
+    <div style="background: rgba(247,245,240,0.82); border-radius: 18px; padding: 10px 14px; display: flex; align-items: center; gap: 10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+      <span style="display: flex; flex-direction: column; flex: 1">
+        <span style="font-size: 12px; font-weight: 600; color: #5B6469">Unit 1 · locked in</span>
+        <span style="font-weight: 600">Our purpose and God’s Word</span>
+      </span>
+      <span style="display: flex; gap: 3px">
+        <sc-for list="{{unit1}}" as="s" hint-placeholder-count="5"><dc-import name="Medal" level="{{s}}" size="16" hint-size="16px,16px"></dc-import></sc-for>
+      </span>
+    </div>
+
+    <span style="margin: 6px 4px 0; font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #4A5257">PART 1 · WHAT TO BELIEVE CONCERNING GOD</span>
+    <div style="background: #1D2327; color: #F7F5F0; border-radius: 22px; display: flex; overflow: hidden; box-shadow: 0 5px 0 #0E1215">
+      <div style="flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #A9B3BA">UNIT 2 · QUESTIONS 6–10</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 600">God’s plan and creation</span>
+      </div>
+      <a href="UnitGuide.dc.html" aria-label="Unit guide" style="width: 64px; border-left: 1px solid #39434A; display: flex; align-items: center; justify-content: center; color: #F7F5F0">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 14px 0 6px">
+      <sc-for list="{{path}}" as="n" hint-placeholder-count="7">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; transform: translateX({{n.dx}})">
+          <sc-if value="{{n.done}}" hint-placeholder-val="{{ true }}">
+            <span style="width: 66px; height: 62px; border-radius: 20px; background: #1D2327; color: #F7F5F0; box-shadow: 0 6px 0 #0E1215; display: flex; align-items: center; justify-content: center">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>
+            </span>
+          </sc-if>
+          <sc-if value="{{n.current}}" hint-placeholder-val="{{ false }}">
+            <span style="width: 96px; height: 96px; border-radius: 30px; box-shadow: 0 0 0 6px rgba(247,245,240,0.9), 0 0 0 9px #1D2327; display: flex; align-items: center; justify-content: center; overflow: hidden">
+              <dc-import name="Medal" level="sapphire" size="96" hint-size="96px,96px"></dc-import>
+            </span>
+            <div style="background: #F7F5F0; border-radius: 22px; padding: 16px 18px; width: 300px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 28px rgba(20,24,28,0.14)">
+              <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600">Lesson 8</span>
+              <span style="font-size: 15px; color: #4A5257; line-height: 1.45">A new question, Q8, and practice on Q6 and Q7. About 4 minutes.</span>
+              <a href="#" style="min-height: 52px; border-radius: 26px; background: #1D2327; color: #F7F5F0; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; text-decoration: none">Start</a>
+            </div>
+          </sc-if>
+          <sc-if value="{{n.ahead}}" hint-placeholder-val="{{ false }}">
+            <span style="width: 66px; height: 62px; border-radius: 20px; background: rgba(247,245,240,0.75); box-shadow: 0 6px 0 rgba(160,150,135,0.45); display: flex; align-items: center; justify-content: center; color: #8A9196">
+              <sc-if value="{{n.practice}}" hint-placeholder-val="{{ false }}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 13a8 8 0 0 0 14.9 3"></path><path d="M4 4v4h4M20 20v-4h-4"></path></svg>
+              </sc-if>
+              <sc-if value="{{n.plain}}" hint-placeholder-val="{{ true }}">
+                <span style="width: 10px; height: 10px; border-radius: 5px; background: #B9B1A3"></span>
+              </sc-if>
+            </span>
+          </sc-if>
+          <sc-if value="{{n.lock}}" hint-placeholder-val="{{ false }}">
+            <span style="width: 86px; height: 70px; border-radius: 14px; background: rgba(247,245,240,0.75); box-shadow: 0 6px 0 rgba(160,150,135,0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #6B737A">
+              <svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="1" y="12" width="12" height="9" rx="1.5"></rect><rect x="17" y="12" width="12" height="9" rx="1.5"></rect><rect x="8" y="1" width="14" height="10" rx="1.5"></rect></svg>
+              <span style="font-size: 11px; font-weight: 700">Lock it in</span>
+            </span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="background: rgba(247,245,240,0.7); border-radius: 22px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 5px 0 rgba(160,150,135,0.45)">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #5B6469">UNIT 3 · QUESTIONS 11–15</span>
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; color: #4A5257">Providence and the fall</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 10px 0; opacity: 0.6">
+      <sc-for list="{{later}}" as="dx" hint-placeholder-count="3">
+        <span style="width: 66px; height: 62px; border-radius: 20px; background: rgba(247,245,240,0.7); box-shadow: 0 6px 0 rgba(160,150,135,0.45); transform: translateX({{dx}})"></span>
+      </sc-for>
+    </div>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #F7F5F0; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(20,24,28,0.12)">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #ECE8DF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #1D2327">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const node = (o) => ({ done: false, current: false, ahead: false, lock: false, practice: false, plain: false, dx: '0px', ...o });
+    return {
+      unit1: ['amethyst', 'amethyst', 'amethyst', 'amethyst', 'amethyst'],
+      path: [
+        node({ done: true, dx: '-40px' }),
+        node({ done: true, dx: '10px' }),
+        node({ current: true, dx: '0px' }),
+        node({ ahead: true, practice: true, dx: '50px' }),
+        node({ ahead: true, plain: true, dx: '20px' }),
+        node({ ahead: true, plain: true, dx: '-30px' }),
+        node({ lock: true, dx: '-50px' }),
+      ],
+      later: ['-20px', '30px', '50px'],
+    };
+  }
+}
+</script>
+</body>
+</html>

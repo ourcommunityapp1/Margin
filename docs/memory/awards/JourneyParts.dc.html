@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Parts and milestones</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ECEEF0}a:hover{color:#FFFFFF}
+</style>
+</helmet>
+<div style="width: 390px; height: 1300px; position: relative; overflow: hidden; background: #11161C; color: #ECEEF0; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/614f50e7fc7c4f0f0011b5cb8eb02f67" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 14px">
+
+    <div style="background: #1E252B; border-radius: 24px; padding: 6px 8px 6px 6px; display: flex; align-items: center; gap: 6px">
+      <button type="button" style="display: flex; align-items: center; gap: 8px; border: 0; background: #2B343B; border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #ECEEF0; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"></path><path d="M8 7h6"></path></svg>
+        Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; padding: 0 8px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F0A789" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <span style="display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 16px; padding: 0 8px">
+        <dc-import name="Medal" level="amethyst" size="20" hint-size="20px,20px"></dc-import>5</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: #2B343B; display: flex; align-items: center; justify-content: center; font-weight: 700">L</span>
+    </div>
+
+    <section style="background: #1E252B; border-radius: 28px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; gap: 16px; align-items: center">
+        <div style="width: 72px; height: 72px; border-radius: 36px; background: conic-gradient(#ECEEF0 0 13%, #2B343B 13% 100%); display: flex; align-items: center; justify-content: center; flex: none">
+          <div style="width: 58px; height: 58px; border-radius: 29px; background: #1E252B; display: flex; align-items: center; justify-content: center; font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600">5</div>
+        </div>
+        <span style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #A9B3BA">PART 1 · Q1–38</span>
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600; line-height: 1.2">What to believe concerning God</span>
+          <span style="font-size: 13px; color: #A9B3BA">5 of 38 known</span>
+        </span>
+      </div>
+
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+        <sc-for list="{{units}}" as="u" hint-placeholder-count="4">
+          <li style="border-top: 1px solid #333C43; padding: 12px 0; display: flex; flex-direction: column; gap: 10px; opacity: {{u.op}}">
+            <div style="display: flex; align-items: center; gap: 12px">
+              <span style="display: flex; flex-direction: column; flex: 1; gap: 2px">
+                <span style="font-size: 12px; font-weight: 600; color: #A9B3BA">Unit {{u.n}} · {{u.q}}</span>
+                <span style="font-weight: 600">{{u.name}}</span>
+              </span>
+              <span style="display: flex; gap: 3px">
+                <sc-for list="{{u.stones}}" as="s" hint-placeholder-count="5"><dc-import name="Medal" level="{{s}}" size="16" hint-size="16px,16px"></dc-import></sc-for>
+              </span>
+            </div>
+            <sc-if value="{{u.current}}" hint-placeholder-val="{{ false }}">
+              <div style="background: #2B343B; border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 12px">
+                <div style="display: flex; align-items: center; gap: 0" aria-label="Lessons in this unit: 2 done, lesson 8 next, about 4 to go, then lock it in">
+                  <sc-for list="{{dots}}" as="d" hint-placeholder-count="7">
+                    <span style="display: flex; align-items: center; flex: {{d.grow}}">
+                      <span style="width: {{d.size}}; height: {{d.size}}; border-radius: 50%; box-sizing: border-box; background: {{d.bg}}; border: {{d.border}}; flex: none"></span>
+                      <span style="flex: 1; height: 2px; background: {{d.line}}"></span>
+                    </span>
+                  </sc-for>
+                </div>
+                <span style="display: flex; justify-content: space-between; font-size: 12px; color: #A9B3BA"><span>Lessons 6–7 done</span><span>Lock it in</span></span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600">Lesson 8</span>
+                <span style="font-size: 14px; color: #A9B3BA; line-height: 1.45">A new question, Q8, and practice on Q6 and Q7.</span>
+                <a href="#" style="min-height: 52px; border-radius: 26px; background: #ECE8DF; color: #1D2327; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; text-decoration: none">Start</a>
+              </div>
+            </sc-if>
+          </li>
+        </sc-for>
+      </ol>
+      <span style="font-size: 13px; color: #A9B3BA">+ 4 more units in Part 1</span>
+    </section>
+
+    <section style="background: #1E252B; border-radius: 24px; padding: 16px 20px; display: flex; align-items: center; gap: 16px; opacity: 0.8">
+      <div style="width: 48px; height: 48px; border-radius: 24px; border: 3px solid #2B343B; box-sizing: border-box; flex: none"></div>
+      <span style="display: flex; flex-direction: column; gap: 2px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #A9B3BA">PART 2 · Q39–107</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; font-weight: 600">The duty God requires</span>
+      </span>
+    </section>
+
+    <p style="margin: 0 6px; font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; line-height: 1.5; color: #A9B3BA">“The Scriptures principally teach what man is to believe concerning God, and what duty God requires of man.” Q3</p>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #1E252B; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.3)">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #2B343B; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #ECEEF0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #A9B3BA">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #A9B3BA">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const dot = (o) => ({ size: '14px', bg: 'transparent', border: '2px solid #4B565E', line: '#333C43', grow: 1, ...o });
+    return {
+      units: [
+        { n: 1, q: 'Q1–5', name: 'Our purpose and God’s Word', stones: ['topaz', 'amethyst', 'amethyst', 'amethyst', 'amethyst'], current: false, op: 1 },
+        { n: 2, q: 'Q6–10', name: 'God’s plan and creation', stones: ['amethyst', 'amethyst', 'none', 'none', 'none'], current: true, op: 1 },
+        { n: 3, q: 'Q11–15', name: 'Providence and the fall', stones: ['none', 'none', 'none', 'none', 'none'], current: false, op: 0.55 },
+        { n: 4, q: 'Q16–20', name: 'Sin and the covenant of grace', stones: ['none', 'none', 'none', 'none', 'none'], current: false, op: 0.55 },
+      ],
+      dots: [
+        dot({ bg: '#ECEEF0', border: '0', line: '#ECEEF0' }),
+        dot({ bg: '#ECEEF0', border: '0', line: '#ECEEF0' }),
+        dot({ size: '20px', bg: '#2B343B', border: '4px solid #ECEEF0' }),
+        dot({}), dot({}), dot({}),
+        dot({ size: '18px', border: '2px solid #ECEEF0', line: 'transparent', grow: 0 }),
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
