@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gallery wall</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#16181A}a:hover{color:#000}
+@keyframes g1-glow{0%,100%{opacity:.55}50%{opacity:.85}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #EFECE6; color: #16181A; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 60px; top: 70px; width: 200px; height: 600px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,170,90,0.45), rgba(80,140,230,0.25) 55%, rgba(239,236,230,0) 100%); filter: blur(30px); animation: g1-glow 5s ease-in-out infinite"></div>
+
+  <div style="position: absolute; left: 20px; right: 20px; top: 54px; display: flex; justify-content: space-between; align-items: baseline">
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.8px">HEIR</span>
+    <span style="font-size: 12px; font-weight: 500; color: #6B6F72">Room 1 · Shorter Catechism</span>
+  </div>
+
+  <div style="position: absolute; left: 66px; top: 96px; width: 186px; height: 616px; border-radius: 93px 93px 4px 4px; overflow: hidden; background: #0E0C0A; box-shadow: 0 0 0 10px #F7F5F1, 0 0 0 11px #DAD5CC, 0 30px 60px rgba(40,30,20,0.25)">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/73cfbf251d6b66f5ef2df21a5c1859b0); background-size: 310px 671px; background-position: -62px -17px"></div>
+  </div>
+
+  <a href="#" style="position: absolute; left: 270px; top: 520px; width: 104px; display: flex; flex-direction: column; gap: 6px; text-decoration: none; background: #FFFFFF; padding: 12px 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.08)">
+    <span style="font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #6B6F72">NO. 8</span>
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; font-weight: 600; line-height: 1.15">The next pane</span>
+    <span style="font-size: 10.5px; line-height: 1.4; color: #6B6F72">Questions 6 and 7<br>12 minutes</span>
+    <span style="margin-top: 4px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #16181A; padding-top: 8px; font-size: 12px; font-weight: 700">Begin
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+  </a>
+
+  <p style="position: absolute; left: 20px; right: 20px; top: 738px; margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-size: 14px; color: #6B6F72">“I am the good shepherd.” 7 of 107 panes lit.</p>
+
+  <nav aria-label="Main" style="position: absolute; left: 20px; right: 20px; bottom: 22px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; letter-spacing: 1px">
+    <a href="#" aria-current="page" style="text-decoration: none; border-bottom: 1.5px solid #16181A; padding-bottom: 3px">TODAY</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">LEARN</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">PROGRESS</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

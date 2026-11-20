@@ -53,21 +53,21 @@
   },
   "JourneyPath.dc.html": {
    "h": 1640,
-   "title": "A · The path",
+   "title": "A \u00b7 The path",
    "w": 390,
    "x": 0,
    "y": 4620
   },
   "JourneyWall.dc.html": {
    "h": 1300,
-   "title": "B · The wall",
+   "title": "B \u00b7 The wall",
    "w": 390,
    "x": 470,
    "y": 4620
   },
   "JourneyParts.dc.html": {
    "h": 1300,
-   "title": "C · Parts and milestones",
+   "title": "C \u00b7 Parts and milestones",
    "w": 390,
    "x": 940,
    "y": 4620
@@ -84,98 +84,168 @@
    "y": 6720,
    "w": 390,
    "h": 1000,
-   "title": "C1 · Quiet"
+   "title": "C1 \u00b7 Quiet"
   },
   "C2Rings.dc.html": {
    "x": 470,
    "y": 6720,
    "w": 390,
    "h": 1100,
-   "title": "C2 · Two rings"
+   "title": "C2 \u00b7 Two rings"
   },
   "C3Ascent.dc.html": {
    "x": 940,
    "y": 6720,
    "w": 390,
    "h": 1100,
-   "title": "C3 · The ascent"
+   "title": "C3 \u00b7 The ascent"
   },
   "Q1Arcs.dc.html": {
    "x": 0,
    "y": 8240,
    "w": 390,
    "h": 1000,
-   "title": "C1·a · Unit arcs"
+   "title": "C1\u00b7a \u00b7 Unit arcs"
   },
   "Q2Night.dc.html": {
    "x": 470,
    "y": 8240,
    "w": 390,
    "h": 1000,
-   "title": "C1·b · Night sky"
+   "title": "C1\u00b7b \u00b7 Night sky"
   },
   "Q3Beads.dc.html": {
    "x": 940,
    "y": 8240,
    "w": 390,
    "h": 1000,
-   "title": "C1·c · Beads"
+   "title": "C1\u00b7c \u00b7 Beads"
   },
   "A1Dawn.dc.html": {
    "x": 0,
    "y": 9560,
    "w": 390,
    "h": 1000,
-   "title": "Arcs · Dawn draw"
+   "title": "Arcs \u00b7 Dawn draw"
   },
   "A2Glass.dc.html": {
    "x": 470,
    "y": 9560,
    "w": 390,
    "h": 1000,
-   "title": "Arcs · Stained glass"
+   "title": "Arcs \u00b7 Stained glass"
   },
   "A3Rose.dc.html": {
    "x": 940,
    "y": 9560,
    "w": 390,
    "h": 1000,
-   "title": "Arcs · Rose window"
+   "title": "Arcs \u00b7 Rose window"
   },
   "A4Week.dc.html": {
    "x": 1410,
    "y": 9560,
    "w": 390,
    "h": 1000,
-   "title": "Arcs · The week and the work"
+   "title": "Arcs \u00b7 The week and the work"
   },
   "N1Stars.dc.html": {
    "x": 0,
    "y": 10880,
    "w": 390,
    "h": 1000,
-   "title": "Night · Constellation"
+   "title": "Night \u00b7 Constellation"
   },
   "N2Aurora.dc.html": {
    "x": 470,
    "y": 10880,
    "w": 390,
    "h": 1000,
-   "title": "Night · Aurora"
+   "title": "Night \u00b7 Aurora"
   },
   "N3Lamp.dc.html": {
    "x": 940,
    "y": 10880,
    "w": 390,
    "h": 1000,
-   "title": "Night · Lamp"
+   "title": "Night \u00b7 Lamp"
   },
   "N4Morning.dc.html": {
    "x": 1410,
    "y": 10880,
    "w": 390,
    "h": 1000,
-   "title": "Night · Morning star"
+   "title": "Night \u00b7 Morning star"
+  },
+  "G01Gallery.dc.html": {
+   "x": 0,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "1 \u00b7 Gallery wall"
+  },
+  "G02Pool.dc.html": {
+   "x": 470,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "2 \u00b7 Pool of light"
+  },
+  "G03Frost.dc.html": {
+   "x": 940,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "3 \u00b7 Frosted glass"
+  },
+  "G04Hold.dc.html": {
+   "x": 1410,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "4 \u00b7 Hold to light"
+  },
+  "G05Swipe.dc.html": {
+   "x": 1880,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "5 \u00b7 Draw the light"
+  },
+  "G06Editorial.dc.html": {
+   "x": 0,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "6 \u00b7 Editorial"
+  },
+  "G07Lancets.dc.html": {
+   "x": 470,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "7 \u00b7 Three lancets"
+  },
+  "G08Mosaic.dc.html": {
+   "x": 940,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "8 \u00b7 Mosaic"
+  },
+  "G09Candle.dc.html": {
+   "x": 1410,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "9 \u00b7 Candle in the dark"
+  },
+  "G10Palette.dc.html": {
+   "x": 1880,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "10 \u00b7 The glass's colours"
   }
  },
  "createdOnFiles": {
@@ -245,6 +315,13 @@
    "text": "Night sky, alive",
    "x": 0,
    "y": 10600
+  },
+  "t9": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "The window, modern: ten ways to begin",
+   "x": 0,
+   "y": 11920
   }
  },
  "order": [
@@ -272,7 +349,17 @@
   "N1Stars.dc.html",
   "N2Aurora.dc.html",
   "N3Lamp.dc.html",
-  "N4Morning.dc.html"
+  "N4Morning.dc.html",
+  "G01Gallery.dc.html",
+  "G02Pool.dc.html",
+  "G03Frost.dc.html",
+  "G04Hold.dc.html",
+  "G05Swipe.dc.html",
+  "G06Editorial.dc.html",
+  "G07Lancets.dc.html",
+  "G08Mosaic.dc.html",
+  "G09Candle.dc.html",
+  "G10Palette.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"
