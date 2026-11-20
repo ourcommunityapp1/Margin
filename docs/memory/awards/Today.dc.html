@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+</style>
+</helmet>
+<div style="width: 390px; height: 1500px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 20px 120px; display: flex; flex-direction: column; gap: 14px">
+
+    <header style="display: flex; justify-content: space-between; align-items: flex-start; padding: 0 4px">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 15px; font-weight: 500">Friday</span>
+        <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 32px; font-weight: 500; line-height: 1.1">Good afternoon, Landon</h1>
+      </div>
+      <a href="#" aria-label="Profiles" style="width: 44px; height: 44px; border-radius: 22px; background: #F7F5F0; display: flex; align-items: center; justify-content: center; font-weight: 600; text-decoration: none; flex: none">L</a>
+    </header>
+
+    <section style="background: #F7F5F0; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; justify-content: space-between">
+        <span style="display: flex; align-items: baseline; gap: 8px">
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 34px; font-weight: 600; line-height: 1">6</span>
+          <span style="font-weight: 600">days kept</span>
+        </span>
+        <span style="font-size: 13px; color: #5B6469; font-weight: 600">Best: 11</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center">
+        <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+            <span style="font-size: 12px; font-weight: 600; color: #5B6469">{{d.label}}</span>
+            <span style="width: 32px; height: 32px; border-radius: 16px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; background: {{d.bg}}; border: {{d.border}}; color: {{d.ink}}">{{d.mark}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: #4A5257; line-height: 1.45">Today: lesson done, 3 reviews left. Sunday is a day of rest and never breaks the count.</p>
+    </section>
+
+    <section style="background: #F7F5F0; border-radius: 24px; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <span style="font-size: 14px; font-weight: 600; color: #5B6469">What you know · all courses</span>
+        <a href="Progress.dc.html" style="font-size: 14px; font-weight: 600">Progress</a>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{counts}}" as="c" hint-placeholder-count="4">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center">
+            <dc-import name="Medal" level="{{c.level}}" size="34" hint-size="34px,34px"></dc-import>
+            <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 600; line-height: 1">{{c.n}}</span>
+            <span style="font-size: 12px; font-weight: 600; color: #4A5257; line-height: 1.25">{{c.name}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="background: #F7F5F0; border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 14px; font-weight: 600; color: #5B6469">Up next · Westminster Shorter · Unit 2, lesson 1</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600">Q6</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; color: #4A5257; line-height: 1.35">How many persons are there in the Godhead?</span>
+      </div>
+      <a href="LevelUp.dc.html" style="min-height: 56px; border-radius: 28px; background: #1D2327; color: #F7F5F0; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; text-decoration: none">Start lesson</a>
+      <a href="#" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-weight: 500; text-decoration: none">Review 3 due</a>
+    </section>
+
+    <section style="background: #F7F5F0; border-radius: 24px; padding: 18px 20px 8px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 13px; font-weight: 600; color: #5B6469">Unit 1</span>
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600">Questions 1–5</span>
+        </span>
+        <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 10px; background: #ECE8DF">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Locked in
+        </span>
+      </div>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+        <sc-for list="{{unit1}}" as="r" hint-placeholder-count="5">
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-top: 1px solid #E3DFD6">
+            <dc-import name="Medal" level="{{r.level}}" size="26" dim="{{r.dim}}" hint-size="26px,26px"></dc-import>
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1">
+              <span style="font-weight: 600">{{r.q}}</span>
+              <span style="font-size: 14px; color: #5B6469; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.prompt}}</span>
+            </span>
+            <span style="font-size: 12px; font-weight: 600; color: {{r.noteInk}}">{{r.note}}</span>
+          </li>
+        </sc-for>
+      </ol>
+    </section>
+
+    <section style="background: #F7F5F0; border-radius: 24px; padding: 18px 20px 8px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="display: flex; flex-direction: column; gap: 2px">
+          <span style="font-size: 13px; font-weight: 600; color: #5B6469">Unit 2</span>
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 600">Questions 6–10</span>
+        </span>
+        <span style="font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 10px; background: #ECE8DF">0 of 5</span>
+      </div>
+      <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+        <li style="display: flex; align-items: center; gap: 12px; min-height: 52px; margin: 0 -10px; padding: 0 10px; border-radius: 14px; background: #ECE8DF">
+          <span style="width: 26px; height: 26px; border-radius: 13px; box-sizing: border-box; border: 2px solid #1D2327; display: flex; align-items: center; justify-content: center; flex: none"><span style="width: 10px; height: 10px; border-radius: 5px; background: #1D2327"></span></span>
+          <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+            <span style="font-weight: 600">Q6 · Up next</span>
+            <span style="font-size: 14px; color: #5B6469; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">How many persons are there in the Godhead?</span>
+          </span>
+        </li>
+        <sc-for list="{{unit2}}" as="r" hint-placeholder-count="4">
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-top: 1px solid #E3DFD6; color: #5B6469">
+            <dc-import name="Medal" level="none" size="26" hint-size="26px,26px"></dc-import>
+            <span style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+              <span style="font-weight: 600">{{r.q}}</span>
+              <span style="font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.prompt}}</span>
+            </span>
+          </li>
+        </sc-for>
+      </ol>
+    </section>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #F7F5F0; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(20,24,28,0.12)">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #ECE8DF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #1D2327">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="Learn.dc.html" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="Progress.dc.html" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1500}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const done = { bg: '#1D2327', border: '2px solid #1D2327', ink: '#F7F5F0', mark: '' };
+    return {
+      week: [
+        { label: 'M', ...done }, { label: 'T', ...done }, { label: 'W', ...done }, { label: 'T', ...done },
+        { label: 'F', bg: 'conic-gradient(#1D2327 0 50%, #ECE8DF 50% 100%)', border: '2px solid #1D2327', ink: '#1D2327', mark: '' },
+        { label: 'S', bg: 'transparent', border: '2px solid #CFC8BA', ink: '#5B6469', mark: '' },
+        { label: 'S', bg: '#ECE8DF', border: '2px dashed #CFC8BA', ink: '#5B6469', mark: 'Rest' },
+      ],
+      counts: [
+        { level: 'bronze', n: 5, name: 'Know' },
+        { level: 'silver', n: 3, name: 'Memorized' },
+        { level: 'gold', n: 1, name: 'Mastered' },
+        { level: 'emerald', n: 0, name: 'Long-term' },
+      ],
+      unit1: [
+        { q: 'Q1', prompt: 'What is the chief end of man?', level: 'gold', dim: false, note: 'Gold', noteInk: '#7E5A12' },
+        { q: 'Q2', prompt: 'What rule hath God given to direct us…', level: 'silver', dim: false, note: 'Silver', noteInk: '#5F6870' },
+        { q: 'Q3', prompt: 'What do the Scriptures principally teach?', level: 'silver', dim: true, note: 'Needs a refresh', noteInk: '#96462A' },
+        { q: 'Q4', prompt: 'What is God?', level: 'bronze', dim: false, note: 'Bronze', noteInk: '#7A4A26' },
+        { q: 'Q5', prompt: 'Are there more Gods than one?', level: 'bronze', dim: false, note: '1 day to Silver', noteInk: '#5B6469' },
+      ],
+      unit2: [
+        { q: 'Q7', prompt: 'What are the decrees of God?' },
+        { q: 'Q8', prompt: 'How doth God execute his decrees?' },
+        { q: 'Q9', prompt: 'What is the work of creation?' },
+        { q: 'Q10', prompt: 'How did God create man?' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

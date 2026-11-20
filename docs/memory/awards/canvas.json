@@ -1,0 +1,23 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-20T21:30:00Z" },
+  "title": "Heir Progress and Awards",
+  "launch": { "view": "canvas" },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1280, "h": 900, "title": "The ladder" },
+    "Medal.dc.html": { "x": 1360, "y": 0, "w": 96, "h": 96, "title": "Medal (shared art)" },
+    "Today.dc.html": { "x": 0, "y": 1260, "w": 390, "h": 1500, "title": "Today" },
+    "Progress.dc.html": { "x": 470, "y": 1260, "w": 390, "h": 1780, "title": "Progress (new tab)" },
+    "LevelUp.dc.html": { "x": 0, "y": 3400, "w": 390, "h": 844, "title": "Lesson complete: level up" },
+    "LockIn.dc.html": { "x": 470, "y": 3400, "w": 390, "h": 844, "title": "Unit locked in" },
+    "Learn.dc.html": { "x": 940, "y": 3400, "w": 390, "h": 844, "title": "Learn with levels" }
+  },
+  "order": ["Main.dc.html", "Medal.dc.html", "Today.dc.html", "Progress.dc.html", "LevelUp.dc.html", "LockIn.dc.html", "Learn.dc.html"],
+  "notes": {
+    "t1": { "x": 0, "y": -300, "text": "How a question grows", "kind": "title1", "maxW": 1840 },
+    "t2": { "x": 0, "y": 1000, "text": "Where progress lives", "kind": "title1", "maxW": 1840 },
+    "t3": { "x": 0, "y": 3130, "text": "The moments", "kind": "title1", "maxW": 1840 }
+  },
+  "designSystems": []
+}
