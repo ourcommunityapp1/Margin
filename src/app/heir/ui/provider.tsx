@@ -10,6 +10,8 @@ import type { Household } from '@/heir/types';
 import { emptyHousehold, parseHousehold } from '@/heir/household';
 import { chooseOnSignIn } from '@/heir/sync';
 import { parseProgress, type Progress } from '@/heir/progress';
+import { settle } from '@/heir/levels';
+import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
 import { cloud, loadRemote, saveRemote, type Remote } from './cloud';
 
@@ -46,7 +48,11 @@ function loadLocal(): Household {
   try { return parseHousehold(localStorage.getItem(KEY)); } catch { return emptyHousehold(); }
 }
 function loadProgress(): Progress {
-  try { return parseProgress(localStorage.getItem(PROGRESS_KEY)); } catch { return {}; }
+  let p: Progress = {};
+  try { p = parseProgress(localStorage.getItem(PROGRESS_KEY)); } catch { return {}; }
+  // Progress saved before stone levels existed: work out what its answer log has already earned.
+  return Object.fromEntries(Object.entries(p).map(([id, m]) =>
+    [id, Object.keys(m.levels).length || !m.log.length ? m : settle(m, allItems(), 'adult', new Date()).progress]));
 }
 function saveLocal(h: Household) {
   try { localStorage.setItem(KEY, JSON.stringify(h)); } catch { /* private mode: keeps working for this visit */ }

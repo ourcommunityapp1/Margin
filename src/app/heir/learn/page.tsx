@@ -11,13 +11,14 @@ import { groupLabel } from '../ui/course';
 import { courseFor, courseItems, courses, getCollection } from '@/heir/content';
 import { activeMember } from '@/heir/household';
 import { groupsOf, unitsFor } from '@/heir/lesson';
-import { masteredItem } from '@/heir/path';
+import { levelInfo, needsRefresh } from '@/heir/levels';
+import { Stone } from '../ui/stone';
 import { memberProgress } from '@/heir/progress';
 
 const SHORT: Record<string, string> = { 'westminster-shorter': 'Shorter', 'westminster-larger': 'Larger', creeds: 'Creeds' };
 
 export default function Learn() {
-  const { ready, household, progress } = useHeir();
+  const { ready, household, progress, now } = useHeir();
   const [picked, setPicked] = useState<string | null>(null);
   if (!ready) return <main className="hr-page" aria-busy="true" />;
   const me = activeMember(household);
@@ -39,17 +40,19 @@ export default function Learn() {
             <ol className="hr-lessons" style={{ marginTop: 6 }}>
               {g.items.map((item) => {
                 const learned = unitsFor(item, track).every((u) => mine.units.includes(u.key));
-                const status = masteredItem(item, mine) ? 'Mastered' : learned ? 'Learned' : null;
+                const level = mine.levels[item.id] ?? 0;
+                const dim = needsRefresh(mine, item.id, now);
+                const status = dim ? 'Needs a refresh' : level ? levelInfo(level)!.name : learned ? 'Learned' : null;
                 const unit = getCollection(item.collection)?.unit;
                 return (
                   <li key={item.id}>
                     <Link className="hr-lesson" href={`/heir/item/${item.id}`} style={{ alignItems: 'flex-start', padding: '10px 8px' }}>
-                      <span style={{ flex: 'none', width: 34, fontWeight: 600, color: 'var(--muted)', fontSize: 15, paddingTop: 1 }}>{unit === 'Question' ? `Q${item.number}` : item.number}</span>
+                      <Stone level={level} size={30} dim={dim} />
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
-                        <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{item.prompt}</span>
+                        <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{unit === 'Question' ? `Q${item.number}` : item.number} · {item.prompt}</span>
                         <span className="serif" style={{ fontSize: 16, lineHeight: 1.4, color: 'var(--muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.text}</span>
                       </span>
-                      {status && <span className="hr-tag" style={{ flex: 'none' }}>{status}</span>}
+                      {status && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)', paddingTop: 2 }}>{status}</span>}
                     </Link>
                   </li>
                 );

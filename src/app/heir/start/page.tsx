@@ -30,7 +30,9 @@ export default function Start() {
   const begin = () => {
     if (!course) return;
     starting.current = true;
-    update((h) => setPlan(h.members.length ? h : addMember(h, name, 'adult', newId(), new Date()), { course }));
+    // Made once, outside the update: an update function may run twice and must give the same result.
+    const id = newId(), now = new Date();
+    update((h) => setPlan(h.members.length ? h : addMember(h, name, 'adult', id, now), { course }));
     router.push('/heir/lesson');
   };
 

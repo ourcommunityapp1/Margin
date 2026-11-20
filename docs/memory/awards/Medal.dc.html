@@ -24,7 +24,7 @@ body{margin:0}
 </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"level":{"editor":"enum","options":["amethyst","topaz","carnelian","emerald","sapphire","jasper","jasper-crystal","jasper-red","none"],"default":"amethyst"},"size":{"editor":"int","default":96,"min":12,"max":200},"dim":{"editor":"boolean","default":false},"$preview":{"width":96,"height":96}}'>
+<script type="text/x-dc" data-dc-script data-props='{"level":{"editor":"enum","options":["amethyst","topaz","carnelian","emerald","sapphire","diamond","none"],"default":"amethyst"},"size":{"editor":"int","default":96,"min":12,"max":200},"dim":{"editor":"boolean","default":false},"$preview":{"width":96,"height":96}}'>
 class Component extends DCLogic {
   renderVals() {
     const level = this.props.level ?? 'amethyst';
@@ -35,9 +35,7 @@ class Component extends DCLogic {
       sapphire: '/_blob/1979c4be847f6bb9b3be068e25cdc213',
       emerald: '/_blob/7f0d01d19bff44f42d85bb367635ec0c',
       amethyst: '/_blob/f763d14908b506007e53b64dbc39dab5',
-      jasper: '/_blob/b65da9dded71dba9b6bcac10740a96f4',
-      'jasper-crystal': '/_blob/500227e910405a9d72382bac6250fe94',
-      'jasper-red': '/_blob/b65da9dded71dba9b6bcac10740a96f4',
+      diamond: '/_blob/8e1d4e259b8c87c79c69e1a22f9bed29',
     };
     const dim = !!this.props.dim;
     return {

@@ -27,6 +27,10 @@ export interface MemberProgress {
   // One schedule per fully learned item.
   cards: Record<string, SavedCard>;
   lessons: number;
+  // Highest stone level each item has earned (1 Amethyst … 6 Diamond). Levels never go down.
+  levels: Record<string, number>;
+  // Award id → ISO date it was first earned.
+  awards: Record<string, string>;
   // Local dates (YYYY-MM-DD) with a finished lesson or review.
   days: string[];
   log: LogEntry[];
@@ -34,7 +38,7 @@ export interface MemberProgress {
 
 export type Progress = Record<string, MemberProgress>;
 
-export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, days: [], log: [] });
+export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, levels: {}, awards: {}, days: [], log: [] });
 
 export const memberProgress = (p: Progress, memberId: string | null | undefined): MemberProgress =>
   (memberId && p[memberId]) || emptyProgress();
@@ -84,6 +88,8 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     checkpoints: o.checkpoint && !p.checkpoints.includes(o.checkpoint) ? [...p.checkpoints, o.checkpoint] : p.checkpoints,
     cards,
     lessons: p.lessons + 1,
+    levels: p.levels,
+    awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
     log: [...p.log, ...o.results.map((r) => ({ ...r, at }))].slice(-1500),
   };
@@ -133,6 +139,8 @@ export function parseProgress(raw: string | null): Progress {
         checkpoints: Array.isArray(m.checkpoints) ? m.checkpoints.filter((u) => typeof u === 'string') : [],
         cards: m.cards && typeof m.cards === 'object' ? m.cards : {},
         lessons: Number(m.lessons) || 0,
+        levels: m.levels && typeof m.levels === 'object' ? m.levels : {},
+        awards: m.awards && typeof m.awards === 'object' ? m.awards : {},
         days: Array.isArray(m.days) ? m.days : [],
         log: Array.isArray(m.log) ? m.log : [],
       };

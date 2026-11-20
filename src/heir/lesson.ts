@@ -369,7 +369,8 @@ export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Ma
     }
     steps.splice(at, 0, step);
   });
-  steps.push(say);
+  // End by saying it aloud, then typing it in full: the first clean typing earns Amethyst.
+  steps.push(say, textStep(c, 'type', item, unit, false));
   return steps;
 }
 

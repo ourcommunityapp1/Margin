@@ -6,16 +6,19 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
-import { masteredItem } from '@/heir/path';
+import { levelInfo, needsRefresh, nextStep } from '@/heir/levels';
+import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import type { Item } from '@/heir/types';
 
 export function ItemScreen({ item, collectionTitle, unit }: { item: Item; collectionTitle: string; unit: string }) {
-  const { household, progress } = useHeir();
+  const { household, progress, now } = useHeir();
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
   const learned = unitsFor(item, me?.track ?? 'adult').every((u) => mine.units.includes(u.key));
-  const status = masteredItem(item, mine) ? 'Mastered' : learned ? 'Learned' : null;
+  const level = mine.levels[item.id] ?? 0;
+  const dim = needsRefresh(mine, item.id, now);
+  const next = learned ? nextStep(item, me?.track ?? 'adult', mine, now) : null;
 
   return (
     <>
@@ -28,8 +31,16 @@ export function ItemScreen({ item, collectionTitle, unit }: { item: Item; collec
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>
           <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.45 }}>{item.text}</p>
+          {learned && (
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--well)', borderRadius: 16, padding: '10px 12px' }}>
+              <Stone level={level} size={40} dim={dim} />
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name}${dim ? ' · needs a refresh' : ''}` : 'Learned'}</span>
+                {next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>Next: {next}</span>}
+              </span>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {status && <span className="hr-tag">{status}</span>}
             {!item.reviewed && <span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span>}
           </div>
         </section>

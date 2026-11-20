@@ -54,7 +54,7 @@ test('pacing: learn a group one item at a time, lock it in, then move to the nex
 test('a first lesson walks from seeing it to saying it', () => {
   const unit = unitsFor(wsc1, 'adult')[0];
   const steps = buildLesson({ unit, item: wsc1, track: 'adult', mates: [], due: [], pool: allItems(), rng: seeded(1) });
-  assert.deepEqual(steps.map((s) => s.kind), ['intro', 'order', 'order', 'meaning', 'order', 'blanks', 'letters', 'say']);
+  assert.deepEqual(steps.map((s) => s.kind), ['intro', 'order', 'order', 'meaning', 'order', 'blanks', 'letters', 'say', 'type']);
   assert.equal(new Set(steps.map((s) => s.id)).size, steps.length);
 });
 
@@ -65,12 +65,12 @@ test('later lessons practice every earlier item in the group, starting with a wa
   assert.equal(steps.filter((s) => s.itemId === 'wsc-1').length, 2);
   assert.equal(steps.filter((s) => s.itemId === 'wsc-2').length, 2);
   assert.equal(steps.filter((s) => s.itemId === 'wlc-1').length, 1);
-  assert.equal(steps[steps.length - 1].kind, 'say');
-  assert.ok(steps.length <= 16);
+  assert.deepEqual(steps.slice(-2).map((s) => s.kind), ['say', 'type']);
+  assert.ok(steps.length <= 17);
   // With four earlier items, each still gets practice, and the lesson stays short.
   const five = buildLesson({ unit: unitsFor(getItem('wsc-5')!, 'adult')[0], item: getItem('wsc-5')!, track: 'adult', mates: ['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4'].map((id) => mate(id, 3)), due: [], pool: allItems(), rng: seeded(3) });
   for (const id of ['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4']) assert.ok(five.some((s) => s.itemId === id), id);
-  assert.ok(five.length <= 16, `${five.length} steps`);
+  assert.ok(five.length <= 17, `${five.length} steps`);
 });
 
 test('practice gets harder the more an item has been seen', () => {
@@ -97,7 +97,7 @@ test('every part of every course builds sensible steps on both tracks', () => {
         for (const unit of unitsFor(item, track)) {
           const steps = buildLesson({ unit, item, track, mates: [], due: [], pool: allItems(), rng: seeded(7) });
           const { text } = unitText(item, track, unit);
-          assert.ok(steps.length >= 5 && steps.length <= 13, `${unit.key} ${track}: ${steps.length} steps`);
+          assert.ok(steps.length >= 6 && steps.length <= 14, `${unit.key} ${track}: ${steps.length} steps`);
           for (const s of steps) {
             if (s.kind === 'order') {
               assert.ok(text.includes(s.tiles.join(' ')), `${unit.key} tiles`);
@@ -207,7 +207,7 @@ test('progress: practice is counted in sessions, not in single answers', () => {
 
 test('progress: stored data that is broken is ignored', () => {
   assert.deepEqual(parseProgress('nope'), {});
-  assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], checkpoints: [], cards: {}, lessons: 0, days: [], log: [] });
+  assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], checkpoints: [], cards: {}, lessons: 0, levels: {}, awards: {}, days: [], log: [] });
 });
 
 test('path: units of named lessons, with exactly one current lesson', () => {

@@ -7,6 +7,16 @@ const PHOTOS = [
   { when: 'Night', who: 'Giles Laurent', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:036_Milky_Way_during_Perseids_seen_from_Oeschinensee_with_water_reflections_Photo_by_Giles_Laurent.jpg' },
 ];
 
+// Close-up crops of these photos, shared under the same licenses.
+const STONES = [
+  { name: 'Amethyst', who: 'Jon Zander (Digon3)', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Amethyst_Quartz_Macro_1.JPG' },
+  { name: 'Topaz', who: 'Didier Descouens', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Topaze_Br%C3%A9sil.jpg' },
+  { name: 'Carnelian', who: 'Claire Pearcy', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Three_Carnelian_Gemstones.jpg' },
+  { name: 'Emerald', who: 'Didier Descouens', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:(Muzo)_Emerald_crystal_in_its_matrix.jpg' },
+  { name: 'Sapphire', who: 'W.carter', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Four_man-made_faceted_blue_sapphires_1.jpg' },
+  { name: 'Diamond', who: 'Petragems', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Round_Brilliant_Cut_Diamond.jpg' },
+];
+
 export default function About() {
   return (
     <main className="hr-page bare">
@@ -14,13 +24,21 @@ export default function About() {
       <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500 }}>About Heir</h1>
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>Heir helps a family memorize Scripture, catechisms and creeds using recall, spaced review and speaking aloud. Progress is kept on this phone for now.</p>
-        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>The Westminster Shorter Catechism (1647) and the Apostles’ Creed are in the public domain.</p>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>The Westminster Shorter and Larger Catechisms (1647), the Apostles’ Creed and the Nicene Creed are in the public domain.</p>
       </section>
       <section className="hr-card" style={{ padding: '6px 22px' }}>
         <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Background photos (softened), from Wikimedia Commons</h2>
         {PHOTOS.map((p) => (
           <a key={p.when} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
             <span><b>{p.when}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
+          </a>
+        ))}
+      </section>
+      <section className="hr-card" style={{ padding: '6px 22px' }}>
+        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Stone photos (close-up crops, same licenses), from Wikimedia Commons</h2>
+        {STONES.map((p) => (
+          <a key={p.name} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
+            <span><b>{p.name}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
           </a>
         ))}
       </section>

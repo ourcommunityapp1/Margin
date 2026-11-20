@@ -16,7 +16,8 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
   const add = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
-    update((h) => addMember(h, name, track, newId(), new Date()));
+    const id = newId(), now = new Date();
+    update((h) => addMember(h, name, track, id, now));
     setName('');
   };
 

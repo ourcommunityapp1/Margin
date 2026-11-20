@@ -10,4 +10,5 @@ Each tile is a square crop of the photo below, resized to 256 px. CC BY-SA crops
 | emerald.jpg | File:(Muzo) Emerald crystal in its matrix.jpg | Didier Descouens | CC BY-SA 3.0 |
 | amethyst.jpg | File:Amethyst Quartz Macro 1.JPG | Jon Zander (Digon3) | CC BY-SA 3.0 |
 | jasper_crystal.jpg | File:Quartz oisan.jpg (rock crystal) | Didier Descouens | CC BY-SA 4.0 |
-| jasper_red.jpg | File:Red Jasper IMG 9466.jpg | to confirm before shipping | CC BY-SA 4.0 |
+| diamond.jpg | File:Round Brilliant Cut Diamond.jpg | Petragems | CC BY-SA 4.0 |
+| jasper_red.jpg (not used) | File:Red Jasper IMG 9466.jpg | to confirm | CC BY-SA 4.0 |

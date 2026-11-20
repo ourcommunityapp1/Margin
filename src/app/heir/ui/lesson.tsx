@@ -10,7 +10,9 @@ import { useHeir } from './provider';
 import { groupLabel, useCourse } from './course';
 import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report } from './steps';
 import { buildCheckpoint, buildLesson, buildReview, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
-import { finishSession, memberProgress, seenCounts, weakestCards, type StepResult } from '@/heir/progress';
+import { finishSession, localDay, memberProgress, seenCounts, weakestCards, type StepResult } from '@/heir/progress';
+import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
+import { Stone } from './stone';
 import { allItems, getItem, itemLabel } from '@/heir/content';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
@@ -18,9 +20,11 @@ interface Session { kind: Kind; steps: Step[]; unit: Unit | null; group: Group |
 
 const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
+interface Finished { right: number; total: number; minutes: number; ups: { itemId: string; from: number; to: number }[]; awards: string[]; kept: number }
+
 export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   const router = useRouter();
-  const { ready, household, updateProgress } = useHeir();
+  const { ready, household, updateProgress, progress } = useHeir();
   const { me, items, track, mine, due, activity, path } = useCourse();
   const [session, setSession] = useState<Session | null>(null);
   const [queue, setQueue] = useState<Step[]>([]);
@@ -28,7 +32,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   const [results, setResults] = useState<Record<string, StepResult>>({});
   const [retried, setRetried] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState<Outcome | null>(null);
-  const [finished, setFinished] = useState<{ right: number; total: number; minutes: number } | null>(null);
+  const [finished, setFinished] = useState<Finished | null>(null);
   const startedAt = useRef(0);
   const sessionStart = useRef(0);
 
@@ -107,12 +111,20 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     startedAt.current = Date.now();
     if (n < queue.length) { setPos(n); return; }
     const recorded = Object.values(results);
-    updateProgress((p) => ({ ...p, [session.memberId]: finishSession(memberProgress(p, session.memberId), { results: recorded, learned: session.unit, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now: new Date() }) }));
+    const now = new Date();
+    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.unit, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now });
+    // Raise levels the log now shows and stamp new awards, so the done screen can show what changed.
+    const settled = settle(next, allItems(), track, now);
+    updateProgress((p) => ({ ...p, [session.memberId]: settled.progress }));
     const recall = recorded.filter((r) => r.kind !== 'intro');
-    setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round((Date.now() - sessionStart.current) / 60000)) });
+    setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round((Date.now() - sessionStart.current) / 60000)), ups: settled.ups, awards: settled.awards, kept: daysKept(settled.progress.days, localDay(now)) });
   };
 
-  const cantSpeak = () => setQueue((q) => q.map((s, i) => (i >= pos ? withoutSpeaking(s) : s)));
+  // Say steps become typing; a typing step that would then repeat the same words right after is dropped.
+  const cantSpeak = () => setQueue((q) => q.map((s, i) => (i >= pos ? withoutSpeaking(s) : s)).filter((s, i, all) => {
+    const prev = all[i - 1];
+    return !(i > pos && prev && s.kind === 'type' && prev.kind === 'type' && prev.itemId === s.itemId && 'text' in prev && prev.text === s.text);
+  }));
   const part = !step.review && session.unit && session.unit.itemId === step.itemId && session.unit.of > 1 ? ` · Part ${session.unit.part} of ${session.unit.of}` : '';
   const title = `${itemLabel(item)}${part}`;
   const retry = retried.has(step.id.replace(/:typed$/, '')) && queue.indexOf(step) !== pos;
@@ -168,41 +180,93 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
   );
 }
 
-function Done({ session, finished, again }: { session: Session; finished: { right: number; total: number; minutes: number }; again(): void }) {
-  const { activity, group, groupLearned } = useCourse();
+function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
+  const { activity, group, groupLearned, mine } = useCourse();
   const item = session.unit ? getItem(session.unit.itemId) : null;
   const partial = session.unit && session.unit.part < session.unit.of;
   const label = session.group ? groupLabel(session.group) : '';
-  const heading = session.kind === 'checkpoint' ? `${label}: locked in.` : item ? `${itemLabel(item)}: ${item.prompt}` : 'Every review makes the next one easier.';
+  const top = finished.ups[0];
+  const topItem = top ? getItem(top.itemId) : null;
+  const topLevel = top ? levelInfo(top.to) : null;
+  const kind = session.kind === 'checkpoint' ? 'Checkpoint complete' : session.kind === 'review' ? 'Review complete' : 'Lesson complete';
   const message =
-    session.kind === 'checkpoint' ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them, out to weeks and months.'
+    session.kind === 'checkpoint' ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
     : session.kind === 'review' ? 'Each review waits until you’re close to forgetting, which is when recalling it helps most.'
     : partial ? `Part ${session.unit!.part} of ${session.unit!.of} learned. The next lesson continues it.`
     : activity?.kind === 'checkpoint' ? `That’s all of ${groupLabel(activity.group)}. Next: lock them in, all together, from memory.`
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
   const cta = activity?.kind === 'checkpoint' ? 'Lock them in now' : activity ? 'Another lesson' : null;
+  const awardNames = finished.awards.map((id) => AWARDS.find((a) => a.id === id)?.name).filter(Boolean);
+
   return (
     <main className="hr-page bare">
-      <section className="hr-card" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <span className="hr-label">{session.kind === 'checkpoint' ? 'Checkpoint complete' : session.kind === 'review' ? 'Review complete' : 'Lesson complete'}</span>
-        <p className="serif" style={{ margin: 0, fontSize: 28, lineHeight: 1.2, fontWeight: 600 }}>{heading}</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <Stat label="Right the first time" value={`${finished.right} of ${finished.total}`} />
-          <Stat label="Time" value={`${finished.minutes} min`} />
-        </div>
-        {message && <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--muted)' }}>{message}</p>}
+      {session.kind === 'checkpoint' && session.group ? (
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <span className="hr-label">{kind}</span>
+          <h1 className="serif" style={{ margin: 0, fontSize: 28, lineHeight: 1.18, fontWeight: 600 }}>{label} {session.group.items.length === 1 ? 'is' : 'are'} set in your foundation.</h1>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${session.group.items.length}, minmax(0, 1fr))`, gap: 6, textAlign: 'center' }}>
+            {session.group.items.map((i) => (
+              <span key={i.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <Stone level={mine.levels[i.id] ?? 0} size={40} />
+                <span style={{ fontSize: 12, fontWeight: 700 }}>{itemLabel(i).replace(/, part /, ' ')}</span>
+              </span>
+            ))}
+          </div>
+          <p className="serif" style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: 'var(--muted)' }}>“You yourselves like living stones are being built up as a spiritual house.” <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>1 Peter 2:5</span></p>
+        </section>
+      ) : top && topItem && topLevel ? (
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
+          <span className="hr-label">{kind}</span>
+          <span className="hr-halo"><Stone level={top.to} size={112} /></span>
+          <h1 className="serif" style={{ margin: '4px 0 0', fontSize: 28, lineHeight: 1.18, fontWeight: 600 }}>{itemLabel(topItem)} reached {topLevel.name}</h1>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--muted)' }}>{topLevel.rule}.{topLevel.counts ? ` It now counts as ${topLevel.counts.toLowerCase()}.` : ''}</p>
+        </section>
+      ) : (
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <span className="hr-label">{kind}</span>
+          <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{item ? `${itemLabel(item)}: ${item.prompt}` : 'Every review makes the next one easier.'}</p>
+        </section>
+      )}
+
+      {(finished.ups.length > (session.kind === 'checkpoint' ? 0 : 1) || awardNames.length > 0) && (
+        <section className="hr-card" style={{ padding: '6px 20px' }}>
+          {finished.ups.slice(session.kind === 'checkpoint' ? 0 : 1).map((u) => {
+            const it = getItem(u.itemId); const lv = levelInfo(u.to);
+            return it && lv ? (
+              <div key={u.itemId} className="hr-row" style={{ justifyContent: 'flex-start', gap: 12 }}>
+                <Stone level={u.to} size={30} />
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>{itemLabel(it)} · {lv.name}</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>{lv.rule}</span></span>
+              </div>
+            ) : null;
+          })}
+          {awardNames.map((n) => (
+            <div key={n} className="hr-row" style={{ justifyContent: 'flex-start', gap: 12 }}>
+              <span className="hr-seal" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z" /></svg></span>
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>Award: {n}</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>See it in Progress</span></span>
+            </div>
+          ))}
+        </section>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+        <Stat label="Right first time" value={`${finished.right} of ${finished.total}`} />
+        <Stat label="Time" value={`${finished.minutes} min`} />
+        <Stat label="Days kept" value={`${finished.kept}`} />
+      </div>
+      {message && <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.5 }}>{message}</p>}
+      <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <Link className="hr-btn" href="/heir">Done</Link>
-        {cta && session.kind !== 'review' && <button type="button" className="hr-btn quiet" onClick={again}>{cta}</button>}
-      </section>
+        {cta && session.kind !== 'review' && <button type="button" className="hr-btn quiet" style={{ background: 'var(--card)' }} onClick={again}>{cta}</button>}
+      </div>
     </main>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: 'var(--well)', borderRadius: 16, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{label}</span>
-      <span style={{ fontSize: 20, fontWeight: 600 }}>{value}</span>
+    <div style={{ background: 'var(--card)', borderRadius: 18, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span className="serif" style={{ fontSize: 20, fontWeight: 600 }}>{value}</span>
+      <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600 }}>{label}</span>
     </div>
   );
 }
