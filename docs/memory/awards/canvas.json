@@ -274,6 +274,48 @@
    "w": 390,
    "h": 844,
    "title": "H4 \u00b7 Hold, half and half"
+  },
+  "L1Quiet.dc.html": {
+   "x": 0,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 quieter"
+  },
+  "L2Tracery.dc.html": {
+   "x": 470,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 tracery"
+  },
+  "E1Refined.dc.html": {
+   "x": 940,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Editorial \u00b7 refined"
+  },
+  "E2Night.dc.html": {
+   "x": 1410,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Editorial \u00b7 night edition"
+  },
+  "R1Quiet.dc.html": {
+   "x": 1880,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 quieter"
+  },
+  "R2Rise.dc.html": {
+   "x": 2350,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 light rises"
   }
  },
  "createdOnFiles": {
@@ -357,6 +399,13 @@
    "text": "Round two: the window at half the screen",
    "x": 0,
    "y": 14200
+  },
+  "t11": {
+   "kind": "title1",
+   "maxW": 2800,
+   "text": "Lancets, Editorial, Hold: two refinements each",
+   "x": 0,
+   "y": 15500
   }
  },
  "order": [
@@ -398,7 +447,13 @@
   "H1EditHold.dc.html",
   "H2Lancets.dc.html",
   "H3FrostLight.dc.html",
-  "H4HoldHalf.dc.html"
+  "H4HoldHalf.dc.html",
+  "L1Quiet.dc.html",
+  "L2Tracery.dc.html",
+  "E1Refined.dc.html",
+  "E2Night.dc.html",
+  "R1Quiet.dc.html",
+  "R2Rise.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"
