@@ -219,10 +219,13 @@ export class GlassEngine {
   // Where the window sits: as tall as fits between the top bar and the button, centred. When zoomed in,
   // the point "focus" (0 = top of the window, 1 = bottom) is kept in view, so the camera can follow the light.
   zoom = 1; focus = 0.5;
+  /** Fill the canvas with the photo exactly (for a round window drawn in a square frame). */
+  fill = false;
   /** CSS pixels at the bottom covered by a panel: the camera frames the glass above it. */
   inset = 0;
   rect(): [number, number, number, number] {
     const cw = this.canvas.width, ch = this.canvas.height;
+    if (this.fill) return [0, 0, 1, 1];
     if (this.fit === 'cover') {
       // The photo's own wall fills the whole screen; the window stands in it.
       let w = cw, h = w / this.imgAspect;

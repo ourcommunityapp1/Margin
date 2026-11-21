@@ -38,13 +38,17 @@ type Props = {
   hint?: number;
   /** Light rays falling from the lit glass. On by default. */
   rays?: boolean;
+  /** Fill the frame with the photo exactly: for a round window in a square frame. */
+  fill?: boolean;
+  /** Each newly lit pane takes its own moment, one after another (ms between panes). */
+  paneDelay?: number;
   className?: string;
 };
 
 type Track = { id: number; t0: number };
 
 export const LivingWindow = forwardRef<WindowHandle, Props>(
-  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, rays = true, className }, ref) {
+  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, rays = true, fill = false, paneDelay, className }, ref) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const engine = useRef<GlassEngine | null>(null);
     const meta = useRef<GlassMeta | null>(null);
@@ -60,6 +64,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
     const insetRef = useRef(bottomInset); insetRef.current = bottomInset;
     const hintRef = useRef(hint); hintRef.current = hint;
     const raysRef = useRef(rays); raysRef.current = rays;
+    const paneRef = useRef(paneDelay); paneRef.current = paneDelay;
     const visible = useRef(true);
     // All pieces in reveal order (bottom left to top right). Course question i of n owns slice i of n.
     const flat = useRef<number[]>([]);
@@ -145,7 +150,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
         if (!ids.length) return;
         if (reduce.current) { for (const id of ids) e.light[id] = 1; return; }
         // However much is new, the sweep takes about two to three seconds.
-        const stagger = Math.max(6, Math.min(130, 2400 / ids.length));
+        const stagger = paneRef.current ?? Math.max(6, Math.min(130, 2400 / ids.length));
         const t = performance.now();
         ids.forEach((id, k) => tracks.current.push({ id, t0: t + k * stagger }));
         let on = 0;
@@ -162,7 +167,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
       const c = canvas.current!;
       loadGlass(base).then(({ assets, meta: m }) => {
         if (!alive) return;
-        try { engine.current = new GlassEngine(c, assets); } catch (err) { console.error('glass', err); setFailed(true); return; }
+        try { engine.current = new GlassEngine(c, assets); engine.current.fill = fill; } catch (err) { console.error('glass', err); setFailed(true); return; }
         meta.current = m;
         flat.current = m.questions.flat();
         if (reduce.current) engine.current.cloud = 0;

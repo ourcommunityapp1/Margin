@@ -18,15 +18,13 @@ import { lessonsDone, planNext } from '@/heir/planner';
 import { unitsFor } from '@/heir/lesson';
 import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
-import { LivingWindow } from './ui/glass/window';
+import { RoundWindow } from './ui/glass/round';
 import { windowFor, windowLight } from './ui/glass/light';
-import { GlassCta, useGlassMeta } from './ui/glass/cta';
 
 export default function Today() {
   const { ready, household, time, now } = useHeir();
   const router = useRouter();
   const { me, course, mine, track, items, path, due, chosen } = useCourse();
-  const meta = useGlassMeta(windowFor(course.id).base);
 
   useEffect(() => {
     if (!ready) return;
@@ -45,26 +43,33 @@ export default function Today() {
   const glass = windowFor(course.id);
   const light = windowLight(items, track, mine, now);
   const next = light.lit.findIndex((f) => f < 1);
-  const cta = !plan ? null
-    : plan.kind === 'welcome' ? { label: 'Light the first pane', sub: 'Welcome lesson' }
-    : plan.kind === 'learn' ? { label: 'Light the next pane', sub: lessonName }
-    : plan.kind === 'checkpoint' ? { label: 'Set these panes', sub: `Lock in ${groupLabel(plan.group)}` }
-    : { label: 'Polish the glass', sub: `${lessonName} · review` };
+  const start = !plan ? null : plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`;
+  const currentUnit = path.find((u) => u.status === 'current');
+  const learnedCount = light.lit.filter((f) => f >= 1).length;
 
   return (
     <>
-      {/* The course's window: lit glass is what you've learned, dull glass is still to come. */}
-      <section className="hr-hero" aria-label={`Your window: ${Math.round(light.share * 100)}% lit`}>
-        <LivingWindow base={glass.base} lit={light.lit} dusty={light.dusty} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') ? next : undefined} />
-        <header className="hr-hero-top">
-          <h1 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name}</h1>
-          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} className="hr-hero-chip">{me.name[0]}</Link>
+      <main className="hr-page">
+        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px', marginTop: 12 }}>
+          <h1 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name}</h1>
+          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
         </header>
-      </section>
 
-      <main className="hr-page hr-after-hero">
-        {cta ? <GlassCta base={glass.base} meta={meta} next={next} total={items.length} href="/heir/lesson" label={cta.label} sub={cta.sub} />
-          : <p className="serif" style={{ margin: '0 4px', fontSize: 18, textAlign: 'center' }}>All caught up for today.</p>}
+        {/* The course's window: lit glass is what you've learned, dark glass is still to come. */}
+        <section className="hr-rose-card">
+          <span className="hr-label">{course.title}</span>
+          <RoundWindow base={glass.base} lit={light.lit} dusty={light.dusty} share={light.share} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') ? next : undefined} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
+            {currentUnit && <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#F1C46B' }}>UNIT {currentUnit.number} OF {path.length}</span>}
+            {currentUnit && <span className="serif" style={{ fontSize: 21, fontWeight: 500, lineHeight: 1.15 }}>{groupLabel(currentUnit.group)}</span>}
+            <span style={{ fontSize: 13, color: '#A9A196' }}>{learnedCount} of {items.length} questions lit</span>
+          </div>
+          {start ? (
+            <Link className="hr-rose-btn" href="/heir/lesson">{start}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            </Link>
+          ) : <p className="serif" style={{ margin: 0, fontSize: 17 }}>All caught up for today.</p>}
+        </section>
 
         <DaysKept days={mine.days} today={today} now={now} dueCount={due.length} />
 

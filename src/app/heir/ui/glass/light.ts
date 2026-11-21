@@ -9,7 +9,7 @@ import type { Item, Track } from '@/heir/types';
 // One window per course. Only one is cut so far; the others share it until theirs are chosen.
 const WINDOWS: Record<string, { base: string; title: string; credit: string }> = {};
 const DEFAULT = {
-  base: '/heir/glass/good-shepherd',
+  base: '/heir/glass/gsc-a',
   title: '“I am the good shepherd”',
   credit: 'St Barnabas, Mount Eden, Auckland. Photo: Bjankuloski06, CC BY 4.0',
 };

@@ -16,9 +16,9 @@ import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, getItem, itemLabel } from '@/heir/content';
-import { LivingWindow, type WindowHandle } from './glass/window';
+import { type WindowHandle } from './glass/window';
+import { RoundWindow } from './glass/round';
 import { windowFor, windowLight } from './glass/light';
-import { GlassCta, useGlassMeta } from './glass/cta';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
 interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] } }
@@ -217,9 +217,6 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
 function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
   const { activity, group, groupLearned, mine, items, track, course } = useCourse();
   const { now } = useHeir();
-  const glassBase = windowFor(course.id).base;
-  const glassMeta = useGlassMeta(glassBase);
-  const nextPane = windowLight(items, track, mine, now).lit.findIndex((f) => f < 1);
   const upNext = planNext({ courseId: course.id, items, track, p: mine, now });
   const first = session.units[0];
   const item = first ? getItem(first.itemId) : null;
@@ -235,15 +232,13 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
     : partial ? `Part ${first!.part} of ${first!.of} learned. The next lesson continues it.`
     : activity?.kind === 'checkpoint' ? `That’s all of ${groupLabel(activity.group)}. Next: lock them in, all together, from memory.`
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
-  const cta = upNext?.kind === 'checkpoint' ? { label: 'Set these panes', sub: `Lock in ${groupLabel(upNext.group)}` }
-    : upNext?.kind === 'learn' ? { label: 'Light the next pane', sub: 'Next lesson' }
-    : upNext ? { label: 'Polish the glass', sub: 'Next lesson · review' } : null;
+  const cta = upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;
   const awardNames = finished.awards.map((id) => AWARDS.find((a) => a.id === id)?.name).filter(Boolean);
 
   return (
     <>
-    <DoneWindow session={session} />
-    <main className="hr-page bare hr-after-hero">
+    <main className="hr-page bare">
+      <DoneWindow session={session} />
       {session.kind === 'checkpoint' && session.group ? (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <span className="hr-label">{kind}</span>
@@ -299,7 +294,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
       </div>
       {message && <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.5 }}>{message}</p>}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {cta && <GlassCta base={glassBase} meta={glassMeta} next={nextPane} total={items.length} onClick={again} label={cta.label} sub={cta.sub} />}
+        {cta && <button type="button" className="hr-btn" onClick={again}>{cta}</button>}
         <Link className={cta ? 'hr-btn quiet' : 'hr-btn'} style={cta ? { background: 'var(--card)' } : undefined} href="/heir">Done</Link>
       </div>
     </main>
@@ -314,16 +309,25 @@ function DoneWindow({ session }: { session: Session }) {
   const { now } = useHeir();
   const win = useRef<WindowHandle>(null);
   const after = windowLight(items, track, mine, now);
-  const fresh = items.filter((_, i) => after.lit[i] > (session.before.lit[i] ?? 0) + 1e-6);
-  const [dusty, setDusty] = useState(session.before.dusty);
+  const before = session.before;
+  const fresh = items.filter((_, i) => after.lit[i] > (before.lit[i] ?? 0) + 1e-6);
+  const [dusty, setDusty] = useState(before.dusty);
+  const [share, setShare] = useState(before.lit.reduce((a, b) => a + b, 0) / Math.max(1, items.length));
+  // Each new pane lights in its own moment, then the gold arc on the frame moves on.
+  const paneDelay = 150;
   const ready = () => {
     setTimeout(() => win.current?.revealTo(after.lit), 700);
     setTimeout(() => setDusty(after.dusty), 900);
+    const pieces = win.current?.meta()?.count ?? 500;
+    const newPanes = Math.max(1, Math.round((after.share - share) * pieces));
+    setTimeout(() => setShare(after.share), 700 + Math.min(6000, newPanes * paneDelay) + 400);
   };
   const names = fresh.map((i) => itemLabel(i)).join(', ');
   return (
-    <section className="hr-hero hr-hero-done" aria-label={names ? `Your window: new light for ${names}` : 'Your window'}>
-      <LivingWindow ref={win} base={windowFor(course.id).base} lit={session.before.lit} dusty={dusty} onReady={ready} />
+    <section className="hr-rose-card" style={{ paddingTop: 20 }}>
+      <RoundWindow ref={win} base={windowFor(course.id).base} lit={before.lit} dusty={dusty} share={share} onReady={ready} paneDelay={paneDelay} size={280}
+        label={names ? `Your window: new light for ${names}` : 'Your window'} />
+      {names && <span className="serif" style={{ fontSize: 19, textAlign: 'center' }}>New light: {names}</span>}
     </section>
   );
 }

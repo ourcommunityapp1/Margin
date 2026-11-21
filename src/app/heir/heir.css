@@ -867,3 +867,25 @@ body:has(.hr) {
 @media (prefers-reduced-motion: reduce) { .hr-glass-cta-glass, .hr-glass-cta-sheen { animation: none; } }
 .hr-hero:not(.hr-hero-done) { height: min(calc(100svh - 220px - env(safe-area-inset-bottom, 0px)), 760px); }
 button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: pointer; }
+
+/* The round window: live glass in a circle, a stone frame drawn over it. */
+.hr-round { position: relative; flex: none; }
+.hr-round-glass { position: absolute; border-radius: 50%; overflow: hidden; background: #0E0C0A; }
+.hr-round-frame { position: absolute; inset: 0; pointer-events: none; }
+.hr-round-notch { animation: hr-round-pulse 2.4s ease-in-out infinite; filter: drop-shadow(0 0 5px #F1C46B); }
+.hr-round-sweep { transform-origin: 162px 162px; animation: hr-round-sweep 9s ease-in-out infinite; }
+@keyframes hr-round-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes hr-round-sweep { 0%, 55% { transform: rotate(-30deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: rotate(330deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hr-round-notch, .hr-round-sweep { animation: none; } }
+
+/* Today's window card: dark, the round window centred, the unit beneath, one button. */
+.hr-rose-card {
+  background: #15181B; color: #F4EFE6; border-radius: 36px; padding: 22px 18px 20px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  box-shadow: 0 24px 50px rgba(20, 24, 28, 0.3);
+}
+.hr-rose-card .hr-label { color: #A9A196; letter-spacing: 0.16em; }
+.hr-rose-btn {
+  align-self: stretch; min-height: 58px; border-radius: 29px; background: #F4EFE6; color: #15181B;
+  font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none;
+}
