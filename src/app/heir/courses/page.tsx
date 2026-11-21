@@ -9,7 +9,7 @@ import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { courseSummary, LENGTHS, KINDS, type Kind, type Length } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
-import { courseFor, courses } from '@/heir/content';
+import { courses } from '@/heir/content';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
 
@@ -25,8 +25,7 @@ export default function Courses() {
   const mine = memberProgress(progress, me?.id);
   const track = me?.track ?? 'adult';
   const minutes = household.plan?.minutes ?? 15;
-  const mineId = courseFor(household.plan?.course)?.id;
-  const all = courses.map((c) => ({ ...courseSummary(c, track, mine, minutes, now), current: c.id === mineId }));
+  const all = courses.map((c) => courseSummary(c, track, mine, minutes, now));
   const shown = all.filter((s) => (filter.kind === 'all' || s.kind === filter.kind) && (filter.length === 'any' || s.length === filter.length));
   const pick = (next: Partial<typeof filter>) => {
     const f = { ...filter, ...next };
@@ -55,19 +54,12 @@ export default function Courses() {
           </p>
         </div>
 
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <ul style={{ listStyle: 'none', margin: '0 -10px', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {shown.map((s) => (
             <li key={s.course.id}>
               <Link href={`/heir/courses/${s.course.id}`} className="hr-card hr-course-row">
-                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={68} label={`${s.course.title} window, ${s.learned} of ${s.total} learned`} />
-                <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
-                  <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-                    <span className="serif" style={{ fontSize: 20, fontWeight: 600, lineHeight: 1.2 }}>{s.course.title}</span>
-                    {s.current && <span className="hr-tag">Your course</span>}
-                  </span>
-                  <span style={{ fontSize: 14, color: 'var(--muted)' }}>{s.total} {s.noun} · about {s.time}</span>
-                  {s.learned > 0 && <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{s.learned} of {s.total} learned</span>}
-                </span>
+                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={76} label={`${s.course.title} window, ${s.learned} of ${s.total} learned`} />
+                <span className="serif" style={{ flex: 1, minWidth: 0, fontSize: 21, fontWeight: 600, lineHeight: 1.2 }}>{s.course.title}</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', color: 'var(--muted)' }}><path d="M9 5l7 7-7 7" /></svg>
               </Link>
             </li>
