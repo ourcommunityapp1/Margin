@@ -27,6 +27,8 @@ ap.add_argument("--seed", type=int, default=3)
 ap.add_argument("--mask", help="optional .npy (or image) marking the glass at the photo's resolution; otherwise found automatically")
 ap.add_argument("--crop", help="x0,y0,x1,y1 in photo pixels, applied to the photo and the mask")
 ap.add_argument("--surround", action="store_true", help="keep the real wall around the glass (the app fills the screen with it)")
+ap.add_argument("--order", choices=["rise", "clockwise"], default="rise", help="rise: bottom left to top right; clockwise: round from the top, for rose windows")
+ap.add_argument("--circle", help="cx,cy,r as fractions of the cropped photo's width (cx, r) and height (cy): the glass is this circle")
 ap.add_argument("--peaks", type=float, default=20, help="how bright a core must be to start its own piece; higher = fewer, bigger pieces")
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
@@ -61,6 +63,10 @@ window = window | (1 - ff)
 window = cv2.erode(window, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(5 * s) | 1,) * 2))
 if given is not None:
     window = given
+if a.circle:
+    ccx, ccy, cr = map(float, a.circle.split(","))
+    yy, xx = np.mgrid[0:SH, 0:SW]
+    window = (((xx - ccx * SW) ** 2 + (yy - ccy * SH) ** 2) <= (cr * SW) ** 2).astype(np.uint8)
 
 # 2. Pieces by watershed. Treat brightness as terrain: each piece of glass is a bright basin and the lead
 # between pieces is the dark valley floor, so flooding from the bright cores puts the borders on the lead.
@@ -101,7 +107,14 @@ def field(x, y, seed):
         ph = r.uniform(0, 2 * np.pi, 2); v += np.sin(x * f * 2 * np.pi / 3 + ph[0]) * np.cos(y * f * 2 * np.pi / 3 + ph[1]) / f
     return v
 xn, yn = cx / W, cy / H
-score = 0.3 * xn + (1 - yn) + 0.05 * field(xn, yn * H / W, a.seed) + rng.normal(0, 0.002, count)
+if a.order == "clockwise":
+    # Round from twelve o'clock; a touch of wobble so each wedge's edge isn't ruled.
+    wy, wx = np.nonzero(full)
+    mx, my = wx.mean(), wy.mean()
+    ang = np.mod(np.arctan2(cx - mx, -(cy - my)), 2 * np.pi) / (2 * np.pi)
+    score = ang + 0.006 * field(xn, yn * H / W, a.seed) + rng.normal(0, 0.001, count)
+else:
+    score = 0.3 * xn + (1 - yn) + 0.05 * field(xn, yn * H / W, a.seed) + rng.normal(0, 0.002, count)
 order = np.argsort(score)
 cum = np.cumsum(ar[order]); cum /= cum[-1]
 q_of = np.minimum((cum * a.questions - 1e-9).astype(int), a.questions - 1)
