@@ -89,7 +89,7 @@ export function CourseScreen({ id }: { id: string }) {
               const done = w.lit.filter((f) => f >= 1).length;
               return (
                 <div key={part.title} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
-                  <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={84} label={`${part.title} window, ${done} of ${w.items.length} learned`} />
+                  <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={84} motion={{ kind: 'circle', delay: i * 0.35 }} label={`${part.title} window, ${done} of ${w.items.length} learned`} />
                   <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{part.title}</span>
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>{done} of {w.items.length}</span>
                 </div>

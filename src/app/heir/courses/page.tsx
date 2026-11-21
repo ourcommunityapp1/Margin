@@ -27,10 +27,10 @@ export default function Courses() {
         <h1 className="serif" style={{ margin: '20px 4px 0', fontSize: 34, fontWeight: 500 }}>Courses</h1>
 
         <ul style={{ listStyle: 'none', margin: '0 -10px', padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {all.map((s) => (
+          {all.map((s, i) => (
             <li key={s.course.id}>
               <Link href={`/heir/courses/${s.course.id}`} className="hr-card hr-course-row">
-                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={76} label={`${s.course.title} window, ${s.learned} of ${s.total} learned`} />
+                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={76} motion={{ kind: 'list', index: i, count: all.length }} label={`${s.course.title} window, ${s.learned} of ${s.total} learned`} />
                 <span className="serif" style={{ flex: 1, minWidth: 0, fontSize: 21, fontWeight: 600, lineHeight: 1.2 }}>{s.course.title}</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', color: 'var(--muted)' }}><path d="M9 5l7 7-7 7" /></svg>
               </Link>

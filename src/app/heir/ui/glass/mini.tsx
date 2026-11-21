@@ -1,13 +1,18 @@
 'use client';
 
-// A small, still copy of a course's round window for lists. Each pane is lit exactly as in the full window
-// (the same panes for the same progress), and everything not yet lit is so dim that only a hint of the glass
-// shows. Drawn on a plain 2D canvas from 256px copies of the window (made by scripts/heir-glass/mini.py),
-// so a list of courses costs no WebGL.
+// A small copy of a course's round window, for the Courses list and a course's page. Panes you've learned are
+// lit exactly as in the full window (the same panes for the same progress). The rest rest almost black, and a
+// dim light moves behind them so you can tell there's a picture there without seeing it:
+//   - on its own (a course's page), the light circles the window, clockwise and then back;
+//   - in a list, one light travels down through every window in turn, top to bottom, then back up.
+// Drawn on a plain 2D canvas from 256px copies of the window (made by scripts/heir-glass/mini.py), so a list of
+// courses costs no WebGL. Only panes whose light changed are redrawn; nothing moves off screen, in a background
+// tab, or with reduced motion.
 
 import { useEffect, useRef } from 'react';
 
-type Decoded = { size: number; glass: Uint8ClampedArray; ids: Uint8ClampedArray; flat: number[]; count: number };
+type Pane = { id: number; px: Int32Array; cx: number; cy: number; gain: number };
+type Decoded = { size: number; glass: Uint8ClampedArray; ids: Uint8ClampedArray; flat: number[]; count: number; panes: Pane[] };
 const cache = new Map<string, Promise<Decoded>>();
 
 async function pixels(url: string): Promise<ImageData> {
@@ -27,52 +32,129 @@ function load(base: string): Promise<Decoded> {
       fetch(`${base}/pieces.json`).then((r) => r.json() as Promise<{ count: number; questions: number[][] }>),
       pixels(`${base}/glass-mini.webp`),
       pixels(`${base}/ids-mini.png`),
-    ]).then(([meta, glass, ids]) => ({ size: glass.width, glass: glass.data, ids: ids.data, flat: meta.questions.flat(), count: meta.count }));
+    ]).then(([meta, glass, ids]) => {
+      const size = glass.width;
+      // Each pane's pixels and centre, for the moving light.
+      const acc = new Map<number, { px: number[]; x: number; y: number }>();
+      for (let p = 0; p < size * size; p++) {
+        if (ids.data[p * 4 + 3] === 0) continue;
+        const id = ids.data[p * 4] + ids.data[p * 4 + 1] * 256;
+        if (!id) continue;
+        let a = acc.get(id);
+        if (!a) acc.set(id, (a = { px: [], x: 0, y: 0 }));
+        a.px.push(p); a.x += p % size; a.y += Math.floor(p / size);
+      }
+      // A fixed small variation per pane, as real glass of different thickness would catch light differently.
+      const panes = [...acc].map(([id, a]) => ({ id, px: Int32Array.from(a.px), cx: a.x / a.px.length / size, cy: a.y / a.px.length / size, gain: 0.82 + ((id * 2654435761) % 1000) / 1000 * 0.18 }));
+      return { size, glass: glass.data, ids: ids.data, flat: meta.questions.flat(), count: meta.count, panes };
+    });
     p.catch(() => cache.delete(base));
     cache.set(base, p);
   }
   return p;
 }
 
-// How bright unlit glass is, and dusty glass (learned, but due for a refresh).
-const UNLIT = 0.13, DUSTY = 0.5;
+// The light behind the glass, as tuned in the mockup.
+const REST = 0.045; // dark glass at rest
+const DUSTY = 0.5; // learned, but due for a refresh
+const LIGHT = { r: 0.27, peak: 0.58, soft: 0.85, pass: 2300, gap: 1100 };
+const FALLOFF = 1.6 / (0.35 + 1.6 * LIGHT.soft);
 
-function paint(canvas: HTMLCanvasElement, d: Decoded, lit: number[], dusty?: boolean[]) {
-  // Item i of n owns an even share of the window's panes, in reveal order; a fraction f lights the first f of them.
-  const state = new Uint8Array(d.count + 1);
-  const P = d.flat.length, n = lit.length;
-  lit.forEach((f, i) => {
-    const own = d.flat.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n));
-    const on = Math.round(Math.max(0, Math.min(1, f)) * own.length);
-    for (let k = 0; k < on; k++) state[own[k]] = dusty?.[i] ? 2 : 1;
-  });
-  canvas.width = d.size; canvas.height = d.size;
-  const ctx = canvas.getContext('2d')!;
-  const out = ctx.createImageData(d.size, d.size);
-  const g = d.glass, ids = d.ids, o = out.data;
-  for (let p = 0; p < o.length; p += 4) {
-    if (ids[p + 3] === 0) continue;
-    const s = state[ids[p] + ids[p + 1] * 256] ?? 0;
-    const lead = 1 - 0.75 * (ids[p + 2] / 255);
-    const r = g[p], gr = g[p + 1], b = g[p + 2];
-    const grey = 0.3 * r + 0.59 * gr + 0.11 * b;
-    const [k, mix] = s === 1 ? [1.05, 0] : s === 2 ? [DUSTY, 0.4] : [UNLIT, 0.45];
-    o[p] = Math.min(255, (r + (grey - r) * mix) * k * lead);
-    o[p + 1] = Math.min(255, (gr + (grey - gr) * mix) * k * lead);
-    o[p + 2] = Math.min(255, (b + (grey - b) * mix) * k * lead);
-    o[p + 3] = 255;
+// Every list window keys off one clock, so the light passes from one window into the next.
+const T0 = typeof performance === 'undefined' ? 0 : performance.now();
+
+export type Motion = { kind: 'circle'; delay?: number } | { kind: 'list'; index: number; count: number };
+
+// Where the light is behind one window right now (window coordinates 0..1), and how strong; null when it's away.
+function lightAt(motion: Motion, now: number): { x: number; y: number; k: number } | null {
+  const { pass, gap, r } = LIGHT;
+  if (motion.kind === 'circle') {
+    // Clockwise once round, a pause, then anticlockwise back, and so on. It fades in and out of each turn.
+    const cycle = pass + gap, t0 = now - T0 + (motion.delay ?? 0) * pass;
+    const n = Math.floor(t0 / cycle), t = (t0 - n * cycle) / pass;
+    if (t > 1) return null;
+    const tt = n % 2 ? 1 - t : t;
+    const a = -Math.PI / 2 + tt * Math.PI * 2;
+    return { x: 0.5 + 0.3 * Math.cos(a), y: 0.5 + 0.3 * Math.sin(a), k: Math.sin(Math.PI * t) };
   }
-  ctx.putImageData(out, 0, 0);
+  // Down through every window in the list, one after another at the same pace, a pause, then back up.
+  const leg = motion.count * pass, cycle = 2 * (leg + gap), t0 = (now - T0) % cycle;
+  const down = t0 < leg + gap;
+  const u = down ? t0 : t0 - (leg + gap);
+  if (u > leg) return null;
+  const pos = down ? u / pass : motion.count - u / pass; // in windows, from the top of the first
+  const t = pos - motion.index;
+  if (t < -0.2 || t > 1.2) return null;
+  return { x: 0.5 + 0.05 * Math.sin(t * Math.PI * 2), y: -r + (1 + 2 * r) * t, k: 1 };
 }
 
-export function MiniWindow({ base, lit, dusty, size = 64, label }: { base: string; lit: number[]; dusty?: boolean[]; size?: number; label?: string }) {
+function shade(o: Uint8ClampedArray, g: Uint8ClampedArray, ids: Uint8ClampedArray, px: Int32Array, b: number, mix: number) {
+  for (const p of px) {
+    const q = p * 4;
+    const lead = 1 - 0.75 * (ids[q + 2] / 255);
+    const r = g[q], gr = g[q + 1], bl = g[q + 2];
+    const grey = 0.3 * r + 0.59 * gr + 0.11 * bl;
+    o[q] = Math.min(255, (r + (grey - r) * mix) * b * lead);
+    o[q + 1] = Math.min(255, (gr + (grey - gr) * mix) * b * lead);
+    o[q + 2] = Math.min(255, (bl + (grey - bl) * mix) * b * lead);
+    o[q + 3] = 255;
+  }
+}
+
+export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind: 'circle' } }: {
+  base: string; lit: number[]; dusty?: boolean[]; size?: number; label?: string; motion?: Motion;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}`;
+  const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}|${JSON.stringify(motion)}`;
   useEffect(() => {
-    let alive = true;
-    load(base).then((d) => { if (alive && ref.current) paint(ref.current, d, lit, dusty); }).catch(() => { /* leave the dark circle */ });
-    return () => { alive = false; };
-    // `key` stands for lit and dusty, which are new arrays on every render.
+    let alive = true, raf = 0, visible = true;
+    const canvas = ref.current;
+    if (!canvas) return;
+    const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const seen = new IntersectionObserver((es) => { visible = es.some((e) => e.isIntersecting); });
+    seen.observe(canvas);
+    load(base).then((d) => {
+      if (!alive) return;
+      // Item i of n owns an even share of the window's panes, in reveal order; a fraction f lights the first f of them.
+      const state = new Uint8Array(d.count + 1);
+      const P = d.flat.length, n = lit.length;
+      lit.forEach((f, i) => {
+        const own = d.flat.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n));
+        const on = Math.round(Math.max(0, Math.min(1, f)) * own.length);
+        for (let k = 0; k < on; k++) state[own[k]] = dusty?.[i] ? 2 : 1;
+      });
+      canvas.width = canvas.height = d.size;
+      const ctx = canvas.getContext('2d')!;
+      const img = ctx.createImageData(d.size, d.size);
+      const dark = d.panes.filter((p) => !state[p.id]);
+      for (const p of d.panes) shade(img.data, d.glass, d.ids, p.px, state[p.id] === 1 ? 1.05 : state[p.id] === 2 ? DUSTY : REST, state[p.id] === 1 ? 0 : state[p.id] === 2 ? 0.4 : 0.45);
+      ctx.putImageData(img, 0, 0);
+      if (still || !dark.length) return;
+      const shown = new Float32Array(d.count + 1).fill(REST);
+      let last = 0;
+      const frame = (now: number) => {
+        raf = requestAnimationFrame(frame);
+        if (!visible || document.hidden || now - last < 33) return;
+        last = now;
+        const s = lightAt(motion, now);
+        let dirty = false;
+        for (const p of dark) {
+          let b = REST;
+          if (s) {
+            const dd = Math.hypot(p.cx - s.x, p.cy - s.y) / LIGHT.r;
+            if (dd < 2.2) b = REST + (LIGHT.peak - REST) * s.k * p.gain * Math.exp(-dd * dd * FALLOFF);
+          }
+          if (Math.abs(shown[p.id] - b) < 0.003) continue;
+          shown[p.id] = b;
+          shade(img.data, d.glass, d.ids, p.px, b, 0.45 * (1 - (b - REST) / (1 - REST)));
+          dirty = true;
+        }
+        if (dirty) ctx.putImageData(img, 0, 0);
+      };
+      raf = requestAnimationFrame(frame);
+    }).catch(() => { /* leave the dark circle */ });
+    return () => { alive = false; cancelAnimationFrame(raf); seen.disconnect(); };
+    // `key` stands for lit, dusty and motion, which are new objects on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [base, key]);
   return (
