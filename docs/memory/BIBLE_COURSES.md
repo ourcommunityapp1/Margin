@@ -169,10 +169,11 @@ Window: Jesus and the children, Sacred Heart Church, New Philadelphia, Ohio (CC0
 Christmas window. No extra encouragement messages through the course.
 
 **Christmas** (replaces the 15-text draft above), for Advent (Advent Sunday 2026 is 29 November). No songs.
-- A, recommended: Isaiah 9:6 · Matthew 1:21 · John 1:14 · Luke 2:8–14. 238 words, 13 sittings, about 2 weeks
-  daily or 3½ weeks at 3–4 days a week. One text per Advent week, ending with Luke 2 said together on Christmas Eve.
-- B, quicker: Isaiah 9:6 · Matthew 1:21 · Luke 2:10–11 · Luke 2:14 · John 1:14 · 2 Corinthians 9:15. 161 words,
-  12 sittings.
+Six verses in story order, 172 words, about 12 sittings: a little under 2 weeks daily, about 3 weeks at 3–4 days
+a week. Isaiah 9:2 · Isaiah 9:6 · Luke 1:46–47 · Matthew 1:21 · Matthew 1:23 · Luke 2:10–11.
+All six sit in the Christmas story itself: the Isaiah 9:2–7 oracle (the Christmas Eve reading; Matthew 4:15–16
+also applies 9:1–2 to Jesus' ministry in Galilee), Mary's song during her pregnancy, the angel to Joseph before
+the birth, and the angel to the shepherds on the night of the birth.
 Window: the Nativity, Sacred Heart Church, New Philadelphia, Ohio (CC0), cropped wide.
 
 ## 5. Windows
