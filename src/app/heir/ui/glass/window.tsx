@@ -206,6 +206,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
           // takes its light from how close it is to the light. The light never passes `peak`, so glass brighter
           // than that has been learned.
           const bm = beamRef.current, cs = meta.current?.centres;
+          e.dull = bm ? 0.3 : 1;
           if (bm && cs && !reduce.current) {
             const busy = new Set(tracks.current.map((t) => t.id));
             const s = lightAt(bm, now);

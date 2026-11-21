@@ -79,7 +79,7 @@ export default function Today() {
             {light.count > 1 && <span className="hr-label">Part {light.index + 1} of {light.count}</span>}
             <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.1 }}>{light.title}</h2>
           </div>
-          <TodayWindow key={light.base} light={light} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
+          <TodayWindow key={light.base} light={light} started={items.some((i) => unitsFor(i, track).some((u) => mine.units.includes(u.key)))} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
           <span style={{ fontSize: 13, color: '#C9C1B3' }}>{learnedCount} of {light.items.length} {noun} lit</span>
           {start ? (
             <Link className="hr-glass-btn" href="/heir/lesson"><span>{start}</span>
@@ -220,7 +220,8 @@ function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProg
 
 // Each time Today opens, the window starts dark and lights pane by pane up to where you are, while the gold
 // arc on the frame grows round with it: your progress, shown fresh every visit.
-function TodayWindow({ light, hint }: { light: PartWindow; hint?: number }) {
+// Before the course has begun, a dim light moves behind the dark glass; once it has, the window holds still.
+function TodayWindow({ light, hint, started }: { light: PartWindow; hint?: number; started: boolean }) {
   const win = useRef<WindowHandle>(null);
   const dark = useMemo(() => light.lit.map(() => 0), [light.lit]);
   const [share, setShare] = useState(0);
@@ -240,6 +241,6 @@ function TodayWindow({ light, hint }: { light: PartWindow; hint?: number }) {
   };
   return (
     <RoundWindow ref={win} base={light.base} lit={dark} dusty={settled ? light.dusty : undefined} hint={settled ? hint : undefined}
-      share={share} arcMs={arcMs} onReady={ready} beam={{ kind: 'circle' }} label={`Your window: ${Math.round(light.share * 100)}% lit`} />
+      share={share} arcMs={arcMs} onReady={ready} beam={started ? undefined : { kind: 'circle' }} label={`Your window: ${Math.round(light.share * 100)}% lit`} />
   );
 }

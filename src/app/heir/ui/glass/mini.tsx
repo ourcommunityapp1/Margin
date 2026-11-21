@@ -57,7 +57,9 @@ function load(base: string): Promise<Decoded> {
   return p;
 }
 
-const REST = LIGHT.rest; // dark glass at rest
+// Dark glass at rest: almost black where a light moves behind it (a course not started yet); a little brighter
+// on the small list windows so they never read as pitch black; and the usual dimness once a course has begun.
+const restFor = (moving: boolean, motion: Motion) => (!moving ? 0.13 : motion.kind === 'list' ? 0.1 : LIGHT.rest);
 const DUSTY = 0.5; // learned, but due for a refresh
 
 function shade(o: Uint8ClampedArray, g: Uint8ClampedArray, ids: Uint8ClampedArray, px: Int32Array, b: number, mix: number) {
@@ -73,16 +75,20 @@ function shade(o: Uint8ClampedArray, g: Uint8ClampedArray, ids: Uint8ClampedArra
   }
 }
 
-export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind: 'circle' } }: {
+export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind: 'circle' }, started = false }: {
   base: string; lit: number[]; dusty?: boolean[]; size?: number; label?: string; motion?: Motion;
+  /** The course has some progress: its window holds still, and only a course not yet begun has the moving light. */
+  started?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}|${JSON.stringify(motion)}`;
+  const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}|${JSON.stringify(motion)}|${started}`;
   useEffect(() => {
     let alive = true, raf = 0, visible = true;
     const canvas = ref.current;
     if (!canvas) return;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const moving = !started && !lit.some((f) => f > 0);
+    const REST = restFor(moving, motion);
     const seen = new IntersectionObserver((es) => { visible = es.some((e) => e.isIntersecting); });
     seen.observe(canvas);
     load(base).then((d) => {
@@ -101,7 +107,7 @@ export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind
       const dark = d.panes.filter((p) => !state[p.id]);
       for (const p of d.panes) shade(img.data, d.glass, d.ids, p.px, state[p.id] === 1 ? 1.05 : state[p.id] === 2 ? DUSTY : REST, state[p.id] === 1 ? 0 : state[p.id] === 2 ? 0.4 : 0.45);
       ctx.putImageData(img, 0, 0);
-      if (still || !dark.length) return;
+      if (still || !moving || !dark.length) return;
       const shown = new Float32Array(d.count + 1).fill(REST);
       let last = 0;
       const frame = (now: number) => {

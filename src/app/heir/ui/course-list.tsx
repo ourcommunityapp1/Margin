@@ -44,6 +44,8 @@ export function courseSummary(course: Course, track: Track, p: MemberProgress, m
     time: `${span(days)} at ${minutes} min a day`,
     noun: itemNoun(items[0], items.length),
     learned: stats.learned,
+    // Any part of any item learned: the course has begun, so its windows hold still.
+    started: items.some((i) => unitsFor(i, track).some((u) => p.units.includes(u.key))),
     total: stats.total,
     window: partWindow(course, track, p, now),
   };
@@ -71,7 +73,7 @@ export function CourseScreen({ id }: { id: string }) {
         {/* Like the window card on Today: the window's own colours, blurred, behind a frosted button. */}
         <section className="hr-rose-card">
           <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
-          <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={168} label={`${course.title} window, ${s.learned} of ${s.total} learned`} />
+          <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={168} started={s.started} label={`${course.title} window, ${s.learned} of ${s.total} learned`} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
             <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500, lineHeight: 1.15 }}>{course.title}</h1>
             <p style={{ margin: 0, fontSize: 16, color: '#D9D1C4', lineHeight: 1.45 }}>{course.blurb}</p>
@@ -89,7 +91,7 @@ export function CourseScreen({ id }: { id: string }) {
               const done = w.lit.filter((f) => f >= 1).length;
               return (
                 <div key={part.title} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
-                  <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={84} motion={{ kind: 'circle', delay: i * 0.35 }} label={`${part.title} window, ${done} of ${w.items.length} learned`} />
+                  <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={84} started={s.started} motion={{ kind: 'circle', delay: i * 0.35 }} label={`${part.title} window, ${done} of ${w.items.length} learned`} />
                   <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{part.title}</span>
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>{done} of {w.items.length}</span>
                 </div>
