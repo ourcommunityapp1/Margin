@@ -68,14 +68,18 @@ export function CourseScreen({ id }: { id: string }) {
     <>
       <main className="hr-page">
         <div style={{ marginTop: 8 }}><Back href="/heir/courses" label="Courses" /></div>
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', textAlign: 'center' }}>
-          {parts.length === 1 && <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={168} label={`${course.title} window, ${s.learned} of ${s.total} learned`} />}
-          <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 600, lineHeight: 1.15 }}>{course.title}</h1>
-          <p style={{ margin: 0, fontSize: 16, color: 'var(--muted)', lineHeight: 1.45 }}>{course.blurb}</p>
-          <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{s.total} {s.noun} · about {s.time}{s.learned > 0 ? ` · ${s.learned} learned` : ''}</p>
+        {/* Like the window card on Today: the window's own colours, blurred, behind a frosted button. */}
+        <section className="hr-rose-card">
+          <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
+          <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={168} label={`${course.title} window, ${s.learned} of ${s.total} learned`} />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
+            <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500, lineHeight: 1.15 }}>{course.title}</h1>
+            <p style={{ margin: 0, fontSize: 16, color: '#D9D1C4', lineHeight: 1.45 }}>{course.blurb}</p>
+            <p style={{ margin: 0, fontSize: 13, color: '#C9C1B3' }}>{s.total} {s.noun} · about {s.time}{s.learned > 0 ? ` · ${s.learned} learned` : ''}</p>
+          </div>
           {current
-            ? <span className="hr-tag">Your course</span>
-            : <button type="button" className="hr-btn" style={{ alignSelf: 'stretch' }} onClick={() => { update((h) => setPlan(h, { course: course.id })); router.push('/heir'); }}>Make this my course</button>}
+            ? <Link className="hr-glass-btn" href="/heir"><span>Continue this course</span><span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span></Link>
+            : <button type="button" className="hr-glass-btn" style={{ font: 'inherit', fontWeight: 600, fontSize: 17, cursor: 'pointer', textAlign: 'left' }} onClick={() => { update((h) => setPlan(h, { course: course.id })); router.push('/heir'); }}><span>Start this course</span><span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span></button>}
         </section>
 
         {parts.length > 1 && (

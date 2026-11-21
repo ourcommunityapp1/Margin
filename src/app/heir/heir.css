@@ -961,3 +961,13 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
   color: inherit;
   text-decoration: none;
 }
+
+/* Progress: how each stone is earned, folded away under the stones. */
+.hr-stones-how { border-top: 1px solid var(--line, rgba(0,0,0,0.08)); padding-top: 10px; }
+.hr-stones-how summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; display: flex; align-items: center; gap: 8px; }
+.hr-stones-how summary::-webkit-details-marker { display: none; }
+.hr-stones-how summary::before { content: "▸"; transition: transform 0.15s; }
+.hr-stones-how[open] summary::before { transform: rotate(90deg); }
+.hr-stones-how ol { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.hr-stones-how li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) { .hr-stones-how summary::before { transition: none; } }

@@ -109,6 +109,21 @@ export default function Progress() {
             ))}
           </div>
           {hints.length > 0 && <p style={{ margin: 0, background: 'var(--well)', borderRadius: 14, padding: '12px 14px', fontSize: 14, lineHeight: 1.45 }}><strong>Closest next:</strong> {hints.join('. ')}.</p>}
+          <details className="hr-stones-how">
+            <summary>How to earn each stone</summary>
+            <ol>
+              {LEVELS.map((l) => (
+                <li key={l.id}>
+                  <Stone level={l.n} size={30} />
+                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                    <b>{l.name}{l.counts ? <span style={{ fontWeight: 500, color: 'var(--muted)' }}> · {l.counts}</span> : null}</b>
+                    <span>{l.means}</span>
+                    {l.n === 6 && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Coming later: related verses can’t be memorized in Heir yet.</span>}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </details>
         </section>
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Days kept this month">

@@ -27,7 +27,10 @@ export const LEVELS: Level[] = [
   { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Long-term, and understood',
     means: 'In long-term memory, and you can say what it means.',
     rule: 'Emerald, plus its meaning' },
-  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: '', means: '', rule: 'Left open for now' },
+  // Not earnable yet: it needs memorizing related verses, which isn't built. levelFromLog stops at Sapphire.
+  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: 'Rooted in Scripture',
+    means: 'Sapphire, and you’ve also memorized every verse connected to it: a catechism answer’s proof texts, or a verse’s related verses.',
+    rule: 'Sapphire, plus all its related verses memorized' },
 ];
 
 export const levelInfo = (n: number): Level | null => LEVELS[n - 1] ?? null;
