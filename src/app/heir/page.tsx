@@ -10,7 +10,7 @@ import { useHeir } from './ui/provider';
 import { groupLabel, useCourse } from './ui/course';
 import { Tabs } from './ui/tabs';
 import { Stone } from './ui/stone';
-import { allItems, itemLabel } from '@/heir/content';
+import { allItems, getCollection, itemLabel } from '@/heir/content';
 import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
 import type { PathUnit } from '@/heir/path';
@@ -19,7 +19,7 @@ import { unitsFor } from '@/heir/lesson';
 import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
 import { RoundWindow } from './ui/glass/round';
-import { windowFor, windowLight } from './ui/glass/light';
+import { partWindow } from './ui/glass/light';
 
 export default function Today() {
   const { ready, household, time, now } = useHeir();
@@ -40,12 +40,12 @@ export default function Today() {
   const lessonName = done === 0 ? 'Welcome' : plan?.kind === 'welcome-back' ? `Welcome back · Lesson ${done + 1}` : `Lesson ${done + 1}`;
   const today = localDay(now);
   const counts = countsFor(allItems(), mine);
-  const glass = windowFor(course.id);
-  const light = windowLight(items, track, mine, now);
-  const next = light.lit.findIndex((f) => f < 1);
+  // The window for the part you're working in.
+  const light = partWindow(course, track, mine, now);
   const start = !plan ? null : plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`;
   const currentUnit = path.find((u) => u.status === 'current');
   const learnedCount = light.lit.filter((f) => f >= 1).length;
+  const noun = items[0] && getCollection(items[0].collection)?.unit === 'Question' ? 'questions' : 'sections';
 
   return (
     <>
@@ -57,12 +57,12 @@ export default function Today() {
 
         {/* The course's window: lit glass is what you've learned, dark glass is still to come. */}
         <section className="hr-rose-card">
-          <span className="hr-label">{course.title}</span>
-          <RoundWindow base={glass.base} lit={light.lit} dusty={light.dusty} share={light.share} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') ? next : undefined} />
+          <span className="hr-label">{light.count > 1 ? `Part ${light.index + 1} of ${light.count} · ` : ''}{light.title}</span>
+          <RoundWindow key={light.base} base={light.base} lit={light.lit} dusty={light.dusty} share={light.share} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
             {currentUnit && <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#F1C46B' }}>UNIT {currentUnit.number} OF {path.length}</span>}
             {currentUnit && <span className="serif" style={{ fontSize: 21, fontWeight: 500, lineHeight: 1.15 }}>{groupLabel(currentUnit.group)}</span>}
-            <span style={{ fontSize: 13, color: '#A9A196' }}>{learnedCount} of {items.length} questions lit</span>
+            <span style={{ fontSize: 13, color: '#A9A196' }}>{learnedCount} of {light.items.length} {noun} lit</span>
           </div>
           {start ? (
             <Link className="hr-rose-btn" href="/heir/lesson">{start}

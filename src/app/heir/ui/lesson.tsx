@@ -15,10 +15,10 @@ import { lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
-import { allItems, getItem, itemLabel } from '@/heir/content';
+import { allItems, courseParts, getItem, itemLabel } from '@/heir/content';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
-import { windowFor, windowLight } from './glass/light';
+import { partOf, partWindow, windowBase, windowLight } from './glass/light';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
 interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] } }
@@ -311,21 +311,29 @@ function DoneWindow({ session }: { session: Session }) {
   const after = windowLight(items, track, mine, now);
   const before = session.before;
   const fresh = items.filter((_, i) => after.lit[i] > (before.lit[i] ?? 0) + 1e-6);
-  const [dusty, setDusty] = useState(before.dusty);
-  const [share, setShare] = useState(before.lit.reduce((a, b) => a + b, 0) / Math.max(1, items.length));
+  // Show the part the new light went into (or, after a review, the part you're working in).
+  const part = fresh.length ? partOf(course, fresh[0].id) : partWindow(course, track, mine, now).index;
+  const pick = (all: number[] | boolean[]) => {
+    const at = new Map(items.map((it, i) => [it.id, i]));
+    return (courseParts(course)[part]?.items ?? []).map((it) => all[at.get(it.id) ?? 0]);
+  };
+  const beforeLit = pick(before.lit) as number[], afterLit = pick(after.lit) as number[];
+  const shareOf = (l: number[]) => l.reduce((a, b) => a + b, 0) / Math.max(1, l.length);
+  const [dusty, setDusty] = useState(pick(before.dusty) as boolean[]);
+  const [share, setShare] = useState(shareOf(beforeLit));
   // Each new pane lights in its own moment, then the gold arc on the frame moves on.
   const paneDelay = 150;
   const ready = () => {
-    setTimeout(() => win.current?.revealTo(after.lit), 700);
-    setTimeout(() => setDusty(after.dusty), 900);
+    setTimeout(() => win.current?.revealTo(afterLit), 700);
+    setTimeout(() => setDusty(pick(after.dusty) as boolean[]), 900);
     const pieces = win.current?.meta()?.count ?? 500;
-    const newPanes = Math.max(1, Math.round((after.share - share) * pieces));
-    setTimeout(() => setShare(after.share), 700 + Math.min(6000, newPanes * paneDelay) + 400);
+    const newPanes = Math.max(1, Math.round((shareOf(afterLit) - shareOf(beforeLit)) * pieces));
+    setTimeout(() => setShare(shareOf(afterLit)), 700 + Math.min(6000, newPanes * paneDelay) + 400);
   };
   const names = fresh.map((i) => itemLabel(i)).join(', ');
   return (
     <section className="hr-rose-card" style={{ paddingTop: 20 }}>
-      <RoundWindow ref={win} base={windowFor(course.id).base} lit={before.lit} dusty={dusty} share={share} onReady={ready} paneDelay={paneDelay} size={280}
+      <RoundWindow ref={win} base={windowBase(part)} lit={beforeLit} dusty={dusty} share={share} onReady={ready} paneDelay={paneDelay} size={280}
         label={names ? `Your window: new light for ${names}` : 'Your window'} />
       {names && <span className="serif" style={{ fontSize: 19, textAlign: 'center' }}>New light: {names}</span>}
     </section>
