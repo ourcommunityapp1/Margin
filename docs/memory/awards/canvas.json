@@ -435,6 +435,76 @@
    "w": 390,
    "h": 1000,
    "title": "Round window \u00b7 the lamb"
+  },
+  "K1EveningToday.dc.html": {
+   "x": 0,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Today, evening"
+  },
+  "K2Listen.dc.html": {
+   "x": 470,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Lie down: listen and answer"
+  },
+  "K3Check.dc.html": {
+   "x": 940,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Lie down: did you have it?"
+  },
+  "K4Goodnight.dc.html": {
+   "x": 1410,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Lie down: goodnight"
+  },
+  "K5MorningToday.dc.html": {
+   "x": 1880,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Today, morning"
+  },
+  "K6MorningDone.dc.html": {
+   "x": 0,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Rise: what stayed overnight"
+  },
+  "K7FromQuestion.dc.html": {
+   "x": 470,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Lesson step: from the question"
+  },
+  "K8Contrast.dc.html": {
+   "x": 940,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Lesson step: which question says this?"
+  },
+  "K9Pray.dc.html": {
+   "x": 1410,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Lesson end: pray this answer"
+  },
+  "K10Family.dc.html": {
+   "x": 1880,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Family night"
   }
  },
  "createdOnFiles": {
@@ -546,6 +616,13 @@
    "text": "The round window, from the Good Shepherd glass",
    "x": 0,
    "y": 20900
+  },
+  "t15": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "Lie down, rise, and the new lesson steps",
+   "x": 0,
+   "y": 22420
   }
  },
  "order": [
@@ -610,7 +687,17 @@
   "W5RoseWindow.dc.html",
   "W6CircleFace.dc.html",
   "W7CircleEmbrace.dc.html",
-  "W8CircleLamb.dc.html"
+  "W8CircleLamb.dc.html",
+  "K1EveningToday.dc.html",
+  "K2Listen.dc.html",
+  "K3Check.dc.html",
+  "K4Goodnight.dc.html",
+  "K5MorningToday.dc.html",
+  "K6MorningDone.dc.html",
+  "K7FromQuestion.dc.html",
+  "K8Contrast.dc.html",
+  "K9Pray.dc.html",
+  "K10Family.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"
