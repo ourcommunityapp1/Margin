@@ -18,15 +18,16 @@ type Props = {
   onReady?: () => void;
   paneDelay?: number;
   label?: string;
+  /** How long the gold arc takes to move to a new share (ms). */
+  arcMs?: number;
 };
 
-export const RoundWindow = forwardRef<WindowHandle, Props>(function RoundWindow({ base, lit, dusty, hint, share, size = 300, onReady, paneDelay, label }, ref) {
+export const RoundWindow = forwardRef<WindowHandle, Props>(function RoundWindow({ base, lit, dusty, hint, share, size = 300, onReady, paneDelay, label, arcMs = 900 }, ref) {
   // Frame geometry in a 324-unit box; the glass sits inside a circle of radius 146.
   const C = 162, R = 152.5;
-  const a = Math.max(0, Math.min(0.9999, share)) * 2 * Math.PI;
-  const pt = (r: number, t: number) => `${(C + r * Math.sin(t)).toFixed(2)} ${(C - r * Math.cos(t)).toFixed(2)}`;
-  const arc = share > 0 ? `M${pt(R, 0)} A${R} ${R} 0 ${share > 0.5 ? 1 : 0} 1 ${pt(R, a)}` : '';
-  const [nx, ny] = [C + 156 * Math.sin(a), C - 156 * Math.cos(a)];
+  const f = Math.max(0, Math.min(1, share));
+  // The arc is a full circle drawn only as far as the share; it and the notch glide when the share changes.
+  const glide = `${arcMs}ms cubic-bezier(.3,.6,.25,1)`;
   const glass = (size * 292) / 324, inset = (size - glass) / 2;
   return (
     <div className="hr-round" style={{ width: size, height: size }} role="img" aria-label={label ?? `Your window: ${Math.round(share * 100)}% lit`}>
@@ -42,8 +43,13 @@ export const RoundWindow = forwardRef<WindowHandle, Props>(function RoundWindow(
         <circle cx={C} cy={C} r="156" fill="none" stroke="url(#hr-round-stone)" strokeWidth="11" />
         <circle cx={C} cy={C} r="161.5" fill="none" stroke="rgba(0,0,0,0.45)" strokeWidth="1" />
         <circle cx={C} cy={C} r="150.6" fill="none" stroke="rgba(255,240,215,0.22)" strokeWidth="0.8" />
-        {arc && <path d={arc} fill="none" stroke="#F1C46B" strokeWidth="2.4" strokeLinecap="round" />}
-        {share < 1 && <circle className="hr-round-notch" cx={nx.toFixed(2)} cy={ny.toFixed(2)} r="4" fill="#FFE2A8" />}
+        <circle cx={C} cy={C} r={R} pathLength={100} fill="none" stroke="#F1C46B" strokeWidth="2.4" strokeLinecap="round"
+          strokeDasharray={`${f * 100} 100`} transform={`rotate(-90 ${C} ${C})`} style={{ transition: `stroke-dasharray ${glide}`, opacity: f > 0 ? 1 : 0 }} />
+        {f < 1 && (
+          <g style={{ transform: `rotate(${f * 360}deg)`, transformOrigin: `${C}px ${C}px`, transition: `transform ${glide}` }}>
+            <circle className="hr-round-notch" cx={C} cy={C - 156} r="4" fill="#FFE2A8" />
+          </g>
+        )}
         <g className="hr-round-sweep"><path d={`M${C} ${C} L${C} 10 A152 152 0 0 1 238 31 Z`} fill="url(#hr-round-sheen)" opacity="0.7" /></g>
       </svg>
     </div>

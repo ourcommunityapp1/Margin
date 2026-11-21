@@ -5,7 +5,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHeir } from './ui/provider';
 import { groupLabel, useCourse } from './ui/course';
 import { Tabs } from './ui/tabs';
@@ -19,7 +19,8 @@ import { unitsFor } from '@/heir/lesson';
 import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
 import { RoundWindow } from './ui/glass/round';
-import { partWindow } from './ui/glass/light';
+import { partWindow, type PartWindow } from './ui/glass/light';
+import type { WindowHandle } from './ui/glass/window';
 
 export default function Today() {
   const { ready, household, time, now } = useHeir();
@@ -50,7 +51,7 @@ export default function Today() {
     <>
       <main className="hr-page">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px', marginTop: 12 }}>
-          <h1 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name}</h1>
+          <h1 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name.trim().split(/\s+/)[0]}</h1>
           <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
         </header>
 
@@ -61,7 +62,7 @@ export default function Today() {
             {light.count > 1 && <span className="hr-label">Part {light.index + 1} of {light.count}</span>}
             <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.1 }}>{light.title}</h2>
           </div>
-          <RoundWindow key={light.base} base={light.base} lit={light.lit} dusty={light.dusty} share={light.share} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
+          <TodayWindow key={light.base} light={light} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
           <span style={{ fontSize: 13, color: '#C9C1B3' }}>{learnedCount} of {light.items.length} {noun} lit</span>
           {start ? (
             <Link className="hr-glass-btn" href="/heir/lesson"><span>{start}</span>
@@ -197,5 +198,31 @@ function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProg
         </ol>
       ) : <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{unit.group.items.length} questions. Opens when the unit before is locked in.</p>}
     </section>
+  );
+}
+
+// Each time Today opens, the window starts dark and lights pane by pane up to where you are, while the gold
+// arc on the frame grows round with it: your progress, shown fresh every visit.
+function TodayWindow({ light, hint }: { light: PartWindow; hint?: number }) {
+  const win = useRef<WindowHandle>(null);
+  const dark = useMemo(() => light.lit.map(() => 0), [light.lit]);
+  const [share, setShare] = useState(0);
+  const [arcMs, setArcMs] = useState(900);
+  const [settled, setSettled] = useState(false);
+  const ready = () => {
+    const pieces = win.current?.meta()?.count ?? 500;
+    const lit = Math.round(light.share * pieces);
+    // The engine spaces panes so the whole sweep takes about two and a half seconds at most.
+    const sweep = lit ? Math.min(2400, lit * 130) + 600 : 0;
+    setTimeout(() => {
+      win.current?.revealTo(light.lit);
+      setArcMs(Math.max(600, sweep));
+      setShare(light.share);
+      setTimeout(() => setSettled(true), sweep);
+    }, 350);
+  };
+  return (
+    <RoundWindow ref={win} base={light.base} lit={dark} dusty={settled ? light.dusty : undefined} hint={settled ? hint : undefined}
+      share={share} arcMs={arcMs} onReady={ready} label={`Your window: ${Math.round(light.share * 100)}% lit`} />
   );
 }
