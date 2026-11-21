@@ -407,6 +407,13 @@
    "w": 390,
    "h": 844,
    "title": "Hold, glass panes \u00b7 menu"
+  },
+  "W5RoseWindow.dc.html": {
+   "x": 1880,
+   "y": 19760,
+   "w": 390,
+   "h": 1000,
+   "title": "Stained-glass arcs \u00b7 a whole rose window"
   }
  },
  "createdOnFiles": {
@@ -571,7 +578,8 @@
   "W1GlassArcsTabs.dc.html",
   "W2GlassArcsMenu.dc.html",
   "W3HoldPanesTabs.dc.html",
-  "W4HoldPanesMenu.dc.html"
+  "W4HoldPanesMenu.dc.html",
+  "W5RoseWindow.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"
