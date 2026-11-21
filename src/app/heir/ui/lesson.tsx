@@ -186,6 +186,14 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55 }}>{step.body}</p>
             <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} onClick={advance}>Continue</button>
           </>
+        ) : step.kind === 'verse' ? (
+          <>
+            <figure style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <blockquote className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.45 }}>“{step.text}”</blockquote>
+              <figcaption style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 600 }}>{step.ref}</figcaption>
+            </figure>
+            <button type="button" className="hr-btn" onClick={advance}>Continue</button>
+          </>
         ) : step.kind === 'quiz' ? (
           <>
             <span className="hr-label">Welcome</span>

@@ -104,9 +104,12 @@ test('lie down: offered in the evening, once a night, with today’s questions f
   const evening = new Date(2026, 10, 20, 21);
   const picks = nightOffer(p, ids, evening)!;
   assert.equal(picks[0], 'wsc-2', 'today’s question first');
-  // One quiet first-letters step per question.
+  // One quiet first-letters step per question, then one verse connected to the last of them.
   const steps = buildNight({ items: picks.map((id) => getItem(id)!), track: 'adult', pool: wsc, rng: seeded(3) });
-  assert.deepEqual(steps.map((s) => s.kind), picks.map(() => 'letters'));
+  assert.deepEqual(steps.map((s) => s.kind), [...picks.map(() => 'letters'), 'verse']);
+  const verse = steps.at(-1)!;
+  assert.equal(verse.itemId, picks.at(-1));
+  assert.ok(verse.kind === 'verse' && getItem(verse.itemId)!.connected.some((r) => r.startsWith(verse.ref.split(':')[0])), 'from its own references');
   // Graded like a lesson: Q2 is still waiting for its night, so it isn't rated yet.
   let after = finishSession(p, { results: picks.map((itemId) => ({ itemId, kind: 'letters' as const, correct: true, hints: 0, ms: 1, review: true })), now: evening });
   assert.deepEqual(after.cards['wsc-2'], p.cards['wsc-2']);
@@ -116,4 +119,18 @@ test('lie down: offered in the evening, once a night, with today’s questions f
   assert.deepEqual(riseOffer(after, new Date(2026, 10, 21, 7)), picks);
   assert.equal(riseOffer(after, new Date(2026, 10, 21, 13)), null);
   assert.equal(riseOffer(after, new Date(2026, 10, 20, 23)), null, 'not the same night');
+});
+
+test('every verse is short and reads as a whole sentence', async () => {
+  const { VERSES } = await import('../content/verses.ts');
+  const { courses, courseItems } = await import('../content/index.ts');
+  const all = courses.flatMap((c) => courseItems(c));
+  assert.ok(Object.keys(VERSES).length >= all.length - 4, 'most items have one');
+  for (const [id, v] of Object.entries(VERSES)) {
+    const item = all.find((i) => i.id === id);
+    assert.ok(item, `${id} exists`);
+    assert.match(v.text, /^[A-Z].*[.?!]$/, `${id} reads as a sentence`);
+    assert.ok(v.text.split(' ').length <= 45, `${id} is short`);
+    assert.ok(!/[[\]]/.test(v.text), `${id} has no editorial brackets`);
+  }
 });

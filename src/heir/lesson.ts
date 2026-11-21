@@ -10,6 +10,7 @@
 import type { Item, MeaningQuestion, Track } from './types.ts';
 import { normalizeWord, words } from './words.ts';
 import { SWAPS } from './swaps.ts';
+import { VERSES } from './content/verses.ts';
 
 export interface Unit {
   key: string;
@@ -91,7 +92,7 @@ export function lockInsWaiting(items: Item[], isWaiting: (itemId: string) => boo
   return new Set(groupsOf(items).filter((g) => g.items.some((i) => isWaiting(i.id))).map((g) => g.key));
 }
 
-export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz';
+export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz' | 'verse';
 
 interface Base { id: string; itemId: string; review: boolean }
 // `lead` is the piece that comes just before the words being practiced, shown as the start of the answer.
@@ -99,6 +100,8 @@ export type Step =
   | (Base & { kind: 'intro'; unit: Unit })
   // Welcome lesson: a short card to read, and an easy question about it (neither is graded as memory).
   | (Base & { kind: 'info'; title: string; body: string })
+  // A verse connected to the item, to read and think on (not graded).
+  | (Base & { kind: 'verse'; ref: string; text: string })
   | (Base & { kind: 'quiz'; question: MeaningQuestion; options: string[] })
   // `tiles` in the right order; `bank` is tiles plus decoys, shuffled, as shown.
   // `slots`: the guided version, with a grey box for each word still to place.
@@ -454,12 +457,28 @@ export function withoutSpeaking(step: Step): Step {
 // type, silent so it won't wake anyone, and quick enough for the end of the day.
 export function buildNight(o: { items: Item[]; track: Track; pool: Item[]; rng: Rng }): Step[] {
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
-  return o.items.map((item) => textStep(c, 'letters', item, pick(unitsFor(item, o.track), c.rng), true));
+  return withVerse(c, o.items.map((item) => textStep(c, 'letters', item, pick(unitsFor(item, o.track), c.rng), true)));
+}
+
+// One verse to think on, connected to a question in the session, placed straight after that question's steps:
+// the last question with a verse at night, the first in the morning, so the two differ.
+function withVerse(c: Ctx, steps: Step[], from: 'last' | 'first' = 'last'): Step[] {
+  const order = steps.map((_, i) => i);
+  if (from === 'last') order.reverse();
+  for (const k of order) {
+    const v = VERSES[steps[k].itemId];
+    if (!v) continue;
+    let i = k;
+    while (i + 1 < steps.length && steps[i + 1].itemId === steps[k].itemId) i++;
+    const verse: Step = { id: nextId(c, 'verse', steps[k].itemId), itemId: steps[k].itemId, review: true, kind: 'verse', ref: v.ref, text: v.text };
+    return [...steps.slice(0, i + 1), verse, ...steps.slice(i + 1)];
+  }
+  return steps;
 }
 
 // "When you rise": last night's questions recalled in full from the question alone, said or typed in turn.
 export function buildRise(o: { items: Item[]; track: Track; pool: Item[]; rng: Rng }): Step[] {
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
   let k = 0;
-  return o.items.flatMap((item) => unitsFor(item, o.track).map((u) => textStep(c, k++ % 2 === 0 ? 'say' : 'type', item, u, true)));
+  return withVerse(c, o.items.flatMap((item) => unitsFor(item, o.track).map((u) => textStep(c, k++ % 2 === 0 ? 'say' : 'type', item, u, true))), 'first');
 }
