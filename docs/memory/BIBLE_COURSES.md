@@ -165,11 +165,8 @@ pieces.
 **First Verses** (replaces the 16-text draft above): 6 verses, 113 words, 9 sittings. About 1½ weeks daily,
 2½ weeks at 3–4 days a week. Easiest first, so the first verse is learned in the first sitting.
 Genesis 1:1 · Psalm 23:1 · John 3:16 · Romans 6:23 · Proverbs 3:5–6 · Psalm 119:11.
-Window options: Christ holding a child (Saint Joseph, Macon, Georgia, CC0); Jesus and the children (Sacred Heart,
-New Philadelphia, Ohio, CC0); Jesus, Friend of Children (Saint Louis, Batesville, Indiana, CC BY 4.0).
-Encouragement: a goal before starting; "your first Bible verse, by heart" after Genesis 1:1; the morning recall
-("still there after a night's sleep"); "say it to someone today"; halfway; a warm welcome back after missed days
-with no broken streaks; the finish with Psalm 119:11.
+Window: Jesus and the children, Sacred Heart Church, New Philadelphia, Ohio (CC0), the same church as the
+Christmas window. No extra encouragement messages through the course.
 
 **Christmas** (replaces the 15-text draft above), for Advent (Advent Sunday 2026 is 29 November). No songs.
 - A, recommended: Isaiah 9:6 · Matthew 1:21 · John 1:14 · Luke 2:8–14. 238 words, 13 sittings, about 2 weeks
