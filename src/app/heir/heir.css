@@ -935,3 +935,29 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-invite-icon { width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
 .hr-invite.night .hr-invite-icon { background: rgba(232,184,103,0.15); color: #E8B867; }
 .hr-invite.morning .hr-invite-icon { background: rgba(255,255,255,0.45); }
+
+/* Courses: a small, still copy of each course's round window in a stone ring, lit as far as you've come. */
+.hr-mini {
+  flex: none;
+  display: block;
+  box-sizing: border-box;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(145deg, #a69b89, #6f675a 55%, #4a443c);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.hr-mini canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #0b0d0f;
+}
+.hr-course-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  color: inherit;
+  text-decoration: none;
+}

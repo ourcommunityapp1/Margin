@@ -11,7 +11,7 @@ import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import type { Item } from '@/heir/types';
 
-export function ItemScreen({ item, collectionTitle, unit }: { item: Item; collectionTitle: string; unit: string }) {
+export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses' }: { item: Item; collectionTitle: string; unit: string; back?: string }) {
   const { household, progress, now } = useHeir();
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
@@ -24,7 +24,7 @@ export function ItemScreen({ item, collectionTitle, unit }: { item: Item; collec
     <>
       <main className="hr-page">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-          <Back href="/heir/learn" />
+          <Back href={back} />
           <span style={{ fontSize: 15, fontWeight: 600 }}>{collectionTitle} · {unit === 'Question' ? 'Q' : unit === 'Verse' ? 'Verse ' : 'Part '}{item.number}</span>
         </div>
 

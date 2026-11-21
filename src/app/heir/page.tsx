@@ -122,9 +122,9 @@ export default function Today() {
           const span = (list: PathUnit[]) => `${groupLabel(list[0].group).replace(/–.*$/, '')}–${list[list.length - 1].group.items[list[list.length - 1].group.items.length - 1].number}`;
           return (
             <>
-              {before.length > 0 && <Link href="/heir/learn" className="hr-course-chip"><span><b>{before.length === 1 ? 'Unit 1' : `Units 1–${before.length}`}</b> · locked in</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See in Learn</span></Link>}
+              {before.length > 0 && <Link href={`/heir/courses/${course.id}`} className="hr-course-chip"><span><b>{before.length === 1 ? 'Unit 1' : `Units 1–${before.length}`}</b> · locked in</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See the course</span></Link>}
               {path.slice(from, to).map((u) => <UnitCard key={u.group.key} unit={u} mine={mine} track={track} now={now} />)}
-              {after.length > 0 && <Link href="/heir/learn" className="hr-course-chip"><span><b>{after.length} more {after.length === 1 ? 'unit' : 'units'}</b> · {span(after)}</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See all</span></Link>}
+              {after.length > 0 && <Link href={`/heir/courses/${course.id}`} className="hr-course-chip"><span><b>{after.length} more {after.length === 1 ? 'unit' : 'units'}</b> · {span(after)}</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See all</span></Link>}
             </>
           );
         })()}

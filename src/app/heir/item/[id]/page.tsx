@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { allItems, getCollection, getItem } from '@/heir/content';
+import { allItems, courses, getCollection, getItem } from '@/heir/content';
 import { ItemScreen } from '../../ui/item';
 
 export function generateStaticParams() {
@@ -11,5 +11,6 @@ export default async function ItemPage({ params }: { params: Promise<{ id: strin
   const item = getItem(id);
   if (!item) notFound();
   const c = getCollection(item.collection)!;
-  return <ItemScreen item={item} collectionTitle={c.title} unit={c.unit} />;
+  const course = courses.find((x) => x.collections.includes(item.collection));
+  return <ItemScreen item={item} collectionTitle={c.title} unit={c.unit} back={course ? `/heir/courses/${course.id}` : '/heir/courses'} />;
 }
