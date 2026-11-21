@@ -205,32 +205,9 @@ export function parseProgress(raw: string | null): Progress {
   }
 }
 
-// "When you lie down": a relaxed review before sleep, answered honestly with Yes, Partly or Not yet.
-// Questions still waiting for their first night aren't rated: rehearsing them at bedtime is the point.
-// Yes and Partly nudge the schedule gently (Solid and Shaky); Not yet changes nothing, and comes back in
-// the morning with everything else from tonight.
-export type NightAnswer = 'yes' | 'partly' | 'not-yet';
-
-export function finishNight(p: MemberProgress, answers: { itemId: string; answer: NightAnswer }[], now: Date): MemberProgress {
-  const cards = { ...p.cards };
-  for (const { itemId, answer } of answers) {
-    const existing = cards[itemId];
-    if (!existing || answer === 'not-yet') continue;
-    const card = toCard(existing);
-    if (card.state === State.New) continue;
-    const grade = answer === 'yes' ? GRADES.solid.rating : GRADES.shaky.rating;
-    cards[itemId] = fromCard(scheduler.next(card, now, grade).card);
-  }
-  const at = now.toISOString();
-  const day = localDay(now);
-  return {
-    ...p,
-    cards,
-    days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
-    log: [...p.log, ...answers.map((a) => ({ itemId: a.itemId, kind: 'night' as const, correct: a.answer === 'yes', hints: a.answer === 'partly' ? 1 : 0, ms: 0, review: true, at }))].slice(-1500),
-    night: { at, items: answers.map((a) => a.itemId) },
-  };
-}
+// "When you lie down" is graded like any lesson (finishSession). Afterwards, remember which questions it
+// held, so "When you rise" can recall them in the morning.
+export const markNight = (p: MemberProgress, items: string[], now: Date): MemberProgress => ({ ...p, night: { at: now.toISOString(), items } });
 
 // After "When you rise".
 export const markRisen = (p: MemberProgress): MemberProgress => (p.night ? { ...p, night: { ...p.night, risen: true } } : p);

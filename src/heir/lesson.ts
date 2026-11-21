@@ -91,7 +91,7 @@ export function lockInsWaiting(items: Item[], isWaiting: (itemId: string) => boo
   return new Set(groupsOf(items).filter((g) => g.items.some((i) => isWaiting(i.id))).map((g) => g.key));
 }
 
-export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz' | 'night';
+export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz';
 
 interface Base { id: string; itemId: string; review: boolean }
 // `lead` is the piece that comes just before the words being practiced, shown as the start of the answer.
@@ -448,6 +448,13 @@ export function buildReview(o: { due: Due[]; track: Track; pool: Item[]; rng: Rn
 // When speaking isn't possible right now, a say step becomes typing the same words.
 export function withoutSpeaking(step: Step): Step {
   return step.kind === 'say' ? { ...step, kind: 'type', id: `${step.id}:typed` } : step;
+}
+
+// "When you lie down": short and quiet. One first-letters step per question: real recall, checked as you
+// type, silent so it won't wake anyone, and quick enough for the end of the day.
+export function buildNight(o: { items: Item[]; track: Track; pool: Item[]; rng: Rng }): Step[] {
+  const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
+  return o.items.map((item) => textStep(c, 'letters', item, pick(unitsFor(item, o.track), c.rng), true));
 }
 
 // "When you rise": last night's questions recalled in full from the question alone, said or typed in turn.

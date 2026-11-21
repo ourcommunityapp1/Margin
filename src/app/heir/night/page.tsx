@@ -1,7 +1,6 @@
-import { NightRunner } from '../ui/night';
+import { redirect } from 'next/navigation';
 
-export const metadata = { title: 'Heir · When you lie down' };
-
+// "When you lie down" runs in the normal lesson screen.
 export default function NightPage() {
-  return <NightRunner />;
+  redirect('/heir/lesson?mode=night');
 }
