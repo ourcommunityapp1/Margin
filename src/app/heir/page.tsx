@@ -14,7 +14,7 @@ import { allItems, getCollection, itemLabel } from '@/heir/content';
 import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
 import type { PathUnit } from '@/heir/path';
-import { lessonsDone, planNext } from '@/heir/planner';
+import { lessonsDone, nightOffer, planNext, riseOffer } from '@/heir/planner';
 import { unitsFor } from '@/heir/lesson';
 import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
@@ -45,6 +45,9 @@ export default function Today() {
   const light = partWindow(course, track, mine, now);
   const start = !plan ? null : plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`;
   const learnedCount = light.lit.filter((f) => f >= 1).length;
+  // The evening review and the morning recall, offered only when there's something to do.
+  const riseItems = riseOffer(mine, now);
+  const nightItems = riseItems ? null : nightOffer(mine, ids, now);
   const noun = items[0] && getCollection(items[0].collection)?.unit === 'Question' ? 'questions' : 'sections';
 
   return (
@@ -54,6 +57,20 @@ export default function Today() {
           <h1 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name.trim().split(/\s+/)[0]}</h1>
           <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
         </header>
+
+        {riseItems ? (
+          <Link className="hr-invite morning" href="/heir/lesson?mode=rise">
+            <span className="hr-invite-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 18a8 8 0 0 1 16 0M2 18h20M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1" /></svg></span>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}><span className="serif" style={{ fontSize: 18, fontWeight: 500 }}>When you rise</span><span style={{ fontSize: 13, opacity: 0.8 }}>1 minute · recall last night’s {riseItems.length}</span></span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </Link>
+        ) : nightItems ? (
+          <Link className="hr-invite night" href="/heir/night">
+            <span className="hr-invite-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a7 7 0 1 0 10.5 10.5z" /></svg></span>
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}><span className="serif" style={{ fontSize: 18 }}>When you lie down</span><span style={{ fontSize: 13, color: '#A9A6C4' }}>3 minutes before sleep · {nightItems.length} {nightItems.length === 1 ? 'question' : 'questions'}</span></span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </Link>
+        ) : null}
 
         {/* The course's window: lit glass is what you've learned, dark glass is still to come. */}
         <section className="hr-rose-card">

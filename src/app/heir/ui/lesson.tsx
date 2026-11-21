@@ -9,8 +9,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useHeir } from './provider';
 import { groupLabel, useCourse } from './course';
 import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report } from './steps';
-import { buildCheckpoint, buildLesson, buildLite, buildReview, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
-import { finishSession, localDay, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
+import { buildCheckpoint, buildLesson, buildLite, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
+import { finishSession, localDay, markRisen, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
 import { lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
@@ -21,13 +21,13 @@ import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
-interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] } }
+interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] }; rise?: boolean }
 
 const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
 interface Finished { right: number; total: number; minutes: number; ups: { itemId: string; from: number; to: number }[]; awards: string[]; kept: number }
 
-export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
+export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' }) {
   const router = useRouter();
   const { ready, household, updateProgress, progress } = useHeir();
   const { me, items, track, mine, due, course } = useCourse();
@@ -58,7 +58,11 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     const glassBefore = windowLight(items, track, mine, new Date());
     const base = { memberId: me.id, courseId: course.id, label: done === 0 ? 'Welcome' : `Lesson ${done + 1}`, before: { lit: glassBefore.lit, dusty: glassBefore.dusty } };
     let next: Session;
-    if (plan?.kind === 'welcome') {
+    if (mode === 'rise') {
+      // When you rise: last night's questions, recalled in full from the question alone.
+      const risen = (mine.night?.items ?? []).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
+      next = { ...base, label: 'When you rise', kind: 'review', steps: buildRise({ items: risen, track, pool, rng: Math.random }), units: [], group: null, rise: true };
+    } else if (plan?.kind === 'welcome') {
       const unit = plan.units[0];
       const item = getItem(unit.itemId)!;
       const intro = INTROS[course.id];
@@ -136,7 +140,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
     const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now });
     // Raise levels the log now shows and stamp new awards, so the done screen can show what changed.
     const settled = settle(next, allItems(), track, now);
-    updateProgress((p) => ({ ...p, [session.memberId]: settled.progress }));
+    const saved = session.rise ? markRisen(settled.progress) : settled.progress;
+    updateProgress((p) => ({ ...p, [session.memberId]: saved }));
     const recall = recorded.filter((r) => r.kind !== 'intro');
     setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round((Date.now() - sessionStart.current) / 60000)), ups: settled.ups, awards: settled.awards, kept: daysKept(settled.progress.days, localDay(now)) });
   };
@@ -229,6 +234,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
   const kind = session.label === 'Welcome' ? 'Welcome lesson complete' : session.label ? `${session.label} complete` : 'Lesson complete';
   const message =
     session.kind === 'checkpoint' ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
+    : session.rise ? 'Recalling it after a night’s sleep is the surest sign it’s being stored. Anything you missed comes back soon.'
     : session.kind === 'review' ? 'Each review waits until you’re close to forgetting, which is when recalling it helps most.'
     : partial ? `Part ${first!.part} of ${first!.of} learned. The next lesson continues it.`
     : lockTomorrow ? `That’s all of ${groupLabel(lockTomorrow.group)}. Lock them in tomorrow, after a night’s sleep: recalling them then is what fixes them in memory. Keep going if you like.`
@@ -265,7 +271,12 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
       ) : (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <span className="hr-label">{kind}</span>
-          <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{item ? `${itemLabel(item)}: ${item.prompt}` : 'Every review makes the next one easier.'}</p>
+          {session.rise ? (
+            <>
+              <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{finished.right} of {finished.total} stayed with you overnight</p>
+              <p className="serif" style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: 'var(--muted)' }}>“O Lord, in the morning you hear my voice.” <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Psalm 5:3</span></p>
+            </>
+          ) : <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{item ? `${itemLabel(item)}: ${item.prompt}` : 'Every review makes the next one easier.'}</p>}
         </section>
       )}
 

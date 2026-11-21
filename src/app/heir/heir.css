@@ -924,3 +924,42 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
   display: flex; align-items: center; justify-content: center;
   background: rgba(255, 248, 238, 0.92); color: #15181B;
 }
+
+/* "When you lie down": a dim, warm night screen. */
+.hr-night {
+  position: fixed; inset: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center;
+  background: radial-gradient(120% 70% at 50% 30%, #1B1D33, #0A0B14 70%); color: #EDE6D8;
+  padding: calc(env(safe-area-inset-top, 0px) + 18px) 22px calc(env(safe-area-inset-bottom, 0px) + 26px);
+  box-sizing: border-box; font-family: var(--font-inter), Inter, sans-serif;
+}
+.hr-night-end { background: radial-gradient(120% 70% at 50% 25%, #16182B, #050509 75%); }
+.hr-night-top { align-self: stretch; display: flex; justify-content: space-between; align-items: center; color: #8E8AA8; font-size: 13px; font-weight: 600; }
+.hr-night-x { width: 36px; height: 36px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; color: #8E8AA8; }
+.hr-night-window { margin-top: 28px; position: relative; filter: brightness(0.6); transition: filter 7s ease-in-out; }
+.hr-night-window::before { content: ''; position: absolute; inset: -18px; border-radius: 50%; background: radial-gradient(circle, rgba(232,184,103,0.25), rgba(232,184,103,0) 70%); animation: hr-night-breathe 6s ease-in-out infinite; }
+.hr-night-end .hr-night-window { margin-top: 40px; filter: brightness(0.8); animation: hr-night-dim 8s 1.5s ease-in-out forwards; }
+.hr-night-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 14px; max-width: 340px; }
+.hr-night-answer { flex: 1; align-self: stretch; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 0 6px; animation: hr-night-rise 0.8s ease-out both; }
+.hr-night-ref { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; color: #8E8AA8; text-transform: uppercase; }
+.hr-night-wave { display: flex; gap: 4px; height: 26px; align-items: center; }
+.hr-night-wave span { width: 4px; height: 26px; border-radius: 2px; background: #E8B867; opacity: 0.8; animation: hr-night-wave 1.2s ease-in-out infinite; }
+.hr-night-bottom { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.hr-night-ghost { min-height: 54px; padding: 0 28px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.14); background: transparent; color: #EDE6D8; font: 600 16px var(--font-inter), Inter, sans-serif; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
+.hr-night-ghost.wide { align-self: stretch; }
+.hr-night-voice { background: none; border: 0; color: #8E8AA8; font: 600 13px var(--font-inter), Inter, sans-serif; min-height: 40px; cursor: pointer; }
+.hr-night-choices { align-self: stretch; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.hr-night-choices button { min-height: 64px; border-radius: 18px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #EDE6D8; font: 600 16px var(--font-inter), Inter, sans-serif; cursor: pointer; }
+.hr-night-choices button.yes { background: rgba(232,184,103,0.16); border-color: rgba(232,184,103,0.4); color: #F1D49A; }
+@keyframes hr-night-breathe { 0%, 100% { transform: scale(1); opacity: 0.55; } 50% { transform: scale(1.1); opacity: 1; } }
+@keyframes hr-night-wave { 0%, 100% { transform: scaleY(0.35); } 50% { transform: scaleY(1); } }
+@keyframes hr-night-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes hr-night-dim { to { filter: brightness(0.3); } }
+@media (prefers-reduced-motion: reduce) { .hr-night-window::before, .hr-night-wave span, .hr-night-answer, .hr-night-end .hr-night-window { animation: none; } }
+
+/* Today's invitations: the evening review and the morning recall. */
+.hr-invite { border-radius: 22px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; text-decoration: none; }
+.hr-invite.night { background: linear-gradient(135deg, #23264A, #15172B); border: 1px solid rgba(190,180,255,0.18); color: #EDE6D8; box-shadow: 0 10px 30px rgba(10,10,30,0.35); }
+.hr-invite.morning { background: linear-gradient(120deg, #FFE0B0, #F6B97A 60%, #E99A86); color: #2A1D10; box-shadow: 0 10px 30px rgba(120,70,30,0.25); }
+.hr-invite-icon { width: 42px; height: 42px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+.hr-invite.night .hr-invite-icon { background: rgba(232,184,103,0.15); color: #E8B867; }
+.hr-invite.morning .hr-invite-icon { background: rgba(255,255,255,0.45); }

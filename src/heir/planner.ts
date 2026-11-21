@@ -7,7 +7,7 @@
 // Practice picks the questions most likely to have slipped first, weighted toward ones you've missed.
 
 import { groupsOf, lockInsWaiting, nextActivity, unitsFor, type Group, type Unit } from './lesson.ts';
-import { waitingForSleep, type MemberProgress, type SavedCard } from './progress.ts';
+import { localDay, waitingForSleep, type MemberProgress, type SavedCard } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
 const DAY = 86_400_000;
@@ -138,4 +138,31 @@ export function project(o: { items: Item[]; track: Track; p: MemberProgress; min
   const learnDays = remaining === 0 ? 0 : Math.ceil(remaining / perDay);
   const learnedBy = new Date(o.now.getTime() + learnDays * DAY);
   return { remaining, learnDays, learnedBy, longTermBy: new Date(learnedBy.getTime() + 90 * DAY) };
+}
+
+// "When you lie down": offered from 7 pm until 3 am, once a night. Up to five questions: those learned
+// today (still waiting for their first night) first, then a few on the edge of being forgotten.
+export const EVENING_FROM = 19;
+export function bedtimePicks(p: MemberProgress, itemIds: Set<string>, now: Date): string[] {
+  const fresh = Object.keys(p.cards).filter((id) => itemIds.has(id) && waitingForSleep(p, id, now));
+  const edge = riskOrder(p, itemIds, now).filter((x) => !fresh.includes(x.itemId) && x.recall >= 0.55 && x.recall <= 0.88).map((x) => x.itemId);
+  return [...fresh.slice(0, 4), ...edge].slice(0, 5);
+}
+// The evening the night belongs to: before 3 am counts as the evening before.
+const eveningOf = (d: Date) => localDay(new Date(d.getTime() - 3 * 3_600_000));
+export function nightOffer(p: MemberProgress, itemIds: Set<string>, now: Date): string[] | null {
+  const h = now.getHours();
+  if (h < EVENING_FROM && h >= 3) return null;
+  if (p.night && eveningOf(new Date(p.night.at)) === eveningOf(now)) return null;
+  const picks = bedtimePicks(p, itemIds, now);
+  return picks.length ? picks : null;
+}
+
+// "When you rise": the morning after a night review, from 4 am until noon, once.
+export function riseOffer(p: MemberProgress, now: Date): string[] | null {
+  const n = p.night;
+  if (!n || n.risen || !n.items.length) return null;
+  const h = now.getHours();
+  if (h < 4 || h >= 12) return null;
+  return eveningOf(new Date(n.at)) !== eveningOf(now) ? n.items : null;
 }

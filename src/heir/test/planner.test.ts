@@ -87,3 +87,40 @@ test('projection: more minutes a day, sooner learned; long-term memory three mon
   const done = project({ items: items.slice(0, 0), track: 'adult', p: emptyProgress(), minutes: 15, now: today });
   assert.equal(done.learnDays, 0);
 });
+
+test('lie down: offered in the evening, once a night, with today’s questions first', async () => {
+  const { finishSession, finishNight } = await import('../progress.ts');
+  const { nightOffer, riseOffer } = await import('../planner.ts');
+  const ids = new Set(wsc.map((i) => i.id));
+  const learned = (id: string) => unitsFor(getItem(id)!, 'adult');
+  const noon = new Date(2026, 10, 20, 12);
+  // Q1 learned two days ago and recalled since; Q2 learned today.
+  let p = finishSession(emptyProgress(), { results: [{ itemId: 'wsc-1', kind: 'intro', correct: true, hints: 0, ms: 1, review: false }], learned: learned('wsc-1'), now: new Date(2026, 10, 18, 12) });
+  p = finishSession(p, { results: [{ itemId: 'wsc-1', kind: 'type', correct: true, hints: 0, ms: 1, review: true }], now: new Date(2026, 10, 19, 9) });
+  p = finishSession(p, { results: [{ itemId: 'wsc-2', kind: 'intro', correct: true, hints: 0, ms: 1, review: false }], learned: learned('wsc-2'), now: noon });
+  assert.equal(nightOffer(p, ids, noon), null, 'not at noon');
+  const evening = new Date(2026, 10, 20, 21);
+  const picks = nightOffer(p, ids, evening)!;
+  assert.equal(picks[0], 'wsc-2', 'today’s question first');
+  // Answered: Q2 (still waiting for sleep) isn't rated; nothing more is offered tonight.
+  const after = finishNight(p, picks.map((itemId) => ({ itemId, answer: 'yes' as const })), evening);
+  assert.deepEqual(after.cards['wsc-2'], p.cards['wsc-2']);
+  assert.equal(nightOffer(after, ids, new Date(2026, 10, 21, 1)), null, 'not again after midnight');
+  // The next morning: rise with last night's questions, until noon.
+  assert.deepEqual(riseOffer(after, new Date(2026, 10, 21, 7)), picks);
+  assert.equal(riseOffer(after, new Date(2026, 10, 21, 13)), null);
+  assert.equal(riseOffer(after, new Date(2026, 10, 20, 23)), null, 'not the same night');
+});
+
+test('lie down: Not yet changes nothing; Yes and Partly nudge a reviewed question', async () => {
+  const { finishSession, finishNight } = await import('../progress.ts');
+  const learned = unitsFor(getItem('wsc-1')!, 'adult');
+  let p = finishSession(emptyProgress(), { results: [{ itemId: 'wsc-1', kind: 'intro', correct: true, hints: 0, ms: 1, review: false }], learned, now: new Date(2026, 10, 18, 12) });
+  p = finishSession(p, { results: [{ itemId: 'wsc-1', kind: 'type', correct: true, hints: 0, ms: 1, review: true }], now: new Date(2026, 10, 19, 9) });
+  const night = new Date(2026, 10, 20, 21);
+  assert.deepEqual(finishNight(p, [{ itemId: 'wsc-1', answer: 'not-yet' }], night).cards['wsc-1'], p.cards['wsc-1']);
+  assert.notDeepEqual(finishNight(p, [{ itemId: 'wsc-1', answer: 'yes' }], night).cards['wsc-1'], p.cards['wsc-1']);
+  const n = finishNight(p, [{ itemId: 'wsc-1', answer: 'partly' }], night);
+  assert.equal(n.log.at(-1)?.kind, 'night');
+  assert.deepEqual(n.night?.items, ['wsc-1']);
+});
