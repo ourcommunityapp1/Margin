@@ -124,6 +124,12 @@ Proverbs 15:1 · Proverbs 12:15 · Proverbs 9:10 · James 1:5 · James 3:17 · J
 Deuteronomy 6:4–9 · Psalm 127 · Psalm 78:1–7 · Ephesians 6:1–4 · Proverbs 22:6 · Colossians 3:18–21 ·
 Psalm 128:1–4 · Joshua 24:15 · Proverbs 1:8–9 · Ephesians 5:25 · Proverbs 31:30 · Psalm 103:17–18
 
+### Seasons
+
+**21. Christmas: The Word Became Flesh:** 15 texts, 40 verses, about 30 answers. Promise, birth and meaning.
+Isaiah 7:14 · Isaiah 9:2 · Isaiah 9:6–7 · Micah 5:2 · Matthew 1:20–23 · Luke 1:30–33 · Luke 1:46–50 · Luke 2:8–14 ·
+Matthew 2:1–2 · Matthew 2:9–11 · John 1:1–5 · John 1:14 · Galatians 4:4–5 · 1 Timothy 1:15 · 2 Corinthians 8:9
+
 ### Passages
 
 **17. Psalms to Know by Heart:** Psalms 1, 23, 46, 100, 121 and 103. 58 verses, about 32 answers.
@@ -134,7 +140,7 @@ Psalm 128:1–4 · Joshua 24:15 · Proverbs 1:8–9 · Ephesians 5:25 · Proverb
 
 **20. The Sermon on the Mount:** Matthew 5, 6 and 7, one Part per chapter. 111 verses, about 80 answers.
 
-Across all twenty courses there are 628 distinct verses.
+Across all twenty-one courses there are about 660 distinct verses.
 
 ## 4. How a Bible course would work in Heir
 
@@ -149,7 +155,19 @@ Across all twenty courses there are 628 distinct verses.
 - **A children's version** of each course uses the shorter texts, or the first verse of each passage.
 - **Custom courses later:** pick any verses, or start from a course and edit it.
 
-## 5. The decision that matters most: translation and licensing
+## 5. Windows
+
+One stained-glass window per course. Each must give a round crop with every head whole, no stone column or mullion
+through it, and no blank areas. Photos from Wikimedia Commons, credited on the About page.
+
+| Course | Window | License |
+|---|---|---|
+| First Verses | Psalm 23, the still waters: sheep by a winding stream. All Saints, Saughall | CC BY-SA 2.0 |
+| Fear, Worry and Peace | "Be of good cheer… O thou of little faith": Christ on the water. Willet Studios, First Presbyterian, Oklahoma City | CC BY 4.0 |
+| Christmas | The Nativity, an oval medallion. Saint Mary's, Rome, Georgia (alternates: Sacred Heart, New Philadelphia, Ohio; Saint Francis de Sales, Lebanon, Ohio) | CC BY 4.0 (alternates CC0) |
+| Kept for later | The Good Shepherd with a lamb, Christ Church Blacklands, Hastings (Assurance); "It is I; be not afraid", St Peter's, Bexhill (Hope in Suffering) | CC BY 2.0 |
+
+## 6. The decision that matters most: translation and licensing
 
 To memorize a verse word for word, the app has to hold its exact text on the phone, offline, every day. That's
 different from the verse screen, which shows one verse fetched live.
@@ -166,9 +184,9 @@ different from the verse screen, which shows one verse fetched live.
 - **A per-family choice later:** each family picks a translation, and the app fetches and keeps that version's
   text. That needs the licensing question settled first.
 
-## 6. Suggested order
+## 7. Suggested order
 
-1. **First Verses**, then **The Gospel**, **Fear, Worry and Peace** and **Psalms to Know by Heart**. These cover
+1. **First Verses**, **Fear, Worry and Peace** and **Christmas**, then **The Gospel** and **Psalms to Know by Heart**. These cover
    beginners, the core of the faith, the bedtime theme and a passage course.
 2. The rest of "The faith" and "For the battles of life".
 3. Growing in Christ, then Romans 8, Isaiah 53 and the Sermon on the Mount.
