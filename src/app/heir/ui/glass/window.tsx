@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { GlassEngine, loadGlass, type GlassMeta } from './engine';
+import { LIGHT, lightAt, lightOn, paneGain, type Motion } from './light-motion';
 
 // Timing for one piece of glass waking up (ms from its start):
 // 0-150 warm light catches the lead; 150-600 light rises past full; 600-1000 settles; glow fades by 900.
@@ -42,13 +43,15 @@ type Props = {
   fill?: boolean;
   /** Each newly lit pane takes its own moment, one after another (ms between panes). */
   paneDelay?: number;
+  /** A dim light moving behind the dark glass, so you can tell there's a picture before any of it is learned. */
+  beam?: Motion;
   className?: string;
 };
 
 type Track = { id: number; t0: number };
 
 export const LivingWindow = forwardRef<WindowHandle, Props>(
-  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, rays = true, fill = false, paneDelay, className }, ref) {
+  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, rays = true, fill = false, paneDelay, beam, className }, ref) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const engine = useRef<GlassEngine | null>(null);
     const meta = useRef<GlassMeta | null>(null);
@@ -65,6 +68,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
     const hintRef = useRef(hint); hintRef.current = hint;
     const raysRef = useRef(rays); raysRef.current = rays;
     const paneRef = useRef(paneDelay); paneRef.current = paneDelay;
+    const beamRef = useRef(beam); beamRef.current = beam;
     const visible = useRef(true);
     // All pieces in reveal order (bottom left to top right). Course question i of n owns slice i of n.
     const flat = useRef<number[]>([]);
@@ -167,7 +171,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
       const c = canvas.current!;
       loadGlass(base).then(({ assets, meta: m }) => {
         if (!alive) return;
-        try { engine.current = new GlassEngine(c, assets); engine.current.fill = fill; } catch (err) { console.error('glass', err); setFailed(true); return; }
+        try { engine.current = new GlassEngine(c, assets); engine.current.fill = fill; if (beamRef.current) engine.current.dull = 0.3; } catch (err) { console.error('glass', err); setFailed(true); return; }
         meta.current = m;
         flat.current = m.questions.flat();
         if (reduce.current) engine.current.cloud = 0;
@@ -197,6 +201,19 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
             // Many small pieces read as an outline if they all glow: keep the beckoning gentle for big panes.
             const soft = Math.min(1, 24 / Math.max(1, ids.length));
             ids.forEach((id, k) => { if (e.light[id] < 0.5) e.glow[id] = (0.12 + 0.45 * wave * (0.6 + 0.4 * Math.sin(k * 1.7))) * (0.35 + 0.65 * soft); });
+          }
+          // The moving light behind dark glass: every pane that isn't learned (and isn't lighting up right now)
+          // takes its light from how close it is to the light. The light never passes `peak`, so glass brighter
+          // than that has been learned.
+          const bm = beamRef.current, cs = meta.current?.centres;
+          if (bm && cs && !reduce.current) {
+            const busy = new Set(tracks.current.map((t) => t.id));
+            const s = lightAt(bm, now);
+            for (let id = 1; id <= e.count; id++) {
+              if (busy.has(id) || e.light[id] > LIGHT.peak + 0.07) continue;
+              const c = cs[id - 1];
+              e.light[id] = c ? LIGHT.peak * lightOn(s, c[0], c[1], paneGain(id)) : 0;
+            }
           }
           // Rays flare while light is arriving; the sun breaks through at the end.
           e.rayAmount += ((raysRef.current ? (active ? 1.15 : 0.75) : 0) - e.rayAmount) * 0.05;

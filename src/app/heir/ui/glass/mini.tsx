@@ -10,6 +10,9 @@
 // tab, or with reduced motion.
 
 import { useEffect, useRef } from 'react';
+import { LIGHT, lightAt, lightOn, paneGain, type Motion } from './light-motion';
+
+export type { Motion };
 
 type Pane = { id: number; px: Int32Array; cx: number; cy: number; gain: number };
 type Decoded = { size: number; glass: Uint8ClampedArray; ids: Uint8ClampedArray; flat: number[]; count: number; panes: Pane[] };
@@ -45,7 +48,7 @@ function load(base: string): Promise<Decoded> {
         a.px.push(p); a.x += p % size; a.y += Math.floor(p / size);
       }
       // A fixed small variation per pane, as real glass of different thickness would catch light differently.
-      const panes = [...acc].map(([id, a]) => ({ id, px: Int32Array.from(a.px), cx: a.x / a.px.length / size, cy: a.y / a.px.length / size, gain: 0.82 + ((id * 2654435761) % 1000) / 1000 * 0.18 }));
+      const panes = [...acc].map(([id, a]) => ({ id, px: Int32Array.from(a.px), cx: a.x / a.px.length / size, cy: a.y / a.px.length / size, gain: paneGain(id) }));
       return { size, glass: glass.data, ids: ids.data, flat: meta.questions.flat(), count: meta.count, panes };
     });
     p.catch(() => cache.delete(base));
@@ -54,39 +57,8 @@ function load(base: string): Promise<Decoded> {
   return p;
 }
 
-// The light behind the glass, as tuned in the mockup.
-const REST = 0.045; // dark glass at rest
+const REST = LIGHT.rest; // dark glass at rest
 const DUSTY = 0.5; // learned, but due for a refresh
-const LIGHT = { r: 0.27, peak: 0.58, soft: 0.85, pass: 2300, gap: 1100 };
-const FALLOFF = 1.6 / (0.35 + 1.6 * LIGHT.soft);
-
-// Every list window keys off one clock, so the light passes from one window into the next.
-const T0 = typeof performance === 'undefined' ? 0 : performance.now();
-
-export type Motion = { kind: 'circle'; delay?: number } | { kind: 'list'; index: number; count: number };
-
-// Where the light is behind one window right now (window coordinates 0..1), and how strong; null when it's away.
-function lightAt(motion: Motion, now: number): { x: number; y: number; k: number } | null {
-  const { pass, gap, r } = LIGHT;
-  if (motion.kind === 'circle') {
-    // Clockwise once round, a pause, then anticlockwise back, and so on. It fades in and out of each turn.
-    const cycle = pass + gap, t0 = now - T0 + (motion.delay ?? 0) * pass;
-    const n = Math.floor(t0 / cycle), t = (t0 - n * cycle) / pass;
-    if (t > 1) return null;
-    const tt = n % 2 ? 1 - t : t;
-    const a = -Math.PI / 2 + tt * Math.PI * 2;
-    return { x: 0.5 + 0.3 * Math.cos(a), y: 0.5 + 0.3 * Math.sin(a), k: Math.sin(Math.PI * t) };
-  }
-  // Down through every window in the list, one after another at the same pace, a pause, then back up.
-  const leg = motion.count * pass, cycle = 2 * (leg + gap), t0 = (now - T0) % cycle;
-  const down = t0 < leg + gap;
-  const u = down ? t0 : t0 - (leg + gap);
-  if (u > leg) return null;
-  const pos = down ? u / pass : motion.count - u / pass; // in windows, from the top of the first
-  const t = pos - motion.index;
-  if (t < -0.2 || t > 1.2) return null;
-  return { x: 0.5 + 0.05 * Math.sin(t * Math.PI * 2), y: -r + (1 + 2 * r) * t, k: 1 };
-}
 
 function shade(o: Uint8ClampedArray, g: Uint8ClampedArray, ids: Uint8ClampedArray, px: Int32Array, b: number, mix: number) {
   for (const p of px) {
@@ -139,11 +111,7 @@ export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind
         const s = lightAt(motion, now);
         let dirty = false;
         for (const p of dark) {
-          let b = REST;
-          if (s) {
-            const dd = Math.hypot(p.cx - s.x, p.cy - s.y) / LIGHT.r;
-            if (dd < 2.2) b = REST + (LIGHT.peak - REST) * s.k * p.gain * Math.exp(-dd * dd * FALLOFF);
-          }
+          const b = REST + (LIGHT.peak - REST) * lightOn(s, p.cx, p.cy, p.gain);
           if (Math.abs(shown[p.id] - b) < 0.003) continue;
           shown[p.id] = b;
           shade(img.data, d.glass, d.ids, p.px, b, 0.45 * (1 - (b - REST) / (1 - REST)));

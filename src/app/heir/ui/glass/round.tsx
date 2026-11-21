@@ -6,6 +6,7 @@
 
 import { forwardRef } from 'react';
 import { LivingWindow, type WindowHandle } from './window';
+import type { Motion } from './light-motion';
 
 type Props = {
   base: string;
@@ -20,9 +21,11 @@ type Props = {
   label?: string;
   /** How long the gold arc takes to move to a new share (ms). */
   arcMs?: number;
+  /** A dim light moving behind the dark glass. */
+  beam?: Motion;
 };
 
-export const RoundWindow = forwardRef<WindowHandle, Props>(function RoundWindow({ base, lit, dusty, hint, share, size = 300, onReady, paneDelay, label, arcMs = 900 }, ref) {
+export const RoundWindow = forwardRef<WindowHandle, Props>(function RoundWindow({ base, lit, dusty, hint, share, size = 300, onReady, paneDelay, label, arcMs = 900, beam }, ref) {
   // Frame geometry in a 324-unit box; the glass sits inside a circle of radius 146.
   const C = 162, R = 152.5;
   const f = Math.max(0, Math.min(1, share));
@@ -32,7 +35,7 @@ export const RoundWindow = forwardRef<WindowHandle, Props>(function RoundWindow(
   return (
     <div className="hr-round" style={{ width: size, height: size }} role="img" aria-label={label ?? `Your window: ${Math.round(share * 100)}% lit`}>
       <div className="hr-round-glass" style={{ left: inset, top: inset, width: glass, height: glass }}>
-        <LivingWindow ref={ref} base={base} lit={lit} dusty={dusty} hint={hint} rays={false} fill onReady={onReady} paneDelay={paneDelay} />
+        <LivingWindow ref={ref} base={base} lit={lit} dusty={dusty} hint={hint} rays={false} fill onReady={onReady} paneDelay={paneDelay} beam={beam} />
       </div>
       <svg width={size} height={size} viewBox="0 0 324 324" aria-hidden="true" className="hr-round-frame">
         <defs>

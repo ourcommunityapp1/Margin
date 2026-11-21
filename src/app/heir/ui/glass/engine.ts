@@ -23,7 +23,7 @@ const SCENE = `#version 300 es
 precision highp float;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uPhoto, uIds, uState;
-uniform vec2 uRes; uniform vec4 uRect; uniform float uTime, uCloud, uFlash, uStateW, uSurround, uRoom;
+uniform vec2 uRes; uniform vec4 uRect; uniform float uTime, uCloud, uFlash, uStateW, uSurround, uRoom, uDull;
 ${NOISE}
 float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 vec4 state(float id) { return texture(uState, vec2((mod(id, uStateW) + 0.5) / uStateW, (floor(id / uStateW) + 0.5) / float(textureSize(uState, 0).y))); }
@@ -62,6 +62,7 @@ void main() {
   vec3 dull = mix(vec3(l), c, 0.3) * 0.17 + vec3(0.016, 0.018, 0.022);
   dull *= 0.85 + 0.3 * fbm(uv * vec2(30.0, 60.0));
   dull += vec3(0.05) * smoothstep(0.25, 0.0, abs(uv.x * 0.8 - uv.y * 0.5 + 0.1)) * (1.0 - edge);
+  dull *= uDull;                                  // darker still where a moving light passes behind it
   // Lit glass: richer, with uneven thickness shimmering slightly and clouds passing outside.
   float colourIn = clamp(a * 1.25 - 0.25, 0.0, 1.0);   // colour arrives just after the light
   vec3 lit = mix(vec3(l), c, 1.0 + 0.28 * colourIn);
@@ -134,6 +135,8 @@ export class GlassEngine {
   readonly count: number;
   light: Float32Array; glow: Float32Array; dust: Float32Array;
   flash = 0; cloud = 1; rayAmount = 0.75; sun: [number, number] = [0.12, -0.25];
+  /** How bright dark glass is, as a share of its usual dimness (1). Lower for windows with a moving light. */
+  dull = 1;
   /** How bright the room is (only for photos that keep their real wall). */
   room = 0.4;
   readonly fit: 'cover' | 'contain';
@@ -278,7 +281,7 @@ export class GlassEngine {
       gl.uniform2f(u(p, 'uRes'), this.canvas.width, this.canvas.height);
       gl.uniform4f(u(p, 'uRect'), ...this.rect());
       gl.uniform1f(u(p, 'uTime'), t); gl.uniform1f(u(p, 'uCloud'), this.cloud);
-      gl.uniform1f(u(p, 'uFlash'), this.flash); gl.uniform1f(u(p, 'uStateW'), this.stateW);
+      gl.uniform1f(u(p, 'uFlash'), this.flash); gl.uniform1f(u(p, 'uDull'), this.dull); gl.uniform1f(u(p, 'uStateW'), this.stateW);
       gl.uniform1f(u(p, 'uSurround'), this.fit === 'cover' ? 1 : 0); gl.uniform1f(u(p, 'uRoom'), this.room);
     });
     this.draw('bright', T.bright, (p) => this.bind(p, 'uTex', 0, T.scene.tex));

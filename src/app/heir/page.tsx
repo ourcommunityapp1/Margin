@@ -240,6 +240,6 @@ function TodayWindow({ light, hint }: { light: PartWindow; hint?: number }) {
   };
   return (
     <RoundWindow ref={win} base={light.base} lit={dark} dusty={settled ? light.dusty : undefined} hint={settled ? hint : undefined}
-      share={share} arcMs={arcMs} onReady={ready} label={`Your window: ${Math.round(light.share * 100)}% lit`} />
+      share={share} arcMs={arcMs} onReady={ready} beam={{ kind: 'circle' }} label={`Your window: ${Math.round(light.share * 100)}% lit`} />
   );
 }
