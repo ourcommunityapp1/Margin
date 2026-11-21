@@ -155,6 +155,29 @@ Across all twenty-one courses there are about 660 distinct verses.
 - **A children's version** of each course uses the shorter texts, or the first verse of each passage.
 - **Custom courses later:** pick any verses, or start from a course and edit it.
 
+## Starter courses (revised)
+
+The first window has to be reachable in a few weeks, even at five minutes a day, three or four days a week.
+So the two starter courses are short. A 5-minute sitting learns about one verse of up to 30 words; longer texts
+split into pieces of about 30 words. Add one lock-in sitting and about one review sitting for every three new
+pieces.
+
+**First Verses** (replaces the 16-text draft above): 6 verses, 113 words, 9 sittings. About 1½ weeks daily,
+2½ weeks at 3–4 days a week. Easiest first, so the first verse is learned in the first sitting.
+Genesis 1:1 · Psalm 23:1 · John 3:16 · Romans 6:23 · Proverbs 3:5–6 · Psalm 119:11.
+Window options: Christ holding a child (Saint Joseph, Macon, Georgia, CC0); Jesus and the children (Sacred Heart,
+New Philadelphia, Ohio, CC0); Jesus, Friend of Children (Saint Louis, Batesville, Indiana, CC BY 4.0).
+Encouragement: a goal before starting; "your first Bible verse, by heart" after Genesis 1:1; the morning recall
+("still there after a night's sleep"); "say it to someone today"; halfway; a warm welcome back after missed days
+with no broken streaks; the finish with Psalm 119:11.
+
+**Christmas** (replaces the 15-text draft above), for Advent (Advent Sunday 2026 is 29 November). No songs.
+- A, recommended: Isaiah 9:6 · Matthew 1:21 · John 1:14 · Luke 2:8–14. 238 words, 13 sittings, about 2 weeks
+  daily or 3½ weeks at 3–4 days a week. One text per Advent week, ending with Luke 2 said together on Christmas Eve.
+- B, quicker: Isaiah 9:6 · Matthew 1:21 · Luke 2:10–11 · Luke 2:14 · John 1:14 · 2 Corinthians 9:15. 161 words,
+  12 sittings.
+Window: the Nativity, Sacred Heart Church, New Philadelphia, Ohio (CC0), cropped wide.
+
 ## 5. Windows
 
 One stained-glass window per course. Each must give a round crop with every head whole, no stone column or mullion
