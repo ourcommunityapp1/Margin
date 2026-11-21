@@ -379,6 +379,34 @@
    "w": 390,
    "h": 844,
    "title": "The menu, open"
+  },
+  "W1GlassArcsTabs.dc.html": {
+   "x": 0,
+   "y": 19760,
+   "w": 390,
+   "h": 1000,
+   "title": "Stained-glass arcs \u00b7 tabs"
+  },
+  "W2GlassArcsMenu.dc.html": {
+   "x": 470,
+   "y": 19760,
+   "w": 390,
+   "h": 1000,
+   "title": "Stained-glass arcs \u00b7 menu"
+  },
+  "W3HoldPanesTabs.dc.html": {
+   "x": 940,
+   "y": 19760,
+   "w": 390,
+   "h": 844,
+   "title": "Hold, glass panes \u00b7 tabs"
+  },
+  "W4HoldPanesMenu.dc.html": {
+   "x": 1410,
+   "y": 19760,
+   "w": 390,
+   "h": 844,
+   "title": "Hold, glass panes \u00b7 menu"
   }
  },
  "createdOnFiles": {
@@ -476,6 +504,13 @@
    "text": "Your four, with tabs (top) or a menu (bottom)",
    "x": 0,
    "y": 16900
+  },
+  "t13": {
+   "kind": "title1",
+   "maxW": 1900,
+   "text": "Real stained glass: the arcs, and the panes around the rose",
+   "x": 0,
+   "y": 19480
   }
  },
  "order": [
@@ -532,7 +567,11 @@
   "V6HoldMenu.dc.html",
   "V7DawnMenu.dc.html",
   "V8GlassMenu.dc.html",
-  "V9MenuOpen.dc.html"
+  "V9MenuOpen.dc.html",
+  "W1GlassArcsTabs.dc.html",
+  "W2GlassArcsMenu.dc.html",
+  "W3HoldPanesTabs.dc.html",
+  "W4HoldPanesMenu.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"

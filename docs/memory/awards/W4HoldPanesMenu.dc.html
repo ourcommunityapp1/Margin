@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hold, panes of glass, menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFF6E6}a:hover{color:#FFFFFF}
+@keyframes r1-fill{0%,18%{stroke-dasharray:0 100}68%,86%{stroke-dasharray:100 100}100%{stroke-dasharray:0 100}}
+@keyframes r1-glass{0%,18%{filter:brightness(.55) saturate(.6)}68%,86%{filter:brightness(1.25) saturate(1.35)}100%{filter:brightness(.55) saturate(.6)}}
+@keyframes r1-halo{0%,18%{opacity:.15;transform:scale(.9)}68%,86%{opacity:1;transform:scale(1.05)}100%{opacity:.15;transform:scale(.9)}}
+@keyframes r1-turn{to{transform:rotate(360deg)}}
+@keyframes r2-rise{0%,18%{clip-path:inset(100% 0 0 0)}68%,86%{clip-path:inset(30% 0 0 0)}100%{clip-path:inset(100% 0 0 0)}}
+@keyframes r2-edge{0%,18%{top:656px;opacity:0}24%{opacity:1}68%,80%{top:247px;opacity:1}86%{opacity:0}100%{top:656px;opacity:0}}
+@keyframes r3-pane{0%,10%{opacity:0}16%,66%{opacity:1}80%,100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: radial-gradient(100% 60% at 50% 40%, #1E1711, #0D0907); color: #FFF6E6; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/f18723faaa2d658b77bc6c5e1fe37e07" alt="The Good Shepherd window, about a third lit; holding the rose sends light up through it" style="position: absolute; left: 60px; top: 72px; width: 270px; height: 584px; object-fit: cover">
+  <img src="/_blob/b8140c3a7056cab893794dadfbb4fed9" alt="" style="position: absolute; left: 60px; top: 72px; width: 270px; height: 584px; object-fit: cover; filter: brightness(1.08) saturate(1.1); animation: r2-rise 4.2s ease-in-out infinite">
+  <div style="position: absolute; left: 0; right: 0; top: 520px; height: 150px; background: linear-gradient(180deg, rgba(13,9,7,0), #0D0907 85%)"></div>
+
+  <div style="position: absolute; left: 22px; right: 22px; top: 52px; display: flex; justify-content: space-between; align-items: center">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px">Good evening, Landon</span>
+    <button type="button" aria-label="Menu" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,246,230,0.28); border-style: solid; display: flex; align-items: center; justify-content: center; color: #FFF6E6; padding: 0; cursor: pointer; flex: none; background: transparent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"></path></svg></button>
+  </div>
+
+  <div style="position: absolute; left: 115px; top: 584px; width: 160px; height: 160px; border-radius: 80px; background: radial-gradient(circle, rgba(255,190,110,0.5), rgba(255,190,110,0) 68%); animation: r1-halo 4.2s ease-in-out infinite"></div>
+  <a href="#" aria-label="Hold to light lesson 8" style="position: absolute; left: 131px; top: 600px; width: 128px; height: 128px; text-decoration: none">
+    <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden="true" style="position: absolute; inset: 0">
+      <defs>
+        <filter id="r3-glass" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.09" numOctaves="2" seed="3" result="n"></feTurbulence>
+          <feColorMatrix in="n" type="saturate" values="0" result="g"></feColorMatrix>
+          <feComponentTransfer in="g" result="g2"><feFuncR type="linear" slope="0.8" intercept="0.5"></feFuncR><feFuncG type="linear" slope="0.8" intercept="0.5"></feFuncG><feFuncB type="linear" slope="0.8" intercept="0.5"></feFuncB></feComponentTransfer>
+          <feBlend in="SourceGraphic" in2="g2" mode="multiply" result="m"></feBlend>
+          <feComposite in="m" in2="SourceGraphic" operator="in"></feComposite>
+        </filter>
+      </defs>
+      <g filter="url(#r3-glass)">
+        <sc-for list="{{ring}}" as="p" hint-placeholder-count="16"><path d="{{p.d}}" fill="{{p.dim}}"></path></sc-for>
+      </g>
+      <g filter="url(#r3-glass)">
+        <sc-for list="{{ring}}" as="p" hint-placeholder-count="16"><path d="{{p.d}}" fill="{{p.lit}}" style="opacity: 0; animation: r3-pane 4.2s ease-in-out {{p.delay}} infinite"></path></sc-for>
+      </g>
+      <sc-for list="{{ring}}" as="p" hint-placeholder-count="16"><path d="{{p.d}}" fill="none" stroke="#0B0806" stroke-width="2.6" stroke-linejoin="round"></path></sc-for>
+      <circle cx="64" cy="64" r="61" fill="none" stroke="#0B0806" stroke-width="3"></circle>
+    </svg>
+    <span style="position: absolute; left: 22px; top: 22px; width: 84px; height: 84px; box-sizing: border-box; border-radius: 50%; border: 4px solid #0B0806; box-shadow: 0 0 0 1px rgba(201,160,99,0.5); background-image: url(/_blob/b8140c3a7056cab893794dadfbb4fed9); background-size: 600px 1298px; background-position: -262px -1080px; animation: r1-glass 4.2s ease-in-out infinite"></span>
+  </a>
+  <span style="position: absolute; left: 0; right: 0; top: 752px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 17px">Hold to light</span>
+    <span style="font-size: 11px; font-weight: 600; opacity: 0.55; letter-spacing: 0.4px">Lesson 8 · two new panes</span>
+  </span>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Sixteen small leaded panes in the window's own colours. Holding lights them one after another.
+    const colours = [[176, 40, 50], [226, 160, 52], [46, 82, 168], [34, 128, 84]];
+    const R = 60, r = 47, n = 16, cx = 64, cy = 64, gap = 0;
+    const pt = (rad, a) => `${(cx + rad * Math.cos(a)).toFixed(2)} ${(cy + rad * Math.sin(a)).toFixed(2)}`;
+    const ring = Array.from({ length: n }, (_, i) => {
+      const a0 = -Math.PI / 2 + (i / n) * 2 * Math.PI + gap, a1 = -Math.PI / 2 + ((i + 1) / n) * 2 * Math.PI - gap;
+      const [cr, cg, cb] = colours[i % colours.length];
+      return {
+        d: `M${pt(R, a0)} A${R} ${R} 0 0 1 ${pt(R, a1)} L${pt(r, a1)} A${r} ${r} 0 0 0 ${pt(r, a0)} Z`,
+        dim: `rgb(${Math.round(cr * 0.2 + 16)},${Math.round(cg * 0.2 + 16)},${Math.round(cb * 0.2 + 18)})`,
+        lit: `rgb(${Math.min(255, cr + 30)},${Math.min(255, cg + 30)},${Math.min(255, cb + 30)})`,
+        delay: `${(i * 0.13).toFixed(2)}s`,
+      };
+    });
+    return { ring };
+  }
+}
+</script>
+</body>
+</html>
