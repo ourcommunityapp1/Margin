@@ -36,13 +36,15 @@ type Props = {
   bottomInset?: number;
   /** The course question learned next: the lead around its glass glows softly, beckoning. */
   hint?: number;
+  /** Light rays falling from the lit glass. On by default. */
+  rays?: boolean;
   className?: string;
 };
 
 type Track = { id: number; t0: number };
 
 export const LivingWindow = forwardRef<WindowHandle, Props>(
-  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, className }, ref) {
+  function LivingWindow({ base, learned = 0, lit, dusty, onReady, bottomInset = 0, hint, rays = true, className }, ref) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const engine = useRef<GlassEngine | null>(null);
     const meta = useRef<GlassMeta | null>(null);
@@ -57,6 +59,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
     litRef.current = lit; dustyRef.current = dusty; readyRef.current = onReady;
     const insetRef = useRef(bottomInset); insetRef.current = bottomInset;
     const hintRef = useRef(hint); hintRef.current = hint;
+    const raysRef = useRef(rays); raysRef.current = rays;
     const visible = useRef(true);
     // All pieces in reveal order (bottom left to top right). Course question i of n owns slice i of n.
     const flat = useRef<number[]>([]);
@@ -189,7 +192,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
             ids.forEach((id, k) => { if (e.light[id] < 0.5) e.glow[id] = 0.18 + 0.5 * wave * (0.6 + 0.4 * Math.sin(k * 1.7)); });
           }
           // Rays flare while light is arriving; the sun breaks through at the end.
-          e.rayAmount += ((active ? 1.15 : 0.75) - e.rayAmount) * 0.05;
+          e.rayAmount += ((raysRef.current ? (active ? 1.15 : 0.75) : 0) - e.rayAmount) * 0.05;
           const f = flash.current;
           if (f) {
             const x = (now - f.t0) / 1400;

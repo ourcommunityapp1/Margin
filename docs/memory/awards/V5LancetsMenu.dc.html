@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lancets, with menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFF6E6}a:hover{color:#FFFFFF}
+@keyframes l1-breathe{0%,100%{box-shadow:0 0 0 1.5px #E9B867, 0 0 26px rgba(233,184,103,0.28)}50%{box-shadow:0 0 0 1.5px #E9B867, 0 0 48px rgba(233,184,103,0.6)}}
+@keyframes l1-pool{0%,100%{opacity:.55}50%{opacity:.85}}
+@keyframes l1-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: radial-gradient(110% 60% at 50% 32%, #241B14, #0E0A07); color: #FFF6E6; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 22px; right: 22px; top: 54px; display: flex; justify-content: space-between; align-items: center">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 400">Good evening, Landon</span>
+    <button type="button" aria-label="Menu" style="width: 40px; height: 40px; border-radius: 20px; border: 1px solid rgba(255,246,230,0.28); border-style: solid; display: flex; align-items: center; justify-content: center; color: #FFF6E6; padding: 0; cursor: pointer; flex: none; background: transparent"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"></path></svg></button>
+  </div>
+
+  <div style="position: absolute; left: 40px; top: 160px; width: 80px; height: 340px; border-radius: 40px 40px 4px 4px; overflow: hidden; border: 2.5px solid #0B0806; animation: l1-rise .8s .1s ease-out both">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/b8140c3a7056cab893794dadfbb4fed9); background-size: 312px 675px; background-position: -62px -260px"></div>
+  </div>
+  <a href="#" style="position: absolute; left: 135px; top: 126px; width: 120px; height: 374px; border-radius: 60px 60px 6px 6px; overflow: hidden; border: 2.5px solid #0B0806; text-decoration: none; animation: l1-breathe 3.8s ease-in-out infinite, l1-rise .8s ease-out both">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/b8140c3a7056cab893794dadfbb4fed9); background-size: 390px 844px; background-position: -135px -250px; filter: saturate(1.15) brightness(1.06)"></div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 140px; background: linear-gradient(180deg, rgba(11,8,6,0), rgba(11,8,6,0.88))"></div>
+    <span style="position: absolute; left: 0; right: 0; bottom: 18px; display: flex; flex-direction: column; align-items: center; gap: 6px">
+      <span style="font-size: 10px; font-weight: 700; letter-spacing: 2px; opacity: 0.8">TONIGHT</span>
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 21px">Lesson 8</span>
+      <span style="margin-top: 4px; width: 38px; height: 38px; border-radius: 19px; background: #E9B867; color: #2A1A08; display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+    </span>
+  </a>
+  <div style="position: absolute; left: 270px; top: 160px; width: 80px; height: 340px; border-radius: 40px 40px 4px 4px; overflow: hidden; border: 2.5px solid #0B0806; animation: l1-rise .8s .2s ease-out both">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/4616fe934452dcc5d91173366d4f58e8); background-size: 312px 675px; background-position: -173px -150px"></div>
+  </div>
+
+  <div style="position: absolute; left: 24px; right: 24px; top: 506px; height: 9px; border-radius: 2px; background: linear-gradient(180deg, #4A3C30, #241B14); box-shadow: inset 0 1px 0 rgba(255,236,210,0.18)"></div>
+  <div style="position: absolute; left: 20px; top: 518px; width: 130px; height: 64px; border-radius: 50%; background-image: url(/_blob/b8140c3a7056cab893794dadfbb4fed9); background-size: 390px 844px; background-position: -60px -500px; filter: blur(16px) saturate(1.6) brightness(1.2); mix-blend-mode: screen; animation: l1-pool 6s ease-in-out infinite"></div>
+  <div style="position: absolute; left: 120px; top: 518px; width: 150px; height: 84px; border-radius: 50%; background-image: url(/_blob/b8140c3a7056cab893794dadfbb4fed9); background-size: 390px 844px; background-position: -120px -420px; filter: blur(18px) saturate(1.7) brightness(1.3); mix-blend-mode: screen; animation: l1-pool 6s 1s ease-in-out infinite"></div>
+
+  <div style="position: absolute; left: 0; right: 0; top: 640px; display: flex; flex-direction: column; align-items: center; gap: 12px">
+    <div style="display: flex; gap: 12px; align-items: flex-end">
+      <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 6px">
+          <span style="width: 14px; height: 30px; border-radius: 7px 7px 2px 2px; box-sizing: border-box; background: {{d.bg}}; border: {{d.border}}; box-shadow: {{d.glow}}"></span>
+          <span style="font-size: 10px; font-weight: 600; opacity: 0.55">{{d.l}}</span>
+        </span>
+      </sc-for>
+    </div>
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-size: 14px; opacity: 0.7">2 days kept · 7 of 107 panes lit</span>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // The week as seven tiny lancets: lit when kept, glowing gold today, dashed for Sunday's rest.
+    const states = ['missed', 'missed', 'missed', 'kept', 'today', 'later', 'rest'];
+    const week = states.map((s, i) => ({
+      l: 'MTWTFSS'[i],
+      bg: s === 'kept' ? 'linear-gradient(180deg, #5B86D6, #E9B867 70%, #C2412E)' : s === 'today' ? 'rgba(233,184,103,0.25)' : 'transparent',
+      border: s === 'rest' ? '1.5px dashed rgba(255,246,230,0.3)' : s === 'today' ? '1.5px solid #E9B867' : s === 'kept' ? '1.5px solid #0B0806' : '1.5px solid rgba(255,246,230,0.2)',
+      glow: s === 'kept' ? '0 0 12px rgba(233,184,103,0.45)' : s === 'today' ? '0 0 14px rgba(233,184,103,0.6)' : 'none',
+    }));
+    return { week };
+  }
+}
+</script>
+</body>
+</html>

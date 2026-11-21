@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hold, with tabs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFF6E6}a:hover{color:#FFFFFF}
+@keyframes r1-fill{0%,18%{stroke-dasharray:0 100}68%,86%{stroke-dasharray:100 100}100%{stroke-dasharray:0 100}}
+@keyframes r1-glass{0%,18%{filter:brightness(.55) saturate(.6)}68%,86%{filter:brightness(1.25) saturate(1.35)}100%{filter:brightness(.55) saturate(.6)}}
+@keyframes r1-halo{0%,18%{opacity:.15;transform:scale(.9)}68%,86%{opacity:1;transform:scale(1.05)}100%{opacity:.15;transform:scale(.9)}}
+@keyframes r1-turn{to{transform:rotate(360deg)}}
+@keyframes r2-rise{0%,18%{clip-path:inset(100% 0 0 0)}68%,86%{clip-path:inset(30% 0 0 0)}100%{clip-path:inset(100% 0 0 0)}}
+@keyframes r2-edge{0%,18%{top:656px;opacity:0}24%{opacity:1}68%,80%{top:247px;opacity:1}86%{opacity:0}100%{top:656px;opacity:0}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: radial-gradient(100% 60% at 50% 40%, #1E1711, #0D0907); color: #FFF6E6; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/f18723faaa2d658b77bc6c5e1fe37e07" alt="The Good Shepherd window, about a third lit; holding the rose sends light up through it" style="position: absolute; left: 60px; top: 72px; width: 270px; height: 584px; object-fit: cover">
+  <img src="/_blob/b8140c3a7056cab893794dadfbb4fed9" alt="" style="position: absolute; left: 60px; top: 72px; width: 270px; height: 584px; object-fit: cover; filter: brightness(1.08) saturate(1.1); animation: r2-rise 4.2s ease-in-out infinite">
+  <div style="position: absolute; left: 112px; width: 166px; top: 656px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,214,150,0), #FFE2AE 50%, rgba(255,214,150,0)); box-shadow: 0 0 18px 4px rgba(255,200,120,0.55); animation: r2-edge 4.2s ease-in-out infinite"></div>
+  <div style="position: absolute; left: 0; right: 0; top: 520px; height: 150px; background: linear-gradient(180deg, rgba(13,9,7,0), #0D0907 85%)"></div>
+
+  <div style="position: absolute; left: 22px; right: 22px; top: 52px; display: flex; justify-content: space-between; align-items: center">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px">Good evening, Landon</span>
+    <span style="font-size: 12px; font-weight: 600; opacity: 0.6">7 / 107</span>
+  </div>
+
+  <div style="position: absolute; left: 115px; top: 584px; width: 160px; height: 160px; border-radius: 80px; background: radial-gradient(circle, rgba(255,190,110,0.5), rgba(255,190,110,0) 68%); animation: r1-halo 4.2s ease-in-out infinite"></div>
+  <a href="#" aria-label="Hold to light lesson 8" style="position: absolute; left: 131px; top: 600px; width: 128px; height: 128px; text-decoration: none">
+    <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden="true" style="position: absolute; inset: 0; animation: r1-turn 60s linear infinite">
+      <sc-for list="{{petals}}" as="p" hint-placeholder-count="12">
+        <path d="M64 2 a6 6 0 0 1 0 10 a6 6 0 0 1 0 -10" fill="none" stroke="#C9A063" stroke-width="1" opacity="0.7" transform="rotate({{p}} 64 64)"></path>
+      </sc-for>
+    </svg>
+    <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden="true" style="position: absolute; inset: 0; transform: rotate(-90deg)">
+      <circle cx="64" cy="64" r="48" fill="none" stroke="rgba(255,246,230,0.14)" stroke-width="2.5"></circle>
+      <circle cx="64" cy="64" r="48" pathLength="100" fill="none" stroke="#E9B867" stroke-width="3" stroke-linecap="round" style="animation: r1-fill 4.2s ease-in-out infinite"></circle>
+    </svg>
+    <span style="position: absolute; left: 22px; top: 22px; width: 84px; height: 84px; box-sizing: border-box; border-radius: 50%; border: 4px solid #0B0806; box-shadow: 0 0 0 1px rgba(201,160,99,0.5); background-image: url(/_blob/b8140c3a7056cab893794dadfbb4fed9); background-size: 600px 1298px; background-position: -262px -1080px; animation: r1-glass 4.2s ease-in-out infinite"></span>
+  </a>
+  <span style="position: absolute; left: 0; right: 0; top: 736px; display: flex; flex-direction: column; align-items: center; gap: 2px">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 17px">Hold, and let the light in</span>
+    <span style="font-size: 11px; font-weight: 600; opacity: 0.55; letter-spacing: 0.4px">Lesson 8 · two new panes</span>
+  </span>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: rgba(28,22,17,0.86); border: 1px solid rgba(255,236,210,0.08); border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px)"><a href="#" aria-current="page" style="min-height: 54px; border-radius: 20px; background: rgba(255,236,210,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; font-weight: 600; text-decoration: none; color: #FFF6E6"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a><a href="#" style="min-height: 54px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; font-weight: 600; text-decoration: none; color: rgba(255,246,230,0.55)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a><a href="#" style="min-height: 54px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; font-weight: 600; text-decoration: none; color: rgba(255,246,230,0.55)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Twelve small foils around the rose, like the tracery of a round window.
+    return { petals: Array.from({ length: 12 }, (_, i) => i * 30) };
+  }
+}
+</script>
+</body>
+</html>

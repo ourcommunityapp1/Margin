@@ -316,6 +316,69 @@
    "w": 390,
    "h": 844,
    "title": "Hold \u00b7 light rises"
+  },
+  "V1LancetsTabs.dc.html": {
+   "x": 0,
+   "y": 17180,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 tabs"
+  },
+  "V2HoldTabs.dc.html": {
+   "x": 470,
+   "y": 17180,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 tabs"
+  },
+  "V3DawnTabs.dc.html": {
+   "x": 940,
+   "y": 17180,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Dawn \u00b7 tabs"
+  },
+  "V4GlassTabs.dc.html": {
+   "x": 1410,
+   "y": 17180,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Stained glass \u00b7 tabs"
+  },
+  "V5LancetsMenu.dc.html": {
+   "x": 0,
+   "y": 18320,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 menu"
+  },
+  "V6HoldMenu.dc.html": {
+   "x": 470,
+   "y": 18320,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 menu"
+  },
+  "V7DawnMenu.dc.html": {
+   "x": 940,
+   "y": 18320,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Dawn \u00b7 menu"
+  },
+  "V8GlassMenu.dc.html": {
+   "x": 1410,
+   "y": 18320,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Stained glass \u00b7 menu"
+  },
+  "V9MenuOpen.dc.html": {
+   "x": 1880,
+   "y": 18320,
+   "w": 390,
+   "h": 844,
+   "title": "The menu, open"
   }
  },
  "createdOnFiles": {
@@ -406,6 +469,13 @@
    "text": "Lancets, Editorial, Hold: two refinements each",
    "x": 0,
    "y": 15500
+  },
+  "t12": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "Your four, with tabs (top) or a menu (bottom)",
+   "x": 0,
+   "y": 16900
   }
  },
  "order": [
@@ -453,7 +523,16 @@
   "E1Refined.dc.html",
   "E2Night.dc.html",
   "R1Quiet.dc.html",
-  "R2Rise.dc.html"
+  "R2Rise.dc.html",
+  "V1LancetsTabs.dc.html",
+  "V2HoldTabs.dc.html",
+  "V3DawnTabs.dc.html",
+  "V4GlassTabs.dc.html",
+  "V5LancetsMenu.dc.html",
+  "V6HoldMenu.dc.html",
+  "V7DawnMenu.dc.html",
+  "V8GlassMenu.dc.html",
+  "V9MenuOpen.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"

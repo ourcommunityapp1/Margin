@@ -33,7 +33,7 @@ export function WindowLab() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: '#16130F', overflow: 'hidden' }}>
-      <LivingWindow ref={win} base="/heir/glass/good-shepherd" />
+      <LivingWindow ref={win} base="/heir/glass/good-shepherd" rays={!(typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('rays') === '0')} />
 
       <div style={{ position: 'absolute', top: 'max(12px, env(safe-area-inset-top))', left: 12, right: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
         <span style={{ ...chip, display: 'flex', alignItems: 'center' }}>Shorter · {learned} of {total}</span>
