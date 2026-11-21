@@ -5,7 +5,31 @@ import type { Intro } from '../lesson.ts';
 
 const how = { title: 'How Heir helps you remember', body: 'Short lessons. You’ll see each answer, build it, then say or type it from memory. Questions come back just as you’re about to forget them, which is when recalling them helps most.' };
 
+const howVerses = { title: 'How Heir helps you remember', body: 'Short lessons. You’ll see each verse, build it, then say or type it from memory. Verses come back just as you’re about to forget them, which is when recalling them helps most.' };
+
 export const INTROS: Record<string, Intro> = {
+  'first-verses': {
+    cards: [
+      { title: 'Why learn verses by heart?', body: 'A verse you know by heart goes with you everywhere: when you’re afraid, when you’re tempted, and when someone asks what you believe.' },
+      { title: 'First Verses', body: 'Six short verses every Christian should know, from the Bible’s first sentence to the promise of eternal life. Each verse you learn lights a sixth of the window.' },
+      howVerses,
+    ],
+    quiz: [
+      { phrase: '', question: 'What is the best reason to learn verses by heart?', answer: 'So God’s word is with you wherever you go', distractors: ['To win prizes', 'So you never need to read the Bible', 'Because it earns God’s love'], explain: 'God’s love is a gift. Knowing His word by heart keeps it close every day.' },
+      { phrase: '', question: 'How many verses are in First Verses?', answer: 'Six', distractors: ['Twelve', 'Thirty', 'One hundred'], explain: 'Six short verses, learned one at a time.' },
+    ],
+  },
+  christmas: {
+    cards: [
+      { title: 'The Christmas story in six verses', body: 'From the prophets’ promise to the angels’ news: six verses that tell who Jesus is and why He was born. Begin in Advent and you can say them all by Christmas.' },
+      { title: 'Promised long before', body: 'Isaiah wrote of the Child about seven hundred years before He was born in Bethlehem. Matthew and Luke tell how the promise came true.' },
+      howVerses,
+    ],
+    quiz: [
+      { phrase: '', question: 'About how long before Jesus was born did Isaiah promise the Child?', answer: 'About 700 years', distractors: ['About 7 years', 'About 70 years', 'About 2,000 years'], explain: 'Isaiah prophesied in the 700s BC.' },
+      { phrase: '', question: 'Which Gospels tell the story of Jesus’ birth?', answer: 'Matthew and Luke', distractors: ['Mark and John', 'John and Acts', 'Only Mark'], explain: 'Matthew tells it from Joseph’s side, Luke from Mary’s and the shepherds’.' },
+    ],
+  },
   'westminster-shorter': {
     cards: [
       { title: 'What is a catechism?', body: 'A catechism teaches the faith by questions and answers. Learned by heart, the answers keep the whole of Christian teaching close at hand: in hard times, in conversation, and in teaching your children.' },

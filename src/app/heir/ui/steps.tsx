@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Item, Track } from '@/heir/types';
 import type { Step } from '@/heir/lesson';
 import { unitText } from '@/heir/lesson';
-import { itemLabel } from '@/heir/content';
+import { getCollection, getItem, isVerse, itemLabel } from '@/heir/content';
 import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
 // `slip`: right, but not cleanly (a spelling slip, a missed word), so the praise should be quieter.
@@ -27,11 +27,13 @@ const Lead = ({ text }: { text: string }) => (text ? <strong className="hr-lead"
 const Answer = ({ lead, text }: { lead?: string; text: string }) => <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={lead ?? ''} />{text}</p>;
 
 export function Cue({ item, step, title }: { item: Item; step: Step; title: string }) {
+  // A verse's prompt is its reference, already shown large below, so the label names the course instead.
+  const label = isVerse(item) ? title.replace(item.prompt, getCollection(item.collection)?.title ?? '') : title;
   return (
     <div className="hr-cue">
       <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {step.review && <span className="hr-tag">Review</span>}
-        {title}
+        {label}
       </span>
       <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>
     </div>
@@ -48,8 +50,8 @@ export function Intro({ item, track, step, onNext }: { item: Item; track: Track;
     <>
       <div className="hr-cue">
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span className="hr-new">{u.part > 1 ? 'Next part' : 'New question'}</span>
-          <span className="hr-label">{itemLabel(item)}{u.of > 1 ? ` · Part ${u.part} of ${u.of}` : ''}</span>
+          <span className="hr-new">{u.part > 1 ? 'Next part' : isVerse(item) ? 'New verse' : 'New question'}</span>
+          <span className="hr-label">{isVerse(item) ? getCollection(item.collection)?.title : itemLabel(item)}{u.of > 1 ? ` · Part ${u.part} of ${u.of}` : ''}</span>
         </span>
         <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.3, fontWeight: 600 }}>{item.prompt}</p>
       </div>
@@ -135,11 +137,13 @@ export function Next({ step, onReport }: { step: Extract<Step, { kind: 'next' }>
 }
 
 export function Match({ step, onReport }: { step: Extract<Step, { kind: 'match' }>; onReport: Report }) {
+  const item = getItem(step.itemId);
+  const verse = item ? isVerse(item) : false;
   return (
     <>
-      <span className="hr-label">Which question does this answer?</span>
+      <span className="hr-label">{verse ? 'Which verse is this?' : 'Which question does this answer?'}</span>
       <p className="hr-say-text">{step.text}</p>
-      <Choices options={step.options} onPick={(o) => onReport({ ok: o === step.answer, note: o === step.answer ? undefined : `It answers: ${step.answer}` })} />
+      <Choices options={step.options} onPick={(o) => onReport({ ok: o === step.answer, note: o === step.answer ? undefined : verse ? `It’s ${step.answer}.` : `It answers: ${step.answer}` })} />
     </>
   );
 }

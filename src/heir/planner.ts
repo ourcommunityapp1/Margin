@@ -6,7 +6,7 @@
 //   - a unit's last lesson locks its questions in; after a long absence, the first lesson catches up.
 // Practice picks the questions most likely to have slipped first, weighted toward ones you've missed.
 
-import { groupsOf, lockInsWaiting, nextActivity, unitsFor, type Group, type Unit } from './lesson.ts';
+import { groupsOf, lockInsWaiting, nextActivity, unitsFor, unitText, type Group, type Unit } from './lesson.ts';
 import { localDay, waitingForSleep, type MemberProgress, type SavedCard } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
@@ -119,23 +119,28 @@ export function describe(plan: LessonPlan, groupName: (g: Group) => string): str
 
 
 // When a course might be learned, and in long-term memory, at a daily goal. A rough guide, not a promise:
-//   - a lesson takes about 6 minutes;
-//   - two lessons in three bring something new (a question, or part of a long one, or a unit's lock-in);
-//     the third is practice;
+//   - a lesson on a typical 20-word piece takes about 6 minutes; shorter pieces take less (a 10-word
+//     verse about 3), but no lesson is under 2½ minutes or over 6;
+//   - a lock-in takes about 4 minutes;
+//   - two lessons in three bring something new; the third is practice;
 //   - reviews grow as more is learned, so allow a fifth more time for them;
 //   - long-term memory (Emerald) asks for three months of right answers after the last question is learned.
 export const LESSON_MINUTES = 6;
+const LOCK_IN_MINUTES = 4;
 export const GOALS = [5, 15, 25] as const;
 
 export interface Projection { remaining: number; learnDays: number; learnedBy: Date; longTermBy: Date }
 
+const lessonMinutes = (words: number) => Math.min(LESSON_MINUTES, Math.max(2.5, (LESSON_MINUTES * words) / 20));
+
 export function project(o: { items: Item[]; track: Track; p: MemberProgress; minutes: number; now: Date }): Projection {
   const learned = new Set(o.p.units), locks = new Set(o.p.checkpoints);
-  const units = o.items.flatMap((i) => unitsFor(i, o.track)).filter((u) => !learned.has(u.key)).length;
+  const todo = o.items.flatMap((i) => unitsFor(i, o.track).filter((u) => !learned.has(u.key)).map((u) => unitText(i, o.track, u).text.split(/\s+/).length));
   const lockIns = groupsOf(o.items).filter((g) => !locks.has(g.key)).length;
-  const remaining = units + lockIns;
-  const perDay = (o.minutes / LESSON_MINUTES) * (2 / 3) / 1.2;
-  const learnDays = remaining === 0 ? 0 : Math.ceil(remaining / perDay);
+  const remaining = todo.length + lockIns;
+  const work = todo.reduce((sum, w) => sum + lessonMinutes(w), 0) + lockIns * LOCK_IN_MINUTES;
+  const perDay = o.minutes * (2 / 3) / 1.2;
+  const learnDays = remaining === 0 ? 0 : Math.ceil(work / perDay);
   const learnedBy = new Date(o.now.getTime() + learnDays * DAY);
   return { remaining, learnDays, learnedBy, longTermBy: new Date(learnedBy.getTime() + 90 * DAY) };
 }

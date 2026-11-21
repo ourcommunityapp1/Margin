@@ -123,8 +123,9 @@ test('lie down: offered in the evening, once a night, with today’s questions f
 
 test('every verse is short and reads as a whole sentence', async () => {
   const { VERSES } = await import('../content/verses.ts');
-  const { courses, courseItems } = await import('../content/index.ts');
-  const all = courses.flatMap((c) => courseItems(c));
+  const { courses, courseItems, getCollection } = await import('../content/index.ts');
+  // Verse items are Scripture already; the verse screen is for catechism questions and creed sections.
+  const all = courses.flatMap((c) => courseItems(c)).filter((i) => getCollection(i.collection)?.kind !== 'scripture');
   assert.ok(Object.keys(VERSES).length >= all.length - 4, 'most items have one');
   for (const [id, v] of Object.entries(VERSES)) {
     const item = all.find((i) => i.id === id);

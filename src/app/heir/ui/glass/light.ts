@@ -12,7 +12,10 @@ import type { Item, Track } from '@/heir/types';
 // Shorter Catechism: the Good Shepherd (St Barnabas, Mount Eden): the face, the shepherd reaching to the lamb, the lamb.
 // Larger Catechism: the north rose of Chartres Cathedral.
 // The Creeds: two medallions of the Good Samaritan window at Chartres: the Creation and Fall, and the Samaritan.
+// First Verses: Jesus and the children; Christmas: the Nativity. Both from Sacred Heart Church, New Philadelphia, Ohio.
 const WINDOWS: Record<string, string[]> = {
+  'first-verses': ['/heir/glass/sh-children'],
+  christmas: ['/heir/glass/sh-nativity'],
   'westminster-shorter': ['/heir/glass/gsc-a', '/heir/glass/gsc-b', '/heir/glass/gsc-c'],
   'westminster-larger': ['/heir/glass/rose-chartres'],
   creeds: ['/heir/glass/chartres-m1', '/heir/glass/chartres-m2'],

@@ -7,6 +7,15 @@ const PHOTOS = [
   { when: 'Night', who: 'Giles Laurent', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:036_Milky_Way_during_Perseids_seen_from_Oeschinensee_with_water_reflections_Photo_by_Giles_Laurent.jpg' },
 ];
 
+// The stained-glass windows, cut into panes for each course (round crops, shared under the same licenses).
+const WINDOWS = [
+  { name: 'The Good Shepherd', place: 'St Barnabas Church, Mount Eden, Auckland', who: 'Bjankuloski06', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Good_Shepherd_staned-glass_window,_St_Barnabas,_Mt_Eden.jpg' },
+  { name: 'North rose', place: 'Chartres Cathedral', who: 'Zairon', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Chartres_Cath%C3%A9drale_Notre-Dame_de_Chartres_Innen_Nordrosette_1.jpg' },
+  { name: 'Good Samaritan window', place: 'Chartres Cathedral', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Vitrail_Chartres-044_rectifi%C3%A9.JPG' },
+  { name: 'Jesus and the Children', place: 'Sacred Heart Church, New Philadelphia, Ohio', who: 'Nheyob', license: 'CC0', page: 'https://commons.wikimedia.org/wiki/File:Sacred_Heart_Church_(New_Philadelphia,_Ohio)_-_Jesus_and_the_Children,_stained-glass.jpg' },
+  { name: 'The Nativity', place: 'Sacred Heart Church, New Philadelphia, Ohio', who: 'Nheyob', license: 'CC0', page: 'https://commons.wikimedia.org/wiki/File:Sacred_Heart_Church_(New_Philadelphia,_Ohio)_-_The_Nativity_of_the_Lord,_stained-glass.jpg' },
+];
+
 // Close-up crops of these photos, shared under the same licenses.
 const STONES = [
   { name: 'Amethyst', who: 'Jon Zander (Digon3)', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Amethyst_Quartz_Macro_1.JPG' },
@@ -34,6 +43,14 @@ export default function About() {
           <a href="https://www.lockman.org" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>lockman.org</a>
         </p>
         <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>NASB text is provided through the YouVersion Platform. Scripture marked KJV is from the King James Version, in the public domain.</p>
+      </section>
+      <section className="hr-card" style={{ padding: '6px 22px' }}>
+        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Stained-glass windows, from Wikimedia Commons</h2>
+        {WINDOWS.map((w) => (
+          <a key={w.page} className="hr-row" href={w.page} target="_blank" rel="noopener noreferrer">
+            <span><b>{w.name}</b> · {w.place} · {w.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{w.license}</span>
+          </a>
+        ))}
       </section>
       <section className="hr-card" style={{ padding: '6px 22px' }}>
         <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Background photos (softened), from Wikimedia Commons</h2>

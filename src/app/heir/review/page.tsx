@@ -19,7 +19,7 @@ export default function Review() {
           {c.items.map((i) => (
             <article key={i.id} className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>
-                <span style={{ fontWeight: 700 }}>{c.unit === 'Question' ? 'Q' : 'Section '}{i.number}</span>
+                <span style={{ fontWeight: 700 }}>{c.unit === 'Question' ? `Q${i.number}` : c.unit === 'Verse' ? i.prompt : `Section ${i.number}`}</span>
                 <span className="hr-tag">{i.reviewed ? 'Approved' : 'Not yet reviewed'}</span>
               </div>
               <p style={{ margin: 0, fontWeight: 600, color: 'var(--muted)' }}>{i.prompt}</p>

@@ -5,8 +5,9 @@ import { westminsterShorter } from './westminster-shorter.ts';
 import { westminsterLarger } from './westminster-larger.ts';
 import { apostlesCreed } from './apostles-creed.ts';
 import { niceneCreed } from './nicene-creed.ts';
+import { christmas, firstVerses } from './bible-starters.ts';
 
-export const collections: Collection[] = [westminsterShorter, westminsterLarger, apostlesCreed, niceneCreed];
+export const collections: Collection[] = [westminsterShorter, westminsterLarger, apostlesCreed, niceneCreed, firstVerses, christmas];
 
 // What a learner picks to memorize. A course runs through one or more collections in order.
 export interface Course {
@@ -20,6 +21,7 @@ export interface Course {
 }
 
 export const courses: Course[] = [
+  { id: 'first-verses', title: 'First Verses', blurb: 'Six short verses every Christian should know. The place to begin.', collections: ['first-verses'] },
   { id: 'westminster-shorter', title: 'Westminster Shorter Catechism', blurb: 'Short questions and answers. A good place to start.', collections: ['westminster-shorter'],
     parts: [
       { title: 'What we believe', collection: 'westminster-shorter', from: 1, to: 38 },
@@ -28,6 +30,7 @@ export const courses: Course[] = [
     ] },
   { id: 'westminster-larger', title: 'Westminster Larger Catechism', blurb: 'Fuller answers to the same questions.', collections: ['westminster-larger'] },
   { id: 'creeds', title: 'The Creeds', blurb: 'The Apostles’ Creed, then the Nicene Creed.', collections: ['apostles-creed', 'nicene-creed'] },
+  { id: 'christmas', title: 'Christmas', blurb: 'Six verses that tell the Christmas story, from the prophets’ promise to the angels’ news.', collections: ['christmas'] },
 ];
 
 const byId = new Map<string, Item>(collections.flatMap((c) => c.items.map((i) => [i.id, i] as const)));
@@ -58,10 +61,29 @@ export function courseParts(course: Course): { title: string; items: Item[] }[] 
     .filter((p) => p.items.length > 0);
 }
 
-// How an item is named in lists: "Q3" or "Apostles’ Creed 2".
+// How an item is named in lists: "Q3", "Apostles’ Creed, part 2", or a verse's reference, "John 3:16".
 export function itemLabel(item: Item): string {
   const c = getCollection(item.collection);
+  if (c?.kind === 'scripture') return item.prompt;
   return c?.unit === 'Question' ? `Q${item.number}` : `${c?.title ?? ''}, part ${item.number}`;
+}
+
+// A Bible verse, cued by its reference, rather than a catechism question or creed section.
+export function isVerse(item: Item): boolean {
+  return getCollection(item.collection)?.kind === 'scripture';
+}
+
+// The line under an item's label in lists: the question for a catechism, the opening words for a verse
+// (whose prompt is already its label).
+export function itemSubtitle(item: Item): string {
+  return getCollection(item.collection)?.kind === 'scripture' ? item.text : item.prompt;
+}
+
+// What a course's items are called, in the plural.
+export function itemNoun(item: Item | undefined, n = 2): string {
+  const unit = item ? getCollection(item.collection)?.unit : undefined;
+  const one = unit === 'Question' ? 'question' : unit === 'Verse' ? 'verse' : 'section';
+  return n === 1 ? one : `${one}s`;
 }
 
 export function getItem(id: string): Item | undefined {

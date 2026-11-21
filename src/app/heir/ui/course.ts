@@ -9,11 +9,12 @@ import { dueCards, localDay, memberProgress, waitingForSleep } from '@/heir/prog
 import { coursePath, courseStats, streak } from '@/heir/path';
 import { useHeir } from './provider';
 
-// "Questions 1–5", "Apostles’ Creed", "Nicene Creed, parts 1–3".
+// "Questions 1–5", "Apostles’ Creed", "Nicene Creed, parts 1–3", "Genesis 1:1 to John 3:16".
 export function groupLabel(g: Group): string {
   const c = getCollection(g.collection);
   const a = g.items[0].number, b = g.items[g.items.length - 1].number;
   if (c?.unit === 'Question') return a === b ? `Question ${a}` : `Questions ${a}–${b}`;
+  if (c?.kind === 'scripture') return g.items.length === c.items.length ? c.title : a === b ? g.items[0].prompt : `${g.items[0].prompt} to ${g.items[g.items.length - 1].prompt}`;
   return g.items.length === c?.items.length ? (c?.title ?? '') : `${c?.title ?? ''}, parts ${a}–${b}`;
 }
 

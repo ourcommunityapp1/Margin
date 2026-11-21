@@ -15,7 +15,7 @@ import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
-import { allItems, courseParts, getItem, itemLabel } from '@/heir/content';
+import { allItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
@@ -309,7 +309,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
               <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{finished.right} of {finished.total} stayed with you overnight</p>
               <p className="serif" style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: 'var(--muted)' }}>“O Lord, in the morning you hear my voice.” <span style={{ fontFamily: 'var(--font-inter), Inter, sans-serif', fontSize: 13, fontWeight: 600 }}>Psalm 5:3</span></p>
             </>
-          ) : <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{item ? `${itemLabel(item)}: ${item.prompt}` : 'Every review makes the next one easier.'}</p>}
+          ) : <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.22, fontWeight: 600 }}>{item ? (isVerse(item) ? item.prompt : `${itemLabel(item)}: ${item.prompt}`) : 'Every review makes the next one easier.'}</p>}
         </section>
       )}
 

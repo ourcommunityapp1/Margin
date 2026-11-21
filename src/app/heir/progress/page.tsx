@@ -32,6 +32,7 @@ export default function Progress() {
   const kinds = [
     { name: 'Catechism questions', list: items.filter((i) => getCollection(i.collection)?.kind === 'catechism') },
     { name: 'Creed sections', list: items.filter((i) => getCollection(i.collection)?.kind === 'creed') },
+    { name: 'Bible verses', list: items.filter((i) => getCollection(i.collection)?.kind === 'scripture') },
   ];
   const hints = items
     .filter((i) => (mine.levels[i.id] ?? 0) > 0 && !needsRefresh(mine, i.id, now))
@@ -90,10 +91,6 @@ export default function Progress() {
                 </div>
               );
             })}
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-              <span style={{ fontWeight: 600 }}>Bible passages</span>
-              <span style={{ color: 'var(--muted)' }}>Coming later</span>
-            </div>
           </div>
         </section>
 
