@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { describe, planNext, recallChance, riskOrder } from '../planner.ts';
+import { describe, GOALS, planNext, project, recallChance, riskOrder } from '../planner.ts';
 import { buildWelcome, groupsOf, seeded, unitsFor } from '../lesson.ts';
 import { emptyProgress, type LogEntry, type MemberProgress, type SavedCard } from '../progress.ts';
 import { allItems, courseItems, courses, getItem } from '../content/index.ts';
@@ -76,4 +76,14 @@ test('a unit ends by locking it in; a finished course keeps practicing', () => {
   const all = progress(wsc.map((i) => i.id), { checkpoints: groupsOf(wsc).map((g) => g.key), courseLessons: { 'westminster-shorter': 140 }, log: [entry('wsc-1', '2026-11-20T10:00:00Z')] });
   const after = plan(all);
   assert.equal(after?.kind, 'practice');
+});
+
+test('projection: more minutes a day, sooner learned; long-term memory three months after', () => {
+  const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
+  const today = new Date('2026-11-21T12:00:00Z');
+  const [five, fifteen, twentyFive] = GOALS.map((minutes) => project({ items, track: 'adult', p: emptyProgress(), minutes, now: today }));
+  assert.ok(five.learnDays > fifteen.learnDays && fifteen.learnDays > twentyFive.learnDays);
+  assert.equal(Math.round((fifteen.longTermBy.getTime() - fifteen.learnedBy.getTime()) / 86400000), 90);
+  const done = project({ items: items.slice(0, 0), track: 'adult', p: emptyProgress(), minutes: 15, now: today });
+  assert.equal(done.learnDays, 0);
 });

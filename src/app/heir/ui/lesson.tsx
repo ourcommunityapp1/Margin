@@ -215,7 +215,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' }) {
 }
 
 function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
-  const { activity, group, groupLearned, mine, items, track, course } = useCourse();
+  const { activity, group, groupLearned, mine, items, track, course, path } = useCourse();
+  const lockTomorrow = path.find((u) => u.lockWaiting && session.units.some((x) => u.group.items.some((i) => i.id === x.itemId)));
   const { now } = useHeir();
   const upNext = planNext({ courseId: course.id, items, track, p: mine, now });
   const first = session.units[0];
@@ -230,6 +231,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
     session.kind === 'checkpoint' ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
     : session.kind === 'review' ? 'Each review waits until you’re close to forgetting, which is when recalling it helps most.'
     : partial ? `Part ${first!.part} of ${first!.of} learned. The next lesson continues it.`
+    : lockTomorrow ? `That’s all of ${groupLabel(lockTomorrow.group)}. Lock them in tomorrow, after a night’s sleep: recalling them then is what fixes them in memory. Keep going if you like.`
     : activity?.kind === 'checkpoint' ? `That’s all of ${groupLabel(activity.group)}. Next: lock them in, all together, from memory.`
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
   const cta = upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;

@@ -8,15 +8,26 @@ import { unitsFor } from './lesson.ts';
 import { localDay, type LogEntry, type MemberProgress } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
-export interface Level { n: number; id: string; name: string; foundation: string; counts: string; rule: string }
+// `counts`: what it means in a word; `means`: in a sentence anyone can follow; `rule`: exactly how it's earned.
+export interface Level { n: number; id: string; name: string; foundation: string; counts: string; means: string; rule: string }
 
 export const LEVELS: Level[] = [
-  { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Know', rule: 'Typed in full, correctly, the first time' },
-  { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'Memorized', rule: 'Said or typed right on 3 different days' },
-  { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Mastered', rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question' },
-  { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'Long-term memory', rule: 'Every review right for 3 months, including one after a gap of a month' },
-  { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Long-term, and understood', rule: 'Emerald, plus its meaning' },
-  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: '', rule: 'Left open for now' },
+  { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Know',
+    means: 'You recalled it the next day, after a night’s sleep: it has started to stick.',
+    rule: 'Recalled in full on a day after you learned it' },
+  { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'Memorized',
+    means: 'You’ve recalled it on three different days: it’s yours, word for word.',
+    rule: 'Said or typed right on 3 different days' },
+  { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Mastered',
+    means: 'You still had it after two weeks away, from the question and from the answer.',
+    rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question' },
+  { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'Long-term memory',
+    means: 'Right every time for three months, even after a month away. With a short review now and then, you can expect to keep it for life.',
+    rule: 'Every review right for 3 months, including one after a gap of a month' },
+  { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Long-term, and understood',
+    means: 'In long-term memory, and you can say what it means.',
+    rule: 'Emerald, plus its meaning' },
+  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: '', means: '', rule: 'Left open for now' },
 ];
 
 export const levelInfo = (n: number): Level | null => LEVELS[n - 1] ?? null;
@@ -37,6 +48,11 @@ export function levelFromLog(item: Item, track: Track, log: LogEntry[], now: Dat
   const all = ss.flatMap((s) => s.entries);
   const typedRight = all.filter((e) => e.kind === 'type' && e.correct).length;
   if (typedRight < unitsFor(item, track).length) return 0;
+  // Know: recalled in full on a later day than it was first learned. Recall in the same sitting is
+  // mostly short-term memory; recall after a night's sleep is the first sign it's stored.
+  const firstDay = ss.length ? localDay(new Date(ss[0].at)) : '';
+  const afterSleep = ss.some((s) => localDay(new Date(s.at)) !== firstDay && s.entries.some((e) => FULL.has(e.kind) && e.correct));
+  if (!afterSleep) return 0;
 
   const fullDays = new Set(ss.filter((s) => s.entries.some((e) => FULL.has(e.kind) && e.correct)).map((s) => localDay(new Date(s.at))));
   if (fullDays.size < 3) return 1;
@@ -79,7 +95,7 @@ export function needsRefresh(p: MemberProgress, itemId: string, now: Date): bool
 // What the next level asks for, in a few words, or null at the top.
 export function nextStep(item: Item, track: Track, p: MemberProgress, now: Date): string | null {
   const n = levelOf(p, item.id);
-  if (n === 0) return 'Type it in full to earn Amethyst';
+  if (n === 0) return 'Recall it after a night’s sleep to earn Amethyst';
   if (n === 1) {
     const days = new Set(sessions(p.log, item.id).filter((s) => s.entries.some((e) => FULL.has(e.kind) && e.correct)).map((s) => localDay(new Date(s.at)))).size;
     const left = Math.max(1, 3 - days);

@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildCheckpoint, buildLesson, buildReview, groupsOf, nextActivity, nextUnit, phrases, practiceKinds, seeded, unitsFor, unitText, withoutSpeaking, type Mate } from '../lesson.ts';
 import { checkOrder, closeWord, gradeSpoken, wordMatches, firstLetter, SPOKEN_PASS } from '../grade.ts';
-import { dueCards, emptyProgress, finishSession, parseProgress, ratingFor, seenCounts, type StepResult } from '../progress.ts';
+import { afterSleep, dueCards, emptyProgress, finishSession, GRADES, parseProgress, ratingFor, seenCounts, waitingForSleep, type StepResult } from '../progress.ts';
+import { planNext } from '../planner.ts';
 import { courses, courseItems, getItem, allItems } from '../content/index.ts';
 import { words } from '../words.ts';
 import { coursePath, courseStats, streak } from '../path.ts';
@@ -188,22 +189,55 @@ test('progress: an item gets a schedule only once all its parts are learned', ()
   assert.equal(p.days.length, 1);
 });
 
-test('progress: a clean first lesson comes back in a few days; a rough one tomorrow', () => {
+test('progress: a newly learned question comes back after a night’s sleep, however the lesson went', () => {
   const now = at('2026-11-19T12:00:00Z');
   const unit = unitsFor(wsc1, 'adult')[0];
   const good = finishSession(emptyProgress(), { results: [ok('wsc-1', 'intro'), ok('wsc-1')], learned: unit, now });
   const rough = finishSession(emptyProgress(), { results: [{ ...ok('wsc-1'), correct: false }, { ...ok('wsc-1', 'say'), correct: false }], learned: unit, now });
-  const days = (p: typeof good) => (new Date(p.cards['wsc-1'].due).getTime() - now.getTime()) / 86400000;
-  assert.ok(days(good) >= 2 && days(good) <= 4, `good ${days(good)}`);
-  assert.ok(days(rough) <= 1, `rough ${days(rough)}`);
-  assert.equal(dueCards(good, now).length, 0);
-  assert.deepEqual(dueCards(good, at('2026-11-25T12:00:00Z')).map((c) => c.itemId), ['wsc-1']);
+  const next = afterSleep(now).toISOString();
+  assert.equal(good.cards['wsc-1'].due, next);
+  assert.equal(rough.cards['wsc-1'].due, next);
+  assert.ok(waitingForSleep(good, 'wsc-1', at('2026-11-19T20:00:00Z')));
+  // Practising again the same evening is welcome, but doesn't count yet.
+  const evening = finishSession(good, { results: [ok('wsc-1', 'type')], now: at('2026-11-19T20:00:00Z') });
+  assert.deepEqual(evening.cards['wsc-1'], good.cards['wsc-1']);
+  assert.equal(dueCards(good, at('2026-11-19T22:00:00Z')).length, 0);
+  // The morning recall is the first real rating.
+  const morning = at('2026-11-20T09:00:00Z');
+  assert.deepEqual(dueCards(good, morning).map((c) => c.itemId), ['wsc-1']);
+  const rated = finishSession(good, { results: [ok('wsc-1', 'type')], now: morning });
+  const days = (new Date(rated.cards['wsc-1'].due).getTime() - morning.getTime()) / 86400000;
+  assert.ok(days >= 1.5 && days <= 4.5, `next review in ${days} days`);
+  assert.ok(!waitingForSleep(rated, 'wsc-1', morning));
 });
 
-test('progress: ratings come from first-try answers and hints, not from reading', () => {
-  assert.equal(ratingFor([{ ...ok('x', 'intro'), correct: false }, ok('x')]), 3);
-  assert.equal(ratingFor([{ ...ok('x'), hints: 1 }]), 2);
-  assert.equal(ratingFor([{ ...ok('x'), correct: false }, { ...ok('x'), correct: false }]), 1);
+test('progress: only recall moves the schedule, in four grades', () => {
+  // Reading and recognising teach, but aren't recall.
+  assert.equal(ratingFor([{ ...ok('x', 'intro'), correct: false }, { ...ok('x', 'match'), correct: false }]), null);
+  assert.equal(ratingFor([{ ...ok('x', 'spot'), correct: false }, ok('x', 'type')]), GRADES.solid.rating);
+  assert.equal(ratingFor([{ ...ok('x', 'type'), hints: 1 }]), GRADES.shaky.rating);
+  assert.equal(ratingFor([{ ...ok('x', 'letters'), correct: false }, ok('x', 'say')]), GRADES.shaky.rating);
+  assert.equal(ratingFor([{ ...ok('x', 'type'), correct: false }, { ...ok('x', 'say'), correct: false }]), GRADES.forgot.rating);
+  // Effortless only for a question already reviewed several times, recalled perfectly in review.
+  const seasoned = { state: 2, reps: 4 } as Parameters<typeof ratingFor>[1];
+  assert.equal(ratingFor([{ ...ok('x', 'type'), review: true }], seasoned), GRADES.effortless.rating);
+  assert.equal(ratingFor([ok('x', 'type')], seasoned), GRADES.solid.rating);
+});
+
+test('planner: a unit’s lock-in waits for a night’s sleep, and learning carries on meanwhile', () => {
+  const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
+  const first = groupsOf(items)[0];
+  const noon = at('2026-11-19T12:00:00Z');
+  const learned = first.items.flatMap((i) => unitsFor(i, 'adult'));
+  const p = finishSession({ ...emptyProgress(), courseLessons: { 'westminster-shorter': 3 } }, { results: first.items.map((i) => ok(i.id)), learned, courseId: 'westminster-shorter', now: noon });
+  const later = planNext({ courseId: 'westminster-shorter', items, track: 'adult', p, now: at('2026-11-19T15:00:00Z') });
+  assert.equal(later?.kind === 'learn' && later.group.key !== first.key, true, JSON.stringify(later?.kind));
+  const tomorrow = planNext({ courseId: 'westminster-shorter', items, track: 'adult', p, now: at('2026-11-20T09:00:00Z') });
+  assert.equal(tomorrow?.kind, 'checkpoint');
+  const path = coursePath(items, 'adult', p, at('2026-11-19T15:00:00Z'));
+  assert.equal(path[0].lockWaiting, true);
+  assert.equal(path[0].status, 'current');
+  assert.equal(path[1].lessons[0].status, 'current');
 });
 
 test('progress: practice is counted in sessions, not in single answers', () => {

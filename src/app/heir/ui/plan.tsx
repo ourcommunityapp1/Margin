@@ -1,6 +1,7 @@
 'use client';
 
-// Choosing what to memorize. Progress on every course is kept, so switching is safe.
+// Choosing what to memorize and how long each day, with what that means in dates, and what the stones
+// and grades mean. Progress on every course is kept, so switching is safe.
 
 import { useRouter } from 'next/navigation';
 import { useHeir } from './provider';
@@ -11,12 +12,18 @@ import { activeMember } from '@/heir/household';
 import { courseStats } from '@/heir/path';
 import { memberProgress } from '@/heir/progress';
 import { setPlan } from '@/heir/household';
+import { GRADES } from '@/heir/progress';
+import { LEVELS } from '@/heir/levels';
+import { AllCourses, GoalChoices, LongTermNote } from './goal';
+import { Stone } from './stone';
 
 export function PlanScreen({ setup }: { setup: boolean }) {
   const { ready, household, update, progress } = useHeir();
   const router = useRouter();
   if (!ready) return <main className="hr-page" aria-busy="true" />;
   const current = courseFor(household.plan?.course)?.id ?? null;
+  const course = courseFor(household.plan?.course) ?? null;
+  const minutes = household.plan?.minutes ?? 15;
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
   const stats = Object.fromEntries(courses.map((c) => [c.id, courseStats(courseItems(c), me?.track ?? 'adult', mine)]));
@@ -26,8 +33,38 @@ export function PlanScreen({ setup }: { setup: boolean }) {
       {!setup && <div><Back href="/heir" /></div>}
       <section className="hr-card" style={{ marginTop: setup ? 40 : 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <h1 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 600, lineHeight: 1.2 }}>Courses</h1>
-        <CourseChoices value={current} progress={stats} onChange={(course) => { update((h) => setPlan(h, { course })); router.push('/heir'); }} />
+        <CourseChoices value={current} progress={stats} onChange={(id) => { update((h) => setPlan(h, { course: id })); router.push('/heir'); }} />
         <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>Progress in each course is kept when you switch. Passages of Scripture come later.</p>
+      </section>
+      {course && (
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <h2 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>Your daily goal</h2>
+          <GoalChoices value={minutes} onChange={(m) => update((h) => setPlan(h, { course: course.id, minutes: m }))} course={course} track={me?.track ?? 'adult'} p={mine} />
+          <AllCourses minutes={minutes} track={me?.track ?? 'adult'} p={mine} />
+          <LongTermNote />
+        </section>
+      )}
+      <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <h2 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>What the stones mean</h2>
+        {LEVELS.filter((l) => l.means).map((l) => (
+          <div key={l.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <Stone level={l.n} size={30} />
+            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontWeight: 600 }}>{l.counts} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· {l.name}</span></span>
+              <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{l.means}</span>
+            </span>
+          </div>
+        ))}
+      </section>
+      <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <h2 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>How each recall is graded</h2>
+        <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>Only answers you produce yourself count: typing it, saying it, or its first letters. The grade decides when it comes back.</p>
+        {Object.values(GRADES).map((g) => (
+          <div key={g.word} style={{ display: 'flex', gap: 12 }}>
+            <span style={{ fontWeight: 600, minWidth: 92 }}>{g.word}</span>
+            <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{g.means}</span>
+          </div>
+        ))}
       </section>
     </main>
   );

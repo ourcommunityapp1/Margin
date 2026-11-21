@@ -4,8 +4,8 @@
 
 import { activeMember } from '@/heir/household';
 import { courseFor, courseItems, courses, getCollection } from '@/heir/content';
-import { groupsOf, nextActivity, unitsFor, type Group } from '@/heir/lesson';
-import { dueCards, localDay, memberProgress } from '@/heir/progress';
+import { groupsOf, lockInsWaiting, nextActivity, unitsFor, type Group } from '@/heir/lesson';
+import { dueCards, localDay, memberProgress, waitingForSleep } from '@/heir/progress';
 import { coursePath, courseStats, streak } from '@/heir/path';
 import { useHeir } from './provider';
 
@@ -25,12 +25,12 @@ export function useCourse() {
   const track = me?.track ?? 'adult';
   const mine = memberProgress(progress, me?.id);
   const learnedUnits = new Set(mine.units);
-  const activity = nextActivity(items, track, learnedUnits, new Set(mine.checkpoints));
+  const activity = nextActivity(items, track, learnedUnits, new Set(mine.checkpoints), lockInsWaiting(items, (id) => waitingForSleep(mine, id, now)));
   const due = dueCards(mine, now, new Set(items.map((i) => i.id)));
   const learned = items.filter((i) => unitsFor(i, track).every((u) => learnedUnits.has(u.key))).length;
   const group = activity?.group ?? groupsOf(items).at(-1) ?? null;
   const groupLearned = group ? group.items.filter((i) => unitsFor(i, track).every((u) => learnedUnits.has(u.key))).length : 0;
-  const path = coursePath(items, track, mine);
+  const path = coursePath(items, track, mine, now);
   const stats = courseStats(items, track, mine);
   const days = streak(mine.days, localDay(now));
   return { me, course, items, track, mine, activity, group, groupLearned, due, learned, path, stats, days, chosen: !!household.plan };

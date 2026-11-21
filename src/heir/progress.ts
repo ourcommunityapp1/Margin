@@ -1,11 +1,12 @@
 // Each person's progress: which parts they have learned, when each item comes back (FSRS), and a log of
 // every answer. Pure functions over plain JSON, so it can live on the phone now and in the database later.
 
-import { createEmptyCard, fsrs, generatorParameters, Rating, type Card, type Grade } from 'ts-fsrs';
+import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
 
 // Day-sized intervals: same-day repetition happens inside the lesson itself.
-const scheduler = fsrs(generatorParameters({ enable_fuzz: false, enable_short_term: false }));
+// Fuzz spreads reviews by a day or so, so questions learned together don't all come due together.
+const scheduler = fsrs(generatorParameters({ enable_fuzz: true, enable_short_term: false }));
 
 export type SavedCard = Omit<Card, 'due' | 'last_review'> & { due: string; last_review?: string };
 
@@ -62,14 +63,43 @@ export function localDay(d: Date): string {
 const toCard = (s: SavedCard): Card => ({ ...s, due: new Date(s.due), last_review: s.last_review ? new Date(s.last_review) : undefined });
 const fromCard = (c: Card): SavedCard => ({ ...c, due: c.due.toISOString(), last_review: c.last_review ? c.last_review.toISOString() : undefined });
 
-// How well an item went in one session, from its answers. The intro is reading, not recall.
-export function ratingFor(results: StepResult[]): Grade {
-  const recall = results.filter((r) => r.kind !== 'intro');
+// Only producing the answer yourself counts as recall: typing it, saying it, or its first letters.
+// Recognising it (word banks, matching, spotting a wrong word) teaches, but doesn't move the schedule.
+export const RECALL_KINDS = new Set(['type', 'say', 'letters']);
+
+// The four grades a recall can earn, in the words the app uses for them.
+export const GRADES = {
+  forgot: { rating: Rating.Again, word: 'Forgot', means: 'Couldn’t recall it' },
+  shaky: { rating: Rating.Hard, word: 'Shaky', means: 'Recalled it with a slip or a hint' },
+  solid: { rating: Rating.Good, word: 'Solid', means: 'Recalled it correctly' },
+  effortless: { rating: Rating.Easy, word: 'Effortless', means: 'Recalled it perfectly, on a question you’ve already reviewed several times' },
+} as const;
+
+// How well an item was recalled in one session, or null if nothing in it was recall.
+export function ratingFor(results: StepResult[], card?: Card): Grade | null {
+  const recall = results.filter((r) => RECALL_KINDS.has(r.kind));
+  if (!recall.length) return null;
   const misses = recall.filter((r) => !r.correct).length;
   const hints = recall.reduce((n, r) => n + r.hints, 0);
-  if (misses === 0 && hints === 0) return Rating.Good;
-  if (misses <= 1) return Rating.Hard;
-  return Rating.Again;
+  if (misses === 0 && hints === 0) {
+    const seasoned = !!card && card.state === State.Review && card.reps >= 3 && recall.every((r) => r.review);
+    return seasoned ? GRADES.effortless.rating : GRADES.solid.rating;
+  }
+  if (misses <= 1) return GRADES.shaky.rating;
+  return GRADES.forgot.rating;
+}
+
+// A newly learned question's first real recall waits for a night's sleep: the next morning, and never
+// sooner than eight hours. Recall in the same sitting mostly measures short-term memory.
+export function afterSleep(now: Date): Date {
+  const morning = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 4);
+  return new Date(Math.max(morning.getTime(), now.getTime() + 8 * 3_600_000));
+}
+
+// Learned, but not yet recalled after sleep.
+export function waitingForSleep(p: MemberProgress, itemId: string, now: Date): boolean {
+  const c = p.cards[itemId];
+  return !!c && c.state === State.New && Date.parse(c.due) > now.getTime();
 }
 
 export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date }): MemberProgress {
@@ -80,9 +110,17 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   for (const [itemId, rs] of byItem) {
     const existing = cards[itemId];
     const finishesItem = newUnits.some((u) => u.itemId === itemId && u.part === u.of);
-    if (!existing && !finishesItem) continue;
-    const card = existing ? toCard(existing) : createEmptyCard(o.now);
-    cards[itemId] = fromCard(scheduler.next(card, o.now, ratingFor(rs)).card);
+    if (!existing) {
+      // Just learned: it isn't rated from this sitting. Its first recall comes after a night's sleep.
+      if (finishesItem) cards[itemId] = fromCard({ ...createEmptyCard(o.now), due: afterSleep(o.now) });
+      continue;
+    }
+    const card = toCard(existing);
+    // Still waiting for its first night: practice today is welcome, but doesn't count yet.
+    if (card.state === State.New && o.now < card.due) continue;
+    const grade = ratingFor(rs, card);
+    if (grade === null) continue;
+    cards[itemId] = fromCard(scheduler.next(card, o.now, grade).card);
   }
   const at = o.now.toISOString();
   const day = localDay(o.now);

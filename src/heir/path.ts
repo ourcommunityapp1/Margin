@@ -1,8 +1,8 @@
 // The course path: units (groups of up to five) made of named lessons, each done, current or upcoming,
 // plus the numbers a learner can feel progress in: learned, mastered, and a day streak.
 
-import { groupsOf, unitsFor, type Group, type Unit } from './lesson.ts';
-import type { MemberProgress } from './progress.ts';
+import { groupsOf, lockInsWaiting, unitsFor, type Group, type Unit } from './lesson.ts';
+import { waitingForSleep, type MemberProgress } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
 // Recalled well after gaps long enough that it is in long-term memory (FSRS stability, in days).
@@ -26,14 +26,17 @@ export interface PathUnit {
   learned: number;
   mastered: number;
   status: Status;
+  // Every question learned, and the lock-in waits for a night's sleep.
+  lockWaiting: boolean;
 }
 
 const learnedItem = (item: Item, track: Track, units: Set<string>) => unitsFor(item, track).every((u) => units.has(u.key));
 export const masteredItem = (item: Item, p: MemberProgress) => (p.cards[item.id]?.stability ?? 0) >= MASTERED_DAYS;
 
-export function coursePath(items: Item[], track: Track, p: MemberProgress): PathUnit[] {
+export function coursePath(items: Item[], track: Track, p: MemberProgress, now = new Date()): PathUnit[] {
   const units = new Set(p.units);
   const checkpoints = new Set(p.checkpoints);
+  const waiting = lockInsWaiting(items, (id) => waitingForSleep(p, id, now));
   let currentFound = false;
   return groupsOf(items).map((group, g) => {
     let n = 0;
@@ -47,12 +50,14 @@ export function coursePath(items: Item[], track: Track, p: MemberProgress): Path
       }
     }
     const lockDone = checkpoints.has(group.key);
-    const lockStatus: Status = lockDone ? 'done' : currentFound ? 'upcoming' : 'current';
+    // A lock-in waiting for sleep doesn't hold up the next unit; its own unit stays under way.
+    const lockWaiting = !lockDone && lessons.every((l) => l.status === 'done') && waiting.has(group.key);
+    const lockStatus: Status = lockDone ? 'done' : lockWaiting || currentFound ? 'upcoming' : 'current';
     if (lockStatus === 'current') currentFound = true;
     lessons.push({ key: `lock:${group.key}`, kind: 'checkpoint', number: ++n, status: lockStatus });
-    const status: Status = lessons.every((l) => l.status === 'done') ? 'done' : lessons.some((l) => l.status === 'current') ? 'current' : 'upcoming';
+    const status: Status = lessons.every((l) => l.status === 'done') ? 'done' : lessons.some((l) => l.status === 'current') || lockWaiting ? 'current' : 'upcoming';
     return {
-      number: g + 1, group, lessons, status,
+      number: g + 1, group, lessons, status, lockWaiting,
       learned: group.items.filter((i) => learnedItem(i, track, units)).length,
       mastered: group.items.filter((i) => masteredItem(i, p)).length,
     };

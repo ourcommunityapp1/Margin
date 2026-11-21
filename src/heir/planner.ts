@@ -6,8 +6,8 @@
 //   - a unit's last lesson locks its questions in; after a long absence, the first lesson catches up.
 // Practice picks the questions most likely to have slipped first, weighted toward ones you've missed.
 
-import { nextActivity, type Group, type Unit } from './lesson.ts';
-import type { MemberProgress, SavedCard } from './progress.ts';
+import { groupsOf, lockInsWaiting, nextActivity, unitsFor, type Group, type Unit } from './lesson.ts';
+import { waitingForSleep, type MemberProgress, type SavedCard } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
 const DAY = 86_400_000;
@@ -76,7 +76,8 @@ export function planNext(o: { courseId: string; items: Item[]; track: Track; p: 
   const done = lessonsDone(p, o.courseId, ids);
   const picks = riskOrder(p, ids, now);
   const learned = new Set(p.units);
-  const act = nextActivity(items, track, learned, new Set(p.checkpoints));
+  const waiting = lockInsWaiting(items, (id) => waitingForSleep(p, id, now));
+  const act = nextActivity(items, track, learned, new Set(p.checkpoints), waiting);
 
   if (done === 0 && act?.kind === 'learn') return { kind: 'welcome', units: [act.unit], group: act.group };
 
@@ -97,7 +98,7 @@ export function planNext(o: { courseId: string; items: Item[]; track: Track; p: 
   const units = [act.unit];
   const flying = acc.length === 2 && acc.every((a) => a >= 0.9) && dueNow === 0;
   if (flying && act.unit.of === 1) {
-    const after = nextActivity(items, track, new Set([...learned, act.unit.key]), new Set(p.checkpoints));
+    const after = nextActivity(items, track, new Set([...learned, act.unit.key]), new Set(p.checkpoints), waiting);
     if (after?.kind === 'learn' && after.group.key === act.group.key && after.unit.of === 1) units.push(after.unit);
   }
   return { kind: 'learn', units, group: act.group };
@@ -116,3 +117,25 @@ export function describe(plan: LessonPlan, groupName: (g: Group) => string): str
   }
 }
 
+
+// When a course might be learned, and in long-term memory, at a daily goal. A rough guide, not a promise:
+//   - a lesson takes about 6 minutes;
+//   - two lessons in three bring something new (a question, or part of a long one, or a unit's lock-in);
+//     the third is practice;
+//   - reviews grow as more is learned, so allow a fifth more time for them;
+//   - long-term memory (Emerald) asks for three months of right answers after the last question is learned.
+export const LESSON_MINUTES = 6;
+export const GOALS = [5, 15, 25] as const;
+
+export interface Projection { remaining: number; learnDays: number; learnedBy: Date; longTermBy: Date }
+
+export function project(o: { items: Item[]; track: Track; p: MemberProgress; minutes: number; now: Date }): Projection {
+  const learned = new Set(o.p.units), locks = new Set(o.p.checkpoints);
+  const units = o.items.flatMap((i) => unitsFor(i, o.track)).filter((u) => !learned.has(u.key)).length;
+  const lockIns = groupsOf(o.items).filter((g) => !locks.has(g.key)).length;
+  const remaining = units + lockIns;
+  const perDay = (o.minutes / LESSON_MINUTES) * (2 / 3) / 1.2;
+  const learnDays = remaining === 0 ? 0 : Math.ceil(remaining / perDay);
+  const learnedBy = new Date(o.now.getTime() + learnDays * DAY);
+  return { remaining, learnDays, learnedBy, longTermBy: new Date(learnedBy.getTime() + 90 * DAY) };
+}

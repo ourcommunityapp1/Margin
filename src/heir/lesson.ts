@@ -76,12 +76,19 @@ export type Activity =
   | { kind: 'learn'; group: Group; unit: Unit }
   | { kind: 'checkpoint'; group: Group };
 
-export function nextActivity(items: Item[], track: Track, learned: Set<string>, checkpoints: Set<string>): Activity | null {
+// `waiting`: units whose lock-in waits for a night's sleep. Learning carries on into the next unit meanwhile,
+// and the lock-in comes first the next day.
+export function nextActivity(items: Item[], track: Track, learned: Set<string>, checkpoints: Set<string>, waiting?: Set<string>): Activity | null {
   for (const group of groupsOf(items)) {
     for (const item of group.items) for (const unit of unitsFor(item, track)) if (!learned.has(unit.key)) return { kind: 'learn', group, unit };
-    if (!checkpoints.has(group.key)) return { kind: 'checkpoint', group };
+    if (!checkpoints.has(group.key) && !waiting?.has(group.key)) return { kind: 'checkpoint', group };
   }
   return null;
+}
+
+// Units fully learned whose lock-in should wait: one of their questions hasn't had its night's sleep yet.
+export function lockInsWaiting(items: Item[], isWaiting: (itemId: string) => boolean): Set<string> {
+  return new Set(groupsOf(items).filter((g) => g.items.some((i) => isWaiting(i.id))).map((g) => g.key));
 }
 
 export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz';

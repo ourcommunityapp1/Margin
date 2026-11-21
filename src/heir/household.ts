@@ -27,7 +27,8 @@ export function setActive(h: Household, id: string): Household {
 }
 
 export function setPlan(h: Household, plan: Plan): Household {
-  return { ...h, plan: { course: plan.course } };
+  const minutes = plan.minutes ?? h.plan?.minutes;
+  return { ...h, plan: minutes ? { course: plan.course, minutes } : { course: plan.course } };
 }
 
 export function activeMember(h: Household): Member | null {
@@ -46,7 +47,8 @@ export function parseHousehold(raw: string | null): Household {
     const activeMemberId = members.some((m) => m.id === v.activeMemberId) ? v.activeMemberId : (members[0]?.id ?? null);
     // Older plans named a collection; the Apostles' Creed now lives in the Creeds course.
     const named = v.plan && (typeof v.plan.course === 'string' ? v.plan.course : typeof v.plan.collection === 'string' ? v.plan.collection : null);
-    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named } : null;
+    const minutes = v.plan && typeof v.plan.minutes === 'number' && v.plan.minutes >= 1 && v.plan.minutes <= 120 ? v.plan.minutes : undefined;
+    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}) } : null;
     return { members, activeMemberId, plan };
   } catch {
     return emptyHousehold();

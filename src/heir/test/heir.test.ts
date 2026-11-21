@@ -65,8 +65,11 @@ test('household: the first member becomes active, removing them moves to the nex
 test('household: a plan is a course, and older plans that named a collection still load', () => {
   assert.deepEqual(setPlan(emptyHousehold(), { course: 'creeds' }).plan, { course: 'creeds' });
   const old = (collection: string) => parseHousehold(JSON.stringify({ members: [], plan: { collection, through: 10, minutes: 5 } })).plan;
-  assert.deepEqual(old('westminster-shorter'), { course: 'westminster-shorter' });
-  assert.deepEqual(old('apostles-creed'), { course: 'creeds' });
+  assert.deepEqual(old('westminster-shorter'), { course: 'westminster-shorter', minutes: 5 });
+  assert.deepEqual(old('apostles-creed'), { course: 'creeds', minutes: 5 });
+  // The daily goal stays when the course changes.
+  const withGoal = setPlan(emptyHousehold(), { course: 'westminster-shorter', minutes: 15 });
+  assert.deepEqual(setPlan(withGoal, { course: 'creeds' }).plan, { course: 'creeds', minutes: 15 });
 });
 
 test('household: stored data that is broken becomes an empty household', () => {
