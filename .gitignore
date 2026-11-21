@@ -49,3 +49,6 @@ next-env.d.ts
 /public/paths.js
 /public/data/
 .netlify
+
+# Netlify deploy uploads (made and removed by the deploy command)
+deploy-*.zip
