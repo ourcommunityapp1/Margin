@@ -26,6 +26,15 @@ export default function About() {
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>Heir helps a family memorize Scripture, catechisms and creeds using recall, spaced review and speaking aloud. Progress is kept on this phone for now.</p>
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>The Westminster Shorter and Larger Catechisms (1647), the Apostles’ Creed and the Nicene Creed are in the public domain.</p>
       </section>
+      <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h2 className="hr-label" style={{ margin: 0 }}>Scripture</h2>
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>
+          Scripture quotations marked NASB are taken from the NEW AMERICAN STANDARD BIBLE® (NASB®), Copyright © 1960, 1971, 1977,
+          1995, 2020 by The Lockman Foundation. Used by permission. All rights reserved.{' '}
+          <a href="https://www.lockman.org" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>lockman.org</a>
+        </p>
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>NASB text is provided through the YouVersion Platform. Scripture marked KJV is from the King James Version, in the public domain.</p>
+      </section>
       <section className="hr-card" style={{ padding: '6px 22px' }}>
         <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Background photos (softened), from Wikimedia Commons</h2>
         {PHOTOS.map((p) => (

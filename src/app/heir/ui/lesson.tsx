@@ -38,6 +38,21 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
   const [retried, setRetried] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState<Outcome | null>(null);
   const [finished, setFinished] = useState<Finished | null>(null);
+  // The NASB text of the session's verse, fetched as the session starts so it's ready by the time it comes up.
+  // Until then, or if it can't be fetched, the verse shows in the KJV that ships with the app.
+  const [verses, setVerses] = useState<Record<string, { text: string; version: string }>>({});
+  useEffect(() => {
+    if (!session) return;
+    const ctl = new AbortController();
+    for (const s of session.steps) {
+      if (s.kind !== 'verse') continue;
+      fetch(`/api/heir/verse?id=${encodeURIComponent(s.itemId)}`, { signal: ctl.signal })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((v: { text?: string; version?: string } | null) => { if (v?.text && v.version) setVerses((m) => ({ ...m, [s.itemId]: { text: v.text!, version: v.version! } })); })
+        .catch(() => { /* offline or no key: keep the KJV */ });
+    }
+    return () => ctl.abort();
+  }, [session]);
   const startedAt = useRef(0);
   const sessionStart = useRef(0);
 
@@ -189,8 +204,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
         ) : step.kind === 'verse' ? (
           <>
             <figure style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <blockquote className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.45 }}>“{step.text}”</blockquote>
-              <figcaption style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 600 }}>{step.ref}</figcaption>
+              <blockquote className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.45 }}>“{verses[step.itemId]?.text ?? step.text}”</blockquote>
+              <figcaption style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 600 }}>{step.ref} ({verses[step.itemId]?.version ?? 'KJV'})</figcaption>
             </figure>
             <button type="button" className="hr-btn" onClick={advance}>Continue</button>
           </>

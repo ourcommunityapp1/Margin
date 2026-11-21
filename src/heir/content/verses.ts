@@ -67,7 +67,6 @@ export const VERSES: Record<string, { ref: string; text: string }> = {
   "wsc-66": { ref: "Exodus 20:12", text: "Honour thy father and thy mother: that thy days may be long upon the land which the LORD thy God giveth thee." },
   "wsc-67": { ref: "Deuteronomy 5:17", text: "Thou shalt not kill." },
   "wsc-68": { ref: "Ephesians 5:28", text: "So ought men to love their wives as their own bodies. He that loveth his wife loveth himself." },
-  "wsc-69": { ref: "Matthew 5:22", text: "But I say unto you, That whosoever is angry with his brother without a cause shall be in danger of the judgment." },
   "wsc-70": { ref: "Deuteronomy 5:18", text: "Neither shalt thou commit adultery." },
   "wsc-71": { ref: "1 Thessalonians 4:3", text: "For this is the will of God, even your sanctification, that ye should abstain from fornication." },
   "wsc-72": { ref: "Ephesians 5:4", text: "Neither filthiness, nor foolish talking, nor jesting, which are not convenient: but rather giving of thanks." },

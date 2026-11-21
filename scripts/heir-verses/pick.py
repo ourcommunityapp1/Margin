@@ -24,7 +24,7 @@ OVERRIDES = {
     'wsc-32': '1 Corinthians 1:30', 'wsc-38': 'Psalm 16:11', 'wsc-40': 'Romans 10:5', 'wsc-42': 'Matthew 22:37',
     'wsc-46': 'Matthew 4:10', 'wsc-47': 'Psalm 81:10', 'wsc-49': 'Exodus 20:6', 'wsc-51': 'Deuteronomy 4:15',
     'wsc-52': 'Psalm 96:9', 'wsc-56': None, 'wsc-58': 'Exodus 31:13', 'wsc-60': 'Isaiah 58:14',
-    'wsc-61': None, 'wsc-62': 'Genesis 2:3', 'wsc-71': '1 Thessalonians 4:3', 'wsc-74': 'Philippians 2:4',
+    'wsc-61': None, 'wsc-62': 'Genesis 2:3', 'wsc-69': None, 'wsc-71': '1 Thessalonians 4:3', 'wsc-74': 'Philippians 2:4',
     'wsc-75': 'Ephesians 4:28', 'wsc-77': 'Zechariah 8:16', 'wsc-78': 'Psalm 15:3', 'wsc-81': 'Galatians 5:26',
     'wsc-82': 'Romans 3:23', 'wsc-83': 'John 19:11', 'wsc-85': 'Mark 1:15', 'wsc-86': 'Ephesians 2:8',
     'wsc-91': '1 Corinthians 3:7', 'wsc-92': '1 Corinthians 10:16', 'wsc-97': '1 Corinthians 11:28',
