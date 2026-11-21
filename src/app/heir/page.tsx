@@ -43,7 +43,6 @@ export default function Today() {
   // The window for the part you're working in.
   const light = partWindow(course, track, mine, now);
   const start = !plan ? null : plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`;
-  const currentUnit = path.find((u) => u.status === 'current');
   const learnedCount = light.lit.filter((f) => f >= 1).length;
   const noun = items[0] && getCollection(items[0].collection)?.unit === 'Question' ? 'questions' : 'sections';
 
@@ -57,16 +56,16 @@ export default function Today() {
 
         {/* The course's window: lit glass is what you've learned, dark glass is still to come. */}
         <section className="hr-rose-card">
-          <span className="hr-label">{light.count > 1 ? `Part ${light.index + 1} of ${light.count} · ` : ''}{light.title}</span>
-          <RoundWindow key={light.base} base={light.base} lit={light.lit} dusty={light.dusty} share={light.share} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
+          <div className="hr-rose-wash" style={{ backgroundImage: `url(${light.base}/glass.webp)` }} aria-hidden="true" />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
-            {currentUnit && <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: '#F1C46B' }}>UNIT {currentUnit.number} OF {path.length}</span>}
-            {currentUnit && <span className="serif" style={{ fontSize: 21, fontWeight: 500, lineHeight: 1.15 }}>{groupLabel(currentUnit.group)}</span>}
-            <span style={{ fontSize: 13, color: '#A9A196' }}>{learnedCount} of {light.items.length} {noun} lit</span>
+            {light.count > 1 && <span className="hr-label">Part {light.index + 1} of {light.count}</span>}
+            <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.1 }}>{light.title}</h2>
           </div>
+          <RoundWindow key={light.base} base={light.base} lit={light.lit} dusty={light.dusty} share={light.share} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
+          <span style={{ fontSize: 13, color: '#C9C1B3' }}>{learnedCount} of {light.items.length} {noun} lit</span>
           {start ? (
-            <Link className="hr-rose-btn" href="/heir/lesson">{start}
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+            <Link className="hr-glass-btn" href="/heir/lesson"><span>{start}</span>
+              <span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
             </Link>
           ) : <p className="serif" style={{ margin: 0, fontSize: 17 }}>All caught up for today.</p>}
         </section>

@@ -333,7 +333,8 @@ function DoneWindow({ session }: { session: Session }) {
   const names = fresh.map((i) => itemLabel(i)).join(', ');
   return (
     <section className="hr-rose-card" style={{ paddingTop: 20 }}>
-      <RoundWindow ref={win} base={windowBase(part)} lit={beforeLit} dusty={dusty} share={share} onReady={ready} paneDelay={paneDelay} size={280}
+      <div className="hr-rose-wash" style={{ backgroundImage: `url(${windowBase(course.id, part)}/glass.webp)` }} aria-hidden="true" />
+      <RoundWindow ref={win} base={windowBase(course.id, part)} lit={beforeLit} dusty={dusty} share={share} onReady={ready} paneDelay={paneDelay} size={280}
         label={names ? `Your window: new light for ${names}` : 'Your window'} />
       {names && <span className="serif" style={{ fontSize: 19, textAlign: 'center' }}>New light: {names}</span>}
     </section>

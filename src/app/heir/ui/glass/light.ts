@@ -8,11 +8,18 @@ import { needsRefresh } from '@/heir/levels';
 import type { MemberProgress } from '@/heir/progress';
 import type { Item, Track } from '@/heir/types';
 
-// Three round windows cut from the Good Shepherd glass: the face, the shepherd reaching to the lamb, the lamb.
-const WINDOWS = ['/heir/glass/gsc-a', '/heir/glass/gsc-b', '/heir/glass/gsc-c'];
-export const WINDOW_CREDIT = 'St Barnabas, Mount Eden, Auckland. Photo: Bjankuloski06, CC BY 4.0';
-export function windowBase(partIndex: number) {
-  return WINDOWS[partIndex % WINDOWS.length];
+// Each course has its own window, one round panel per part.
+// Shorter Catechism: the Good Shepherd (St Barnabas, Mount Eden): the face, the shepherd reaching to the lamb, the lamb.
+// Larger Catechism: the north rose of Chartres Cathedral.
+// The Creeds: two medallions of the Good Samaritan window at Chartres: the Creation and Fall, and the Samaritan.
+const WINDOWS: Record<string, string[]> = {
+  'westminster-shorter': ['/heir/glass/gsc-a', '/heir/glass/gsc-b', '/heir/glass/gsc-c'],
+  'westminster-larger': ['/heir/glass/rose-chartres'],
+  creeds: ['/heir/glass/chartres-m1', '/heir/glass/chartres-m2'],
+};
+export function windowBase(courseId: string, partIndex: number) {
+  const list = WINDOWS[courseId] ?? WINDOWS['westminster-shorter'];
+  return list[partIndex % list.length];
 }
 
 export function windowLight(items: Item[], track: Track, p: MemberProgress, now: Date) {
@@ -38,7 +45,7 @@ export function partWindow(course: Course, track: Track, p: MemberProgress, now:
   const open = lights.findIndex((l) => l.lit.some((f) => f < 1));
   const at = Math.min(index ?? (open === -1 ? parts.length - 1 : open), parts.length - 1);
   const light = lights[at];
-  return { index: at, count: parts.length, title: parts[at].title, base: windowBase(at), items: parts[at].items, ...light, next: light.lit.findIndex((f) => f < 1) };
+  return { index: at, count: parts.length, title: parts[at].title, base: windowBase(course.id, at), items: parts[at].items, ...light, next: light.lit.findIndex((f) => f < 1) };
 }
 
 // Which part an item is in.

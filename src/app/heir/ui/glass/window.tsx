@@ -194,7 +194,9 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
           if (h != null && h >= 0 && n && !tracks.current.length) {
             const ids = itemPieces(n, h);
             const wave = 0.5 + 0.5 * Math.sin(now / 700);
-            ids.forEach((id, k) => { if (e.light[id] < 0.5) e.glow[id] = 0.18 + 0.5 * wave * (0.6 + 0.4 * Math.sin(k * 1.7)); });
+            // Many small pieces read as an outline if they all glow: keep the beckoning gentle for big panes.
+            const soft = Math.min(1, 24 / Math.max(1, ids.length));
+            ids.forEach((id, k) => { if (e.light[id] < 0.5) e.glow[id] = (0.12 + 0.45 * wave * (0.6 + 0.4 * Math.sin(k * 1.7))) * (0.35 + 0.65 * soft); });
           }
           // Rays flare while light is arriving; the sun breaks through at the end.
           e.rayAmount += ((raysRef.current ? (active ? 1.15 : 0.75) : 0) - e.rayAmount) * 0.05;
