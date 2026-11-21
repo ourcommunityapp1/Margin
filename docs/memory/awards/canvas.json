@@ -414,6 +414,27 @@
    "w": 390,
    "h": 1000,
    "title": "Stained-glass arcs \u00b7 a whole rose window"
+  },
+  "W6CircleFace.dc.html": {
+   "x": 0,
+   "y": 21180,
+   "w": 390,
+   "h": 1000,
+   "title": "Round window \u00b7 the face"
+  },
+  "W7CircleEmbrace.dc.html": {
+   "x": 470,
+   "y": 21180,
+   "w": 390,
+   "h": 1000,
+   "title": "Round window \u00b7 shepherd and lamb"
+  },
+  "W8CircleLamb.dc.html": {
+   "x": 940,
+   "y": 21180,
+   "w": 390,
+   "h": 1000,
+   "title": "Round window \u00b7 the lamb"
   }
  },
  "createdOnFiles": {
@@ -518,6 +539,13 @@
    "text": "Real stained glass: the arcs, and the panes around the rose",
    "x": 0,
    "y": 19480
+  },
+  "t14": {
+   "kind": "title1",
+   "maxW": 1400,
+   "text": "The round window, from the Good Shepherd glass",
+   "x": 0,
+   "y": 20900
   }
  },
  "order": [
@@ -579,7 +607,10 @@
   "W2GlassArcsMenu.dc.html",
   "W3HoldPanesTabs.dc.html",
   "W4HoldPanesMenu.dc.html",
-  "W5RoseWindow.dc.html"
+  "W5RoseWindow.dc.html",
+  "W6CircleFace.dc.html",
+  "W7CircleEmbrace.dc.html",
+  "W8CircleLamb.dc.html"
  ],
  "pages": [],
  "title": "Heir Progress and Awards"
