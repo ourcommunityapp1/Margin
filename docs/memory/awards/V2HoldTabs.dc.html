@@ -25,7 +25,6 @@ a{color:#FFF6E6}a:hover{color:#FFFFFF}
 <div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: radial-gradient(100% 60% at 50% 40%, #1E1711, #0D0907); color: #FFF6E6; font-family: Inter, system-ui, sans-serif">
   <img src="/_blob/f18723faaa2d658b77bc6c5e1fe37e07" alt="The Good Shepherd window, about a third lit; holding the rose sends light up through it" style="position: absolute; left: 60px; top: 72px; width: 270px; height: 584px; object-fit: cover">
   <img src="/_blob/b8140c3a7056cab893794dadfbb4fed9" alt="" style="position: absolute; left: 60px; top: 72px; width: 270px; height: 584px; object-fit: cover; filter: brightness(1.08) saturate(1.1); animation: r2-rise 4.2s ease-in-out infinite">
-  <div style="position: absolute; left: 112px; width: 166px; top: 656px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, rgba(255,214,150,0), #FFE2AE 50%, rgba(255,214,150,0)); box-shadow: 0 0 18px 4px rgba(255,200,120,0.55); animation: r2-edge 4.2s ease-in-out infinite"></div>
   <div style="position: absolute; left: 0; right: 0; top: 520px; height: 150px; background: linear-gradient(180deg, rgba(13,9,7,0), #0D0907 85%)"></div>
 
   <div style="position: absolute; left: 22px; right: 22px; top: 52px; display: flex; justify-content: space-between; align-items: center">
@@ -35,11 +34,6 @@ a{color:#FFF6E6}a:hover{color:#FFFFFF}
 
   <div style="position: absolute; left: 115px; top: 584px; width: 160px; height: 160px; border-radius: 80px; background: radial-gradient(circle, rgba(255,190,110,0.5), rgba(255,190,110,0) 68%); animation: r1-halo 4.2s ease-in-out infinite"></div>
   <a href="#" aria-label="Hold to light lesson 8" style="position: absolute; left: 131px; top: 600px; width: 128px; height: 128px; text-decoration: none">
-    <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden="true" style="position: absolute; inset: 0; animation: r1-turn 60s linear infinite">
-      <sc-for list="{{petals}}" as="p" hint-placeholder-count="12">
-        <path d="M64 2 a6 6 0 0 1 0 10 a6 6 0 0 1 0 -10" fill="none" stroke="#C9A063" stroke-width="1" opacity="0.7" transform="rotate({{p}} 64 64)"></path>
-      </sc-for>
-    </svg>
     <svg width="128" height="128" viewBox="0 0 128 128" aria-hidden="true" style="position: absolute; inset: 0; transform: rotate(-90deg)">
       <circle cx="64" cy="64" r="48" fill="none" stroke="rgba(255,246,230,0.14)" stroke-width="2.5"></circle>
       <circle cx="64" cy="64" r="48" pathLength="100" fill="none" stroke="#E9B867" stroke-width="3" stroke-linecap="round" style="animation: r1-fill 4.2s ease-in-out infinite"></circle>
@@ -57,8 +51,7 @@ a{color:#FFF6E6}a:hover{color:#FFFFFF}
 <script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
-    // Twelve small foils around the rose, like the tracery of a round window.
-    return { petals: Array.from({ length: 12 }, (_, i) => i * 30) };
+    return {};
   }
 }
 </script>
