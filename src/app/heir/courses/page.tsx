@@ -41,7 +41,7 @@ export default function Courses() {
         <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
         <span className="hr-label">In season · {seasonal.label}</span>
         <Link href={`/heir/courses/${seasonal.c.id}`} aria-label={`About ${seasonal.c.title}`}>
-          <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={170} started={s.started} label={`${seasonal.c.title} window`} />
+          <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={170} started={s.started} bright label={`${seasonal.c.title} window`} />
         </Link>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
           <h2 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.1 }}>{seasonal.c.title}</h2>

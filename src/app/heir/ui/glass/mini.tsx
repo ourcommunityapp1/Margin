@@ -58,8 +58,10 @@ function load(base: string): Promise<Decoded> {
 }
 
 // Dark glass at rest: almost black where a light moves behind it (a course not started yet); a little brighter
-// on the small list windows so they never read as pitch black; and the usual dimness once a course has begun.
-const restFor = (moving: boolean, motion: Motion) => (!moving ? 0.13 : motion.kind === 'list' ? 0.1 : LIGHT.rest);
+// everywhere on the Courses tab (`bright`) so no window there reads as pitch black; and the usual dimness once a
+// course has begun.
+const COURSES_REST = 0.1;
+const restFor = (moving: boolean, bright: boolean) => (!moving ? 0.13 : bright ? COURSES_REST : LIGHT.rest);
 const DUSTY = 0.5; // learned, but due for a refresh
 
 function shade(o: Uint8ClampedArray, g: Uint8ClampedArray, ids: Uint8ClampedArray, px: Int32Array, b: number, mix: number) {
@@ -75,20 +77,22 @@ function shade(o: Uint8ClampedArray, g: Uint8ClampedArray, ids: Uint8ClampedArra
   }
 }
 
-export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind: 'circle' }, started = false }: {
+export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind: 'circle' }, started = false, bright = motion.kind === 'list' }: {
   base: string; lit: number[]; dusty?: boolean[]; size?: number; label?: string; motion?: Motion;
   /** The course has some progress: its window holds still, and only a course not yet begun has the moving light. */
   started?: boolean;
+  /** On the Courses tab: a brighter rest, so the window never reads as black. Lists are always bright. */
+  bright?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}|${JSON.stringify(motion)}|${started}`;
+  const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}|${JSON.stringify(motion)}|${started}|${bright}`;
   useEffect(() => {
     let alive = true, raf = 0, visible = true;
     const canvas = ref.current;
     if (!canvas) return;
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const moving = !started && !lit.some((f) => f > 0);
-    const REST = restFor(moving, motion);
+    const REST = restFor(moving, bright);
     const seen = new IntersectionObserver((es) => { visible = es.some((e) => e.isIntersecting); });
     seen.observe(canvas);
     load(base).then((d) => {

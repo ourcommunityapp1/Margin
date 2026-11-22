@@ -203,8 +203,8 @@ Testament keep their ordinary letters). src/heir/test/nasb-passages.json keeps t
 passage, and a test checks each text against it. The KJV verses on the verse screen's fallback are likewise whole
 and exact (scripts/heir-verses/pick.py).
 
-The Hastings and Bytom photos are only available here at modest size (crops of about 500px), so those two windows
-are a little softer than the rest. Alternatives considered: Christ kneeling, Buttevant (Lord's Prayer); the burning
+Windows are cut from 3840px Commons thumbnails where the original is that large (the Hastings and Bytom windows
+are), so each round crop is about 1,000px or more across. Alternatives considered: Christ kneeling, Buttevant (Lord's Prayer); the burning
 bush, Marienkirche, and a hand of blessing, Mount Vernon (Shema); Moses, Immaculate Conception, Toledo (too narrow
 for a round crop without dark sides); the Crucifixion, Middletown (Gospel); Christ in Majesty, St Mary-le-Bow
 (Who God Is).
