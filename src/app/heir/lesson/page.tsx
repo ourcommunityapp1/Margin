@@ -4,6 +4,6 @@ export default async function LessonPage({ searchParams }: { searchParams: Promi
   const q = await searchParams;
   const mode = q.mode === 'review' ? 'review' : q.mode === 'rise' ? 'rise' : q.mode === 'night' ? 'night' : 'lesson';
   // Before sleep the screen stays dark, whatever the hour: less light, easier sleep.
-  if (mode === 'night') return <div className="hr hr-dark-shell" data-time="night"><LessonRunner mode="night" /></div>;
+  if (mode === 'night') return <div className="hr hr-dark-shell" data-time="night" data-theme="dark"><LessonRunner mode="night" /></div>;
   return <LessonRunner mode={mode} />;
 }

@@ -162,7 +162,7 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider value={value}>
-      <div className="hr" data-time={time}>
+      <div className="hr" data-time={time} data-theme="dark">
         <div className="hr-bg" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {clock && <img src={`/heir/bg-${time}.jpg`} alt="" />}
