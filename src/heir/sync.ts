@@ -2,8 +2,7 @@
 
 import type { Household, Member, Plan } from './types.ts';
 
-// An account's own view of its household: its current course and its active person. Each account in a family has its own.
-export interface HouseholdRow { id?: string; plan: Plan | null; active_member_id: string | null }
+export interface HouseholdRow { id: string; plan: Plan | null; active_member_id: string | null }
 export interface MemberRow { id: string; household_id: string; name: string; track: 'adult' | 'child'; created_at: string }
 
 export function toRows(h: Household, householdId: string): { household: HouseholdRow; members: MemberRow[] } {
@@ -17,8 +16,7 @@ export function fromRows(household: HouseholdRow, members: MemberRow[]): Househo
   const list: Member[] = [...members]
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .map((m) => ({ id: m.id, name: m.name, track: m.track === 'child' ? 'child' : 'adult', createdAt: m.created_at }));
-  // No active person yet (an account that has just joined a family) stays that way, so it can add itself.
-  const active = household.active_member_id === null ? null : list.some((m) => m.id === household.active_member_id) ? household.active_member_id : (list[0]?.id ?? null);
+  const active = list.some((m) => m.id === household.active_member_id) ? household.active_member_id : (list[0]?.id ?? null);
   return { members: list, activeMemberId: active, plan: household.plan ?? null };
 }
 
@@ -33,13 +31,4 @@ export function chooseOnSignIn(local: Household, remote: Household | null): { ho
   if (remote && remote.members.length) return { household: remote, upload: false };
   if (local.members.length) return { household: local, upload: true };
   return { household: remote ?? local, upload: false };
-}
-
-// Members another account has added since this phone last looked: everyone here, plus anyone only the database has.
-// Nothing is removed here, so a person added on this phone while offline is never lost.
-export function withRemoteMembers(local: Household, remote: Household): Household {
-  const have = new Set(local.members.map((m) => m.id));
-  const added = remote.members.filter((m) => !have.has(m.id));
-  if (!added.length) return local;
-  return { ...local, members: [...local.members, ...added].sort((a, b) => a.createdAt.localeCompare(b.createdAt)) };
 }

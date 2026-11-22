@@ -7,7 +7,6 @@ import { Tabs } from './tabs';
 import { addMember, removeMember, setActive, updateMember } from '@/heir/household';
 import type { Track } from '@/heir/types';
 import { newId } from './ids';
-import { cloud, createInvite } from './cloud';
 
 export function FamilyScreen({ setup }: { setup: boolean }) {
   const { ready, household, update, accounts, email, sync, signOut, updateProgress } = useHeir();
@@ -66,7 +65,6 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
             <button type="submit" className="hr-btn" disabled={!name.trim()} style={{ background: 'var(--well)', color: 'var(--ink)' }}>Add</button>
           </form>
         </section>
-        {!setup && accounts && email && <InviteCard />}
         {setup && (
           <Link className="hr-btn" href={members.length ? '/heir/plan?setup=1' : '#'} aria-disabled={!members.length}
             style={{ marginTop: 'auto', opacity: members.length ? 1 : 0.45, pointerEvents: members.length ? 'auto' : 'none' }}>Continue</Link>
@@ -108,49 +106,6 @@ function StartOver({ name, armed, setArmed, erase }: { name: string; armed: bool
       ) : (
         <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => setArmed(true)}>Start over</button>
       ))}
-    </section>
-  );
-}
-
-// Make a single-use link (good for a week) that adds someone's own account to this family, and send it.
-function InviteCard() {
-  const [link, setLink] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  const make = async () => {
-    const db = cloud();
-    if (!db) return;
-    setBusy(true); setError(''); setCopied(false);
-    try {
-      const code = await createInvite(db);
-      setLink(`${window.location.origin}/heir/join?code=${code}`);
-    } catch {
-      setError('Couldn’t make an invite. Check your connection and try again.');
-    }
-    setBusy(false);
-  };
-  const send = async () => {
-    try {
-      if (navigator.share) { await navigator.share({ title: 'Join my family on Heir', text: 'Join my family on Heir:', url: link }); return; }
-    } catch { /* cancelled: fall through to copying */ }
-    try { await navigator.clipboard.writeText(link); setCopied(true); } catch { /* the link is shown, so it can be copied by hand */ }
-  };
-
-  return (
-    <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <span className="hr-label">Invite your spouse</span>
-      <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>They sign in with their own email, and get their own progress, stones and course. You’ll see each other in the family. The link works once, for a week.</p>
-      {link ? (
-        <>
-          <input readOnly value={link} aria-label="Invite link" onFocus={(e) => e.currentTarget.select()} style={{ fontSize: 13 }} />
-          <button type="button" className="hr-btn" onClick={send}>{copied ? 'Link copied' : 'Send the link'}</button>
-        </>
-      ) : (
-        <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={make} disabled={busy}>{busy ? 'Making a link…' : 'Make an invite link'}</button>
-      )}
-      {error && <p role="alert" style={{ margin: 0, fontSize: 14, color: 'var(--miss)' }}>{error}</p>}
     </section>
   );
 }

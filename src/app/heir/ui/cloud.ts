@@ -20,27 +20,23 @@ export function cloud(): SupabaseClient | null {
 
 export interface Remote { householdId: string; household: Household; memberRows: MemberRow[] }
 
-// The signed-in account's household. Its course and active person are the account's own (heir_household_users);
-// the members are the whole family's.
 export async function loadRemote(db: SupabaseClient): Promise<Remote | null> {
-  const { data: link, error } = await db.from('heir_household_users').select('household_id, plan, active_member_id').maybeSingle();
+  const { data: hh, error } = await db.from('heir_households').select('id, plan, active_member_id').maybeSingle();
   if (error) throw error;
-  if (!link) return null;
-  const { data: members, error: e2 } = await db.from('heir_members').select('id, household_id, name, track, created_at').eq('household_id', link.household_id);
+  if (!hh) return null;
+  const { data: members, error: e2 } = await db.from('heir_members').select('id, household_id, name, track, created_at').eq('household_id', hh.id);
   if (e2) throw e2;
   const rows = (members ?? []) as MemberRow[];
-  return { householdId: link.household_id, household: fromRows(link as HouseholdRow, rows), memberRows: rows };
+  return { householdId: hh.id, household: fromRows(hh as HouseholdRow, rows), memberRows: rows };
 }
 
 // Writes the whole household. Small enough that sending it all is simpler and safer than tracking edits.
 export async function saveRemote(db: SupabaseClient, h: Household, known: Remote | null): Promise<Remote> {
   let householdId = known?.householdId;
   if (!householdId) {
-    const { data, error } = await db.from('heir_households').insert({}).select('id').single();
+    const { data, error } = await db.from('heir_households').insert({ plan: h.plan, active_member_id: h.activeMemberId }).select('id').single();
     if (error) throw error;
     householdId = data.id as string;
-    const { error: e2 } = await db.from('heir_household_users').insert({ household_id: householdId, role: 'owner', plan: h.plan, active_member_id: h.activeMemberId });
-    if (e2) throw e2;
   }
   const rows = toRows(h, householdId);
   if (rows.members.length) {
@@ -52,23 +48,9 @@ export async function saveRemote(db: SupabaseClient, h: Household, known: Remote
     const { error } = await db.from('heir_members').delete().in('id', gone);
     if (error) throw error;
   }
-  const { error } = await db.from('heir_household_users').update({ plan: rows.household.plan, active_member_id: rows.household.active_member_id }).eq('household_id', householdId);
+  const { error } = await db.from('heir_households').update({ plan: rows.household.plan, active_member_id: rows.household.active_member_id, updated_at: new Date().toISOString() }).eq('id', householdId);
   if (error) throw error;
   return { householdId, household: h, memberRows: rows.members };
-}
-
-// ---- Inviting someone into the family: a single-use link, good for a week. Joining adds this account to the family.
-
-export async function createInvite(db: SupabaseClient): Promise<string> {
-  const { data, error } = await db.rpc('heir_create_invite');
-  if (error) throw error;
-  return data as string;
-}
-
-/** Join the family that made this invite. Throws an Error whose message says why not, in plain words. */
-export async function joinWithInvite(db: SupabaseClient, code: string): Promise<void> {
-  const { error } = await db.rpc('heir_join', { p_code: code });
-  if (error) throw new Error(error.message || 'That invite didn’t work.');
 }
 
 // ---- Progress: one row per member. Reads merge the account's copy into this phone's; writes first read the
