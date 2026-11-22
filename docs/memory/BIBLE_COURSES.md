@@ -186,14 +186,22 @@ column through it and no blank area.
 |---|---|---|---|---|
 | Start here | First Verses | Genesis 1:1 · Psalm 23:1 · John 3:16 · Romans 6:23 · Proverbs 3:5–6 · Psalm 119:11 | Jesus and the children, Sacred Heart, New Philadelphia, Ohio | CC0 |
 | Start here | Psalm 23 | Psalm 23:1–6, a verse each | The Good Shepherd with a lamb, Christ Church Blacklands, Hastings | CC BY 2.0 |
-| Start here | The Lord's Prayer | Matthew 6:9–13, a verse each (6:9 from "Our Father") | Christ praying in Gethsemane, Notre-Dame Basilica, Ottawa | CC BY-SA 4.0 |
+| Start here | The Lord's Prayer | Matthew 6:9–13, a verse each | Christ praying in Gethsemane, Notre-Dame Basilica, Ottawa | CC BY-SA 4.0 |
 | Church | The Shema and the Blessing | Deuteronomy 6:4 · 6:5 · 6:6–7 · 6:8–9 · Numbers 6:24–26 | Moses and the burning bush, Spay | CC BY-SA 4.0 |
-| Church | The Ten Commandments | Exodus 20:3–17 in short form, one line each, cued by number | Moses with the tablets, Temple De Hirsch Sinai, Seattle | Public domain |
+| Church | The Ten Commandments | Exodus 20:3, 4, 7, 8, 12, 13, 14, 15, 16, 17: the whole verse where each commandment begins, cued by number | Moses with the tablets, Temple De Hirsch Sinai, Seattle | Public domain |
 | For life | Fear, Worry and Peace | Psalm 56:3 · 1 Peter 5:7 · Psalm 4:8 · John 14:27 · Isaiah 41:10 · Philippians 4:6–7 | Jesus walks on the water, Willet Studios, First Presbyterian, Oklahoma City | CC BY 4.0 |
 | For life | The Gospel | Romans 3:23 · 5:8 · 2 Corinthians 5:21 · Ephesians 2:8–9 · Romans 10:9 · John 1:12 | "Consummatum est", Bobrek, Bytom | Public domain |
 | For life | Who God Is | Psalm 90:2 · Malachi 3:6 · Isaiah 6:3 · 1 John 4:8 · Psalm 145:8 · Lamentations 3:22–23 | The Lamb of God, Saint Aloysius, Shandon, Ohio | CC BY-SA 3.0 |
 | Seasons | Christmas | Isaiah 9:2 · 9:6 · Luke 1:46–47 · Matthew 1:21 · 1:23 · Luke 2:10–11 | The Nativity, Sacred Heart, New Philadelphia, Ohio | CC0 |
 | Seasons | Easter (leads the page in Lent) | Isaiah 53:5 · Romans 4:25 · 1 Corinthians 15:3–4 · Matthew 28:5–6 · John 11:25–26 · 1 Peter 1:3 | The empty tomb, Eugène Oudinot, Trinity Church, Boston | CC BY 4.0 |
+
+Every Bible text is exactly as the NASB 2020 has it: whole verses, word for word, with their own capitals and
+punctuation, including quotation marks that open or close in a neighbouring verse ("for all have sinned and fall
+short of the glory of God,"). Nothing is trimmed, recased or repunctuated. Only markup is left out: verse numbers,
+paragraph marks, italics and small capitals (the divine name is written LORD; Old Testament words quoted in the New
+Testament keep their ordinary letters). src/heir/test/nasb-passages.json keeps the publisher's HTML for every
+passage, and a test checks each text against it. The KJV verses on the verse screen's fallback are likewise whole
+and exact (scripts/heir-verses/pick.py).
 
 The Hastings and Bytom photos are only available here at modest size (crops of about 500px), so those two windows
 are a little softer than the rest. Alternatives considered: Christ kneeling, Buttevant (Lord's Prayer); the burning

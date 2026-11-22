@@ -11,26 +11,22 @@ test('references convert to USFM', () => {
   for (const [id, v] of Object.entries(VERSES)) assert.ok(toUsfm(v.ref), `${id}: ${v.ref}`);
 });
 
-test('stray quotation marks are dropped, real ones kept', () => {
-  assert.equal(tidyVerse('“Come to Me, all who are weary and burdened, and I will give you rest.'), 'Come to Me, all who are weary and burdened, and I will give you rest.');
-  assert.equal(tidyVerse('God is spirit, and those who worship Him must worship in spirit and truth.”'), 'God is spirit, and those who worship Him must worship in spirit and truth.');
-  assert.equal(tidyVerse('Jesus said, “I am the way.”'), 'Jesus said, “I am the way.”');
-  assert.equal(tidyVerse('‘Come to me, all you who are weary.'), 'Come to me, all you who are weary.');
-  assert.equal(tidyVerse('The LORD’s mercy endures.'), 'The LORD’s mercy endures.');
+test('tidying never changes a word, a capital or a mark: only spacing', () => {
+  for (const t of ['“Come to Me, all who are weary and burdened, and I will give you rest.', 'and I give them eternal life, and they will never perish;',
+    'for God so loved the world,', '‘Our Father, who is in heaven,', 'The LORD’S acts of mercy']) assert.equal(tidyVerse(t), t);
+  assert.equal(tidyVerse('  Jesus  wept. '), 'Jesus wept.');
 });
 
-test('a verse that runs on in the Bible reads as a sentence on its own', () => {
-  assert.equal(tidyVerse('and I give them eternal life, and they will never perish;'), 'I give them eternal life, and they will never perish.');
-  assert.equal(tidyVerse('for God so loved the world,'), 'For God so loved the world.');
+test('passage HTML reads as plain text: LORD in the Old Testament, quoted words keep their letters in the New', () => {
+  const ot = '<div><div class="q"><span class="yv-v" v="14"></span><span class="yv-vlbl">14</span>Then you will take delight in the L<span class="sc">ord</span>,</div><div class="q">For the mouth of the L<span class="sc">ord</span>has spoken.”</div></div>';
+  assert.equal(verseFromHtml(ot, 'Isaiah 58:14'), 'Then you will take delight in the LORD, For the mouth of the LORD has spoken.”');
+  const nt = '<div><div class="p"><span class="yv-vlbl">23</span>“B<span class="sc">ehold</span>, <span class="sc">the virgin will</span> <span class="sc">conceive</span>,” which translated means, “G<span class="sc">od with us</span>.” </div></div>';
+  assert.equal(verseFromHtml(nt, 'Matthew 1:23'), '“Behold, the virgin will conceive,” which translated means, “God with us.”');
 });
 
-test('passage HTML reads as plain text, with LORD in capitals', () => {
-  const html = '<div><div class="q"><span class="yv-v" v="14"></span><span class="yv-vlbl">14</span>Then you will take delight in the L<span class="sc">ord</span>,</div><div class="q">For the mouth of the L<span class="sc">ord</span>has spoken.”</div></div>';
-  assert.equal(verseFromHtml(html), 'Then you will take delight in the LORD, For the mouth of the LORD has spoken.”');
-  assert.equal(tidyVerse(verseFromHtml(html)), 'Then you will take delight in the LORD, For the mouth of the LORD has spoken.');
-});
-
-test('a quotation the verse opens is closed at its end', () => {
-  assert.equal(tidyVerse('Speak to the sons of Israel, saying, ‘You must keep My Sabbaths.'), 'Speak to the sons of Israel, saying, ‘You must keep My Sabbaths.’');
-  assert.equal(tidyVerse('The LORD’s mercy endures.'), 'The LORD’s mercy endures.');
+test('markup gaps are closed, and italic words stay', () => {
+  assert.equal(verseFromHtml('<div><span class="yv-vlbl">25</span><span class="it">He</span>who was delivered over</div>', 'Romans 4:25'), 'He who was delivered over');
+  assert.equal(verseFromHtml('<div><span class="yv-vlbl">10</span> <span class="wj">‘</span> <span class="wj">Your kingdom come.</span></div>', 'Matthew 6:10'), '‘Your kingdom come.');
+  assert.equal(verseFromHtml('<div><span class="wj">deliver us from </span><span class="wj">evil.</span> <span class="wj">’</span></div>', 'Matthew 6:13'), 'deliver us from evil.’');
+  assert.equal(verseFromHtml('<div>¶The L<span class="sc">ord</span>’<span class="sc">s</span> mercy</div>', 'Lamentations 3:22'), 'The LORD’S mercy');
 });

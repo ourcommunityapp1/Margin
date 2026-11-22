@@ -22,36 +22,42 @@ export function toUsfm(ref: string): string | null {
   return `${book}.${m[2]}.${m[3]}${m[4] ? `-${m[4]}` : ''}`;
 }
 
-// A verse lifted out of a longer speech can open or close a quotation it doesn't contain both ends of.
-// Drop those stray marks, so the verse reads as a whole, and drop a leading "and" or "but" that only joins it
-// to the verse before.
-export function tidyVerse(text: string): string {
-  let t = text.replace(/\s+/g, ' ').trim();
-  const count = (re: RegExp) => (t.match(re) ?? []).length;
-  if (t.startsWith('“') && count(/“/g) > count(/”/g)) t = t.slice(1);
-  if (t.endsWith('”') && count(/”/g) > count(/“/g)) t = t.slice(0, -1);
-  // Single marks: only at the very start or end, since ’ is also an apostrophe.
-  if (t.startsWith('‘') && count(/‘/g) > count(/[.!?,;]’/g)) t = t.slice(1);
-  if (/[.!?,;]’$/.test(t) && !t.includes('‘')) t = t.slice(0, -1);
-  // Shown on its own, it starts with a capital and ends on a full stop, even when it runs on in the Bible.
-  t = t.trim().replace(/^(?:and|but|so|then) (?=\S)/, '').replace(/^\p{Ll}/u, (c) => c.toUpperCase()).replace(/[,;:—–-]$/, '.');
-  // A quotation it opens mid-way and doesn't finish is closed at the end.
-  if (count(/“/g) > count(/”/g)) t += '”';
-  if (count(/(^|[\s“(])‘/g) > count(/’(?=[\s”).,;:!?]|$)/g)) t += '’';
-  return t;
+const NEW_TESTAMENT = new Set(['MAT', 'MRK', 'LUK', 'JHN', 'ACT', 'ROM', '1CO', '2CO', 'GAL', 'EPH', 'PHP', 'COL', '1TH', '2TH',
+  '1TI', '2TI', 'TIT', 'PHM', 'HEB', 'JAS', '1PE', '2PE', '1JN', '2JN', '3JN', 'JUD', 'REV']);
+
+/** Whether a reference is in the Old Testament (where the NASB's small capitals print the divine name). */
+export function isOldTestament(ref: string): boolean {
+  const u = toUsfm(ref);
+  return !!u && !NEW_TESTAMENT.has(u.split('.')[0]);
 }
 
-// The passage HTML as plain text. Small capitals (the divine name, LORD) become capitals, with the space the
-// source sometimes drops after them; verse numbers and tags go; poetry lines join with a space.
-export function verseFromHtml(html: string): string {
+// The word of God is shown and learned exactly as the translation has it. Nothing here changes a word, a letter's
+// case or a punctuation mark: no trimming, no closing or dropping quotation marks, no capitalizing a verse that
+// begins in lowercase. Only spacing is tidied.
+export function tidyVerse(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+// The NASB passage HTML from the YouVersion Platform as plain text. Only markup goes:
+//  - verse numbers, tags, paragraph marks (¶) and line breaks between poetry lines (which become a space);
+//  - small capitals: in the Old Testament they print the divine name, written LORD (and GOD); in the New
+//    Testament they mark a quotation from the Old, and the letters keep their case;
+//  - italics (words the translators supplied) become plain words;
+//  - the source sometimes drops the space after a small-capitals or italic run before the next word, and leaves a
+//    space next to a quotation mark where a footnote or a tag was; those spaces are put right.
+export function verseFromHtml(html: string, ref: string): string {
+  const ot = isOldTestament(ref);
   return html
     .replace(/<span class="yv-vlbl">[^<]*<\/span>/g, '')
-    .replace(/<span class="sc">([^<]*)<\/span>(?=\p{L})/gu, (_, w: string) => `${w.toUpperCase()} `)
-    .replace(/<span class="sc">([^<]*)<\/span>/g, (_, w: string) => w.toUpperCase())
+    .replace(/<span class="sc">([^<]*)<\/span>(?=\p{L})/gu, (_, w: string) => (ot ? `${w.toUpperCase()} ` : w))
+    .replace(/<span class="sc">([^<]*)<\/span>/g, (_, w: string) => (ot ? w.toUpperCase() : w))
+    .replace(/<span class="it">([^<]*)<\/span>(?=\p{L})/gu, '$1 ')
     .replace(/<\/div>\s*<div[^>]*>/g, ' ')
     .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, '’').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
-    .replace(/\s+([,.;:!?])/g, '$1')
+    .replace(/¶/g, '')
+    .replace(/\s+([,.;:!?’”])/g, '$1')
+    .replace(/([‘“])\s+/g, '$1')
     .replace(/\s+/g, ' ')
     .trim();
 }

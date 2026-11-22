@@ -204,7 +204,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
         ) : step.kind === 'verse' ? (
           <>
             <figure style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <blockquote className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.45 }}>“{verses[step.itemId]?.text ?? step.text}”</blockquote>
+              <blockquote className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.45 }}>{verses[step.itemId]?.text ?? step.text}</blockquote>
               <figcaption style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 600 }}>{step.ref} ({verses[step.itemId]?.version ?? 'KJV'})</figcaption>
             </figure>
             <button type="button" className="hr-btn" onClick={advance}>Continue</button>

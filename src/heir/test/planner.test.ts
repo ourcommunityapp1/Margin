@@ -121,7 +121,7 @@ test('lie down: offered in the evening, once a night, with today’s questions f
   assert.equal(riseOffer(after, new Date(2026, 10, 20, 23)), null, 'not the same night');
 });
 
-test('every verse is short and reads as a whole sentence', async () => {
+test('every verse is short, and whole (exactly as the KJV has it, ending as the verse ends)', async () => {
   const { VERSES } = await import('../content/verses.ts');
   const { courses, courseItems, getCollection } = await import('../content/index.ts');
   // Verse items are Scripture already; the verse screen is for catechism questions and creed sections.
@@ -130,7 +130,7 @@ test('every verse is short and reads as a whole sentence', async () => {
   for (const [id, v] of Object.entries(VERSES)) {
     const item = all.find((i) => i.id === id);
     assert.ok(item, `${id} exists`);
-    assert.match(v.text, /^[A-Z].*[.?!]$/, `${id} reads as a sentence`);
+    assert.match(v.text, /^[A-Z]/, `${id} starts a sentence`);
     assert.ok(v.text.split(' ').length <= 45, `${id} is short`);
     assert.ok(!/[[\]]/.test(v.text), `${id} has no editorial brackets`);
   }

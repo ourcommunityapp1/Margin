@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { collections, getItem, allItems } from '../content/index.ts';
+import { tidyVerse, verseFromHtml } from '../usfm.ts';
 import { collectionProblems, itemProblems } from '../validate.ts';
 import { sameWords, words } from '../words.ts';
 import { timeOfDay } from '../time.ts';
@@ -22,13 +24,14 @@ test('the content check catches a meaning phrase that is not in the text', () =>
   assert.ok(itemProblems(item).some((p) => p.includes('not in the text')));
 });
 
-test('Bible verse texts are clean: no paragraph marks, run-together words or unbalanced quotes', () => {
+test('every Bible verse is word for word the NASB 2020, as the publisher gives it', () => {
+  // test/nasb-passages.json holds the YouVersion Platform's HTML for each passage (NASB 2020, Bible 2692).
+  const html = JSON.parse(readFileSync(new URL('./nasb-passages.json', import.meta.url), 'utf8')) as Record<string, string>;
   for (const c of collections.filter((c) => c.kind === 'scripture')) {
     for (const i of c.items) {
-      assert.ok(!/[¶‘’]\s*$|^[‘’]|¶/.test(i.text), `${i.id}: stray mark`);
-      assert.ok(!/\b(Hewho|Lordhas|LORDis)\b/.test(i.text), `${i.id}: run-together words`);
-      assert.equal((i.text.match(/“/g) ?? []).length, (i.text.match(/”/g) ?? []).length, `${i.id}: unbalanced quotes`);
-      assert.match(i.text, /^[A-Z“]/, `${i.id}: starts with a capital`);
+      const ref = /\(([^)]+)\)$/.exec(i.prompt)?.[1] ?? i.prompt;
+      assert.ok(html[ref], `${i.id}: no saved passage for ${ref}`);
+      assert.equal(i.text, tidyVerse(verseFromHtml(html[ref], ref)), `${i.id} (${ref})`);
     }
   }
 });

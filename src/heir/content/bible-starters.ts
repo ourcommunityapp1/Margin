@@ -3,8 +3,10 @@
 //
 // Scripture quotations are from the NASB 2020: NEW AMERICAN STANDARD BIBLE®, Copyright © 1960, 1971, 1977, 1995,
 // 2020 by The Lockman Foundation. Used by permission. All rights reserved. lockman.org
-// The text is as the YouVersion Platform gives it, with Old Testament quotations (printed in small capitals in
-// the NASB) set in ordinary case.
+// Every text is exactly as the NASB 2020 has it: whole verses, word for word, with their own capitals and
+// punctuation, including quotation marks that open or close in a neighbouring verse. Only markup is left out
+// (verse numbers, paragraph marks, italics and small capitals; the divine name is written LORD, and Old Testament
+// words quoted in the New keep their ordinary letters). A test checks each text against the publisher's HTML.
 //
 // For a verse, the cue (`prompt`) is its reference.
 
@@ -48,10 +50,10 @@ export const firstVerses: Collection = {
     {
       id: 'fv-3', collection: 'first-verses', number: 3, reviewed: false,
       prompt: 'John 3:16',
-      text: 'For God so loved the world, that He gave His only Son, so that everyone who believes in Him will not perish, but have eternal life.',
+      text: '“For God so loved the world, that He gave His only Son, so that everyone who believes in Him will not perish, but have eternal life.',
       chunks: {
-        adult: ['For God so loved the world,', 'that He gave His only Son,', 'so that everyone who believes in Him will not perish,', 'but have eternal life.'],
-        child: ['For God so loved the world,', 'that He gave His only Son,', 'so that everyone', 'who believes in Him', 'will not perish,', 'but have eternal life.'],
+        adult: ['“For God so loved the world,', 'that He gave His only Son,', 'so that everyone who believes in Him will not perish,', 'but have eternal life.'],
+        child: ['“For God so loved the world,', 'that He gave His only Son,', 'so that everyone', 'who believes in Him', 'will not perish,', 'but have eternal life.'],
       },
       meaning: [
         { phrase: 'eternal life', question: 'What is “eternal life”?', answer: 'Life with God that never ends, beginning now',
@@ -144,10 +146,10 @@ export const christmas: Collection = {
     {
       id: 'xm-3', collection: 'christmas', number: 3, reviewed: false,
       prompt: 'Luke 1:46–47',
-      text: 'And Mary said: “My soul exalts the Lord, And my spirit has rejoiced in God my Savior.”',
+      text: 'And Mary said: “My soul exalts the Lord, And my spirit has rejoiced in God my Savior.',
       chunks: {
-        adult: ['And Mary said:', '“My soul exalts the Lord,', 'And my spirit has rejoiced in God my Savior.”'],
-        child: ['And Mary said:', '“My soul exalts the Lord,', 'And my spirit has rejoiced', 'in God my Savior.”'],
+        adult: ['And Mary said:', '“My soul exalts the Lord,', 'And my spirit has rejoiced in God my Savior.'],
+        child: ['And Mary said:', '“My soul exalts the Lord,', 'And my spirit has rejoiced', 'in God my Savior.'],
       },
       meaning: [
         { phrase: 'exalts the Lord', question: 'What does Mary mean when she says her soul “exalts the Lord”?', answer: 'She praises the Lord as great, with all her heart',
@@ -159,10 +161,10 @@ export const christmas: Collection = {
     {
       id: 'xm-4', collection: 'christmas', number: 4, reviewed: false,
       prompt: 'Matthew 1:21',
-      text: 'She will give birth to a Son; and you shall name Him Jesus, for He will save His people from their sins.',
+      text: 'She will give birth to a Son; and you shall name Him Jesus, for He will save His people from their sins.”',
       chunks: {
-        adult: ['She will give birth to a Son;', 'and you shall name Him Jesus,', 'for He will save His people from their sins.'],
-        child: ['She will give birth', 'to a Son;', 'and you shall name Him Jesus,', 'for He will save His people', 'from their sins.'],
+        adult: ['She will give birth to a Son;', 'and you shall name Him Jesus,', 'for He will save His people from their sins.”'],
+        child: ['She will give birth', 'to a Son;', 'and you shall name Him Jesus,', 'for He will save His people', 'from their sins.”'],
       },
       meaning: [
         { phrase: 'name Him Jesus', question: 'Why was the baby to be named Jesus?', answer: 'Because He would save His people from their sins',
@@ -189,10 +191,10 @@ export const christmas: Collection = {
     {
       id: 'xm-6', collection: 'christmas', number: 6, reviewed: false,
       prompt: 'Luke 2:10–11',
-      text: 'And so the angel said to them, “Do not be afraid; for behold, I bring you good news of great joy which will be for all the people; for today in the city of David there has been born for you a Savior, who is Christ the Lord.”',
+      text: 'And so the angel said to them, “Do not be afraid; for behold, I bring you good news of great joy which will be for all the people; for today in the city of David there has been born for you a Savior, who is Christ the Lord.',
       chunks: {
-        adult: ['And so the angel said to them,', '“Do not be afraid;', 'for behold, I bring you good news of great joy', 'which will be for all the people;', 'for today in the city of David there has been born for you a Savior,', 'who is Christ the Lord.”'],
-        child: ['And so the angel said to them,', '“Do not be afraid;', 'for behold,', 'I bring you good news', 'of great joy', 'which will be for all the people;', 'for today in the city of David', 'there has been born for you', 'a Savior,', 'who is Christ the Lord.”'],
+        adult: ['And so the angel said to them,', '“Do not be afraid;', 'for behold, I bring you good news of great joy', 'which will be for all the people;', 'for today in the city of David there has been born for you a Savior,', 'who is Christ the Lord.'],
+        child: ['And so the angel said to them,', '“Do not be afraid;', 'for behold,', 'I bring you good news', 'of great joy', 'which will be for all the people;', 'for today in the city of David', 'there has been born for you', 'a Savior,', 'who is Christ the Lord.'],
       },
       meaning: [
         { phrase: 'good news of great joy', question: 'What was the “good news of great joy”?', answer: 'A Savior, Christ the Lord, had been born',

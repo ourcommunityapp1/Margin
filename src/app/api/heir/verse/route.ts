@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     });
     if (!r.ok) return Response.json({ error: `YouVersion answered ${r.status}.` }, { status: 502 });
     const body = (await r.json()) as { content?: string };
-    const text = tidyVerse(verseFromHtml(body.content ?? ''));
+    const text = tidyVerse(verseFromHtml(body.content ?? '', verse.ref));
     if (!text) return Response.json({ error: 'The verse came back empty.' }, { status: 502 });
     memo.set(id, { text, at: Date.now() });
     return Response.json({ ref: verse.ref, text, version: VERSION }, { headers: cacheHeaders });
