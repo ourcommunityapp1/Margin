@@ -19,7 +19,8 @@ const FALLOFF = 1.6 / (0.35 + 1.6 * LIGHT.soft);
 // Every window keys off one clock, so in a list the light passes from one window into the next.
 const T0 = typeof performance === 'undefined' ? 0 : performance.now();
 
-export type Motion = { kind: 'circle'; delay?: number } | { kind: 'list'; index: number; count: number };
+/** list: one light travels down a list of windows; `offset` (ms) keeps separate lists out of step. */
+export type Motion = { kind: 'circle'; delay?: number } | { kind: 'list'; index: number; count: number; offset?: number };
 
 /** Where the light is behind one window now (window coordinates 0..1) and how strong it is; null while it's away. */
 export function lightAt(motion: Motion, now: number): { x: number; y: number; k: number } | null {
@@ -34,7 +35,7 @@ export function lightAt(motion: Motion, now: number): { x: number; y: number; k:
     return { x: 0.5 + 0.3 * Math.cos(a), y: 0.5 + 0.3 * Math.sin(a), k: Math.sin(Math.PI * t) };
   }
   // Down through every window in the list, one after another at the same pace, a pause, then back up.
-  const leg = motion.count * pass, cycle = 2 * (leg + gap), t0 = (now - T0) % cycle;
+  const leg = motion.count * pass, cycle = 2 * (leg + gap), t0 = (now - T0 + (motion.offset ?? 0)) % cycle;
   const down = t0 < leg + gap;
   const u = down ? t0 : t0 - (leg + gap);
   if (u > leg) return null;

@@ -971,3 +971,16 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-stones-how ol { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
 .hr-stones-how li { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; line-height: 1.45; }
 @media (prefers-reduced-motion: reduce) { .hr-stones-how summary::before { transition: none; } }
+
+/* Courses: the season's course, the one you're on, and every course as a card on its shelf. */
+.hr-glass-btn-reset { font: inherit; font-weight: 600; font-size: 17px; cursor: pointer; text-align: left; }
+.hr-continue { flex-direction: row; align-items: center; gap: 14px; padding: 16px; border-radius: 28px; text-decoration: none; color: #F4EFE6; }
+.hr-continue-bar { display: block; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.hr-continue-bar span { display: block; height: 100%; border-radius: 3px; background: #E8B867; }
+.hr-shelf { display: flex; flex-direction: column; gap: 8px; }
+.hr-shelf ul { list-style: none; margin: 0 -10px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.hr-course-card { display: flex; align-items: center; gap: 14px; padding: 14px 14px 14px 14px; color: inherit; text-decoration: none; }
+.hr-course-text { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.hr-course-name { font-size: 19px; font-weight: 600; line-height: 1.2; }
+.hr-course-short { font-size: 14px; line-height: 1.4; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.hr-course-status { font-size: 12.5px; font-weight: 600; color: var(--good); margin-top: 2px; }

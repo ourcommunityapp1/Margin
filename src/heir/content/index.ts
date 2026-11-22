@@ -6,14 +6,31 @@ import { westminsterLarger } from './westminster-larger.ts';
 import { apostlesCreed } from './apostles-creed.ts';
 import { niceneCreed } from './nicene-creed.ts';
 import { christmas, firstVerses } from './bible-starters.ts';
+import type { Season } from '../season.ts';
 
 export const collections: Collection[] = [westminsterShorter, westminsterLarger, apostlesCreed, niceneCreed, firstVerses, christmas];
+
+// The Courses page's shelves, in order.
+export type Shelf = 'start' | 'church' | 'life' | 'seasons' | 'catechisms';
+export const SHELVES: { id: Shelf; title: string }[] = [
+  { id: 'start', title: 'Start here' },
+  { id: 'church', title: 'What the church has always learned' },
+  { id: 'life', title: 'For life' },
+  { id: 'catechisms', title: 'Catechisms' },
+  { id: 'seasons', title: 'Seasons' },
+];
 
 // What a learner picks to memorize. A course runs through one or more collections in order.
 export interface Course {
   id: string;
   title: string;
   blurb: string;
+  /** Two lines at most, under the name on the Courses page. */
+  short: string;
+  /** Which shelf it sits on, on the Courses page. */
+  shelf: Shelf;
+  /** A seasonal course leads the Courses page while it's in season. */
+  season?: Season;
   collections: string[];
   // The course's natural parts, each with its own window. By question number within a collection;
   // without parts, each collection is one part.
@@ -21,16 +38,16 @@ export interface Course {
 }
 
 export const courses: Course[] = [
-  { id: 'first-verses', title: 'First Verses', blurb: 'Six short verses every Christian should know. The place to begin.', collections: ['first-verses'] },
-  { id: 'westminster-shorter', title: 'Westminster Shorter Catechism', blurb: 'Short questions and answers. A good place to start.', collections: ['westminster-shorter'],
+  { id: 'first-verses', title: 'First Verses', blurb: 'Six short verses every Christian should know. The place to begin.', short: 'Six short verses every Christian should know.', shelf: 'start', collections: ['first-verses'] },
+  { id: 'westminster-shorter', title: 'Westminster Shorter Catechism', blurb: 'Short questions and answers. A good place to start.', short: '107 questions on what we believe and how we live.', shelf: 'catechisms', collections: ['westminster-shorter'],
     parts: [
       { title: 'What we believe', collection: 'westminster-shorter', from: 1, to: 38 },
       { title: 'The law', collection: 'westminster-shorter', from: 39, to: 81 },
       { title: 'The way of salvation', collection: 'westminster-shorter', from: 82, to: 107 },
     ] },
-  { id: 'westminster-larger', title: 'Westminster Larger Catechism', blurb: 'Fuller answers to the same questions.', collections: ['westminster-larger'] },
-  { id: 'creeds', title: 'The Creeds', blurb: 'The Apostles’ Creed, then the Nicene Creed.', collections: ['apostles-creed', 'nicene-creed'] },
-  { id: 'christmas', title: 'Christmas', blurb: 'Six verses that tell the Christmas story, from the prophets’ promise to the angels’ news.', collections: ['christmas'] },
+  { id: 'westminster-larger', title: 'Westminster Larger Catechism', blurb: 'Fuller answers to the same questions.', short: 'Fuller answers to the same questions.', shelf: 'catechisms', collections: ['westminster-larger'] },
+  { id: 'creeds', title: 'The Creeds', blurb: 'The Apostles’ Creed, then the Nicene Creed.', short: 'The faith Christians confess together.', shelf: 'church', collections: ['apostles-creed', 'nicene-creed'] },
+  { id: 'christmas', title: 'Christmas', blurb: 'Six verses that tell the Christmas story, from the prophets’ promise to the angels’ news.', short: 'From the prophets’ promise to the angels’ news.', shelf: 'seasons', season: 'christmas', collections: ['christmas'] },
 ];
 
 const byId = new Map<string, Item>(collections.flatMap((c) => c.items.map((i) => [i.id, i] as const)));
