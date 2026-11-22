@@ -1,7 +1,7 @@
 # Heir: Bible memory courses, research and options
 
-A plan for themed Bible memory courses that sit beside the catechisms and creeds. Nothing here is built yet.
-The verse lists are drafts for review.
+A plan for themed Bible memory courses that sit beside the catechisms and creeds. Section 5 lists the ten built so
+far; the rest of the catalog is a draft for review.
 
 ## 1. What already exists
 
@@ -176,17 +176,30 @@ also applies 9:1–2 to Jesus' ministry in Galilee), Mary's song during her preg
 the birth, and the angel to the shepherds on the night of the birth.
 Window: the Nativity, Sacred Heart Church, New Philadelphia, Ohio (CC0), cropped wide.
 
-## 5. Windows
+## 5. Built courses and their windows
 
-One stained-glass window per course. Each must give a round crop with every head whole, no stone column or mullion
-through it, and no blank areas. Photos from Wikimedia Commons, credited on the About page.
+Ten Bible courses are built (src/heir/content/bible-starters.ts and bible-courses.ts), each with one round window
+cut from a Commons photo and credited on the About page. Every window crop keeps each head whole, has no stone
+column through it and no blank area.
 
-| Course | Window | License |
-|---|---|---|
-| First Verses | Psalm 23, the still waters: sheep by a winding stream. All Saints, Saughall | CC BY-SA 2.0 |
-| Fear, Worry and Peace | "Be of good cheer… O thou of little faith": Christ on the water. Willet Studios, First Presbyterian, Oklahoma City | CC BY 4.0 |
-| Christmas | The Nativity, an oval medallion. Saint Mary's, Rome, Georgia (alternates: Sacred Heart, New Philadelphia, Ohio; Saint Francis de Sales, Lebanon, Ohio) | CC BY 4.0 (alternates CC0) |
-| Kept for later | The Good Shepherd with a lamb, Christ Church Blacklands, Hastings (Assurance); "It is I; be not afraid", St Peter's, Bexhill (Hope in Suffering) | CC BY 2.0 |
+| Shelf | Course | Texts | Window | License |
+|---|---|---|---|---|
+| Start here | First Verses | Genesis 1:1 · Psalm 23:1 · John 3:16 · Romans 6:23 · Proverbs 3:5–6 · Psalm 119:11 | Jesus and the children, Sacred Heart, New Philadelphia, Ohio | CC0 |
+| Start here | Psalm 23 | Psalm 23:1–6, a verse each | The Good Shepherd with a lamb, Christ Church Blacklands, Hastings | CC BY 2.0 |
+| Start here | The Lord's Prayer | Matthew 6:9–13, a verse each (6:9 from "Our Father") | Christ praying in Gethsemane, Notre-Dame Basilica, Ottawa | CC BY-SA 4.0 |
+| Church | The Shema and the Blessing | Deuteronomy 6:4 · 6:5 · 6:6–7 · 6:8–9 · Numbers 6:24–26 | Moses and the burning bush, Spay | CC BY-SA 4.0 |
+| Church | The Ten Commandments | Exodus 20:3–17 in short form, one line each, cued by number | Moses with the tablets, Temple De Hirsch Sinai, Seattle | Public domain |
+| For life | Fear, Worry and Peace | Psalm 56:3 · 1 Peter 5:7 · Psalm 4:8 · John 14:27 · Isaiah 41:10 · Philippians 4:6–7 | Jesus walks on the water, Willet Studios, First Presbyterian, Oklahoma City | CC BY 4.0 |
+| For life | The Gospel | Romans 3:23 · 5:8 · 2 Corinthians 5:21 · Ephesians 2:8–9 · Romans 10:9 · John 1:12 | "Consummatum est", Bobrek, Bytom | Public domain |
+| For life | Who God Is | Psalm 90:2 · Malachi 3:6 · Isaiah 6:3 · 1 John 4:8 · Psalm 145:8 · Lamentations 3:22–23 | The Lamb of God, Saint Aloysius, Shandon, Ohio | CC BY-SA 3.0 |
+| Seasons | Christmas | Isaiah 9:2 · 9:6 · Luke 1:46–47 · Matthew 1:21 · 1:23 · Luke 2:10–11 | The Nativity, Sacred Heart, New Philadelphia, Ohio | CC0 |
+| Seasons | Easter (leads the page in Lent) | Isaiah 53:5 · Romans 4:25 · 1 Corinthians 15:3–4 · Matthew 28:5–6 · John 11:25–26 · 1 Peter 1:3 | The empty tomb, Eugène Oudinot, Trinity Church, Boston | CC BY 4.0 |
+
+The Hastings and Bytom photos are only available here at modest size (crops of about 500px), so those two windows
+are a little softer than the rest. Alternatives considered: Christ kneeling, Buttevant (Lord's Prayer); the burning
+bush, Marienkirche, and a hand of blessing, Mount Vernon (Shema); Moses, Immaculate Conception, Toledo (too narrow
+for a round crop without dark sides); the Crucifixion, Middletown (Gospel); Christ in Majesty, St Mary-le-Bow
+(Who God Is).
 
 ## 6. The decision that matters most: translation and licensing
 

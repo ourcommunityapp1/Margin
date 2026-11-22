@@ -22,6 +22,21 @@ test('the content check catches a meaning phrase that is not in the text', () =>
   assert.ok(itemProblems(item).some((p) => p.includes('not in the text')));
 });
 
+test('Bible verse texts are clean: no paragraph marks, run-together words or unbalanced quotes', () => {
+  for (const c of collections.filter((c) => c.kind === 'scripture')) {
+    for (const i of c.items) {
+      assert.ok(!/[¶‘’]\s*$|^[‘’]|¶/.test(i.text), `${i.id}: stray mark`);
+      assert.ok(!/\b(Hewho|Lordhas|LORDis)\b/.test(i.text), `${i.id}: run-together words`);
+      assert.equal((i.text.match(/“/g) ?? []).length, (i.text.match(/”/g) ?? []).length, `${i.id}: unbalanced quotes`);
+      assert.match(i.text, /^[A-Z“]/, `${i.id}: starts with a capital`);
+    }
+  }
+});
+
+test('every Bible course is short enough for a first window in a few weeks', () => {
+  for (const c of collections.filter((c) => c.kind === 'scripture')) assert.ok(c.items.length >= 5 && c.items.length <= 10, `${c.id}: ${c.items.length} items`);
+});
+
 test('item ids are unique across collections', () => {
   const ids = allItems().map((i) => i.id);
   assert.equal(new Set(ids).size, ids.length);

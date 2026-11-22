@@ -13,9 +13,18 @@ import type { Item, Track } from '@/heir/types';
 // Larger Catechism: the north rose of Chartres Cathedral.
 // The Creeds: two medallions of the Good Samaritan window at Chartres: the Creation and Fall, and the Samaritan.
 // First Verses: Jesus and the children; Christmas: the Nativity. Both from Sacred Heart Church, New Philadelphia, Ohio.
+// The other Bible courses: credited on the About page.
 const WINDOWS: Record<string, string[]> = {
   'first-verses': ['/heir/glass/sh-children'],
   christmas: ['/heir/glass/sh-nativity'],
+  'psalm-23': ['/heir/glass/psalm-23'],
+  'lords-prayer': ['/heir/glass/lords-prayer'],
+  shema: ['/heir/glass/shema'],
+  'ten-commandments': ['/heir/glass/ten-commandments'],
+  'fear-peace': ['/heir/glass/fear-peace'],
+  gospel: ['/heir/glass/gospel'],
+  'who-god-is': ['/heir/glass/who-god-is'],
+  easter: ['/heir/glass/easter'],
   'westminster-shorter': ['/heir/glass/gsc-a', '/heir/glass/gsc-b', '/heir/glass/gsc-c'],
   'westminster-larger': ['/heir/glass/rose-chartres'],
   creeds: ['/heir/glass/chartres-m1', '/heir/glass/chartres-m2'],

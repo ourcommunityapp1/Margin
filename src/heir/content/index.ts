@@ -6,9 +6,11 @@ import { westminsterLarger } from './westminster-larger.ts';
 import { apostlesCreed } from './apostles-creed.ts';
 import { niceneCreed } from './nicene-creed.ts';
 import { christmas, firstVerses } from './bible-starters.ts';
+import { easter, fearPeace, gospel, lordsPrayer, psalm23, shema, tenCommandments, whoGodIs } from './bible-courses.ts';
 import type { Season } from '../season.ts';
 
-export const collections: Collection[] = [westminsterShorter, westminsterLarger, apostlesCreed, niceneCreed, firstVerses, christmas];
+export const collections: Collection[] = [westminsterShorter, westminsterLarger, apostlesCreed, niceneCreed, firstVerses, christmas,
+  psalm23, lordsPrayer, shema, tenCommandments, fearPeace, gospel, whoGodIs, easter];
 
 // The Courses page's shelves, in order.
 export type Shelf = 'start' | 'church' | 'life' | 'seasons' | 'catechisms';
@@ -39,6 +41,13 @@ export interface Course {
 
 export const courses: Course[] = [
   { id: 'first-verses', title: 'First Verses', blurb: 'Six short verses every Christian should know. The place to begin.', short: 'Six short verses every Christian should know.', shelf: 'start', collections: ['first-verses'] },
+  { id: 'psalm-23', title: 'Psalm 23', blurb: 'The Shepherd’s psalm, all six verses: the LORD who leads, feeds and keeps His people, all the way home.', short: 'The Shepherd’s psalm, all six verses.', shelf: 'start', collections: ['psalm-23'] },
+  { id: 'lords-prayer', title: 'The Lord’s Prayer', blurb: 'The prayer Jesus taught His disciples, as Matthew gives it. Christians have prayed it every day for two thousand years.', short: 'The prayer Jesus taught His disciples.', shelf: 'start', collections: ['lords-prayer'] },
+  { id: 'shema', title: 'The Shema and the Blessing', blurb: '“Hear, Israel!”: the confession God’s people have said morning and evening for three thousand years, and the blessing God gave the priests.', short: 'Israel’s daily confession and the priestly blessing.', shelf: 'church', collections: ['shema'] },
+  { id: 'ten-commandments', title: 'The Ten Commandments', blurb: 'The Ten Commandments from Exodus 20, one short line each.', short: 'God’s law in ten short lines.', shelf: 'church', collections: ['ten-commandments'] },
+  { id: 'fear-peace', title: 'Fear, Worry and Peace', blurb: 'Six promises for anxious days and restless nights, from “When I am afraid” to the peace that guards your heart.', short: 'Six promises for anxious days and restless nights.', shelf: 'life', collections: ['fear-peace'] },
+  { id: 'gospel', title: 'The Gospel', blurb: 'The good news in six verses: our sin, Christ’s death for us, grace, and new life as God’s children.', short: 'The good news, from our sin to new life in Christ.', shelf: 'life', collections: ['gospel'] },
+  { id: 'who-god-is', title: 'Who God Is', blurb: 'Six verses on who God is: eternal, unchanging, holy, love, gracious and faithful.', short: 'Eternal, holy, faithful, and love: who God is.', shelf: 'life', collections: ['who-god-is'] },
   { id: 'westminster-shorter', title: 'Westminster Shorter Catechism', blurb: 'Short questions and answers. A good place to start.', short: '107 questions on what we believe and how we live.', shelf: 'catechisms', collections: ['westminster-shorter'],
     parts: [
       { title: 'What we believe', collection: 'westminster-shorter', from: 1, to: 38 },
@@ -48,6 +57,7 @@ export const courses: Course[] = [
   { id: 'westminster-larger', title: 'Westminster Larger Catechism', blurb: 'Fuller answers to the same questions.', short: 'Fuller answers to the same questions.', shelf: 'catechisms', collections: ['westminster-larger'] },
   { id: 'creeds', title: 'The Creeds', blurb: 'The Apostles’ Creed, then the Nicene Creed.', short: 'The faith Christians confess together.', shelf: 'church', collections: ['apostles-creed', 'nicene-creed'] },
   { id: 'christmas', title: 'Christmas', blurb: 'Six verses that tell the Christmas story, from the prophets’ promise to the angels’ news.', short: 'From the prophets’ promise to the angels’ news.', shelf: 'seasons', season: 'christmas', collections: ['christmas'] },
+  { id: 'easter', title: 'Easter', blurb: 'Six verses for Lent and Easter: the Servant pierced for us, the empty tomb, and the living hope.', short: 'The cross, the empty tomb, the living hope.', shelf: 'seasons', season: 'easter', collections: ['easter'] },
 ];
 
 const byId = new Map<string, Item>(collections.flatMap((c) => c.items.map((i) => [i.id, i] as const)));
@@ -99,7 +109,7 @@ export function itemSubtitle(item: Item): string {
 // What a course's items are called, in the plural.
 export function itemNoun(item: Item | undefined, n = 2): string {
   const unit = item ? getCollection(item.collection)?.unit : undefined;
-  const one = unit === 'Question' ? 'question' : unit === 'Verse' ? 'verse' : 'section';
+  const one = unit === 'Question' ? 'question' : unit === 'Verse' ? 'verse' : unit === 'Commandment' ? 'commandment' : 'section';
   return n === 1 ? one : `${one}s`;
 }
 

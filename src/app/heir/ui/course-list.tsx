@@ -115,7 +115,7 @@ export function CourseScreen({ id }: { id: string }) {
                     <Link className="hr-lesson" href={`/heir/item/${item.id}`} style={{ alignItems: 'flex-start', padding: '10px 8px' }}>
                       <Stone level={level} size={30} dim={dim} />
                       <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
-                        <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{unit === 'Question' ? `Q${item.number} · ${item.prompt}` : unit === 'Verse' ? item.prompt : `${item.number} · ${item.prompt}`}</span>
+                        <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{unit === 'Question' ? `Q${item.number} · ${item.prompt}` : unit === 'Verse' || unit === 'Commandment' ? item.prompt : `${item.number} · ${item.prompt}`}</span>
                         <span className="serif" style={{ fontSize: 16, lineHeight: 1.4, color: 'var(--muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.text}</span>
                       </span>
                       {status && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)', paddingTop: 2 }}>{status}</span>}

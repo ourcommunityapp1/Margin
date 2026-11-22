@@ -25,7 +25,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
       <main className="hr-page">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
           <Back href={back} />
-          <span style={{ fontSize: 15, fontWeight: 600 }}>{collectionTitle} · {unit === 'Question' ? 'Q' : unit === 'Verse' ? 'Verse ' : 'Part '}{item.number}</span>
+          <span style={{ fontSize: 15, fontWeight: 600 }}>{collectionTitle} · {unit === 'Question' ? 'Q' : unit === 'Verse' || unit === 'Commandment' ? `${unit} ` : 'Part '}{item.number}</span>
         </div>
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

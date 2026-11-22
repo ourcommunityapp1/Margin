@@ -14,6 +14,14 @@ const WINDOWS = [
   { name: 'Good Samaritan window', place: 'Chartres Cathedral', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Vitrail_Chartres-044_rectifi%C3%A9.JPG' },
   { name: 'Jesus and the Children', place: 'Sacred Heart Church, New Philadelphia, Ohio', who: 'Nheyob', license: 'CC0', page: 'https://commons.wikimedia.org/wiki/File:Sacred_Heart_Church_(New_Philadelphia,_Ohio)_-_Jesus_and_the_Children,_stained-glass.jpg' },
   { name: 'The Nativity', place: 'Sacred Heart Church, New Philadelphia, Ohio', who: 'Nheyob', license: 'CC0', page: 'https://commons.wikimedia.org/wiki/File:Sacred_Heart_Church_(New_Philadelphia,_Ohio)_-_The_Nativity_of_the_Lord,_stained-glass.jpg' },
+  { name: 'The Good Shepherd with a lamb', place: 'Christ Church, Blacklands, Hastings', who: 'Jules & Jenny', license: 'CC BY 2.0', page: 'https://commons.wikimedia.org/wiki/File:Stained_glass_window,_Christchurch_Blacklands,_Hastings_(15232949385).jpg' },
+  { name: 'Christ praying in Gethsemane', place: 'Notre-Dame Cathedral Basilica, Ottawa', who: 'ΙΣΧΣΝΙΚΑ-888', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Christ_praying_in_the_garden_of_Gethsemane_-_Notre-Dame_Cathedral_Basilica,_Ottawa.JPG' },
+  { name: 'Moses and the burning bush', place: 'Parish church, Spay', who: 'Rolf Kranz', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Spay,_Pfarrkirche,_Moses_und_der_brennende_Dornbusch.jpg' },
+  { name: 'Moses with the tablets', place: 'Temple De Hirsch Sinai, Seattle', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Temple_De_Hirsch_Sinai_-_Moses_with_the_Tablets_(stained_glass)_01.jpg' },
+  { name: 'Jesus walks on the water', place: 'First Presbyterian Church, Oklahoma City (Willet Studios)', who: 'NateBergin', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:08_First_Presbyterian_OKC_(Jesus_Walks_on_Water)_Willet_Studios.png' },
+  { name: '“Consummatum est”', place: 'Church in Bobrek, Bytom (Mayer’sche Hofkunstanstalt)', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Bytom_Bobrek_church_crucifixion_stained_glass.jpg' },
+  { name: 'The Lamb of God', place: 'Saint Aloysius Church, Shandon, Ohio', who: 'Nheyob', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Saint_Aloysius_Catholic_Church_(Shandon,_Ohio)_-_interior,_stained_glass,_Lamb_of_God_%26_Seven_Seals_detail.jpg' },
+  { name: 'The empty tomb', place: 'Trinity Church, Boston (Eugène Oudinot)', who: 'NateBergin', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Oudinot_Stained-Glass_Window,_the_Empty_Tomb,_Trinity_Church,_Boston.png' },
 ];
 
 // Close-up crops of these photos, shared under the same licenses.

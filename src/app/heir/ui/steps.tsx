@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Item, Track } from '@/heir/types';
 import type { Step } from '@/heir/lesson';
 import { unitText } from '@/heir/lesson';
-import { getCollection, getItem, isVerse, itemLabel } from '@/heir/content';
+import { getCollection, getItem, isVerse, itemLabel, itemNoun } from '@/heir/content';
 import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
 // `slip`: right, but not cleanly (a spelling slip, a missed word), so the praise should be quieter.
@@ -50,7 +50,7 @@ export function Intro({ item, track, step, onNext }: { item: Item; track: Track;
     <>
       <div className="hr-cue">
         <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <span className="hr-new">{u.part > 1 ? 'Next part' : isVerse(item) ? 'New verse' : 'New question'}</span>
+          <span className="hr-new">{u.part > 1 ? 'Next part' : isVerse(item) ? `New ${itemNoun(item, 1)}` : 'New question'}</span>
           <span className="hr-label">{isVerse(item) ? getCollection(item.collection)?.title : itemLabel(item)}{u.of > 1 ? ` · Part ${u.part} of ${u.of}` : ''}</span>
         </span>
         <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.3, fontWeight: 600 }}>{item.prompt}</p>
