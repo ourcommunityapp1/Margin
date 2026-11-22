@@ -9,6 +9,7 @@ import { HEIR_SUPABASE_KEY, HEIR_SUPABASE_URL, heirCloudConfigured } from '@/hei
 import { fromRows, removedMemberIds, toRows, type HouseholdRow, type MemberRow } from '@/heir/sync';
 import type { Household } from '@/heir/types';
 import { mergeProgress, parseProgress, sameProgress, type MemberProgress } from '@/heir/progress';
+import type { Plan } from '@/heir/types';
 
 let client: SupabaseClient | null = null;
 
@@ -20,8 +21,12 @@ export function cloud(): SupabaseClient | null {
 
 export interface Remote { householdId: string; household: Household; memberRows: MemberRow[] }
 
+// The signed-in account's own household. (A linked account's household is readable too, so this asks for its own.)
 export async function loadRemote(db: SupabaseClient): Promise<Remote | null> {
-  const { data: hh, error } = await db.from('heir_households').select('id, plan, active_member_id').maybeSingle();
+  const { data: session } = await db.auth.getSession();
+  const me = session.session?.user.id;
+  if (!me) return null;
+  const { data: hh, error } = await db.from('heir_households').select('id, plan, active_member_id').eq('owner_id', me).maybeSingle();
   if (error) throw error;
   if (!hh) return null;
   const { data: members, error: e2 } = await db.from('heir_members').select('id, household_id, name, track, created_at').eq('household_id', hh.id);
@@ -76,4 +81,59 @@ export async function saveProgressRows(db: SupabaseClient, householdId: string, 
     if (error) throw error;
   }
   return merged;
+}
+
+// ---- Linking two accounts (a couple): each can VIEW the other's family and progress, and nothing more. The database
+// allows only reading across a link; changing or deleting anything of the other's is refused there.
+
+/** Make a single-use link invite (good for a week) to send to the other person. */
+export async function createInvite(db: SupabaseClient): Promise<string> {
+  const { data, error } = await db.rpc('heir_create_invite');
+  if (error) throw error;
+  return data as string;
+}
+
+/** Accept an invite: links this account with the one that made it. Throws an Error whose message says why not. */
+export async function acceptInvite(db: SupabaseClient, code: string): Promise<void> {
+  const { error } = await db.rpc('heir_accept_invite', { p_code: code });
+  if (error) throw new Error(error.message || 'That invite didn’t work.');
+}
+
+export async function unlinkAccount(db: SupabaseClient, ownerId: string): Promise<void> {
+  const { error } = await db.rpc('heir_unlink', { p_other: ownerId });
+  if (error) throw error;
+}
+
+export interface LinkedAccount {
+  ownerId: string;
+  plan: Plan | null;
+  members: { id: string; name: string; track: 'adult' | 'child' }[];
+  progress: Record<string, MemberProgress>;
+}
+
+/** Every account linked to this one, with its family and their progress, for reading only. */
+export async function loadLinked(db: SupabaseClient): Promise<LinkedAccount[]> {
+  const { data: session } = await db.auth.getSession();
+  const me = session.session?.user.id;
+  if (!me) return [];
+  const { data: hhs, error } = await db.from('heir_households').select('id, owner_id, plan').neq('owner_id', me);
+  if (error) throw error;
+  if (!hhs?.length) return [];
+  const ids = hhs.map((h) => h.id as string);
+  const [{ data: members, error: e2 }, { data: rows, error: e3 }] = await Promise.all([
+    db.from('heir_members').select('id, household_id, name, track, created_at').in('household_id', ids).order('created_at'),
+    db.from('heir_progress').select('member_id, household_id, data').in('household_id', ids),
+  ]);
+  if (e2) throw e2;
+  if (e3) throw e3;
+  const progress = parseProgress(JSON.stringify(Object.fromEntries((rows ?? []).map((r) => [r.member_id as string, r.data]))));
+  return hhs.map((h) => {
+    const mine = (members ?? []).filter((m) => m.household_id === h.id);
+    return {
+      ownerId: h.owner_id as string,
+      plan: (h.plan as Plan | null) ?? null,
+      members: mine.map((m) => ({ id: m.id as string, name: m.name as string, track: m.track === 'child' ? 'child' as const : 'adult' as const })),
+      progress: Object.fromEntries(mine.filter((m) => progress[m.id as string]).map((m) => [m.id as string, progress[m.id as string]])),
+    };
+  });
 }

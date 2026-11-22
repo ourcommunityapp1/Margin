@@ -7,6 +7,7 @@ import { Tabs } from './tabs';
 import { addMember, removeMember, setActive, updateMember } from '@/heir/household';
 import type { Track } from '@/heir/types';
 import { newId } from './ids';
+import { LinkedAccounts } from './linked';
 
 export function FamilyScreen({ setup }: { setup: boolean }) {
   const { ready, household, update, accounts, email, sync, signOut, updateProgress } = useHeir();
@@ -65,6 +66,7 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
             <button type="submit" className="hr-btn" disabled={!name.trim()} style={{ background: 'var(--well)', color: 'var(--ink)' }}>Add</button>
           </form>
         </section>
+        {!setup && accounts && email && <LinkedAccounts />}
         {setup && (
           <Link className="hr-btn" href={members.length ? '/heir/plan?setup=1' : '#'} aria-disabled={!members.length}
             style={{ marginTop: 'auto', opacity: members.length ? 1 : 0.45, pointerEvents: members.length ? 'auto' : 'none' }}>Continue</Link>
