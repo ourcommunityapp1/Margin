@@ -8,8 +8,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Household } from '@/heir/types';
-import { emptyHousehold, parseHousehold } from '@/heir/household';
-import { chooseOnSignIn } from '@/heir/sync';
+import { activeMember, emptyHousehold, parseHousehold } from '@/heir/household';
+import { chooseOnSignIn, withRemoteMembers } from '@/heir/sync';
 import { mergeProgress, parseProgress, sameProgress, type MemberProgress, type Progress } from '@/heir/progress';
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
@@ -123,6 +123,8 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
       try {
         const found = await loadRemote(db);
         const pick = chooseOnSignIn(loadLocal(), found?.household ?? null);
+        // Arriving from an invite: don't start a family of its own; the invite adds this account to an existing one.
+        if (!found && window.location.pathname.startsWith('/heir/join')) pick.upload = false;
         remote.current = found;
         if (pick.upload) remote.current = await saveRemote(db, pick.household, found);
         if (!live) return;
@@ -155,6 +157,12 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     // is asked to sign in (their phone's progress is then carried up) and returns.
     router.replace(path === '/heir' && !household.members.length ? '/heir/welcome' : `/heir/signin?next=${encodeURIComponent(path + window.location.search)}`);
   }, [accounts, email, ready, household.members.length, path, router]);
+
+  // Signed in to a family but not yet one of its people (just joined from an invite): add yourself first.
+  useEffect(() => {
+    if (!accounts || !email || !ready || !household.members.length || activeMember(household) || OPEN_PAGES.includes(path) || path.startsWith('/heir/join')) return;
+    router.replace('/heir/join');
+  }, [accounts, email, ready, household, path, router]);
 
   const update = useCallback((change: (h: Household) => Household) => {
     setHousehold((h) => {
@@ -211,7 +219,17 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     const onShow = () => {
       const r = remote.current;
       if (document.visibilityState !== 'visible' || !r) return;
-      pullProgress(db, r.householdId, r.memberRows.map((m) => m.id)).then(setProgress).catch(() => setSync('offline'));
+      // People another account in the family has added since, then everyone's progress.
+      loadRemote(db).then((found) => {
+        if (!found) return;
+        remote.current = { ...found, household: r.household };
+        setHousehold((h) => {
+          const next = withRemoteMembers(h, found.household);
+          if (next !== h) saveLocal(next);
+          return next;
+        });
+        return pullProgress(db, found.householdId, found.memberRows.map((m) => m.id)).then(setProgress);
+      }).catch(() => setSync('offline'));
     };
     document.addEventListener('visibilitychange', onShow);
     return () => document.removeEventListener('visibilitychange', onShow);

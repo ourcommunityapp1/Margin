@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chooseOnSignIn, fromRows, removedMemberIds, toRows } from '../sync.ts';
+import { chooseOnSignIn, fromRows, removedMemberIds, toRows, withRemoteMembers } from '../sync.ts';
 import { addMember, emptyHousehold, setActive, setPlan } from '../household.ts';
 
 const now = new Date('2026-11-19T12:00:00Z');
@@ -44,4 +44,23 @@ test('first sign-in: the phone household is carried up only when the account has
   const remote = addMember(emptyHousehold(), 'Mom', 'adult', 'r1', now);
   assert.deepEqual(chooseOnSignIn(local, remote), { household: remote, upload: false });
   assert.deepEqual(chooseOnSignIn(emptyHousehold(), null), { household: emptyHousehold(), upload: false });
+});
+
+test('an account that has just joined a family has no active person until it adds itself', () => {
+  const rows = toRows(family(), 'hh');
+  const back = fromRows({ plan: null, active_member_id: null }, rows.members);
+  assert.equal(back.activeMemberId, null);
+  assert.equal(back.members.length, 2);
+  assert.equal(back.plan, null);
+});
+
+test('people another account added are brought in, and nobody is dropped', () => {
+  const mine = family();
+  const theirs = addMember(family(), 'Mom', 'adult', 'm3', new Date('2026-11-19T13:00:00Z'));
+  const merged = withRemoteMembers(mine, theirs);
+  assert.deepEqual(merged.members.map((m) => m.name), ['June', 'Dad', 'Mom']);
+  assert.equal(merged.activeMemberId, 'm2', 'this phone keeps its own active person');
+  const offline = addMember(mine, 'Sam', 'child', 'm4', new Date('2026-11-19T14:00:00Z'));
+  assert.deepEqual(withRemoteMembers(offline, theirs).members.map((m) => m.id), ['m1', 'm2', 'm3', 'm4']);
+  assert.equal(withRemoteMembers(mine, mine), mine);
 });
