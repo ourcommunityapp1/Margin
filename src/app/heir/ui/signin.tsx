@@ -10,7 +10,7 @@ import { cloud } from './cloud';
 
 export function SignIn({ next }: { next: string }) {
   const router = useRouter();
-  const { accounts, email: signedIn } = useHeir();
+  const { accounts, email: signedIn, household } = useHeir();
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
@@ -45,7 +45,9 @@ export function SignIn({ next }: { next: string }) {
     <main className="hr-page bare">
       <section className="hr-card" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
         <p className="serif" style={{ margin: 0, fontSize: 28, lineHeight: 1.18 }}>
-          <span style={{ fontWeight: 600 }}>Sign in.</span> <span style={{ color: 'var(--muted)' }}>One account for the family, so progress is kept on every phone.</span>
+          <span style={{ fontWeight: 600 }}>Sign in.</span> <span style={{ color: 'var(--muted)' }}>{household.members.length
+            ? 'Your progress on this phone will be saved to your account, and kept on every phone you sign in on.'
+            : 'One account for the family, so progress is kept on every phone.'}</span>
         </p>
         {!sent ? (
           <form onSubmit={send} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

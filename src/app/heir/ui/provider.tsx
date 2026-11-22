@@ -1,19 +1,20 @@
 'use client';
 
 // What every Heir screen needs: the family, who is signed in, and the time of day.
-// The household always lives on this device. When Heir's database is set up, it also syncs to the
-// signed-in account, and a household that only lived on the phone is carried up on first sign-in.
+// The household and everyone's progress always live on this device. When Heir's database is set up, both also
+// sync to the signed-in account: what only lived on the phone is carried up on first sign-in, and from then on the
+// phone's and the account's copies of each person's progress are merged, never overwritten.
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import type { Household } from '@/heir/types';
 import { emptyHousehold, parseHousehold } from '@/heir/household';
 import { chooseOnSignIn } from '@/heir/sync';
-import { parseProgress, type Progress } from '@/heir/progress';
+import { mergeProgress, parseProgress, sameProgress, type MemberProgress, type Progress } from '@/heir/progress';
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
-import { cloud, loadRemote, saveRemote, type Remote } from './cloud';
+import { cloud, loadProgressRows, loadRemote, saveProgressRows, saveRemote, type Remote } from './cloud';
 
 const KEY = 'heir-household-v1';
 const PROGRESS_KEY = 'heir-progress-v1';
@@ -54,6 +55,28 @@ function loadProgress(): Progress {
   return Object.fromEntries(Object.entries(p).map(([id, m]) =>
     [id, Object.keys(m.levels).length || !m.log.length ? m : settle(m, allItems(), 'adult', new Date()).progress]));
 }
+function saveProgressLocal(p: Progress) {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch { /* private mode: kept for this visit */ }
+}
+
+// The account's progress for these members, merged with this phone's; the merged copy is kept on the phone, and
+// sent back to the account wherever the phone had something the account didn't.
+async function pullProgress(db: NonNullable<ReturnType<typeof cloud>>, householdId: string, memberIds: string[]): Promise<Progress> {
+  const local = loadProgress();
+  const theirs = await loadProgressRows(db, householdId);
+  const merged: Progress = { ...local };
+  const send: Record<string, MemberProgress> = {};
+  for (const id of memberIds) {
+    const a = local[id], b = theirs[id];
+    merged[id] = a && b ? mergeProgress(b, a) : (a ?? b);
+    if (merged[id] && (!b || !sameProgress(b, merged[id]))) send[id] = merged[id];
+    if (!merged[id]) delete merged[id];
+  }
+  if (Object.keys(send).length) await saveProgressRows(db, householdId, send);
+  saveProgressLocal(merged);
+  return merged;
+}
+
 function saveLocal(h: Household) {
   try { localStorage.setItem(KEY, JSON.stringify(h)); } catch { /* private mode: keeps working for this visit */ }
 }
@@ -73,6 +96,8 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const [sync, setSync] = useState<SyncState>('local');
   const remote = useRef<Remote | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressRef = useRef<Progress>({});
 
   useEffect(() => {
     Promise.resolve().then(() => setClock(new Date()));
@@ -103,6 +128,11 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
         if (!live) return;
         setHousehold(pick.household);
         saveLocal(pick.household);
+        if (remote.current) {
+          const merged = await pullProgress(db, remote.current.householdId, pick.household.members.map((m) => m.id));
+          if (!live) return;
+          setProgress(merged);
+        }
         setSync('synced');
       } catch {
         if (!live) return;
@@ -120,10 +150,11 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
 
   // Signed out with accounts on: everything except welcome, sign-in and about asks to sign in first.
   useEffect(() => {
-    if (!accounts || email !== null || OPEN_PAGES.includes(path)) return;
-    // A first visit opens on the welcome screen; any other page asks to sign in and then returns.
-    router.replace(path === '/heir' ? '/heir/welcome' : `/heir/signin?next=${encodeURIComponent(path + window.location.search)}`);
-  }, [accounts, email, path, router]);
+    if (!accounts || email !== null || !ready || OPEN_PAGES.includes(path)) return;
+    // A first visit opens on the welcome screen; anyone with a family on this phone already, or on any other page,
+    // is asked to sign in (their phone's progress is then carried up) and returns.
+    router.replace(path === '/heir' && !household.members.length ? '/heir/welcome' : `/heir/signin?next=${encodeURIComponent(path + window.location.search)}`);
+  }, [accounts, email, ready, household.members.length, path, router]);
 
   const update = useCallback((change: (h: Household) => Household) => {
     setHousehold((h) => {
@@ -145,10 +176,46 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const updateProgress = useCallback((change: (p: Progress) => Progress) => {
     setProgress((p) => {
       const next = change(p);
-      try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(next)); } catch { /* private mode: kept for this visit */ }
+      saveProgressLocal(next);
+      progressRef.current = next;
+      if (db && email && remote.current) {
+        setSync('saving');
+        if (progressTimer.current) clearTimeout(progressTimer.current);
+        progressTimer.current = setTimeout(() => {
+          const r = remote.current;
+          if (!r) return;
+          const ids = new Set(r.memberRows.map((m) => m.id));
+          const mine = Object.fromEntries(Object.entries(progressRef.current).filter(([id]) => ids.has(id)));
+          saveProgressRows(db, r.householdId, mine)
+            .then((saved) => {
+              // Bring in anything another phone added, without undoing changes made while this was saving.
+              setProgress((cur) => {
+                const out = { ...cur };
+                for (const [id, s] of Object.entries(saved)) out[id] = out[id] ? mergeProgress(out[id], s) : s;
+                saveProgressLocal(out);
+                progressRef.current = out;
+                return out;
+              });
+              setSync('synced');
+            })
+            .catch(() => setSync('offline'));
+        }, 800);
+      }
       return next;
     });
-  }, []);
+  }, [db, email]);
+
+  // Back on the app (another phone may have saved a lesson): bring the account's progress in.
+  useEffect(() => {
+    if (!db || !email) return;
+    const onShow = () => {
+      const r = remote.current;
+      if (document.visibilityState !== 'visible' || !r) return;
+      pullProgress(db, r.householdId, r.memberRows.map((m) => m.id)).then(setProgress).catch(() => setSync('offline'));
+    };
+    document.addEventListener('visibilitychange', onShow);
+    return () => document.removeEventListener('visibilitychange', onShow);
+  }, [db, email]);
 
   const signOut = useCallback(async () => {
     await db?.auth.signOut();

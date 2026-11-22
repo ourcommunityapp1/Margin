@@ -221,3 +221,43 @@ export const markRisen = (p: MemberProgress): MemberProgress => (p.night ? { ...
 export function recallRelated(p: MemberProgress, passage: string, now: Date): MemberProgress {
   return p.related?.[passage] ? p : { ...p, related: { ...p.related, [passage]: now.toISOString() } };
 }
+
+// ---- Combining two copies of one person's progress (this phone's and the account's), so nothing is ever lost:
+// learned parts, checkpoints, days and recalled verses are joined; each stone takes the higher level; counts take
+// the larger; each award keeps its first date; each schedule keeps the one reviewed most recently; and the answer
+// logs are joined, each answer once, in time order.
+
+const union = (a: string[], b: string[]) => [...new Set([...a, ...b])];
+const latest = (a?: string, b?: string) => (!a ? b : !b ? a : a >= b ? a : b);
+const earliest = (a?: string, b?: string) => (!a ? b : !b ? a : a <= b ? a : b);
+
+function mergeRecord<T>(a: Record<string, T>, b: Record<string, T>, pick: (x: T, y: T) => T): Record<string, T> {
+  const out: Record<string, T> = { ...a };
+  for (const [k, v] of Object.entries(b)) out[k] = k in out ? pick(out[k], v) : v;
+  return out;
+}
+
+const logKey = (e: LogEntry) => `${e.at}|${e.itemId}|${e.kind}|${e.review ? 1 : 0}`;
+
+export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgress {
+  const log = new Map<string, LogEntry>();
+  for (const e of [...a.log, ...b.log]) if (!log.has(logKey(e))) log.set(logKey(e), e);
+  const night = !a.night ? b.night : !b.night ? a.night : a.night.at >= b.night.at ? a.night : b.night;
+  const related = a.related || b.related ? mergeRecord(a.related ?? {}, b.related ?? {}, (x, y) => earliest(x, y)!) : undefined;
+  return {
+    units: union(a.units, b.units),
+    checkpoints: union(a.checkpoints, b.checkpoints),
+    cards: mergeRecord(a.cards, b.cards, (x, y) => ((latest(x.last_review, y.last_review) ?? '') === (y.last_review ?? '') && y.last_review ? y : x)),
+    lessons: Math.max(a.lessons, b.lessons),
+    courseLessons: mergeRecord(a.courseLessons, b.courseLessons, Math.max),
+    levels: mergeRecord(a.levels, b.levels, Math.max),
+    awards: mergeRecord(a.awards, b.awards, (x, y) => earliest(x, y)!),
+    days: union(a.days, b.days).sort(),
+    log: [...log.values()].sort((x, y) => x.at.localeCompare(y.at)),
+    ...(night ? { night } : {}),
+    ...(related ? { related } : {}),
+  };
+}
+
+/** Whether two copies hold the same progress (so there's nothing to send). */
+export const sameProgress = (a: MemberProgress, b: MemberProgress) => JSON.stringify(a) === JSON.stringify(b);
