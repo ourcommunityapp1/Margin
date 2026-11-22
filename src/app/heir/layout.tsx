@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: 'Heir',
   description: 'Scripture, catechisms and creeds, learned together and kept for life.',
   manifest: '/heir/manifest.webmanifest',
-  appleWebApp: { capable: true, title: 'Heir', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'Heir', statusBarStyle: 'black-translucent' },
   icons: { icon: '/heir/icon-192.png', apple: '/heir/apple-touch-icon.png' },
   robots: { index: false, follow: false },
 };
@@ -20,7 +20,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  themeColor: '#DCD4C3',
+  themeColor: '#11161c',
 };
 
 export default function HeirLayout({ children }: { children: React.ReactNode }) {
