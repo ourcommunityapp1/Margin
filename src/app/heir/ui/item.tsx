@@ -9,6 +9,8 @@ import { memberProgress } from '@/heir/progress';
 import { levelInfo, needsRefresh, nextStep } from '@/heir/levels';
 import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
+import { RelatedVerses } from './related';
+import { relatedFor } from '@/heir/related';
 import type { Item } from '@/heir/types';
 
 export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses' }: { item: Item; collectionTitle: string; unit: string; back?: string }) {
@@ -57,7 +59,9 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           </section>
         )}
 
-        {item.connected.length > 0 && (
+        <RelatedVerses item={item} />
+
+        {item.connected.length > 0 && relatedFor(item).length === 0 && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <span className="hr-label">Connected Scripture</span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>

@@ -39,6 +39,8 @@ export interface MemberProgress {
   log: LogEntry[];
   // The last "When you lie down": when, which questions, and whether "When you rise" has followed it.
   night?: { at: string; items: string[]; risen?: boolean };
+  // Related verses recalled from memory (passage → ISO date), toward Diamond. See related.ts.
+  related?: Record<string, string>;
 }
 
 export type Progress = Record<string, MemberProgress>;
@@ -197,6 +199,9 @@ export function parseProgress(raw: string | null): Progress {
         ...(m.night && typeof m.night.at === 'string' && Array.isArray(m.night.items)
           ? { night: { at: m.night.at, items: m.night.items.filter((i) => typeof i === 'string'), ...(m.night.risen ? { risen: true } : {}) } }
           : {}),
+        ...(m.related && typeof m.related === 'object' && !Array.isArray(m.related)
+          ? { related: Object.fromEntries(Object.entries(m.related).filter(([, v]) => typeof v === 'string')) }
+          : {}),
       };
     }
     return out;
@@ -211,3 +216,8 @@ export const markNight = (p: MemberProgress, items: string[], now: Date): Member
 
 // After "When you rise".
 export const markRisen = (p: MemberProgress): MemberProgress => (p.night ? { ...p, night: { ...p.night, risen: true } } : p);
+
+/** Record that a related verse was recalled from memory. */
+export function recallRelated(p: MemberProgress, passage: string, now: Date): MemberProgress {
+  return p.related?.[passage] ? p : { ...p, related: { ...p.related, [passage]: now.toISOString() } };
+}

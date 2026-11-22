@@ -102,8 +102,8 @@ export default function Progress() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 4 }}>
             {LEVELS.map((l, i) => (
               <div key={l.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <Stone level={l.n} size={40} dim={l.n === 6 || stones[i] === 0} />
-                <span style={{ fontSize: 16, fontWeight: 700 }}>{l.n === 6 ? '·' : stones[i]}</span>
+                <Stone level={l.n} size={40} dim={stones[i] === 0} />
+                <span style={{ fontSize: 16, fontWeight: 700 }}>{stones[i]}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>{l.name}</span>
               </div>
             ))}
@@ -118,7 +118,7 @@ export default function Progress() {
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                     <b>{l.name}{l.counts ? <span style={{ fontWeight: 500, color: 'var(--muted)' }}> · {l.counts}</span> : null}</b>
                     <span>{l.means}</span>
-                    {l.n === 6 && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Coming later: related verses can’t be memorized in Heir yet.</span>}
+                    {l.n === 6 && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Open any question or verse that has reached Sapphire, and recall its related verses one by one.</span>}
                   </span>
                 </li>
               ))}

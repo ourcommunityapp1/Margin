@@ -209,6 +209,17 @@ bush, Marienkirche, and a hand of blessing, Mount Vernon (Shema); Moses, Immacul
 for a round crop without dark sides); the Crucifixion, Middletown (Gospel); Christ in Majesty, St Mary-le-Bow
 (Who God Is).
 
+## Related verses and Diamond (built)
+
+Diamond = Sapphire, plus every related verse recalled from memory. Related verses are a catechism answer's proof
+texts (`connected`), or, for the Bible courses' verses, two cross-references each (content/bible-related.ts).
+They are **not stored in the app.** A learner opens a related verse on the item page ("Practice"); the phone asks
+/api/heir/verse?ref=… (served only for passages some item lists as related), and keeps the NASB text in that
+phone's own localStorage (`heir-verses-v1`) for next time. Recalling means typing it from memory; capitals and
+punctuation don't count against it. Progress is `related` (passage → date) on the member's progress.
+Scale: 189 items, 664 distinct related passages (about 1,090 verses), 2 per item at the median and 24 at most.
+The 74 verses of the Bible courses themselves are still stored in the app; nothing else is.
+
 ## 6. The decision that matters most: translation and licensing
 
 To memorize a verse word for word, the app has to hold its exact text on the phone, offline, every day. That's

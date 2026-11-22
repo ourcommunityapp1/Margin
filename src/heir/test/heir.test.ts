@@ -98,3 +98,36 @@ test('household: stored data that is broken becomes an empty household', () => {
   assert.equal(h.members[0].track, 'adult');
   assert.equal(h.activeMemberId, 'x');
 });
+
+test('related references split into passages, and unusable ones are left out', async () => {
+  const { passagesOf, relatedFor, verseCount } = await import('../related.ts');
+  assert.deepEqual(passagesOf('Acts 15:14–15, 18'), ['Acts 15:14–15', 'Acts 15:18']);
+  assert.deepEqual(passagesOf('Romans 3:10–18, 23'), ['Romans 3:10–18', 'Romans 3:23']);
+  assert.deepEqual(passagesOf('Psalm 103:1–5; 136'), ['Psalm 103:1–5']);
+  assert.deepEqual(passagesOf('cf. John 1:14, 18'), ['John 1:14', 'John 1:18']);
+  assert.deepEqual(passagesOf('Genesis 1:1'), ['Genesis 1:1']);
+  assert.equal(verseCount('Acts 15:14–15'), 2);
+  assert.equal(verseCount('John 3:16'), 1);
+  assert.deepEqual(relatedFor(getItem('fv-3')!), ['Romans 5:8', '1 John 4:9']);
+  assert.ok(allItems().filter((i) => i.connected.length).every((i) => relatedFor(i).length > 0), 'every item with references has some that can be looked up');
+});
+
+test('Diamond: Sapphire plus every related verse recalled; never without related verses', async () => {
+  const { earnedLevels, relatedDone } = await import('../levels.ts');
+  const { emptyProgress, recallRelated } = await import('../progress.ts');
+  const { relatedFor } = await import('../related.ts');
+  const item = getItem('fv-3')!;
+  const now = new Date('2026-12-01T12:00:00Z');
+  let p = { ...emptyProgress(), levels: { [item.id]: 5 } };
+  assert.equal(earnedLevels([item], 'adult', p, now)[item.id], 5);
+  for (const r of relatedFor(item)) p = recallRelated(p, r, now);
+  assert.ok(relatedDone(item, p));
+  assert.equal(earnedLevels([item], 'adult', p, now)[item.id], 6);
+  // Recalling them all earns nothing before Sapphire.
+  let q = { ...emptyProgress(), levels: { [item.id]: 3 } };
+  for (const r of relatedFor(item)) q = recallRelated(q, r, now);
+  assert.equal(earnedLevels([item], 'adult', q, now)[item.id], 3);
+  // An item with nothing related can't reach Diamond.
+  const bare = { ...item, id: 'x-1', connected: [] };
+  assert.equal(earnedLevels([bare], 'adult', { ...emptyProgress(), levels: { 'x-1': 5 } }, now)['x-1'], 5);
+});

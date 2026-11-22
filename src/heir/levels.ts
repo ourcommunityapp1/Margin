@@ -6,6 +6,7 @@
 
 import { unitsFor } from './lesson.ts';
 import { localDay, type LogEntry, type MemberProgress } from './progress.ts';
+import { relatedFor } from './related.ts';
 import type { Item, Track } from './types.ts';
 
 // `counts`: what it means in a word; `means`: in a sentence anyone can follow; `rule`: exactly how it's earned.
@@ -27,7 +28,7 @@ export const LEVELS: Level[] = [
   { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Long-term, and understood',
     means: 'In long-term memory, and you can say what it means.',
     rule: 'Emerald, plus its meaning' },
-  // Not earnable yet: it needs memorizing related verses, which isn't built. levelFromLog stops at Sapphire.
+  // Earned in `earnedLevels`: Sapphire, then every related verse recalled from memory (see related.ts).
   { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: 'Rooted in Scripture',
     means: 'Sapphire, and you’ve also memorized every verse connected to it: a catechism answer’s proof texts, or a verse’s related verses.',
     rule: 'Sapphire, plus all its related verses memorized' },
@@ -74,14 +75,21 @@ export function levelFromLog(item: Item, track: Track, log: LogEntry[], now: Dat
   if (!longEnough || !allRight || !monthGap) return 3;
 
   if (!all.some((e) => e.kind === 'meaning' && e.correct)) return 4;
-  return 5; // Diamond (6) is left open for now.
+  return 5; // Diamond (6) also needs the related verses; see `earnedLevels`.
+}
+
+// Diamond: Sapphire, plus every related verse recalled from memory (and the item has some).
+export function relatedDone(item: Item, p: MemberProgress): boolean {
+  const rel = relatedFor(item);
+  return rel.length > 0 && rel.every((r) => !!p.related?.[r]);
 }
 
 // Levels never go down: a stored level stays, and a higher one replaces it.
 export function earnedLevels(items: Item[], track: Track, p: MemberProgress, now: Date): Record<string, number> {
   const out: Record<string, number> = { ...p.levels };
   for (const item of items) {
-    const n = levelFromLog(item, track, p.log, now);
+    let n = levelFromLog(item, track, p.log, now);
+    if (Math.max(n, out[item.id] ?? 0) >= 5 && relatedDone(item, p)) n = 6;
     if (n > (out[item.id] ?? 0)) out[item.id] = n;
   }
   return out;
@@ -108,6 +116,11 @@ export function nextStep(item: Item, track: Track, p: MemberProgress, now: Date)
   if (n === 3) return 'Emerald after three months';
   if (n === 4) return 'Sapphire: answer what it means';
   void track; void now;
+  if (n === 5) {
+    const rel = relatedFor(item);
+    const left = rel.filter((r) => !p.related?.[r]).length;
+    return rel.length ? `Diamond: ${left} related ${left === 1 ? 'verse' : 'verses'} to recall` : null;
+  }
   return null;
 }
 

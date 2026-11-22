@@ -7,10 +7,14 @@ import { apostlesCreed } from './apostles-creed.ts';
 import { niceneCreed } from './nicene-creed.ts';
 import { christmas, firstVerses } from './bible-starters.ts';
 import { easter, fearPeace, gospel, lordsPrayer, psalm23, shema, tenCommandments, whoGodIs } from './bible-courses.ts';
+import { BIBLE_RELATED } from './bible-related.ts';
 import type { Season } from '../season.ts';
 
 export const collections: Collection[] = [westminsterShorter, westminsterLarger, apostlesCreed, niceneCreed, firstVerses, christmas,
   psalm23, lordsPrayer, shema, tenCommandments, fearPeace, gospel, whoGodIs, easter];
+
+// The Bible courses' verses carry their related verses as references (the text is fetched on demand).
+for (const c of collections) for (const i of c.items) if (!i.connected.length && BIBLE_RELATED[i.id]) i.connected = BIBLE_RELATED[i.id];
 
 // The Courses page's shelves, in order.
 export type Shelf = 'start' | 'church' | 'life' | 'seasons' | 'catechisms';
