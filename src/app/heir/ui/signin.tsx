@@ -51,7 +51,7 @@ export function SignIn({ next }: { next: string }) {
         </p>
         {!sent ? (
           <form onSubmit={send} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label htmlFor="heir-email" className="hr-label">Parent’s email</label>
+            <label htmlFor="heir-email" className="hr-label">Your email</label>
             <input id="heir-email" type="text" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             <button type="submit" className="hr-btn" disabled={busy || !/.+@.+\..+/.test(email)}>{busy ? 'Sending…' : 'Email me a code'}</button>
           </form>
