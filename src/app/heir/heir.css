@@ -1013,8 +1013,8 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-dock:empty { display: none; }
 .hr-dock-in { display: flex; flex-direction: column; gap: 10px; }
 .hr-dock-in.row { flex-direction: row; }
-.hr-lesson[data-feedback='true'] .hr-dock { display: none; }
-.hr-lesson { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); }
+.hr-lesson-screen[data-feedback='true'] .hr-dock { display: none; }
+.hr-lesson-screen { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); }
 /* The bar sits over the page's bottom edge: fade the page behind it so text never runs under the button. */
 .hr-dock::before { content: ''; position: absolute; left: -20px; right: -20px; bottom: -40px; height: calc(100% + 64px); z-index: -1;
   background: linear-gradient(rgba(17, 22, 28, 0), #11161c 45%); pointer-events: none; }

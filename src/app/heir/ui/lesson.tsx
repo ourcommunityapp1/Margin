@@ -200,7 +200,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
   const heading = feedback?.ok ? (feedback.slip ? 'Good.' : PRAISE[pos % PRAISE.length]) : feedback?.close ? 'Almost.' : 'Not quite.';
 
   return (
-    <main className="hr-page bare hr-lesson" data-feedback={feedback ? 'true' : undefined} style={{ paddingBottom: feedback ? 300 : undefined }}>
+    <main className="hr-page bare hr-lesson-screen" data-feedback={feedback ? 'true' : undefined} style={{ paddingBottom: feedback ? 300 : undefined }}>
       <div className="hr-lesson-top">
         <Link href="/heir" className="hr-back" aria-label="End lesson">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
