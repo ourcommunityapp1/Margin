@@ -46,3 +46,18 @@ Panes lit at the end of a lesson; a stone earned; a milestone; a part's window f
 ## Order
 1 Measures as tested code · 2 Words + windows (mockup first) · 3 Bible (mockup first) · 4 Course progress page
 (mockup first) · 5 Moments · Larger Catechism in parallel.
+
+## To do: lesson screens (reported 2026-11-23)
+- [ ] **Multiple choice: the selected answer looks wrong.** The selected option is shown in yellow/amber (the
+      "select" colour), which reads as a warning. Fix: a neutral selected state (outline + slightly lighter fill);
+      right = green with a tick, wrong = muted red with the right answer shown in green.
+- [ ] **Two buttons at once after Check.** The feedback sheet's Continue appears while the card's Check is still
+      visible. Fix: one fixed button area at the bottom of every lesson screen; Check turns into Continue in the same
+      place (the sheet shows only the feedback text), so there is only ever one primary button.
+- [ ] **Put the phrases in order: placed vs. not placed is unclear, and the layout jumps.** Fix: placed tiles leave a
+      dashed, empty slot in the bank (so nothing reflows); the answer area has fixed rows that fill top to bottom;
+      placed tiles in the answer are solid, bank tiles outlined; tapping a placed tile sends it back to its own slot.
+- [ ] **Keep the context when learning a later phrase.** When practising part 2+ of a verse or answer, show
+      everything before it (the verse or answer up to where this part starts) above the exercise, quieter, so the
+      phrase is learned in its place, not on its own. Applies to every exercise kind (order, blanks, letters, say,
+      type); long lead-ins fade from the top.
