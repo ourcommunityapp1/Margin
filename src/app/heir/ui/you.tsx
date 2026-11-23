@@ -8,6 +8,7 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { courseFor } from '@/heir/content';
+import { InstallApp } from './install';
 
 function Row({ href, title, sub }: { href: string; title: string; sub: string }) {
   return (
@@ -56,6 +57,7 @@ export function YouScreen() {
           <Row href="/heir/how" title="How it works" sub="Stones, grading and spaced review" />
           <Row href="/heir/about" title="About Katekize" sub="Sources and credits" />
         </section>
+        <InstallApp />
         {accounts && email && (
           <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', textAlign: 'center', overflowWrap: 'anywhere' }}>
             Signed in as {email}{sync === 'offline' ? ' · couldn’t reach the server; changes are kept on this phone' : ''}

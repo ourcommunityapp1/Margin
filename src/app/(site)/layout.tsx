@@ -11,7 +11,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 export const metadata: Metadata = {
   metadataBase: new URL('https://katekize.com'),
   manifest: '/heir/manifest.webmanifest',
-  icons: { icon: '/heir/icon-192.png', apple: '/heir/apple-touch-icon.png' },
+  icons: { icon: [{ url: '/heir/favicon-32.png', sizes: '32x32', type: 'image/png' }, { url: '/heir/icon-192.png', sizes: '192x192', type: 'image/png' }], apple: '/heir/apple-touch-icon.png' },
 };
 
 // Unlike the phone app, public pages let people zoom.

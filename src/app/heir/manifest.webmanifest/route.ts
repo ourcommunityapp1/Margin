@@ -1,4 +1,4 @@
-// Heir's own web app manifest, so it can be added to the home screen as its own app.
+// Katekize's web app manifest: lets it be installed to the home screen as its own app (the K icon, no browser bar).
 export const dynamic = 'force-static';
 
 export function GET() {
@@ -9,14 +9,18 @@ export function GET() {
     id: '/heir',
     start_url: '/heir',
     scope: '/heir',
+    lang: 'en',
+    dir: 'ltr',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#DCD4C3',
-    theme_color: '#DCD4C3',
+    categories: ['education', 'lifestyle'],
+    // The icon's own ground, so the start-up screen matches it; the app bar takes the app's ink.
+    background_color: '#313232',
+    theme_color: '#11161c',
     icons: [
-      { src: '/heir/icon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: '/heir/icon-512.png', sizes: '512x512', type: 'image/png' },
-      { src: '/heir/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: '/heir/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/heir/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/heir/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
   }, { headers: { 'content-type': 'application/manifest+json' } });
 }

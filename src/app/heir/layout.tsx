@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: 'Scripture, catechisms and creeds, learned together and kept for life.',
   manifest: '/heir/manifest.webmanifest',
   appleWebApp: { capable: true, title: 'Katekize', statusBarStyle: 'black-translucent' },
-  icons: { icon: '/heir/icon-192.png', apple: '/heir/apple-touch-icon.png' },
+  icons: { icon: [{ url: '/heir/favicon-32.png', sizes: '32x32', type: 'image/png' }, { url: '/heir/icon-192.png', sizes: '192x192', type: 'image/png' }], apple: '/heir/apple-touch-icon.png' },
   robots: { index: false, follow: false },
 };
 

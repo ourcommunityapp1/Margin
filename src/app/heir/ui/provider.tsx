@@ -103,6 +103,11 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const progressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressRef = useRef<Progress>({});
 
+  // Lets the app be installed to the home screen (see public/heir-sw.js). Production only, so development isn't cached.
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) navigator.serviceWorker.register('/heir-sw.js', { scope: '/heir' }).catch(() => { /* not installable here: the app still works */ });
+  }, []);
+
   useEffect(() => {
     Promise.resolve().then(() => setClock(new Date()));
     const t = setInterval(() => setClock(new Date()), 60_000);
