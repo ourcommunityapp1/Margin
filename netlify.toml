@@ -3,18 +3,19 @@
   command = "npm run build"
   publish = ".next"
 
-# katekize.com is Heir's own address: its front door opens Heir (Netlify takes the first rule that matches, so
-# these come before the root rule below), and www goes to the bare domain.
+# katekize.com is Heir's own address (Netlify takes the first rule that matches, so these come before the root
+# rule below), and www goes to the bare domain.
 [[redirects]]
   from = "https://www.katekize.com/*"
   to = "https://katekize.com/:splat"
   status = 301
   force = true
 
+# katekize.com's front door is a public page (search engines and AI answer engines read it); the app is at /heir.
 [[redirects]]
   from = "https://katekize.com/"
-  to = "/heir"
-  status = 302
+  to = "/katekize"
+  status = 200
   force = true
 
 # The phone app is a static page; serve it at the root straight from the CDN

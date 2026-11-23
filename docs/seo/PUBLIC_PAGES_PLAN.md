@@ -83,3 +83,38 @@ sites, so the gain is in how search engines and AI tools read the page, not a sp
 3. **Plain-words notes for the other 97 Shorter questions.** Worth writing for both search and the app; each
    needs your theological review before it goes live.
 4. **AI crawlers.** Allowing them is what makes AI answers cite you. Default: allow.
+
+## Status (Nov 2026)
+
+- **Built (phase 1):** public home page at `katekize.com/` (served from `/katekize`, `src/app/(site)/`), `sitemap.xml`,
+  `robots.txt`, per-page metadata and social image. The app (`/heir`) stays `noindex`. Google (DNS TXT) and Bing
+  (`/BingSiteAuth.xml`) ownership records are in place.
+- **Research (5 agents, files in `docs/seo/research/`):** `catechism-serp.md`, `scripture-memory-serp.md`,
+  `page-teardown.md`, `question-bank.md` (202 questions, 41-page guide map), `bible-text-licensing.md`.
+  **Limit:** page fetching was blocked in the research sandbox, so everything comes from search-result titles and
+  summaries, ranked in the search tool's order (not measured rankings), with no search volumes. Open the top results
+  for the first queries in a browser before relying on a specific claim, and check any statistic on a vendor page
+  against its primary source.
+
+## What the research suggests (hypotheses until the pages are read)
+
+1. Per-question Shorter Catechism pages exist (bpc.org, biblehub, ccel, Cambridge) but mostly with generic titles;
+   no page seen combined the answer first, proof texts, a plain-language meaning and a memorize tool.
+2. "How to memorize" and "memorization app" queries look like the clearest gap: background essays, user-made decks,
+   vendor pages, no step-by-step method with sourced research and no free per-question web memorizer.
+3. Generic wording ("catechism for children", "what is God catechism answer") returns Catholic and Lutheran results;
+   use "Westminster" / "Shorter Catechism" in titles and H1s.
+4. Don't try to win raw creed-text queries against Wikipedia and universities; win on method, comparison and
+   plain-language meaning.
+5. Title pattern for question pages: `WSC Q{n}: {question} | Westminster Shorter Catechism`, answer as the description.
+6. Proof texts: state the proof-text edition and the Bible version; print the verse text, not only references.
+
+## Updated build order
+
+1. Per-question Shorter Catechism pages (107) and the hub, in the template above, with WEB or KJV proof texts and
+   references-only for NASB until Lockman confirms (see `bible-text-licensing.md`; the owner emails Lockman and YouVersion).
+2. Top guides from `question-bank.md`: how to review old verses; why you forget verses after a week; how long the
+   Shorter Catechism takes; what age to start catechism; how many verses a week; the broad "how to memorize Bible
+   verses" hub (links to the rest).
+3. Independent "best Bible memory app" comparison with disclosed criteria (we are one of the apps; say so).
+4. Larger Catechism and creed pages as their content is built.
