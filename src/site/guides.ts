@@ -6,7 +6,10 @@ import { courseItems, getCourse, getItem } from '../heir/content/index.ts';
 import { GOALS, project } from '../heir/planner.ts';
 import { emptyProgress } from '../heir/progress.ts';
 
+// The date the public content last changed. Update it when a guide or page is edited; it feeds the visible
+// "Updated" line, the page markup and the sitemap.
 export const PUBLISHED = '2026-11-23';
+export const PUBLISHED_LABEL = new Date(`${PUBLISHED}T12:00:00Z`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
 export interface Section {
   h: string;

@@ -142,3 +142,6 @@ ol.kz-list { list-style: decimal; }
 .kz-explore a:hover { border-color: var(--gold); }
 @media (min-width: 760px) { .kz-explore { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 520px) { .kz-pn { grid-template-columns: 1fr; } .kz-pn a.r { text-align: left; } }
+
+.kz-phrase { display: block; }
+.kz-proofs .kz-phrase + .kz-phrase { margin-top: 2px; }

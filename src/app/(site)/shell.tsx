@@ -29,7 +29,10 @@ export function SiteFooter({ notice }: { notice?: string }) {
       <div className="row">
         <Link href="/westminster-shorter-catechism">Westminster Shorter Catechism</Link>
         <Link href="/guides">Guides</Link>
-        <Link href="/heir/about">Sources and photo credits</Link>
+        <Link href="/memorize/psalm-23">Memorize Psalm 23</Link>
+        <Link href="/memorize/the-lords-prayer">Memorize the Lord’s Prayer</Link>
+        <Link href="/about">About Katekize</Link>
+        <Link href="/heir/about">Photo credits</Link>
         <Link href="/heir">Open the app</Link>
       </div>
     </footer>

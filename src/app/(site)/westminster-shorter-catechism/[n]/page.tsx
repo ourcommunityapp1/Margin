@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { courseItems, courseParts, getCourse, getItem } from '@/heir/content';
 import { BIBLE_NOTICE, proofTexts } from '@/site/bible';
+import { groupsOf } from '@/heir/lesson';
 import { Crumbs, JsonLd, SITE, SiteFooter, SiteHeader, breadcrumbLd } from '../../shell';
 
 // One page per question: the question as the heading, the answer first, then what it means (only once the owner has
@@ -27,8 +28,8 @@ export async function generateMetadata({ params }: { params: Promise<{ n: string
   const description = cut(`${item.text} Westminster Shorter Catechism question ${item.number}, with Scripture proofs and a way to memorize it.`, 158);
   return {
     title: { absolute: title }, description, alternates: { canonical: url },
-    openGraph: { type: 'article', url, siteName: 'Katekize', title, description, images: [{ url: '/katekize-og.png', width: 1200, height: 630 }] },
-    twitter: { card: 'summary_large_image', title, description, images: ['/katekize-og.png'] },
+    openGraph: { type: 'article', url, siteName: 'Katekize', title, description, images: [{ url: '/katekize-og.jpg', width: 1200, height: 630 }] },
+    twitter: { card: 'summary_large_image', title, description, images: ['/katekize-og.jpg'] },
   };
 }
 
@@ -40,6 +41,8 @@ export default async function QuestionPage({ params }: { params: Promise<{ n: st
   const prev = all.find((i) => i.number === item.number - 1);
   const next = all.find((i) => i.number === item.number + 1);
   const part = courseParts(course()).find((p) => p.items.some((i) => i.id === item.id));
+  // The other questions Katekize teaches in the same unit of five.
+  const unitMates = (groupsOf(all).find((g) => g.items.some((i) => i.id === item.id))?.items ?? []).filter((i) => i.id !== item.id);
   const { shown, refsOnly } = await proofTexts(item.connected);
   const url = `/westminster-shorter-catechism/${item.number}`;
   const trail = [{ name: 'Katekize', href: '/' }, { name: 'Westminster Shorter Catechism', href: '/westminster-shorter-catechism' }, { name: `Question ${item.number}`, href: url }];
@@ -97,6 +100,13 @@ export default async function QuestionPage({ params }: { params: Promise<{ n: st
             </ol>
             <p>After a night’s sleep, try to say the answer before looking at it, and then again after a few days. <Link href="/guides/how-to-review-memorized-verses">How to review what you have memorized</Link>.</p>
           </section>
+
+          {unitMates.length > 0 && (
+            <section aria-labelledby="unit-h">
+              <h2 id="unit-h">Questions that go with this one</h2>
+              <ul className="kz-list">{unitMates.map((i) => <li key={i.id}><Link href={`/westminster-shorter-catechism/${i.number}`}>Q{i.number}: {i.prompt}</Link></li>)}</ul>
+            </section>
+          )}
 
           <nav className="kz-pn" aria-label="Neighboring questions">
             {prev ? <Link href={`/westminster-shorter-catechism/${prev.number}`}><small>Previous</small><span>Q{prev.number}: {prev.prompt}</span></Link> : <span />}

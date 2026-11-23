@@ -7,7 +7,7 @@ const TITLE = 'Guides to Memorizing Scripture and the Catechism';
 const DESCRIPTION = 'Plain answers on how to memorize Bible verses, how to review them, why they fade, and how to start the Westminster Shorter Catechism with your family.';
 export const metadata: Metadata = {
   title: { absolute: TITLE }, description: DESCRIPTION, alternates: { canonical: `${SITE}/guides` },
-  openGraph: { type: 'website', url: `${SITE}/guides`, siteName: 'Katekize', title: TITLE, description: DESCRIPTION, images: [{ url: '/katekize-og.png', width: 1200, height: 630 }] },
+  openGraph: { type: 'website', url: `${SITE}/guides`, siteName: 'Katekize', title: TITLE, description: DESCRIPTION, images: [{ url: '/katekize-og.jpg', width: 1200, height: 630 }] },
 };
 
 export default function Guides() {

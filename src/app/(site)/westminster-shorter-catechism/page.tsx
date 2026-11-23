@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: URL_HUB },
-  openGraph: { type: 'website', url: URL_HUB, siteName: 'Katekize', title: TITLE, description: DESCRIPTION, images: [{ url: '/katekize-og.png', width: 1200, height: 630 }] },
-  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION, images: ['/katekize-og.png'] },
+  openGraph: { type: 'website', url: URL_HUB, siteName: 'Katekize', title: TITLE, description: DESCRIPTION, images: [{ url: '/katekize-og.jpg', width: 1200, height: 630 }] },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION, images: ['/katekize-og.jpg'] },
 };
 
 export default function Hub() {

@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
   description: DESCRIPTION,
   alternates: { canonical: URL_HOME },
-  openGraph: { type: 'website', url: URL_HOME, siteName: 'Katekize', title: TITLE, description: DESCRIPTION, images: [{ url: '/katekize-og.png', width: 1200, height: 630, alt: 'Katekize: a stained-glass window and the words Memorize Scripture, catechisms and creeds together.' }] },
-  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION, images: ['/katekize-og.png'] },
+  openGraph: { type: 'website', url: URL_HOME, siteName: 'Katekize', title: TITLE, description: DESCRIPTION, images: [{ url: '/katekize-og.jpg', width: 1200, height: 630, alt: 'Katekize: a stained-glass window and the words Memorize Scripture, catechisms and creeds together.' }] },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION, images: ['/katekize-og.jpg'] },
 };
 
 const FAQ: { q: string; a: string }[] = [
@@ -65,7 +65,7 @@ export default function Home() {
             </div>
             <div className="kz-window">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/heir/glass/gsc-a/glass.webp" width={512} height={512} alt="A stained-glass window of the Good Shepherd, the picture that lights up as you learn the Westminster Shorter Catechism." fetchPriority="high" />
+              <img src="/katekize-window.webp" width={640} height={640} alt="A stained-glass window of the Good Shepherd, the picture that lights up as you learn the Westminster Shorter Catechism." fetchPriority="high" />
             </div>
           </section>
 
@@ -96,6 +96,8 @@ export default function Home() {
             <div className="kz-explore">
               <Link href="/westminster-shorter-catechism"><b>Westminster Shorter Catechism</b><span>All 107 questions and answers, each with its Scripture proofs.</span></Link>
               <Link href="/guides"><b>Guides to memorizing</b><span>How to memorize Bible verses, how to review them, why they fade, and how to start with children.</span></Link>
+              <Link href="/memorize/psalm-23"><b>Memorize Psalm 23</b><span>The full text in short phrases and a six-day plan.</span></Link>
+              <Link href="/memorize/the-lords-prayer"><b>Memorize the Lord’s Prayer</b><span>Matthew 6:9–13 in short phrases and a five-day plan.</span></Link>
             </div>
           </section>
 

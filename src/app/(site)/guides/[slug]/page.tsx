@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { PUBLISHED, allGuides, guideBySlug } from '@/site/guides';
+import { PUBLISHED, PUBLISHED_LABEL, allGuides, guideBySlug } from '@/site/guides';
 import { BIBLE_NOTICE, passageText } from '@/site/bible';
 import { Crumbs, JsonLd, SITE, SiteFooter, SiteHeader, breadcrumbLd } from '../../shell';
 
@@ -15,8 +15,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const url = `${SITE}/guides/${g.slug}`;
   return {
     title: { absolute: `${g.title} | Katekize` }, description: g.description, alternates: { canonical: url },
-    openGraph: { type: 'article', url, siteName: 'Katekize', title: g.title, description: g.description, publishedTime: PUBLISHED, images: [{ url: '/katekize-og.png', width: 1200, height: 630 }] },
-    twitter: { card: 'summary_large_image', title: g.title, description: g.description, images: ['/katekize-og.png'] },
+    openGraph: { type: 'article', url, siteName: 'Katekize', title: g.title, description: g.description, publishedTime: PUBLISHED, images: [{ url: '/katekize-og.jpg', width: 1200, height: 630 }] },
+    twitter: { card: 'summary_large_image', title: g.title, description: g.description, images: ['/katekize-og.jpg'] },
   };
 }
 
@@ -40,6 +40,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
         <main className="kz-page">
           <Crumbs trail={trail} />
           <h1>{g.title}</h1>
+          <p className="kz-muted">Updated <time dateTime={PUBLISHED}>{PUBLISHED_LABEL}</time></p>
           <p className="kz-answer">{g.answer}</p>
           {g.sections.map((s) => {
             const v = s.verse ? verses.get(s.verse) : null;
