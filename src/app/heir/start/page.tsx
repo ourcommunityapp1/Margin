@@ -42,7 +42,10 @@ export default function Start() {
 
   return (
     <main className="hr-page bare">
-      <span className="serif" style={{ fontSize: 24, fontWeight: 500, textAlign: 'center', marginTop: 8 }}>Katekize</span>
+      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+        <span className="hr-mark" aria-hidden="true" style={{ width: 24, height: 28 }} />
+        <span className="serif" style={{ fontSize: 24, fontWeight: 500 }}>Katekize</span>
+      </div>
       {askName ? (
         <form className="hr-card" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}
           onSubmit={(e) => { e.preventDefault(); if (name.trim()) setStep('course'); }}>

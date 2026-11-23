@@ -11,11 +11,14 @@ export function JsonLd({ data }: { data: unknown }) {
 export function SiteHeader() {
   return (
     <header className="kz-head">
-      <Link href="/" className="kz-brand">Katekize</Link>
+      <Link href="/" className="kz-brand" aria-label="Katekize home">
+        <span className="kz-mark" aria-hidden="true" />
+        <span>Katekize</span>
+      </Link>
+      <Link href="/heir" className="kz-btn small kz-open">Open the app</Link>
       <nav className="kz-nav" aria-label="Site">
         <Link href="/westminster-shorter-catechism">Catechism</Link>
         <Link href="/guides">Guides</Link>
-        <Link href="/heir" className="kz-btn small">Open the app</Link>
       </nav>
     </header>
   );

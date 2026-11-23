@@ -1094,3 +1094,6 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-unit-fold + .hr-unit-fold { border-top: 1px solid var(--line); }
 .hr-unit-head { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; background: none; border: 0; color: inherit; font: inherit; cursor: pointer; }
 .hr-unit-head:disabled { cursor: default; }
+
+/* The K logo, drawn in the surrounding text colour. */
+.hr-mark { display: block; flex: none; background: currentColor; -webkit-mask: url(/brand/katekize-k-mark.png) center / contain no-repeat; mask: url(/brand/katekize-k-mark.png) center / contain no-repeat; }
