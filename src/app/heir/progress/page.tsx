@@ -14,7 +14,7 @@ import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { activeMember } from '@/heir/household';
 import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, recited, understanding } from '@/heir/levels';
-import { milestones, wordsIn, wordsRecitedThisWeek } from '@/heir/measures';
+import { milestones, wordsIn } from '@/heir/measures';
 import { localDay, memberProgress } from '@/heir/progress';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
@@ -34,7 +34,6 @@ export default function Progress() {
   const mine = memberProgress(progress, me.id);
   const items = allItems();
   const words = wordsIn(items, me.track, mine);
-  const week = wordsRecitedThisWeek(items, me.track, mine, now);
   const miles = milestones(words.inMemory);
   const prevMile = miles.reached.at(-1) ?? 0;
   const today = localDay(now);
@@ -89,9 +88,9 @@ export default function Progress() {
               <span className="hr-label">Words in your memory</span>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                 <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
-                <span style={{ fontSize: 15, color: 'var(--muted)' }}>of {fmt(words.recited)} words you’ve recited{week && week < words.recited ? ` · ${fmt(week)} new this week` : ''}</span>
+                <span style={{ fontSize: 15, color: 'var(--muted)' }}>{words.recited === 0 ? 'none yet' : words.inMemory === words.recited ? 'every word you’ve recited' : `${fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day`}</span>
               </span>
-              {words.recited > words.inMemory && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>{words.inMemory === 0 ? 'Words' : `The other ${fmt(words.recited - words.inMemory)} words`} count as in your memory once you recall them, with no hints, on a later day than you recited them.</p>}
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.</p>
               <div className="hr-ladder">
                 {STAGES.map((stage) => {
                   const n = words.atStage[stage.n];
