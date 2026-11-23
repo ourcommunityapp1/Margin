@@ -9,6 +9,7 @@ import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
+import { ShareCourse } from '../ui/share-course';
 import { courseFor, courses, SHELVES, type Course } from '@/heir/content';
 import { activeMember, setPlan } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
@@ -51,6 +52,10 @@ export default function Courses() {
         {mineToo
           ? <Link className="hr-glass-btn" href="/heir"><span>Continue this course</span>{arrow}</Link>
           : <button type="button" className="hr-glass-btn hr-glass-btn-reset" onClick={() => choose(seasonal.c)}><span>{s.started ? 'Continue this course' : 'Start this course'}</span>{arrow}</button>}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Link href={`/heir/courses/${seasonal.c.id}`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '8px 14px', borderRadius: 20, color: '#F4EFE6', fontSize: 14, fontWeight: 600, textDecoration: 'none', border: '1px solid rgba(255, 255, 255, 0.22)' }}>See the verses</Link>
+          <ShareCourse course={seasonal.c} />
+        </div>
       </section>
     );
   })();
