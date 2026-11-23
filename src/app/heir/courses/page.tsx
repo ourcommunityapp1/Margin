@@ -9,7 +9,6 @@ import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
-import { ShareCourse } from '../ui/share-course';
 import { courseFor, courses, SHELVES, type Course } from '@/heir/content';
 import { activeMember, setPlan } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
@@ -41,21 +40,22 @@ export default function Courses() {
       <section className="hr-rose-card" aria-label={`In season: ${seasonal.c.title}`}>
         <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
         <span className="hr-label">In season · {seasonal.label}</span>
-        <Link href={`/heir/courses/${seasonal.c.id}`} aria-label={`About ${seasonal.c.title}`}>
+        {/* The window, name and description are one tap target: the course's own page (its verses, and sharing). */}
+        <Link href={`/heir/courses/${seasonal.c.id}`} aria-label={`${seasonal.c.title}: see the course`}
+          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, color: 'inherit', textDecoration: 'none', textAlign: 'center' }}>
           <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={170} started={s.started} bright label={`${seasonal.c.title} window`} />
+          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+            <span className="serif" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 28, fontWeight: 500, lineHeight: 1.1 }}>
+              {seasonal.c.title}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.55, marginTop: 2 }}><path d="M9 5l7 7-7 7" /></svg>
+            </span>
+            <span style={{ fontSize: 15, color: '#D9D1C4', lineHeight: 1.45 }}>{seasonal.c.blurb}</span>
+            {statusOf(s) && <span style={{ fontSize: 13, color: '#C9C1B3' }}>{statusOf(s)}</span>}
+          </span>
         </Link>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
-          <h2 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500, lineHeight: 1.1 }}>{seasonal.c.title}</h2>
-          <p style={{ margin: 0, fontSize: 15, color: '#D9D1C4', lineHeight: 1.45 }}>{seasonal.c.blurb}</p>
-          {statusOf(s) && <p style={{ margin: 0, fontSize: 13, color: '#C9C1B3' }}>{statusOf(s)}</p>}
-        </div>
         {mineToo
           ? <Link className="hr-glass-btn" href="/heir"><span>Continue this course</span>{arrow}</Link>
           : <button type="button" className="hr-glass-btn hr-glass-btn-reset" onClick={() => choose(seasonal.c)}><span>{s.started ? 'Continue this course' : 'Start this course'}</span>{arrow}</button>}
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href={`/heir/courses/${seasonal.c.id}`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '8px 14px', borderRadius: 20, color: '#F4EFE6', fontSize: 14, fontWeight: 600, textDecoration: 'none', border: '1px solid rgba(255, 255, 255, 0.22)' }}>See the verses</Link>
-          <ShareCourse course={seasonal.c} />
-        </div>
       </section>
     );
   })();

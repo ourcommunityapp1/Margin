@@ -7,10 +7,34 @@ import { useState } from 'react';
 import type { Course } from '@/heir/content';
 
 const icon = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 3v12M7 8l5-5 5 5" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
   </svg>
 );
+
+const check = (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+);
+
+/** A round share button for a screen's top bar, beside Back. Shows a tick for a moment when the link was copied instead. */
+export function ShareCourseIcon({ course }: { course: Course }) {
+  const [copied, setCopied] = useState(false);
+  const share = async () => {
+    const url = `${window.location.origin}/heir/courses/${course.id}`;
+    const text = `Learn ${course.title} with me on Heir`;
+    try {
+      if (navigator.share) { await navigator.share({ title: course.title, text, url }); return; }
+    } catch (e) {
+      if ((e as Error).name === 'AbortError') return;
+    }
+    try { await navigator.clipboard.writeText(`${text}: ${url}`); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch { /* nothing to copy to */ }
+  };
+  return (
+    <button type="button" className="hr-back" onClick={share} aria-label={copied ? 'Link copied' : `Share ${course.title}`} style={{ border: 0, cursor: 'pointer', padding: 0 }}>
+      {copied ? check : icon}
+    </button>
+  );
+}
 
 export function ShareCourse({ course }: { course: Course }) {
   const [note, setNote] = useState('');

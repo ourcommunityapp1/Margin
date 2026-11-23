@@ -17,7 +17,7 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { groupLabel } from './course';
 import { partWindow } from './glass/light';
-import { ShareCourse } from './share-course';
+import { ShareCourseIcon } from './share-course';
 import { MiniWindow } from './glass/mini';
 import { Stone } from './stone';
 
@@ -70,7 +70,10 @@ export function CourseScreen({ id }: { id: string }) {
   return (
     <>
       <main className="hr-page">
-        <div style={{ marginTop: 8 }}><Back href="/heir/courses" label="Courses" /></div>
+        <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Back href="/heir/courses" label="Courses" />
+          <ShareCourseIcon course={course} />
+        </div>
         {/* Like the window card on Today: the window's own colours, blurred, behind a frosted button. */}
         <section className="hr-rose-card">
           <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
@@ -83,7 +86,6 @@ export function CourseScreen({ id }: { id: string }) {
           {current
             ? <Link className="hr-glass-btn" href="/heir"><span>Continue this course</span><span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span></Link>
             : <button type="button" className="hr-glass-btn" style={{ font: 'inherit', fontWeight: 600, fontSize: 17, cursor: 'pointer', textAlign: 'left' }} onClick={() => { update((h) => setPlan(h, { course: course.id })); router.push('/heir'); }}><span>Start this course</span><span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span></button>}
-          <ShareCourse course={course} />
         </section>
 
         {parts.length > 1 && (
