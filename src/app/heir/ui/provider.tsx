@@ -7,10 +7,10 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import type { Household } from '@/heir/types';
-import { emptyHousehold, parseHousehold } from '@/heir/household';
+import type { Household, Track } from '@/heir/types';
+import { addMember, emptyHousehold, parseHousehold } from '@/heir/household';
 import { chooseOnSignIn } from '@/heir/sync';
-import { mergeProgress, parseProgress, sameProgress, type MemberProgress, type Progress } from '@/heir/progress';
+import { memberProgress, mergeProgress, parseProgress, sameProgress, type MemberProgress, type Progress } from '@/heir/progress';
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
@@ -38,6 +38,10 @@ interface Heir {
   labs: boolean;
   sync: SyncState;
   signOut(): Promise<void>;
+  /** Bring back a removed person (saved progress still on this phone) under their old id, and save it to the account. */
+  restorePerson(id: string, name: string, track: Track): Promise<boolean>;
+  /** Fold a removed person's saved progress into someone already in the family. */
+  mergeProgressInto(fromId: string, toId: string): void;
 }
 
 const Ctx = createContext<Heir | null>(null);
@@ -232,11 +236,37 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     try { localStorage.removeItem(KEY); } catch { /* nothing stored */ }
   }, [db]);
 
+  const restorePerson = useCallback(async (id: string, name: string, track: Track) => {
+    const next = addMember(household, name, track, id, new Date());
+    if (next === household) return false;
+    setHousehold(next);
+    saveLocal(next);
+    if (db && email) {
+      setSync('saving');
+      try {
+        const r = await saveRemote(db, next, remote.current);
+        remote.current = r;
+        if (progress[id]) await saveProgressRows(db, r.householdId, { [id]: progress[id] });
+        setSync('synced');
+      } catch { setSync('offline'); }
+    }
+    return true;
+  }, [household, progress, db, email]);
+
+  const mergeProgressInto = useCallback((fromId: string, toId: string) => {
+    updateProgress((all) => {
+      const next = { ...all };
+      if (all[fromId]) next[toId] = mergeProgress(memberProgress(all, toId), all[fromId]);
+      delete next[fromId];
+      return next;
+    });
+  }, [updateProgress]);
+
   const now = useMemo(() => clock ?? new Date(0), [clock]);
   const time = clock ? timeOfDay(clock) : 'day';
   const labs = !!userId && LABS.includes(userId);
-  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut }),
-    [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut]);
+  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto }),
+    [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut, restorePerson, mergeProgressInto]);
 
   return (
     <Ctx.Provider value={value}>
