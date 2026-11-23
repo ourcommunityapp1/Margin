@@ -1,25 +1,22 @@
 'use client';
 
-// Courses: the season's course first while it's in season, then the course you're on, then every course on its
+// Courses: the course you're on first, then the season's course while it's in season, then every course on its
 // shelf. Each is a card with its window (lit as far as you've come), its name and two lines on what it is.
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { courseFor, courses, SHELVES, type Course } from '@/heir/content';
-import { activeMember, setPlan } from '@/heir/household';
+import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
 import { seasonLabel } from '@/heir/season';
 
-const arrow = <span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>;
 const chevron = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', color: 'var(--muted)' }}><path d="M9 5l7 7-7 7" /></svg>;
 
 export default function Courses() {
-  const { ready, household, progress, now, update } = useHeir();
-  const router = useRouter();
+  const { ready, household, progress, now, labs } = useHeir();
   if (!ready) return <main className="hr-page" aria-busy="true" />;
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
@@ -30,38 +27,27 @@ export default function Courses() {
 
   // The season's course, if one is in season now.
   const seasonal = courses.map((c) => ({ c, label: c.season ? seasonLabel(c.season, now) : null })).find((x) => x.label);
-  const choose = (c: Course) => { update((h) => setPlan(h, { course: c.id })); router.push('/heir'); };
   const statusOf = (s: ReturnType<typeof summary>) => (s.learned >= s.total ? 'Finished' : s.started ? `${s.learned} of ${s.total} learned` : '');
 
+  // The season's course, as a smaller card under the course you're on. It opens the course's own page.
   const hero = seasonal && (() => {
     const s = summary(seasonal.c);
-    const mineToo = current?.id === seasonal.c.id;
     return (
-      <section className="hr-rose-card" aria-label={`In season: ${seasonal.c.title}`}>
+      <Link href={`/heir/courses/${seasonal.c.id}`} className="hr-rose-card hr-continue" aria-label={`In season: ${seasonal.c.title}`}>
         <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
-        <span className="hr-label">In season · {seasonal.label}</span>
-        {/* The window, name and description are one tap target: the course's own page (its verses, and sharing). */}
-        <Link href={`/heir/courses/${seasonal.c.id}`} aria-label={`${seasonal.c.title}: see the course`}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, color: 'inherit', textDecoration: 'none', textAlign: 'center' }}>
-          <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={170} started={s.started} bright label={`${seasonal.c.title} window`} />
-          <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <span className="serif" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 28, fontWeight: 500, lineHeight: 1.1 }}>
-              {seasonal.c.title}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ opacity: 0.55, marginTop: 2 }}><path d="M9 5l7 7-7 7" /></svg>
-            </span>
-            <span style={{ fontSize: 15, color: '#D9D1C4', lineHeight: 1.45 }}>{seasonal.c.blurb}</span>
-            {statusOf(s) && <span style={{ fontSize: 13, color: '#C9C1B3' }}>{statusOf(s)}</span>}
-          </span>
-        </Link>
-        {mineToo
-          ? <Link className="hr-glass-btn" href="/heir"><span>Continue this course</span>{arrow}</Link>
-          : <button type="button" className="hr-glass-btn hr-glass-btn-reset" onClick={() => choose(seasonal.c)}><span>{s.started ? 'Continue this course' : 'Start this course'}</span>{arrow}</button>}
-      </section>
+        <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={84} started={s.started} bright label={`${seasonal.c.title} window`} />
+        <span style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+          <span className="hr-label">In season · {seasonal.label}</span>
+          <span className="serif" style={{ fontSize: 22, lineHeight: 1.15 }}>{seasonal.c.title}</span>
+          <span style={{ fontSize: 13, color: '#D9D1C4', lineHeight: 1.4 }}>{statusOf(s) || seasonal.c.short}</span>
+        </span>
+        {chevron}
+      </Link>
     );
   })();
 
-  // The course you're on, unless it's the one in season (already above).
-  const resume = current && current.id !== seasonal?.c.id && (() => {
+  // The course you're on.
+  const resume = current && (() => {
     const s = summary(current);
     return (
       <Link href="/heir" className="hr-rose-card hr-continue" aria-label={`Continue ${current.title}`}>
@@ -84,8 +70,8 @@ export default function Courses() {
     <>
       <main className="hr-page">
         <h1 className="serif" style={{ margin: '20px 4px 0', fontSize: 34, fontWeight: 500 }}>Courses</h1>
-        {hero}
         {resume}
+        {seasonal && current?.id !== seasonal.c.id && hero}
         {shelves.map((sh) => (
           <section key={sh.id} className="hr-shelf" aria-labelledby={`shelf-${sh.id}`}>
             <h2 id={`shelf-${sh.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sh.title}</h2>
@@ -110,7 +96,7 @@ export default function Courses() {
             </ul>
           </section>
         ))}
-        <Link href="/heir/review" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>Review all the content (for the owner)</Link>
+        {labs && <Link href="/heir/review" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>Review all the content (for the owner)</Link>}
       </main>
       <Tabs />
     </>

@@ -78,12 +78,12 @@ test('a unit ends by locking it in; a finished course keeps practicing', () => {
   assert.equal(after?.kind, 'practice');
 });
 
-test('projection: more minutes a day, sooner learned; long-term memory three months after', () => {
+test('projection: more minutes a day, sooner learned; long-term memory six months after', () => {
   const items = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
   const today = new Date('2026-11-21T12:00:00Z');
   const [five, fifteen, twentyFive] = GOALS.map((minutes) => project({ items, track: 'adult', p: emptyProgress(), minutes, now: today }));
   assert.ok(five.learnDays > fifteen.learnDays && fifteen.learnDays > twentyFive.learnDays);
-  assert.equal(Math.round((fifteen.longTermBy.getTime() - fifteen.learnedBy.getTime()) / 86400000), 90);
+  assert.equal(Math.round((fifteen.longTermBy.getTime() - fifteen.learnedBy.getTime()) / 86400000), 182);
   const done = project({ items: items.slice(0, 0), track: 'adult', p: emptyProgress(), minutes: 15, now: today });
   assert.equal(done.learnDays, 0);
 });

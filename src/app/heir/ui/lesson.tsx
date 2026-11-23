@@ -48,7 +48,7 @@ function useKeyboardLift() {
   }, []);
 }
 
-export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'night' }) {
+export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item'; itemId?: string }) {
   useKeyboardLift();
   const router = useRouter();
   const { ready, household, updateProgress, progress } = useHeir();
@@ -95,7 +95,12 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
     const glassBefore = windowLight(items, track, mine, new Date());
     const base = { memberId: me.id, courseId: course.id, label: done === 0 ? 'Welcome' : `Lesson ${done + 1}`, before: { lit: glassBefore.lit, dusty: glassBefore.dusty } };
     let next: Session;
-    if (mode === 'night') {
+    const one = mode === 'item' && itemId ? getItem(itemId) : undefined;
+    if (one) {
+      // One question or verse, practiced on its own from its page: a quick recall, then said or typed in full.
+      // Not numbered as a lesson of the course: no course id.
+      next = { ...base, courseId: '', label: `Practice · ${itemLabel(one)}`, kind: 'review', steps: buildReview({ due: [{ item: one, strength: Math.min(6, mine.cards[one.id]?.stability ?? 1) }], track, pool, rng: Math.random, max: 1 }), units: [], group: null };
+    } else if (mode === 'night') {
       // When you lie down: today's questions first, then a few on the edge, one quiet step each.
       const picked = bedtimePicks(mine, ids, new Date()).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
       next = { ...base, label: 'When you lie down', kind: 'review', steps: buildNight({ items: picked, track, pool, rng: Math.random }), units: [], group: null, night: true };
@@ -138,7 +143,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, router]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, router]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
@@ -196,6 +201,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
   const part = !step.review && u && u.of > 1 ? ` · Part ${u.part} of ${u.of}` : '';
   const title = `${itemLabel(item)}${part}`;
   const retry = retried.has(step.id.replace(/:typed$/, '')) && queue.indexOf(step) !== pos;
+  // A lock-in says so on every question; elsewhere, practice on earlier questions is marked Review.
+  const tag = session.kind === 'checkpoint' ? `Lock it in · ${Math.min(pos + 1, queue.length)} of ${queue.length}` : step.review ? 'Review' : null;
   // A pass with a slip is "Good", not "Well done": praise should match what happened.
   const heading = feedback?.ok ? (feedback.slip ? 'Good.' : PRAISE[pos % PRAISE.length]) : feedback?.close ? 'Almost.' : 'Not quite.';
 
@@ -239,8 +246,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
         ) : (
           <>
             {step.kind === 'match' || step.kind === 'meaning'
-              ? <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{step.review && <span className="hr-tag">Review</span>}{step.kind === 'meaning' ? title : 'Match'}{retry ? ' · Second try' : ''}</span>
-              : <Cue item={item} step={step} title={`${title}${retry ? ' · Second try' : ''}`} />}
+              ? <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{tag && <span className="hr-tag">{tag}</span>}{step.kind === 'meaning' ? title : 'Match'}{retry ? ' · Second try' : ''}</span>
+              : <Cue item={item} step={step} tag={tag} title={`${title}${retry ? ' · Second try' : ''}`} />}
             {'lead' in step && step.kind !== 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'order' && <Order step={step} onReport={report} />}

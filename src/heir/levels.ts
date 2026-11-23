@@ -4,7 +4,7 @@
 // Two separate tracks:
 //   Memory, the stones: five foundation stones of Revelation 21 (twelfth to second), then Diamond. Every stone is
 //   earned the same way the research measures memory: recalling the whole thing unaided (no hints, nothing to pick
-//   from) after time away. The longer the time away, the higher the stone. Practising more never earns one by itself.
+//   from) after time away. The longer the time away, the higher the stone. Practicing more never earns one by itself.
 //   Understanding: Learned (answered what it means), Understood (explained it in your own words, checked against the
 //   notes), Mastered (also recalled every verse it rests on). See `understanding`.
 //
@@ -78,7 +78,7 @@ export function levelFromLog(item: Item, track: Track, log: LogEntry[], now: Dat
   const firstRecall = ss.find(anyUnaided);
   const knownFor = (days: number) => !!firstRecall && firstRecall.at <= now.getTime() - days * DAY;
 
-  // Remembered: unaided on a later day than it was first practised. Recall in the same sitting is mostly
+  // Remembered: unaided on a later day than it was first practiced. Recall in the same sitting is mostly
   // short-term memory; recall after a night's sleep is the first sign it's stored.
   const firstDay = ss.length ? localDay(new Date(ss[0].at)) : '';
   if (!ss.some((s) => localDay(new Date(s.at)) !== firstDay && anyUnaided(s))) return 0;
@@ -152,17 +152,17 @@ export function needsRefresh(p: MemberProgress, itemId: string, now: Date): bool
 // What the next stone asks for, in a few words, or null at the top.
 export function nextStep(item: Item, track: Track, p: MemberProgress, now: Date): string | null {
   const n = levelOf(p, item.id);
-  if (n === 0) return recited(item, track, p.log) ? 'Recall it unaided after a night’s sleep for Amethyst' : 'Type it in full with no hints to recite it';
+  if (n === 0) return recited(item, track, p.log) ? 'Amethyst, once you recall it after a night’s sleep' : 'Type it in full with no hints to recite it';
   if (n === 1) {
     const days = new Set(sessions(p.log, item.id).filter(anyUnaided).map((s) => localDay(new Date(s.at)))).size;
     const left = Math.max(1, 3 - days);
-    return `Recall it on ${left} more ${left === 1 ? 'day' : 'days'} for Topaz`;
+    return `Topaz, once you recall it on ${left} more ${left === 1 ? 'day' : 'days'}`;
   }
   void now;
-  if (n === 2) return 'Carnelian after three weeks away';
-  if (n === 3) return 'Emerald after six months, with a two-month gap';
-  if (n === 4) return 'Sapphire a year on, after six months away';
-  if (n === 5) return 'Diamond three years on, after a year away';
+  if (n === 2) return 'Carnelian, once you recall it after three weeks away';
+  if (n === 3) return 'Emerald, once it’s held for six months';
+  if (n === 4) return 'Sapphire, once you recall it a year on, after six months away';
+  if (n === 5) return 'Diamond, once you recall it three years on, after a year away';
   return null;
 }
 

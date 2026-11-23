@@ -49,10 +49,10 @@ export function AllCourses({ minutes, track, p }: { minutes: number; track: Trac
 export function LongTermNote() {
   return (
     <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.55 }}>
-      <b style={{ color: 'var(--ink)' }}>What long-term memory means.</b> By then you’ll have recalled each answer correctly for three
-      months, including after a month away. Each recall spaced further apart slows forgetting, until a few minutes of review now and
+      <b style={{ color: 'var(--ink)' }}>What long-term memory means.</b> By then you’ll have recalled each answer correctly for six
+      months, including after two months away. Each recall spaced further apart slows forgetting, until a few minutes of review now and
       then keeps it for good. Studies of people who learned something well this way find it still there decades later. Learn as fast
-      as you like: a question only counts as known once you’ve recalled it after a night’s sleep.
+      as you like: a question only counts as remembered once you’ve recalled it after a night’s sleep.
     </p>
   );
 }

@@ -2,6 +2,7 @@
 
 // One item, for reading: the answer, what it means, and the Scripture it rests on. Practice happens in lessons.
 
+import Link from 'next/link';
 import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
@@ -15,7 +16,7 @@ import { relatedFor } from '@/heir/related';
 import type { Item } from '@/heir/types';
 
 export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses' }: { item: Item; collectionTitle: string; unit: string; back?: string }) {
-  const { household, progress, now } = useHeir();
+  const { household, progress, now, labs } = useHeir();
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
   const learned = unitsFor(item, me?.track ?? 'adult').every((u) => mine.units.includes(u.key));
@@ -35,17 +36,19 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>
           <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.45 }}>{item.text}</p>
           {learned && (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--well)', borderRadius: 16, padding: '10px 12px' }}>
-              <Stone level={level} size={40} dim={dim} />
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name} · ${levelInfo(level)!.counts}${dim ? ' · needs a refresh' : ''}` : recited(item, me?.track ?? 'adult', mine.log) ? STAGES[0].name : 'Practised'}</span>
-                {next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>Next: {next}</span>}
-              </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--well)', borderRadius: 16, padding: 12 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <Stone level={level} size={44} dim={dim} />
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name} · ${levelInfo(level)!.counts}` : recited(item, me?.track ?? 'adult', mine.log) ? STAGES[0].name : 'Practiced'}</span>
+                  {dim && <span style={{ fontSize: 14, color: 'var(--miss)' }}>Due for a refresh</span>}
+                </span>
+              </div>
+              {next && <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{level === 0 && !recited(item, me?.track ?? 'adult', mine.log) ? 'Next' : 'Next stone'}: {next}.</span>}
+              <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}`} className="hr-btn" style={dim ? undefined : { background: 'var(--card)', color: 'var(--ink)' }}>Practice this {unit === 'Question' ? 'question' : unit === 'Verse' ? 'verse' : 'now'}</Link>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {!item.reviewed && <span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span>}
-          </div>
+          {labs && !item.reviewed && <div><span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span></div>}
         </section>
 
         <Explain item={item} />

@@ -3,15 +3,13 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useHeir } from './provider';
-import { Tabs } from './tabs';
+import { Back, Tabs } from './tabs';
 import { addMember, removeMember, setActive, updateMember } from '@/heir/household';
 import type { Track } from '@/heir/types';
 import { newId } from './ids';
-import { LinkedAccounts } from './linked';
 
 export function FamilyScreen({ setup }: { setup: boolean }) {
-  const { ready, household, update, accounts, email, sync, signOut, updateProgress } = useHeir();
-  const [confirmReset, setConfirmReset] = useState(false);
+  const { ready, household, update } = useHeir();
   const [name, setName] = useState('');
   const [track, setTrack] = useState<Track>('adult');
 
@@ -29,9 +27,10 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
   return (
     <>
       <main className={`hr-page${setup ? ' bare' : ''}`}>
-        <section className="hr-card" style={{ marginTop: setup ? 40 : 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {!setup && <div style={{ marginTop: 8 }}><Back href="/heir/you" /></div>}
+        <section className="hr-card" style={{ marginTop: setup ? 40 : 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500, lineHeight: 1.15 }}>{setup ? 'Who’s memorizing with you?' : 'Family'}</h1>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--muted)' }}>Everyone gets their own pace and progress. The child track uses shorter pieces. Tap a name to make it the active person on this phone.</p>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--muted)' }}>Everyone gets their own pace and progress. The child track uses shorter pieces.{members.length > 1 ? ' Tap a name to make it the active person on this phone.' : ''}</p>
 
           {members.length > 0 && (
             <div>
@@ -66,48 +65,12 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
             <button type="submit" className="hr-btn" disabled={!name.trim()} style={{ background: 'var(--well)', color: 'var(--ink)' }}>Add</button>
           </form>
         </section>
-        {!setup && accounts && email && <LinkedAccounts />}
         {setup && (
           <Link className="hr-btn" href={members.length ? '/heir/plan?setup=1' : '#'} aria-disabled={!members.length}
             style={{ marginTop: 'auto', opacity: members.length ? 1 : 0.45, pointerEvents: members.length ? 'auto' : 'none' }}>Continue</Link>
         )}
-        {!setup && accounts && email && (
-          <p style={{ margin: 0, textAlign: 'center', fontSize: 14 }}>
-            Signed in as {email}{sync === 'offline' ? ' · couldn’t reach the server; changes are kept on this phone' : ''} ·{' '}
-            <button type="button" onClick={signOut} style={{ background: 'none', border: 0, padding: 0, font: 'inherit', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>Sign out</button>
-          </p>
-        )}
-        {!setup && (
-          <StartOver name={household.members.find((m) => m.id === household.activeMemberId)?.name ?? ''} armed={confirmReset} setArmed={setConfirmReset}
-            erase={() => { const id = household.activeMemberId; if (id) updateProgress((p) => { const next = { ...p }; delete next[id]; return next; }); setConfirmReset(false); }} />
-        )}
-        {!setup && (
-          <Link href="/heir/about" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>About Katekize and photo credits</Link>
-        )}
       </main>
       {!setup && <Tabs />}
     </>
-  );
-}
-
-// Erases one person's progress (lessons, stones, days kept, awards) on this phone. Two taps, so it can't happen by accident.
-function StartOver({ name, armed, setArmed, erase }: { name: string; armed: boolean; setArmed(v: boolean): void; erase(): void }) {
-  const [done, setDone] = useState(false);
-  if (!name) return null;
-  return (
-    <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <span className="hr-label">Start over</span>
-      <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>
-        {done ? `${name}’s progress is cleared. The next lesson starts from the welcome.` : `Clear ${name}’s lessons, stones, days kept and awards on this phone, and begin again from the welcome lesson.`}
-      </p>
-      {!done && (armed ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => setArmed(false)}>Keep it</button>
-          <button type="button" className="hr-btn" style={{ background: 'var(--miss)', color: 'var(--card)' }} onClick={() => { erase(); setDone(true); }}>Erase progress</button>
-        </div>
-      ) : (
-        <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => setArmed(true)}>Start over</button>
-      ))}
-    </section>
   );
 }

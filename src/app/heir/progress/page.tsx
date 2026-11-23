@@ -1,7 +1,7 @@
 'use client';
 
-// Progress, in three sections: Overview (the words in your memory, milestones, days kept), Courses (the window of
-// every course you've begun), and Stones (each item's stone, how to earn them, understanding, and awards).
+// Progress, as one scroll: the words in your memory and the next milestone, the stones ladder, the window of every
+// course you've begun (tap one to see it up close), the month's days kept, and awards.
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { allItems, courseItems, courses, itemLabel } from '@/heir/content';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
+import { RoundWindow } from '../ui/glass/round';
+import type { PartWindow } from '../ui/glass/light';
 import { activeMember } from '@/heir/household';
 import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, recited, understanding } from '@/heir/levels';
 import { milestones, wordsIn } from '@/heir/measures';
@@ -19,14 +21,13 @@ import { localDay, memberProgress } from '@/heir/progress';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
 const STAGE_COLORS = ['#C9A46A', '#7B52B5', '#D99A2B', '#B0442A', '#1E8657', '#2F5DA8', '#BFC6CC'];
-type Section = 'overview' | 'courses' | 'stones';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function Progress() {
   const { ready, household, progress, now, labs } = useHeir();
   const router = useRouter();
-  const [section, setSection] = useState<Section>('overview');
+  const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { if (ready && !household.members.length) router.replace('/heir/welcome'); }, [ready, household.members.length, router]);
   const me = activeMember(household);
   if (!ready || !me) return <main className="hr-page" aria-busy="true" />;
@@ -72,95 +73,34 @@ export default function Progress() {
   const earned = AWARDS.filter((a) => mine.awards[a.id]).length;
   const fmt = (n: number) => n.toLocaleString('en-US');
 
+  const nextAward = AWARDS.find((a) => !mine.awards[a.id]);
+  const viewing = yours.find((y) => y.c.id === open);
+
   return (
     <>
       <main className="hr-page">
         <h1 className="serif" style={{ margin: '20px 4px 4px', fontSize: 34, fontWeight: 500 }}>Progress</h1>
-        <div className="hr-seg" role="tablist" aria-label="Progress sections" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-          {([['overview', 'Overview'], ['courses', 'Courses'], ['stones', 'Stones']] as const).map(([id, name]) => (
-            <button key={id} type="button" role="tab" aria-selected={section === id} onClick={() => setSection(id)}>{name}</button>
-          ))}
-        </div>
 
-        {section === 'overview' && (
-          <>
-            <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Words in your memory">
-              <span className="hr-label">Words in your memory</span>
-              <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
-                {words.recited > words.inMemory && <span style={{ fontSize: 15, color: 'var(--muted)' }}>{fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day</span>}
-              </span>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.</p>
-              <div className="hr-ladder">
-                {STAGES.map((stage) => {
-                  const n = words.atStage[stage.n];
-                  return (
-                    <div key={stage.name} className="hr-ladder-row">
-                      <span className="hr-ladder-name">{stage.name}</span>
-                      <span className="hr-ladder-bar"><span style={{ width: `${words.recited ? (n / words.recited) * 100 : 0}%`, background: STAGE_COLORS[stage.n] }} /></span>
-                      <span className="hr-ladder-n">{fmt(n)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Milestones">
-              <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span className="hr-label">Milestones</span>
-                <span style={{ fontSize: 13, color: 'var(--muted)' }}>{fmt(words.inMemory)} {words.inMemory === 1 ? 'word' : 'words'} in memory</span>
-              </span>
-              {/* Only where you are: the milestone last reached, the way to the next, and the next. */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                {miles.reached.length > 0 && <span className="hr-mile" data-reached="true" aria-label={`Reached ${fmt(prevMile)}`}>{fmt(prevMile)}</span>}
-                {miles.next ? (
-                  <>
-                    <span className="hr-ladder-bar" style={{ flex: 1 }} aria-hidden="true"><span style={{ width: `${((words.inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
-                    <span className="hr-mile" aria-label={`Next: ${fmt(miles.next)}`}>{fmt(miles.next)}</span>
-                  </>
-                ) : <span style={{ fontSize: 14, color: 'var(--muted)' }}>Every milestone reached</span>}
-              </div>
-              {miles.next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{fmt(miles.next - words.inMemory)} more {miles.next - words.inMemory === 1 ? 'word' : 'words'} to {fmt(miles.next)}</span>}
-            </section>
-
-            <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Days kept this month">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span className="serif" style={{ fontSize: 30, fontWeight: 600, lineHeight: 1 }}>{kept}</span>
-              <span style={{ fontWeight: 600 }}>{kept === 1 ? 'day kept' : 'days kept'}</span>
-            </span>
-            <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{MONTHS[now.getMonth()]}{best ? ` · Best ${best}` : ''}</span>
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Words in your memory">
+          <span className="hr-label">Words in your memory</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
+            {words.recited > words.inMemory && <span style={{ fontSize: 14, color: 'var(--muted)', flex: '1 1 160px' }}>{fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day</span>}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {miles.reached.length > 0 && <span className="hr-mile" data-reached="true" aria-label={`Milestone reached: ${fmt(prevMile)}`}>{fmt(prevMile)}</span>}
+            {miles.next ? (
+              <>
+                <span className="hr-ladder-bar" style={{ flex: 1 }} aria-hidden="true"><span style={{ width: `${((words.inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
+                <span className="hr-mile" aria-label={`Next milestone: ${fmt(miles.next)}`}>{fmt(miles.next)}</span>
+              </>
+            ) : <span style={{ fontSize: 14, color: 'var(--muted)' }}>Every milestone reached</span>}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, textAlign: 'center' }}>
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)' }}>{d}</span>)}
-            {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
-            {cells.map((c) => <span key={c.key} className="hr-cal" data-state={c.state}>{c.n}</span>)}
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest: learning counts, and skipping never breaks the run.</p>
+          {miles.next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{fmt(miles.next - words.inMemory)} more {miles.next - words.inMemory === 1 ? 'word' : 'words'} to {fmt(miles.next)}</span>}
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.</p>
         </section>
 
-          </>
-        )}
-
-        {section === 'courses' && (
-          <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Your courses">
-            <span className="hr-label">Your windows</span>
-            {yours.length === 0 && <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Finish your first lesson and its window starts to light here.</p>}
-            <div className="hr-wall">
-              {yours.map(({ c, s }) => (
-                <Link key={c.id} href={`/heir/courses/${c.id}`} className="hr-wall-item">
-                  <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={88} started label={`${c.title} window`} />
-                  <span className="serif" style={{ fontSize: 15, fontWeight: 600, lineHeight: 1.2 }}>{c.title}</span>
-                  <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{s.learned >= s.total ? 'Finished' : `${s.learned} of ${s.total}`}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {section === 'stones' && (
-          <>
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Stones">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span className="hr-label">Stones</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>All courses · {recitedCount} recited</span>
@@ -180,23 +120,9 @@ export default function Progress() {
             ))}
           </div>
           {hints.length > 0 && <p style={{ margin: 0, background: 'var(--well)', borderRadius: 14, padding: '12px 14px', fontSize: 14, lineHeight: 1.45 }}><strong>Closest next:</strong> {hints.join('. ')}.</p>}
-          <details className="hr-stones-how">
-            <summary>How to earn each stone</summary>
-            <ol>
-              {LEVELS.map((l) => (
-                <li key={l.id}>
-                  <Stone level={l.n} size={30} />
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                    <b>{l.name}{l.counts ? <span style={{ fontWeight: 500, color: 'var(--muted)' }}> · {l.counts}</span> : null}</b>
-                    <span>{l.means}</span>
-                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{l.rule}.</span>
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </details>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>Every stone is earned the way memory research measures it: the whole thing recalled with no hints, after time away. Extra practice keeps it fresh but doesn’t earn a stone by itself.</p>
+          <Link href="/heir/how" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>How to earn each stone</Link>
         </section>
+
         {labs && <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Understanding">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span className="hr-label">Understanding</span>
@@ -211,33 +137,100 @@ export default function Progress() {
               </div>
             ))}
           </div>
-          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, lineHeight: 1.45 }}>
-            {UNDERSTANDING.map((u) => <li key={u.name}><b>{u.name}:</b> {u.means}</li>)}
-          </ol>
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>Open any question or verse to explain it in your own words and recall the verses it rests on.</p>
         </section>}
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Your windows">
+          <span className="hr-label">Your windows</span>
+          {yours.length === 0 && <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Finish your first lesson and its window starts to light here.</p>}
+          <div className="hr-wall">
+            {yours.map(({ c, s }) => (
+              <button key={c.id} type="button" className="hr-wall-item" onClick={() => setOpen(c.id)} aria-label={`See the ${c.title} window up close`}>
+                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={128} started label={`${c.title} window`} />
+                <span className="serif" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.2 }}>{c.title}</span>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>{s.learned >= s.total ? 'Finished' : `${s.learned} of ${s.total} learned`}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Days kept this month">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span className="serif" style={{ fontSize: 30, fontWeight: 600, lineHeight: 1 }}>{kept}</span>
+              <span style={{ fontWeight: 600 }}>{kept === 1 ? 'day kept' : 'days kept'}</span>
+            </span>
+            <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{MONTHS[now.getMonth()]}{best ? ` · Best ${best}` : ''}</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, textAlign: 'center' }}>
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)' }}>{d}</span>)}
+            {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
+            {cells.map((c) => <span key={c.key} className="hr-cal" data-state={c.state}>{c.n}</span>)}
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest: learning counts, and skipping never breaks the run.</p>
+        </section>
+
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Awards">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span className="hr-label">Awards</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>{earned} of {AWARDS.length}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-            {AWARDS.map((a) => {
-              const when = mine.awards[a.id];
-              return (
-                <div key={a.id} className="hr-award" data-earned={!!when}>
-                  <span className="hr-seal" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z" /></svg></span>
-                  <span style={{ fontWeight: 600, fontSize: 15, lineHeight: 1.3 }}>{a.name}</span>
-                  <span style={{ fontSize: 12, color: 'var(--muted)' }}>{when ? new Date(when).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : a.hint}</span>
-                </div>
-              );
-            })}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {AWARDS.filter((a) => mine.awards[a.id]).map((a) => <span key={a.id} className="hr-seal big" title={a.name} role="img" aria-label={a.name}><Star /></span>)}
+            {nextAward && <span className="hr-seal big next" role="img" aria-label={`Next: ${nextAward.name}`}><Star /></span>}
           </div>
+          {nextAward && <span style={{ fontSize: 14 }}><b>Next: {nextAward.name}</b> <span style={{ color: 'var(--muted)' }}>· {nextAward.hint}</span></span>}
+          <details className="hr-awards-all">
+            <summary>See all awards</summary>
+            <ul>
+              {AWARDS.map((a) => {
+                const when = mine.awards[a.id];
+                return (
+                  <li key={a.id} data-earned={!!when}>
+                    <span style={{ fontWeight: 600 }}>{a.name}</span>
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{when ? new Date(when).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : a.hint}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
         </section>
-          </>
-        )}
       </main>
-      <Tabs />
+      {viewing ? <WindowView title={viewing.c.title} part={viewing.s.window.count > 1 ? `Part ${viewing.s.window.index + 1} · ${viewing.s.window.title}` : null}
+        learned={viewing.s.learned >= viewing.s.total ? 'Finished' : `${viewing.s.learned} of ${viewing.s.total} learned`}
+        window={viewing.s.window} href={`/heir/courses/${viewing.c.id}`} onClose={() => setOpen(null)} /> : <Tabs />}
     </>
+  );
+}
+
+const Star = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z" /></svg>;
+
+// A course's window up close: full screen, with a way back and a quiet way into the course.
+function WindowView({ title, part, learned, window: w, href, onClose }: { title: string; part: string | null; learned: string; window: PartWindow; href: string; onClose(): void }) {
+  const [size, setSize] = useState(320);
+  useEffect(() => {
+    const fit = () => setSize(Math.floor(Math.min(window.innerWidth - 32, window.innerHeight - 260, 720)));
+    fit();
+    window.addEventListener('resize', fit);
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', esc);
+    return () => { window.removeEventListener('resize', fit); window.removeEventListener('keydown', esc); };
+  }, [onClose]);
+  return (
+    <div className="hr-window-view" role="dialog" aria-modal="true" aria-label={`${title} window`}>
+      <div className="hr-window-view-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
+      <div className="hr-window-view-top">
+        <button type="button" className="hr-back" onClick={onClose} aria-label="Back" autoFocus>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+        </button>
+      </div>
+      <div className="hr-window-view-body">
+        <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={size} label={`${title} window: ${learned}`} />
+        <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
+          <span className="serif" style={{ fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{title}</span>
+          <span style={{ fontSize: 14, color: '#C9C1B3' }}>{part ? `${part} · ` : ''}{learned}</span>
+        </span>
+        <Link href={href} className="hr-window-view-go">Go to course</Link>
+      </div>
+    </div>
   );
 }

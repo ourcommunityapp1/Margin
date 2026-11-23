@@ -30,7 +30,7 @@ export function PlanScreen({ setup }: { setup: boolean }) {
 
   return (
     <main className="hr-page bare">
-      {!setup && <div><Back href="/heir" /></div>}
+      {!setup && <div><Back href="/heir/you" /></div>}
       <section className="hr-card" style={{ marginTop: setup ? 40 : 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <h1 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 600, lineHeight: 1.2 }}>Courses</h1>
         <CourseChoices value={current} progress={stats} onChange={(id) => { update((h) => setPlan(h, { course: id })); router.push('/heir'); }} />

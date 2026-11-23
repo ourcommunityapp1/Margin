@@ -1,7 +1,7 @@
 'use client';
 
-// Today: days kept, what you know, the next lesson, and the course as units of named lessons,
-// each question showing the stone it has earned.
+// Today answers one question: what should I do now? The course's window with today's session, the week kept,
+// and the unit you're on. What you know lives on Progress; the whole course on its own page.
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -10,11 +10,11 @@ import { useHeir } from './ui/provider';
 import { groupLabel, useCourse } from './ui/course';
 import { Tabs } from './ui/tabs';
 import { Stone } from './ui/stone';
-import { allItems, getItem, itemLabel, itemNoun, itemSubtitle } from '@/heir/content';
-import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep, LEVELS } from '@/heir/levels';
+import { getItem, itemLabel, itemNoun, itemSubtitle } from '@/heir/content';
+import { bestDaysKept, daysKept, levelInfo, needsRefresh, recited } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
 import type { PathUnit } from '@/heir/path';
-import { lessonsDone, nightOffer, planNext, riseOffer } from '@/heir/planner';
+import { describe, lessonsDone, nightOffer, planNext, riseOffer } from '@/heir/planner';
 import { unitsFor } from '@/heir/lesson';
 import { greeting } from '@/heir/time';
 import type { Track } from '@/heir/types';
@@ -40,10 +40,11 @@ export default function Today() {
   const plan = planNext({ courseId: course.id, items, track, p: mine, now });
   const lessonName = done === 0 ? 'Welcome' : plan?.kind === 'welcome-back' ? `Welcome back · Lesson ${done + 1}` : `Lesson ${done + 1}`;
   const today = localDay(now);
-  const counts = countsFor(allItems(), mine);
   // The window for the part you're working in.
   const light = partWindow(course, track, mine, now);
-  const start = !plan ? null : plan.kind === 'welcome' ? 'Begin' : plan.kind === 'checkpoint' ? 'Lock them in' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`;
+  const start = !plan ? null : plan.kind === 'welcome' ? 'Begin' : `Start ${lessonName.replace(/^Lesson/, 'lesson')}`;
+  // What today's session holds, in a line.
+  const holds = plan ? `${describe(plan, groupLabel)}${due.length && plan.kind !== 'practice' && plan.kind !== 'welcome-back' ? ` ${due.length} ${due.length === 1 ? 'review is' : 'reviews are'} due too.` : ''}` : '';
   const learnedCount = light.lit.filter((f) => f >= 1).length;
   // The evening review and the morning recall, offered only when there's something to do.
   const riseItems = riseOffer(mine, now);
@@ -55,7 +56,7 @@ export default function Today() {
       <main className="hr-page">
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 4px', marginTop: 12 }}>
           <h1 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{greeting(time)}, {me.name.trim().split(/\s+/)[0]}</h1>
-          <Link href="/heir/family" aria-label={`Profiles (now ${me.name})`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
+          <Link href="/heir/you" aria-label={`You: ${me.name}, settings and family`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
         </header>
 
         {riseItems ? (
@@ -76,11 +77,17 @@ export default function Today() {
         <section className="hr-rose-card">
           <div className="hr-rose-wash" style={{ backgroundImage: `url(${light.base}/glass.webp)` }} aria-hidden="true" />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, textAlign: 'center' }}>
-            {light.count > 1 && <span className="hr-label">Part {light.index + 1} of {light.count}</span>}
-            <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.1 }}>{light.title}</h2>
+            {(light.count > 1 || light.title !== course.title) && <span className="hr-label">{course.title}</span>}
+            <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.1 }}>{light.count > 1 ? `Part ${light.index + 1} · ${light.title}` : light.title}</h2>
           </div>
           <TodayWindow key={light.base} light={light} started={items.some((i) => unitsFor(i, track).some((u) => mine.units.includes(u.key)))} hint={plan && (plan.kind === 'welcome' || plan.kind === 'learn') && light.next >= 0 ? light.next : undefined} />
-          <span style={{ fontSize: 13, color: '#C9C1B3' }}>{learnedCount} of {light.items.length} {noun} lit</span>
+          <span style={{ fontSize: 13, color: '#C9C1B3' }}>{learnedCount} of {light.items.length} {noun} learned</span>
+          {plan && (
+            <div className="hr-today-plan">
+              <span style={{ fontWeight: 700 }}>Today · {lessonName}</span>
+              <span>{holds}</span>
+            </div>
+          )}
           {start ? (
             <Link className="hr-glass-btn" href="/heir/lesson"><span>{start}</span>
               <span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>
@@ -90,43 +97,11 @@ export default function Today() {
 
         <DaysKept days={mine.days} today={today} now={now} dueCount={due.length} />
 
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span className="hr-label">What you know · all courses</span>
-            <Link href="/heir/progress" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>Progress</Link>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
-            {[[1, counts.know, LEVELS[0].counts], [2, counts.memorized, LEVELS[1].counts], [3, counts.mastered, LEVELS[2].counts], [4, counts.longTerm, LEVELS[3].counts]].map(([lv, n, name]) => (
-              <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
-                <Stone level={Number(lv)} size={34} />
-                <span className="serif" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1 }}>{n}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', lineHeight: 1.25 }}>{name}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <Link href="/heir/plan" className="hr-course-chip" aria-label={`Course: ${course.title}. Change course`}>
-          <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>Course</span>
-            <span style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{course.title}</span>
-          </span>
-          <span style={{ fontSize: 15, color: 'var(--muted)', flex: 'none' }}>Change</span>
-        </Link>
-
         {(() => {
-          // Long courses: the last finished unit, the current one and the next; the rest summed up.
-          const at = Math.max(0, path.findIndex((u) => u.status !== 'done'));
-          const from = Math.max(0, at - 1), to = Math.min(path.length, at + 2);
-          const before = path.slice(0, from), after = path.slice(to);
-          const span = (list: PathUnit[]) => `${groupLabel(list[0].group).replace(/–.*$/, '')}–${list[list.length - 1].group.items[list[list.length - 1].group.items.length - 1].number}`;
-          return (
-            <>
-              {before.length > 0 && <Link href={`/heir/courses/${course.id}`} className="hr-course-chip"><span><b>{before.length === 1 ? 'Unit 1' : `Units 1–${before.length}`}</b> · locked in</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See the course</span></Link>}
-              {path.slice(from, to).map((u) => <UnitCard key={u.group.key} unit={u} mine={mine} track={track} now={now} />)}
-              {after.length > 0 && <Link href={`/heir/courses/${course.id}`} className="hr-course-chip"><span><b>{after.length} more {after.length === 1 ? 'unit' : 'units'}</b> · {span(after)}</span><span style={{ fontSize: 15, color: 'var(--muted)' }}>See all</span></Link>}
-            </>
-          );
+          // Only the unit you're on; the whole course is on its own page.
+          const at = path.findIndex((u) => u.status !== 'done');
+          const unit = path[at >= 0 ? at : path.length - 1];
+          return unit ? <UnitCard unit={unit} mine={mine} track={track} now={now} courseId={course.id} /> : null;
         })()}
       </main>
       <Tabs />
@@ -173,7 +148,7 @@ function DaysKept({ days, today, now, dueCount }: { days: string[]; today: strin
 }
 
 // A unit is its questions: each shows the stone it has earned, the next one to learn, or nothing yet.
-function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProgress; track: Track; now: Date }) {
+function UnitCard({ unit, mine, track, now, courseId }: { unit: PathUnit; mine: MemberProgress; track: Track; now: Date; courseId: string }) {
   const learned = new Set(mine.units);
   const nextUp = unit.lessons.find((l) => l.status === 'current');
   const lockDone = unit.lessons[unit.lessons.length - 1].status === 'done';
@@ -195,7 +170,9 @@ function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProg
             const level = mine.levels[item.id] ?? 0;
             const dim = needsRefresh(mine, item.id, now);
             const isNext = nextUp?.itemId === item.id;
-            const note = dim ? { text: 'Needs a refresh', miss: true } : level ? { text: levelInfo(level)!.name, miss: false } : started ? { text: nextStep(item, track, mine, now) ?? '', miss: false } : isNext ? { text: 'Next', miss: false } : null;
+            // Short labels in a list; the full next step is on the item's own page.
+            const note = dim ? { text: 'Needs a refresh', miss: true } : level ? { text: levelInfo(level)!.name, miss: false }
+              : started ? { text: recited(item, track, mine.log) ? 'Tomorrow' : 'Learning', miss: false } : isNext ? { text: 'Next', miss: false } : null;
             const body = (
               <>
                 {isNext && !started ? <span className="hr-dot current" aria-label="Next" /> : <Stone level={level} size={26} dim={dim} />}
@@ -212,6 +189,10 @@ function UnitCard({ unit, mine, track, now }: { unit: PathUnit; mine: MemberProg
             <span className={`hr-dot${lockDone ? ' done' : ''}`} aria-hidden="true">{lockDone && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5 9-10" /></svg>}</span>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>Lock it in</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>{unit.lockWaiting ? 'Tomorrow, after a night’s sleep' : `All ${unit.group.items.length} from memory`}</span></span>
           </div></li>
+          <li><Link className="hr-lesson" href={`/heir/courses/${courseId}`} style={{ justifyContent: 'space-between' }}>
+            <span style={{ fontWeight: 600 }}>The whole course</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: 'var(--muted)' }}><path d="M9 6l6 6-6 6" /></svg>
+          </Link></li>
         </ol>
       ) : <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>{unit.group.items.length} {itemNoun(unit.group.items[0], unit.group.items.length)}. Opens when the unit before is locked in.</p>}
     </section>

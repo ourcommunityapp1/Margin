@@ -124,7 +124,8 @@ export function describe(plan: LessonPlan, groupName: (g: Group) => string): str
 //   - a lock-in takes about 4 minutes;
 //   - two lessons in three bring something new; the third is practice;
 //   - reviews grow as more is learned, so allow a fifth more time for them;
-//   - long-term memory (Emerald) asks for three months of right answers after the last question is learned.
+//   - long-term memory (Emerald) asks for six months of right answers, one after two months away, after the
+//     last question is learned.
 export const LESSON_MINUTES = 6;
 const LOCK_IN_MINUTES = 4;
 export const GOALS = [5, 15, 25] as const;
@@ -142,7 +143,7 @@ export function project(o: { items: Item[]; track: Track; p: MemberProgress; min
   const perDay = o.minutes * (2 / 3) / 1.2;
   const learnDays = remaining === 0 ? 0 : Math.ceil(work / perDay);
   const learnedBy = new Date(o.now.getTime() + learnDays * DAY);
-  return { remaining, learnDays, learnedBy, longTermBy: new Date(learnedBy.getTime() + 90 * DAY) };
+  return { remaining, learnDays, learnedBy, longTermBy: new Date(learnedBy.getTime() + 182 * DAY) };
 }
 
 // "When you lie down": offered from 7 pm until 3 am, once a night. Up to five questions: those learned

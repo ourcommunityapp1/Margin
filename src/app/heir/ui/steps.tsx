@@ -42,13 +42,13 @@ export function Context({ text }: { text: string }) {
   return <p className={`hr-context${text.length > 150 ? ' long' : ''}`} aria-label="Earlier in the passage">{text}</p>;
 }
 
-export function Cue({ item, step, title }: { item: Item; step: Step; title: string }) {
+export function Cue({ item, step, title, tag }: { item: Item; step: Step; title: string; tag?: string | null }) {
   // A verse's prompt is its reference, already shown large below, so the label names the course instead.
   const label = isVerse(item) ? title.replace(item.prompt, getCollection(item.collection)?.title ?? '') : title;
   return (
     <div className="hr-cue">
       <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        {step.review && <span className="hr-tag">Review</span>}
+        {tag !== undefined ? tag && <span className="hr-tag">{tag}</span> : step.review && <span className="hr-tag">Review</span>}
         {label}
       </span>
       <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>

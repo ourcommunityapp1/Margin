@@ -77,7 +77,7 @@ test('counts and hints follow the levels', () => {
   assert.deepEqual(countsFor(allItems(), p), { know: 3, memorized: 2, mastered: 1, longTerm: 0 });
   assert.equal(nextStep(getItem('wsc-4')!, 'adult', p, at('2026-11-20T12:00:00Z')), 'Type it in full with no hints to recite it');
   const one = { ...withLog([e('2026-11-19', 'type')]), levels: { 'wsc-1': 1 } };
-  assert.equal(nextStep(wsc1, 'adult', one, at('2026-11-20T12:00:00Z')), 'Recall it on 2 more days for Topaz');
+  assert.equal(nextStep(wsc1, 'adult', one, at('2026-11-20T12:00:00Z')), 'Topaz, once you recall it on 2 more days');
 });
 
 test('an overdue item needs a refresh', () => {
