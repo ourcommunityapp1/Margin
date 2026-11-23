@@ -59,8 +59,11 @@ body:has(.hr) {
    ink (#11161c, also the browser's theme colour), and the page fades into it, so nothing shows a seam and
    nothing scrolls visibly under the clock or below the tab bar. */
 .hr::before, .hr::after { content: ''; position: fixed; left: 0; right: 0; z-index: 4; pointer-events: none; }
-.hr::before { top: 0; height: calc(env(safe-area-inset-top, 0px) + 18px); background: linear-gradient(#11161c calc(100% - 18px), rgba(17, 22, 28, 0)); }
-.hr::after { bottom: 0; height: calc(env(safe-area-inset-bottom, 0px) + 56px); background: linear-gradient(rgba(17, 22, 28, 0), #11161c 60%); }
+/* Frosted like the tab bar, not a gradient: text scrolling under the status bar or below the tab bar is blurred
+   behind glass with a clean edge, never cut half-faded. The bottom band ends halfway up the tab bar, behind it. */
+.hr::before, .hr::after { background: rgba(17, 22, 28, 0.97); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); }
+.hr::before { top: 0; height: env(safe-area-inset-top, 0px); }
+.hr::after { bottom: 0; height: calc(env(safe-area-inset-bottom, 0px) + 46px); }
 .hr-bg::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(#11161c, rgba(17, 22, 28, 0) 160px, rgba(17, 22, 28, 0) calc(100% - 200px), #11161c); }
 
 /* Dark all day: the photo for the time of day stays, under a deeper wash except at night (which is dark already). */
