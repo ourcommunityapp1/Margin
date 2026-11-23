@@ -131,3 +131,20 @@ test('Diamond: Sapphire plus every related verse recalled; never without related
   const bare = { ...item, id: 'x-1', connected: [] };
   assert.equal(earnedLevels([bare], 'adult', { ...emptyProgress(), levels: { 'x-1': 5 } }, now)['x-1'], 5);
 });
+
+test('words in memory: learned parts count their words; each stage counts whole items at or above it', async () => {
+  const { wordsIn, milestones, wordCount } = await import('../measures.ts');
+  const { emptyProgress } = await import('../progress.ts');
+  const { unitsFor } = await import('../lesson.ts');
+  const a = getItem('fv-1')!, b = getItem('fv-3')!;
+  const p = { ...emptyProgress(), units: [...unitsFor(a, 'adult'), ...unitsFor(b, 'adult')].map((u) => u.key), levels: { [a.id]: 2 } };
+  const w = wordsIn([a, b], 'adult', p);
+  assert.equal(w.learned, wordCount(a.text) + wordCount(b.text));
+  assert.equal(w.atStage[1], wordCount(a.text), 'Recalled counts only the item with a stone');
+  assert.equal(w.atStage[2], wordCount(a.text));
+  assert.equal(w.atStage[3], 0);
+  assert.equal(w.inMemory, w.atStage[1]);
+  assert.deepEqual(milestones(9), { reached: [], next: 10 });
+  assert.deepEqual(milestones(84), { reached: [10, 25, 50, 75], next: 100 });
+  assert.deepEqual(milestones(1200).next, null);
+});

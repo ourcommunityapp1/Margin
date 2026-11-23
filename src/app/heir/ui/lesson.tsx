@@ -319,7 +319,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
           <span className="hr-label">{kind}</span>
           <span className="hr-halo"><Stone level={top.to} size={112} /></span>
           <h1 className="serif" style={{ margin: '4px 0 0', fontSize: 28, lineHeight: 1.18, fontWeight: 600 }}>{itemLabel(topItem)} reached {topLevel.name}</h1>
-          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--muted)' }}>{topLevel.rule}.{topLevel.counts ? ` It now counts as ${topLevel.counts.toLowerCase()}.` : ''}</p>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--muted)' }}>{topLevel.rule}.{topLevel.counts ? ` Now: ${topLevel.counts}.` : ''}</p>
         </section>
       ) : (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

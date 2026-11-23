@@ -11,7 +11,7 @@ import { groupLabel, useCourse } from './ui/course';
 import { Tabs } from './ui/tabs';
 import { Stone } from './ui/stone';
 import { allItems, getItem, itemLabel, itemNoun, itemSubtitle } from '@/heir/content';
-import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep } from '@/heir/levels';
+import { bestDaysKept, countsFor, daysKept, levelInfo, needsRefresh, nextStep, LEVELS } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
 import type { PathUnit } from '@/heir/path';
 import { lessonsDone, nightOffer, planNext, riseOffer } from '@/heir/planner';
@@ -96,7 +96,7 @@ export default function Today() {
             <Link href="/heir/progress" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>Progress</Link>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
-            {[[1, counts.know, 'Know'], [2, counts.memorized, 'Memorized'], [3, counts.mastered, 'Mastered'], [4, counts.longTerm, 'Long-term']].map(([lv, n, name]) => (
+            {[[1, counts.know, LEVELS[0].counts], [2, counts.memorized, LEVELS[1].counts], [3, counts.mastered, LEVELS[2].counts], [4, counts.longTerm, LEVELS[3].counts]].map(([lv, n, name]) => (
               <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
                 <Stone level={Number(lv)} size={34} />
                 <span className="serif" style={{ fontSize: 24, fontWeight: 600, lineHeight: 1 }}>{n}</span>

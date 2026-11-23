@@ -13,25 +13,31 @@ import type { Item, Track } from './types.ts';
 export interface Level { n: number; id: string; name: string; foundation: string; counts: string; means: string; rule: string }
 
 export const LEVELS: Level[] = [
-  { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Know',
-    means: 'You recalled it the next day, after a night’s sleep: it has started to stick.',
+  { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Recalled',
+    means: 'You recalled it after a night’s sleep: it has started to stick.',
     rule: 'Recalled in full on a day after you learned it' },
-  { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'Memorized',
+  { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'By heart',
     means: 'You’ve recalled it on three different days: it’s yours, word for word.',
     rule: 'Said or typed right on 3 different days' },
-  { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Mastered',
-    means: 'You still had it after two weeks away, from the question and from the answer.',
+  { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Kept',
+    means: 'Still there after two weeks away, both ways: from the question to the answer, and back.',
     rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question' },
-  { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'Long-term memory',
+  { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'For life',
     means: 'Right every time for three months, even after a month away. With a short review now and then, you can expect to keep it for life.',
     rule: 'Every review right for 3 months, including one after a gap of a month' },
-  { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Long-term, and understood',
-    means: 'In long-term memory, and you can say what it means.',
+  { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Understood',
+    means: 'Kept for life, and you can say what it means.',
     rule: 'Emerald, plus its meaning' },
   // Earned in `earnedLevels`: Sapphire, then every related verse recalled from memory (see related.ts).
-  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: 'Rooted in Scripture',
-    means: 'Sapphire, and you’ve also memorized every verse connected to it: a catechism answer’s proof texts, or a verse’s related verses.',
-    rule: 'Sapphire, plus all its related verses memorized' },
+  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: 'Rooted',
+    means: 'Understood, and you’ve also recalled every verse connected to it: a catechism answer’s proof texts, or a verse’s related verses.',
+    rule: 'Sapphire, plus all its related verses recalled' },
+];
+
+/** The stages of memory, in order: "Learned" (its lesson finished, no stone yet), then one per stone. */
+export const STAGES: { n: number; name: string; means: string }[] = [
+  { n: 0, name: 'Learned', means: 'You’ve finished its lesson.' },
+  ...LEVELS.map((l) => ({ n: l.n, name: l.counts, means: l.means })),
 ];
 
 export const levelInfo = (n: number): Level | null => LEVELS[n - 1] ?? null;

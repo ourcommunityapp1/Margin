@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useHeir } from './provider';
 import { cloud, createInvite, loadLinked, unlinkAccount, type LinkedAccount } from './cloud';
 import { allItems, courseFor } from '@/heir/content';
-import { countsFor, daysKept } from '@/heir/levels';
+import { LEVELS, countsFor, daysKept } from '@/heir/levels';
 import { localDay } from '@/heir/progress';
 
 export function LinkedAccounts() {
@@ -61,7 +61,7 @@ export function LinkedAccounts() {
                 {p ? (
                   <>
                     <span style={{ fontSize: 15 }}>{daysKept(p.days, today)} {daysKept(p.days, today) === 1 ? 'day' : 'days'} kept · {p.lessons} {p.lessons === 1 ? 'lesson' : 'lessons'} · {p.units.length} learned</span>
-                    {c && <span style={{ fontSize: 14, color: 'var(--muted)' }}>Know {c.know} · Memorized {c.memorized} · Mastered {c.mastered} · Long-term {c.longTerm}</span>}
+                    {c && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{LEVELS[0].counts} {c.know} · {LEVELS[1].counts} {c.memorized} · {LEVELS[2].counts} {c.mastered} · {LEVELS[3].counts} {c.longTerm}</span>}
                   </>
                 ) : <span style={{ fontSize: 15, color: 'var(--muted)' }}>No lessons yet.</span>}
               </div>
