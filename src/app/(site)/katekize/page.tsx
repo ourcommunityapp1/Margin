@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { courseItems, courses, getItem, itemNoun } from '@/heir/content';
 import { LEVELS } from '@/heir/levels';
 import { windowBase } from '@/app/heir/ui/glass/light';
+import { JsonLd, SiteFooter, SiteHeader } from '../shell';
 
 // katekize.com's front door (served at / on that domain). Everything here is real content from the app's own data,
 // written to answer the questions people type and ask: what is this, how does it work, what can I memorize.
@@ -36,11 +37,10 @@ const REFS = [
   'Bahrick, H. P. (1984). Semantic memory content in permastore: Fifty years of memory for Spanish learned in school. Journal of Experimental Psychology: General, 113(1), 1–29.',
 ];
 
-const json = (v: unknown) => JSON.stringify(v).replace(/</g, '\\u003c');
-
 export default function Home() {
   const wsc = getItem('wsc-1')!;
-  const note = wsc.meaning[0];
+  // Plain-language notes are drafts until the owner approves them, so only approved ones go on public pages.
+  const note = wsc.reviewed ? wsc.meaning[0] : undefined;
   const ld = [
     { '@context': 'https://schema.org', '@type': 'WebSite', name: 'Katekize', url: URL_HOME, description: DESCRIPTION },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })) },
@@ -48,12 +48,9 @@ export default function Home() {
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json(ld) }} />
+      <JsonLd data={ld} />
       <div className="kz-wrap">
-        <header className="kz-head">
-          <Link href="/" className="kz-brand">Katekize</Link>
-          <Link href="/heir" className="kz-btn small">Open the app</Link>
-        </header>
+        <SiteHeader />
 
         <main>
           <section className="kz-hero" aria-labelledby="top">
@@ -84,12 +81,21 @@ export default function Home() {
 
           <section className="kz-sec" aria-labelledby="ex-h">
             <h2 id="ex-h">An example: the first question of the Shorter Catechism</h2>
-            <p className="kz-intro">Every catechism question comes with its answer, word for word, and a plain-language note on what it means.</p>
+            <p className="kz-intro">Every catechism question comes with its answer, word for word, and the Scripture it rests on. <Link href={`/westminster-shorter-catechism/${wsc.number}`} style={{ textDecoration: 'underline' }}>Read this question in full</Link>.</p>
             <div className="kz-example">
               <span className="src">Westminster Shorter Catechism, Question {wsc.number}</span>
               <p className="q">{wsc.prompt}</p>
               <p className="a">{wsc.text}</p>
               {note && <div className="m"><b>{note.question}</b>{note.answer}. {note.explain}</div>}
+            </div>
+          </section>
+
+          <section className="kz-sec" aria-labelledby="explore-h">
+            <h2 id="explore-h">Read before you start</h2>
+            <p className="kz-intro">Every question of the Westminster Shorter Catechism has its own page, and the guides answer the questions people ask most about memorizing.</p>
+            <div className="kz-explore">
+              <Link href="/westminster-shorter-catechism"><b>Westminster Shorter Catechism</b><span>All 107 questions and answers, each with its Scripture proofs.</span></Link>
+              <Link href="/guides"><b>Guides to memorizing</b><span>How to memorize Bible verses, how to review them, why they fade, and how to start with children.</span></Link>
             </div>
           </section>
 
@@ -155,10 +161,7 @@ export default function Home() {
           </section>
         </main>
 
-        <footer className="kz-foot">
-          <p>The Westminster Shorter and Larger Catechisms (1647), the Apostles’ Creed and the Nicene Creed are in the public domain. Scripture quotations marked NASB are from the New American Standard Bible®, copyright The Lockman Foundation, used by permission.</p>
-          <div className="row"><Link href="/heir/about">Sources and photo credits</Link><Link href="/heir">Open the app</Link></div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

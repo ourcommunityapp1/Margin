@@ -118,3 +118,17 @@ sites, so the gain is in how search engines and AI tools read the page, not a sp
    verses" hub (links to the rest).
 3. Independent "best Bible memory app" comparison with disclosed criteria (we are one of the apps; say so).
 4. Larger Catechism and creed pages as their content is built.
+
+## Built (Nov 2026): question pages and first guides
+
+- `/westminster-shorter-catechism` (hub) and `/westminster-shorter-catechism/1` … `/107`: question as H1, answer first,
+  Scripture proofs with the verse text, how-to-memorize pieces, previous/next. 107 pages, all in the sitemap.
+- `/guides` and six guides: how to memorize Bible verses; how to review memorized verses; why you forget verses;
+  how long the Shorter Catechism takes (numbers computed from the app's planner); what age to start the catechism;
+  how many verses a week.
+- **Bible text on public pages is the Berean Standard Bible** from the corpus bundled in `data/corpus`
+  (`src/site/bible.ts`), shown exactly as stored. The BSB is published as public domain; confirm this before
+  relying on it. The NASB never appears on public pages. References that can't be shown as text (whole chapters,
+  ranges across chapters) are listed as "Also cited".
+- **Plain-language meaning notes appear on public pages only when the item is marked `reviewed`** (none are yet).
+  Approve the notes in the data and the pages gain a "What this means" section on the next build.

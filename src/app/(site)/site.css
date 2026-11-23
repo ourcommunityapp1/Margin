@@ -71,7 +71,7 @@
 .kz-cols h3 { font-size: 20px; margin-bottom: 8px; }
 .kz-cols p { color: var(--muted); font-size: 16px; }
 
-.kz-refs { margin: 22px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14.5px; color: var(--muted); }
+.kz-refs { margin: 22px 0 0; padding-left: 20px; list-style: disc; display: grid; gap: 8px; font-size: 14.5px; color: var(--muted); }
 
 .kz-faq { display: grid; gap: 22px; }
 .kz-faq h3 { font-size: 20px; margin-bottom: 6px; }
@@ -90,3 +90,55 @@
   .kz-sec { padding-block: 64px; }
 }
 @media (prefers-reduced-motion: no-preference) { .kz { scroll-behavior: smooth; } }
+
+/* Inner pages: nav, breadcrumbs, answer-first question and guide pages, lists. */
+.kz-nav { display: flex; align-items: center; gap: 6px 20px; flex-wrap: wrap; justify-content: flex-end; }
+.kz-nav a:not(.kz-btn) { text-decoration: none; font-weight: 600; font-size: 15px; padding: 8px 2px; }
+.kz-nav a:not(.kz-btn):hover { text-decoration: underline; text-underline-offset: 4px; }
+.kz-page { max-width: 760px; padding-block: 12px 56px; display: flex; flex-direction: column; gap: 22px; }
+.kz-page h1 { font-size: clamp(30px, 6vw, 44px); }
+.kz-page h2 { font-size: clamp(23px, 3.6vw, 29px); margin-top: 14px; }
+.kz-page section { display: flex; flex-direction: column; gap: 12px; }
+.kz-page p, .kz-page li { max-width: 66ch; }
+.kz-muted { color: var(--muted); font-size: 15.5px; }
+.kz-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.kz-answer { font: 400 clamp(20px, 3.4vw, 25px)/1.5 var(--serif); }
+.kz-crumbs ol { display: flex; flex-wrap: wrap; gap: 4px 8px; list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--muted); }
+.kz-crumbs li + li::before { content: "›"; margin-right: 8px; }
+.kz-crumbs a { text-decoration: none; }
+.kz-crumbs a:hover { text-decoration: underline; }
+.kz-proofs { display: grid; gap: 14px; }
+.kz-proofs figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 20px; }
+.kz-proofs figcaption { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+.kz-proofs blockquote { margin: 0; font: 400 18px/1.6 var(--serif); }
+.kz-proofs sup { font: 600 11px var(--sans); color: var(--muted); margin-right: 2px; }
+.kz-pieces { margin: 0; padding-left: 26px; list-style: decimal; font: 400 19px/1.5 var(--serif); display: grid; gap: 4px; }
+.kz-pn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+.kz-pn a { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; text-decoration: none; background: var(--panel); font-size: 15px; line-height: 1.4; }
+.kz-pn a.r { text-align: right; }
+.kz-pn small { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.kz-pn a:hover { border-color: var(--gold); }
+.kz-qlist ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.kz-qlist a { display: grid; grid-template-columns: 38px 1fr; gap: 10px; padding: 9px 4px; text-decoration: none; border-top: 1px solid var(--line); }
+.kz-qlist a:hover span:last-child { text-decoration: underline; text-underline-offset: 3px; }
+.kz-qlist .n { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.kz-guides { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.kz-guides a { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); text-decoration: none; }
+.kz-guides b { font: 600 19px/1.3 var(--serif); }
+.kz-guides span { color: var(--muted); font-size: 15px; }
+.kz-guides a:hover { border-color: var(--gold); }
+.kz-list { margin: 0; padding-left: 24px; display: grid; gap: 8px; }
+ul.kz-list { list-style: disc; }
+ol.kz-list { list-style: decimal; }
+.kz-tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+.kz-tablewrap table { border-collapse: collapse; width: 100%; font-size: 16px; }
+.kz-tablewrap th, .kz-tablewrap td { text-align: left; padding: 12px 16px; border-top: 1px solid var(--line); }
+.kz-tablewrap thead th { border-top: 0; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.kz-page .kz-cta { margin-top: 4px; }
+.kz-explore { display: grid; gap: 12px; }
+.kz-explore a { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); text-decoration: none; }
+.kz-explore b { font: 600 19px/1.3 var(--serif); }
+.kz-explore span { color: var(--muted); font-size: 15px; }
+.kz-explore a:hover { border-color: var(--gold); }
+@media (min-width: 760px) { .kz-explore { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .kz-pn { grid-template-columns: 1fr; } .kz-pn a.r { text-align: left; } }
