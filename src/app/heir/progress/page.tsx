@@ -89,9 +89,9 @@ export default function Progress() {
               <span className="hr-label">Words in your memory</span>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                 <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
-                <span style={{ fontSize: 15, color: 'var(--muted)' }}>of {fmt(words.recited)} recited{week ? ` · +${fmt(week)} this week` : ''}</span>
+                <span style={{ fontSize: 15, color: 'var(--muted)' }}>of {fmt(words.recited)} words you’ve recited{week && week < words.recited ? ` · ${fmt(week)} new this week` : ''}</span>
               </span>
-              {words.inMemory === 0 && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>Recall something unaided on the day after you recite it, and its words move up into your memory.</p>}
+              {words.recited > words.inMemory && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>{words.inMemory === 0 ? 'Words' : `The other ${fmt(words.recited - words.inMemory)} words`} count as in your memory once you recall them, with no hints, on a later day than you recited them.</p>}
               <div className="hr-ladder">
                 {STAGES.map((stage) => {
                   const n = words.atStage[stage.n];
