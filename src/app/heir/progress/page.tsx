@@ -24,7 +24,7 @@ type Section = 'overview' | 'courses' | 'stones';
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function Progress() {
-  const { ready, household, progress, now } = useHeir();
+  const { ready, household, progress, now, labs } = useHeir();
   const router = useRouter();
   const [section, setSection] = useState<Section>('overview');
   useEffect(() => { if (ready && !household.members.length) router.replace('/heir/welcome'); }, [ready, household.members.length, router]);
@@ -195,7 +195,7 @@ export default function Progress() {
           </details>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>Every stone is earned the way memory research measures it: the whole thing recalled with no hints, after time away. Extra practice keeps it fresh but doesn’t earn a stone by itself.</p>
         </section>
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Understanding">
+        {labs && <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Understanding">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span className="hr-label">Understanding</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>Separate from memory</span>
@@ -213,7 +213,7 @@ export default function Progress() {
             {UNDERSTANDING.map((u) => <li key={u.name}><b>{u.name}:</b> {u.means}</li>)}
           </ol>
           <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>Open any question or verse to explain it in your own words and recall the verses it rests on.</p>
-        </section>
+        </section>}
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span className="hr-label">Awards</span>

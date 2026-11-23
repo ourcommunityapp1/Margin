@@ -73,7 +73,7 @@ function Practice({ passage, onRecalled }: { passage: string; onRecalled: () => 
 }
 
 export function RelatedVerses({ item }: { item: Item }) {
-  const { household, progress, updateProgress } = useHeir();
+  const { household, progress, updateProgress, labs } = useHeir();
   const me = activeMember(household);
   const [open, setOpen] = useState<string | null>(null);
   const passages = relatedFor(item);
@@ -95,7 +95,7 @@ export function RelatedVerses({ item }: { item: Item }) {
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>{done} of {passages.length} recalled</span>
       </span>
       <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>
-        {u >= 3 ? 'Mastered: you understand this and know everything it rests on.' : u === 2 ? 'Recall each one from memory to master it.' : 'Recall each one from memory. Once you’ve also explained it in your own words, it’s mastered.'}
+        {!labs ? 'Recall each one from memory.' : u >= 3 ? 'Mastered: you understand this and know everything it rests on.' : u === 2 ? 'Recall each one from memory to master it.' : 'Recall each one from memory. Once you’ve also explained it in your own words, it’s mastered.'}
       </span>
       {passages.map((p) => {
         const ok = !!mine.related?.[p];

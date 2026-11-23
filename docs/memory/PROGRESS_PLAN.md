@@ -88,3 +88,20 @@ stays for decades, so Diamond asks for recall after a year away, three years on.
 against the notes; `explained` in progress) → Mastered (also every related verse recalled from memory).
 Only items with meaning notes have this track. Self-explanation (Chi) is the basis: understanding shows in
 explaining, not in recognizing a right answer.
+
+**Status: labs only.** The understanding track (the "In your own words" card, the Understanding section on
+Progress, the Mastered wording on related verses) shows only to the accounts in `src/heir/labs.ts`.
+
+**To do: understanding, taught and assessed by AI, inside the lessons.**
+- [ ] Bake understanding into the normal lesson plan, not a separate card: a step in the lesson flow, spaced
+      like recall (e.g. after an item is Remembered, then again later).
+- [ ] An AI model asks the learner to explain in their own words, assesses the answer against the text, the
+      meaning notes and the proof texts, and gives specific feedback.
+- [ ] When the answer misses something, the model teaches: asks a follow-up, points to the words in the text or a
+      related verse, and has them try again. Not self-graded.
+- [ ] Levels come from the model's assessment (Learned → Understood → Mastered), recorded with what was asked and
+      the verdict, so it can be reviewed; keep it separate from the memory stones.
+- [ ] Theologically careful: the model judges against the catechism's own answer and Scripture, never invents
+      doctrine, and quotes Scripture only from the verse service (exact text).
+- [ ] Children's track: simpler questions, encouraging feedback.
+- [ ] Server route for the model (key kept server-side), rate limits, and a fallback when offline.

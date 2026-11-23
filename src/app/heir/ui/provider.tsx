@@ -15,6 +15,7 @@ import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
 import { cloud, loadProgressRows, loadRemote, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { LABS } from '@/heir/labs';
 
 const KEY = 'heir-household-v1';
 const PROGRESS_KEY = 'heir-progress-v1';
@@ -33,6 +34,8 @@ interface Heir {
   now: Date;
   accounts: boolean;
   email: string | null;
+  // Features still being tried out, shown only to the accounts in LABS (see labs.ts).
+  labs: boolean;
   sync: SyncState;
   signOut(): Promise<void>;
 }
@@ -93,6 +96,7 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const [clock, setClock] = useState<Date | null>(null);
   // undefined while checking; null when signed out.
   const [email, setEmail] = useState<string | null | undefined>(accounts ? undefined : null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [sync, setSync] = useState<SyncState>('local');
   const remote = useRef<Remote | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -115,10 +119,11 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!db) return;
     let live = true;
-    const arrive = async (userEmail: string | null) => {
+    const arrive = async (userEmail: string | null, id: string | null) => {
       if (!live) return;
       setProgress(loadProgress());
       setEmail(userEmail);
+      setUserId(id);
       if (!userEmail) { remote.current = null; setHousehold(loadLocal()); setSync('local'); setReady(true); return; }
       try {
         const found = await loadRemote(db);
@@ -141,9 +146,9 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
       }
       setReady(true);
     };
-    db.auth.getSession().then(({ data }) => arrive(data.session?.user.email ?? null));
+    db.auth.getSession().then(({ data }) => arrive(data.session?.user.email ?? null, data.session?.user.id ?? null));
     const { data: sub } = db.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') arrive(session?.user.email ?? null);
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') arrive(session?.user.email ?? null, session?.user.id ?? null);
     });
     return () => { live = false; sub.subscription.unsubscribe(); };
   }, [db]);
@@ -224,8 +229,9 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
 
   const now = useMemo(() => clock ?? new Date(0), [clock]);
   const time = clock ? timeOfDay(clock) : 'day';
-  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, sync, signOut }),
-    [ready, household, update, progress, updateProgress, time, now, accounts, email, sync, signOut]);
+  const labs = !!userId && LABS.includes(userId);
+  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut }),
+    [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut]);
 
   return (
     <Ctx.Provider value={value}>

@@ -12,12 +12,12 @@ import { UNDERSTANDING, understanding } from '@/heir/levels';
 import type { Item } from '@/heir/types';
 
 export function Explain({ item }: { item: Item }) {
-  const { household, progress, updateProgress } = useHeir();
+  const { household, progress, updateProgress, labs } = useHeir();
   const me = activeMember(household);
   const [text, setText] = useState('');
   const [comparing, setComparing] = useState(false);
   const [notYet, setNotYet] = useState(false);
-  if (!me || !item.meaning.length) return null;
+  if (!labs || !me || !item.meaning.length) return null;
   const mine = memberProgress(progress, me.id);
   const u = understanding(item, mine);
   const step = u ? UNDERSTANDING[u - 1] : null;
