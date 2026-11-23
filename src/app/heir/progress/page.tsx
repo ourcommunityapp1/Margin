@@ -108,16 +108,19 @@ export default function Progress() {
             <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Milestones">
               <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span className="hr-label">Milestones</span>
-                <span style={{ fontSize: 13, color: 'var(--muted)' }}>{miles.next ? `${fmt(miles.next - words.inMemory)} more to ${fmt(miles.next)}` : 'All reached'}</span>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>{fmt(words.inMemory)} {words.inMemory === 1 ? 'word' : 'words'} in memory</span>
               </span>
-              <div className="hr-miles">
-                {[...miles.reached, ...(miles.next ? [miles.next] : [])].slice(-5).map((m) => (
-                  <span key={m} className="hr-mile" data-reached={miles.reached.includes(m)}>{fmt(m)}</span>
-                ))}
+              {/* Only where you are: the milestone last reached, the way to the next, and the next. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {miles.reached.length > 0 && <span className="hr-mile" data-reached="true" aria-label={`Reached ${fmt(prevMile)}`}>{fmt(prevMile)}</span>}
+                {miles.next ? (
+                  <>
+                    <span className="hr-ladder-bar" style={{ flex: 1 }} aria-hidden="true"><span style={{ width: `${((words.inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
+                    <span className="hr-mile" aria-label={`Next: ${fmt(miles.next)}`}>{fmt(miles.next)}</span>
+                  </>
+                ) : <span style={{ fontSize: 14, color: 'var(--muted)' }}>Every milestone reached</span>}
               </div>
-              {miles.next && (
-                <span className="hr-ladder-bar" aria-hidden="true"><span style={{ width: `${((words.inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
-              )}
+              {miles.next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{fmt(miles.next - words.inMemory)} more {miles.next - words.inMemory === 1 ? 'word' : 'words'} to {fmt(miles.next)}</span>}
             </section>
 
             <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Days kept this month">
