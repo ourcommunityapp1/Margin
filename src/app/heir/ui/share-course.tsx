@@ -21,7 +21,7 @@ export function ShareCourseIcon({ course }: { course: Course }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
     const url = `${window.location.origin}/heir/courses/${course.id}`;
-    const text = `Learn ${course.title} with me on Heir`;
+    const text = `Learn ${course.title} with me on Katekize`;
     try {
       if (navigator.share) { await navigator.share({ title: course.title, text, url }); return; }
     } catch (e) {
@@ -40,7 +40,7 @@ export function ShareCourse({ course }: { course: Course }) {
   const [note, setNote] = useState('');
   const share = async () => {
     const url = `${window.location.origin}/heir/courses/${course.id}`;
-    const text = `Learn ${course.title} with me on Heir`;
+    const text = `Learn ${course.title} with me on Katekize`;
     try {
       if (navigator.share) { await navigator.share({ title: course.title, text, url }); return; }
     } catch (e) {

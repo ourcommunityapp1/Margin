@@ -3,9 +3,9 @@
 
 import type { Intro } from '../lesson.ts';
 
-const how = { title: 'How Heir helps you remember', body: 'Short lessons. You’ll see each answer, build it, then say or type it from memory. Questions come back just as you’re about to forget them, which is when recalling them helps most.' };
+const how = { title: 'How Katekize helps you remember', body: 'Short lessons. You’ll see each answer, build it, then say or type it from memory. Questions come back just as you’re about to forget them, which is when recalling them helps most.' };
 
-const howVerses = { title: 'How Heir helps you remember', body: 'Short lessons. You’ll see each verse, build it, then say or type it from memory. Verses come back just as you’re about to forget them, which is when recalling them helps most.' };
+const howVerses = { title: 'How Katekize helps you remember', body: 'Short lessons. You’ll see each verse, build it, then say or type it from memory. Verses come back just as you’re about to forget them, which is when recalling them helps most.' };
 
 export const INTROS: Record<string, Intro> = {
   'first-verses': {
@@ -44,7 +44,7 @@ export const INTROS: Record<string, Intro> = {
   'westminster-larger': {
     cards: [
       { title: 'What is a catechism?', body: 'A catechism teaches the faith by questions and answers. Learned by heart, the answers keep the whole of Christian teaching close at hand.' },
-      { title: 'The Westminster Larger Catechism', body: 'Written in 1647 alongside the Shorter Catechism, its 196 questions give fuller answers, meant for teaching from the pulpit. Heir has the first ten for now.' },
+      { title: 'The Westminster Larger Catechism', body: 'Written in 1647 alongside the Shorter Catechism, its 196 questions give fuller answers, meant for teaching from the pulpit. Katekize has the first ten for now.' },
       how,
     ],
     quiz: [

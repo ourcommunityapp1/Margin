@@ -7,12 +7,14 @@ import { useEffect } from 'react';
 import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { Stone } from '../ui/stone';
-import { allItems, getCollection, itemLabel } from '@/heir/content';
+import Link from 'next/link';
+import { allItems, courseItems, courses, itemLabel } from '@/heir/content';
+import { courseSummary } from '../ui/course-list';
+import { MiniWindow } from '../ui/glass/mini';
 import { activeMember } from '@/heir/household';
 import { AWARDS, LEVELS, bestDaysKept, countsFor, daysKept, needsRefresh, nextStep, shelf } from '@/heir/levels';
 import { localDay, memberProgress } from '@/heir/progress';
 
-const COLORS = ['#7B52B5', '#D99A2B', '#B0442A', '#1E8657', '#2F5DA8', '#BFC6CC'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function Progress() {
@@ -29,11 +31,12 @@ export default function Progress() {
   const kept = daysKept(mine.days, today);
   const best = Math.max(kept, bestDaysKept(mine.days));
   const stones = shelf(items, mine);
-  const kinds = [
-    { name: 'Catechism questions', list: items.filter((i) => getCollection(i.collection)?.kind === 'catechism') },
-    { name: 'Creed sections', list: items.filter((i) => getCollection(i.collection)?.kind === 'creed') },
-    { name: 'Bible verses', list: items.filter((i) => getCollection(i.collection)?.kind === 'scripture') },
-  ];
+  // Every course with anything learned, the one in progress first: its window lit as far as you've come.
+  const minutes = household.plan?.minutes ?? 15;
+  const yours = courses
+    .map((c) => ({ c, s: courseSummary(c, me.track, mine, minutes, now), stones: courseItems(c).filter((i) => (mine.levels[i.id] ?? 0) > 0).length }))
+    .filter((x) => x.s.started)
+    .sort((a, b) => Number(b.c.id === household.plan?.course) - Number(a.c.id === household.plan?.course));
   const hints = items
     .filter((i) => (mine.levels[i.id] ?? 0) > 0 && !needsRefresh(mine, i.id, now))
     .sort((a, b) => (mine.levels[a.id] ?? 0) - (mine.levels[b.id] ?? 0))
@@ -73,25 +76,21 @@ export default function Progress() {
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {kinds.map((k) => {
-              const known = k.list.filter((i) => (mine.levels[i.id] ?? 0) > 0).length;
-              return (
-                <div key={k.name} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
-                    <span style={{ fontWeight: 600 }}>{k.name}</span>
-                    <span style={{ color: 'var(--muted)' }}>{known ? `${known} of ${k.list.length} known` : 'Not started'}</span>
-                  </div>
-                  <div className="hr-stack" aria-hidden="true">
-                    {[5, 4, 3, 2, 1].map((lv) => {
-                      const n = k.list.filter((i) => (mine.levels[i.id] ?? 0) === lv).length;
-                      return n ? <span key={lv} style={{ width: `${(n / k.list.length) * 100}%`, background: COLORS[lv - 1] }} /> : null;
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        </section>
+
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 4 }} aria-label="Your courses">
+          <span className="hr-label" style={{ marginBottom: 6 }}>Your courses</span>
+          {yours.length === 0 && <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Finish your first lesson and its window starts to light here.</p>}
+          {yours.map(({ c, s, stones: withStone }) => (
+            <Link key={c.id} href={`/heir/courses/${c.id}`} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', color: 'inherit', textDecoration: 'none', borderTop: '1px solid var(--line)' }}>
+              <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={64} started label={`${c.title} window`} />
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 0 }}>
+                <span className="serif" style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.2 }}>{c.title}</span>
+                <span style={{ fontSize: 14, color: 'var(--muted)' }}>{s.learned >= s.total ? 'All' : `${s.learned} of`} {s.total} {s.noun} learned{withStone ? ` · ${withStone} with a stone` : ''}</span>
+                <span className="hr-continue-bar" aria-hidden="true" style={{ background: 'var(--well)' }}><span style={{ width: `${Math.round((s.learned / Math.max(1, s.total)) * 100)}%` }} /></span>
+              </span>
+            </Link>
+          ))}
         </section>
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

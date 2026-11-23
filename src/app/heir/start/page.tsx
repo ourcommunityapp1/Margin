@@ -42,7 +42,7 @@ export default function Start() {
 
   return (
     <main className="hr-page bare">
-      <span className="serif" style={{ fontSize: 24, fontWeight: 500, textAlign: 'center', marginTop: 8 }}>Heir</span>
+      <span className="serif" style={{ fontSize: 24, fontWeight: 500, textAlign: 'center', marginTop: 8 }}>Katekize</span>
       {askName ? (
         <form className="hr-card" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}
           onSubmit={(e) => { e.preventDefault(); if (name.trim()) setStep('course'); }}>

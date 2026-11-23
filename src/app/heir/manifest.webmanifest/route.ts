@@ -3,8 +3,8 @@ export const dynamic = 'force-static';
 
 export function GET() {
   return Response.json({
-    name: 'Heir',
-    short_name: 'Heir',
+    name: 'Katekize',
+    short_name: 'Katekize',
     description: 'Scripture, catechisms and creeds, learned together and kept for life.',
     id: '/heir',
     start_url: '/heir',

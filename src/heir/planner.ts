@@ -107,7 +107,7 @@ export function planNext(o: { courseId: string; items: Item[]; track: Track; p: 
 // One line for Today's "Up next" card.
 export function describe(plan: LessonPlan, groupName: (g: Group) => string): string {
   switch (plan.kind) {
-    case 'welcome': return 'Welcome: what this is and how Heir helps you remember, then your first question.';
+    case 'welcome': return 'Welcome: what this is and how Katekize helps you remember, then your first question.';
     case 'learn': return plan.units.length > 1 ? 'Two new questions, and practice on the ones before.' : 'A new question, and practice on the ones before.';
     case 'checkpoint': return `Lock in ${groupName(plan.group)}: each one from memory.`;
     case 'welcome-back': return `Welcome back. Catch up on ${plan.picks.length} questions, starting with the ones most likely to have slipped.`;

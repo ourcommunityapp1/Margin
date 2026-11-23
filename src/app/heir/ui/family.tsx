@@ -82,7 +82,7 @@ export function FamilyScreen({ setup }: { setup: boolean }) {
             erase={() => { const id = household.activeMemberId; if (id) updateProgress((p) => { const next = { ...p }; delete next[id]; return next; }); setConfirmReset(false); }} />
         )}
         {!setup && (
-          <Link href="/heir/about" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>About Heir and photo credits</Link>
+          <Link href="/heir/about" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>About Katekize and photo credits</Link>
         )}
       </main>
       {!setup && <Tabs />}

@@ -41,7 +41,7 @@ export function AllCourses({ minutes, track, p }: { minutes: number; track: Trac
   const r = project({ items, track, p, minutes, now: new Date() });
   return (
     <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.5 }}>
-      Everything in Heir at {minutes} minutes a day: learned by {month(r.learnedBy)}, in long-term memory by {month(r.longTermBy)}.
+      Everything in Katekize at {minutes} minutes a day: learned by {month(r.learnedBy)}, in long-term memory by {month(r.longTermBy)}.
     </p>
   );
 }

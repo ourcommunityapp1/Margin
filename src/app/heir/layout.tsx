@@ -8,10 +8,10 @@ const serif = Source_Serif_4({ subsets: ['latin'], axes: ['opsz'], variable: '--
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata: Metadata = {
-  title: 'Heir',
+  title: 'Katekize',
   description: 'Scripture, catechisms and creeds, learned together and kept for life.',
   manifest: '/heir/manifest.webmanifest',
-  appleWebApp: { capable: true, title: 'Heir', statusBarStyle: 'black-translucent' },
+  appleWebApp: { capable: true, title: 'Katekize', statusBarStyle: 'black-translucent' },
   icons: { icon: '/heir/icon-192.png', apple: '/heir/apple-touch-icon.png' },
   robots: { index: false, follow: false },
 };

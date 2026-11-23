@@ -33,7 +33,7 @@ export function LinkedAccounts() {
     setBusy(false);
   };
   const send = async () => {
-    try { if (navigator.share) { await navigator.share({ title: 'Link our Heir accounts', text: 'Link our Heir accounts:', url: link }); return; } } catch { /* cancelled: fall through to copying */ }
+    try { if (navigator.share) { await navigator.share({ title: 'Link our Katekize accounts', text: 'Link our Katekize accounts:', url: link }); return; } } catch { /* cancelled: fall through to copying */ }
     try { await navigator.clipboard.writeText(link); setMessage('Link copied.'); } catch { /* the link is shown, so it can be copied by hand */ }
   };
   const unlink = async (ownerId: string) => {

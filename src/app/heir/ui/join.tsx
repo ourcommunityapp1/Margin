@@ -23,7 +23,7 @@ export function JoinScreen({ code }: { code: string }) {
     acceptInvite(db, code).then(() => setState('linked')).catch((e: Error) => { setError(e.message || 'That invite didn’t work.'); setState('failed'); });
   }, [code, ready, email]);
 
-  if (!accounts) return <main className="hr-page bare"><p style={{ margin: 'auto', textAlign: 'center' }}>Accounts aren’t switched on for this copy of Heir.</p></main>;
+  if (!accounts) return <main className="hr-page bare"><p style={{ margin: 'auto', textAlign: 'center' }}>Accounts aren’t switched on for this copy of Katekize.</p></main>;
   if (!ready || !email) return <main className="hr-page bare" aria-busy="true" />;
 
   return (

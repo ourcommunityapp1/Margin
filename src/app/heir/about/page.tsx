@@ -39,8 +39,8 @@ export default function About() {
     <main className="hr-page bare">
       <div style={{ marginTop: 8 }}><Back href="/heir" /></div>
       <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500 }}>About Heir</h1>
-        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>Heir helps a family memorize Scripture, catechisms and creeds using recall, spaced review and speaking aloud. Progress is kept on this phone for now.</p>
+        <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500 }}>About Katekize</h1>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>Katekize helps a family memorize Scripture, catechisms and creeds using recall, spaced review and speaking aloud. Your progress is saved to your account, so it’s kept on every phone you sign in on.</p>
         <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>The Westminster Shorter and Larger Catechisms (1647), the Apostles’ Creed and the Nicene Creed are in the public domain.</p>
       </section>
       <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
