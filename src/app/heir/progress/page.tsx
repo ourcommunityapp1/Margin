@@ -88,7 +88,7 @@ export default function Progress() {
               <span className="hr-label">Words in your memory</span>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                 <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
-                <span style={{ fontSize: 15, color: 'var(--muted)' }}>{words.recited === 0 ? 'none yet' : words.inMemory === words.recited ? 'every word you’ve recited' : `${fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day`}</span>
+                {words.recited > words.inMemory && <span style={{ fontSize: 15, color: 'var(--muted)' }}>{fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day</span>}
               </span>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.</p>
               <div className="hr-ladder">
