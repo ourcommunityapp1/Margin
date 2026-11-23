@@ -7,8 +7,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useHeir } from './provider';
+import type { Item, Track } from '@/heir/types';
 import { groupLabel, useCourse } from './course';
-import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report } from './steps';
+import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report, Dock, Context } from './steps';
 import { buildCheckpoint, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
@@ -27,7 +28,28 @@ const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
 interface Finished { right: number; total: number; minutes: number; ups: { itemId: string; from: number; to: number }[]; awards: string[]; kept: number }
 
+// The text before a part's lead-in: the verse or answer up to where the part being practiced starts.
+function contextBefore(item: Item, track: Track, lead: string): string {
+  if (!lead) return '';
+  const c = item.chunks[track];
+  const at = c.indexOf(lead);
+  return at > 0 ? c.slice(0, at).join(' ') : '';
+}
+
+// While the phone keyboard is open, lift the bottom button bar above it (iPhone keeps fixed bars behind the keyboard).
+function useKeyboardLift() {
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const set = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, window.innerHeight - vv.height - vv.offsetTop)}px`);
+    set();
+    vv.addEventListener('resize', set); vv.addEventListener('scroll', set);
+    return () => { vv.removeEventListener('resize', set); vv.removeEventListener('scroll', set); document.documentElement.style.removeProperty('--kb'); };
+  }, []);
+}
+
 export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'night' }) {
+  useKeyboardLift();
   const router = useRouter();
   const { ready, household, updateProgress, progress } = useHeir();
   const { me, items, track, mine, due, course } = useCourse();
@@ -178,7 +200,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
   const heading = feedback?.ok ? (feedback.slip ? 'Good.' : PRAISE[pos % PRAISE.length]) : feedback?.close ? 'Almost.' : 'Not quite.';
 
   return (
-    <main className="hr-page bare" style={{ paddingBottom: feedback ? 300 : undefined }}>
+    <main className="hr-page bare hr-lesson" data-feedback={feedback ? 'true' : undefined} style={{ paddingBottom: feedback ? 300 : undefined }}>
       <div className="hr-lesson-top">
         <Link href="/heir" className="hr-back" aria-label="End lesson">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -199,7 +221,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
             <span className="hr-label">Welcome</span>
             <h2 className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.2, fontWeight: 600 }}>{step.title}</h2>
             <p style={{ margin: 0, fontSize: 18, lineHeight: 1.55 }}>{step.body}</p>
-            <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} onClick={advance}>Continue</button>
+            <Dock><button type="button" className="hr-btn" onClick={advance}>Continue</button></Dock>
           </>
         ) : step.kind === 'verse' ? (
           <>
@@ -207,7 +229,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
               <blockquote className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.45 }}>{verses[step.itemId]?.text ?? step.text}</blockquote>
               <figcaption style={{ fontSize: 15, color: 'var(--muted)', fontWeight: 600 }}>{step.ref} ({verses[step.itemId]?.version ?? 'KJV'})</figcaption>
             </figure>
-            <button type="button" className="hr-btn" onClick={advance}>Continue</button>
+            <Dock><button type="button" className="hr-btn" onClick={advance}>Continue</button></Dock>
           </>
         ) : step.kind === 'quiz' ? (
           <>
@@ -219,6 +241,8 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
             {step.kind === 'match' || step.kind === 'meaning'
               ? <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{step.review && <span className="hr-tag">Review</span>}{step.kind === 'meaning' ? title : 'Match'}{retry ? ' · Second try' : ''}</span>
               : <Cue item={item} step={step} title={`${title}${retry ? ' · Second try' : ''}`} />}
+            {'lead' in step && step.kind !== 'next' && <Context text={contextBefore(item, track, step.lead)} />}
+            {step.kind === 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'order' && <Order step={step} onReport={report} />}
             {step.kind === 'meaning' && <Meaning step={step} onReport={report} />}
             {step.kind === 'next' && <Next step={step} onReport={report} />}
@@ -231,6 +255,7 @@ export function LessonRunner({ mode }: { mode: 'lesson' | 'review' | 'rise' | 'n
           </>
         )}
       </section>
+      <div id="hr-dock" className="hr-dock" />
       {feedback && (
         <div className="hr-sheet" data-ok={feedback.ok} role="status">
           <div>

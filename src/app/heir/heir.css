@@ -1003,3 +1003,48 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-course-name { font-size: 19px; font-weight: 600; line-height: 1.2; }
 .hr-course-short { font-size: 14px; line-height: 1.4; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .hr-course-status { font-size: 12.5px; font-weight: 600; color: var(--good); margin-top: 2px; }
+
+/* ---- Lessons: one button area, fixed to the bottom (lifted above the keyboard while typing). Feedback replaces it. */
+.hr-dock {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 9;
+  width: min(480px, calc(100% - 40px));
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px + var(--kb, 0px));
+}
+.hr-dock:empty { display: none; }
+.hr-dock-in { display: flex; flex-direction: column; gap: 10px; }
+.hr-dock-in.row { flex-direction: row; }
+.hr-lesson[data-feedback='true'] .hr-dock { display: none; }
+.hr-lesson { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); }
+/* The bar sits over the page's bottom edge: fade the page behind it so text never runs under the button. */
+.hr-dock::before { content: ''; position: absolute; left: -20px; right: -20px; bottom: -40px; height: calc(100% + 64px); z-index: -1;
+  background: linear-gradient(rgba(17, 22, 28, 0), #11161c 45%); pointer-events: none; }
+
+/* Answer options: no colour until answered; then right is green with a tick, a wrong pick red with a cross. */
+.hr-card .hr-choice, .hr-choice { display: flex; align-items: center; gap: 10px; }
+.hr-card .hr-choice[aria-pressed='true'], .hr-choice[aria-pressed='true'] { background: transparent; border-color: var(--ink); }
+.hr-card .hr-choice[data-state='right'], .hr-choice[data-state='right'] { background: var(--good-wash); border-color: var(--good); color: var(--ink); opacity: 1; }
+.hr-card .hr-choice[data-state='wrong'], .hr-choice[data-state='wrong'] { background: var(--miss-wash); border-color: var(--miss); color: var(--ink); opacity: 1; }
+.hr-card .hr-choice[data-state='other'] { opacity: 0.45; }
+.hr-choice-mark { font-weight: 700; font-size: 18px; }
+.hr-choice[data-state='right'] .hr-choice-mark { color: var(--good); }
+.hr-choice[data-state='wrong'] .hr-choice-mark { color: var(--miss); }
+.hr-word[aria-pressed='true'] { background: transparent; outline: 1.5px solid var(--ink); }
+.hr-word[data-state='right'] { background: var(--good-wash); outline: 1.5px solid var(--good); }
+.hr-word[data-state='wrong'] { background: var(--miss-wash); outline: 1.5px solid var(--miss); }
+
+/* Putting phrases in order: tiles to place are raised; a placed tile leaves a dashed gap where it was; the answer
+   has a dashed place for every tile still to come, so nothing moves as you go. */
+.hr-answer.pieces { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
+.hr-bank.pieces { flex-direction: column; align-items: stretch; }
+.hr-tile { box-shadow: 0 2px 0 var(--edge); border-color: var(--edge); }
+.hr-tile.placed { border-color: var(--ink); box-shadow: none; }
+.hr-tile[data-used='true'] { background: transparent; border: 1.5px dashed var(--line); color: transparent; box-shadow: none; }
+.hr-slot { background: transparent; border: 1.5px dashed var(--line); }
+.hr-slot.piece { display: block; min-height: 48px; width: 100%; }
+
+/* What comes before the part being practiced: quiet, and fading at the top when it's long. */
+.hr-context {
+  margin: 0; font-family: var(--font-source-serif), Georgia, serif; font-size: 16px; line-height: 1.45; color: var(--muted);
+  max-height: calc(1.45em * 4); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
+}
+.hr-context.long { -webkit-mask-image: linear-gradient(transparent, #000 1.6em); mask-image: linear-gradient(transparent, #000 1.6em); }

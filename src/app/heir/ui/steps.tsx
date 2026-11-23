@@ -4,6 +4,7 @@
 // Typing steps keep their words near the top of the card, so the phone keyboard never hides them.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import type { Item, Track } from '@/heir/types';
 import type { Step } from '@/heir/lesson';
 import { unitText } from '@/heir/lesson';
@@ -25,6 +26,21 @@ const plural = (n: number, one: string, many: string) => (n === 1 ? one : many);
 // The words that come before the part being practiced: plain, bold, the start of the sentence.
 const Lead = ({ text }: { text: string }) => (text ? <strong className="hr-lead">{text} </strong> : null);
 const Answer = ({ lead, text }: { lead?: string; text: string }) => <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={lead ?? ''} />{text}</p>;
+
+// The lesson's buttons live in one place: a bar fixed to the bottom of the screen (above the keyboard while typing),
+// so there's only ever one main button, always in the same spot. Feedback replaces the bar with its own Continue.
+export function Dock({ children, row }: { children: ReactNode; row?: boolean }) {
+  const [el, setEl] = useState<HTMLElement | null>(null);
+  useEffect(() => { Promise.resolve().then(() => setEl(document.getElementById('hr-dock'))); }, []);
+  return el ? createPortal(<div className={`hr-dock-in${row ? ' row' : ''}`}>{children}</div>, el) : null;
+}
+
+// What comes before the part being practiced (the verse or answer up to the lead-in), quiet, so a later phrase is
+// learned in its place. Long openings fade at the top; the words nearest the phrase stay readable.
+export function Context({ text }: { text: string }) {
+  if (!text) return null;
+  return <p className={`hr-context${text.length > 150 ? ' long' : ''}`} aria-label="Earlier in the passage">{text}</p>;
+}
 
 export function Cue({ item, step, title }: { item: Item; step: Step; title: string }) {
   // A verse's prompt is its reference, already shown large below, so the label names the course instead.
@@ -63,7 +79,7 @@ export function Intro({ item, track, step, onNext }: { item: Item; track: Track;
       <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>
         {u.of > 1 ? 'This lesson covers the darker words. ' : ''}Read it aloud once, slowly.
       </p>
-      <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} onClick={onNext}>Continue</button>
+      <Dock><button type="button" className="hr-btn" onClick={onNext}>Continue</button></Dock>
     </>
   );
 }
@@ -80,37 +96,55 @@ export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' 
     onReport({ ok: r.ok, close: r.close, note, reveal: <Answer lead={step.lead} text={answer} /> });
   };
   const tileClass = `hr-tile${step.pieces ? ' piece' : ''}`;
+  // The answer keeps one place per tile from the start, and a placed tile leaves a dashed gap in the bank, so nothing
+  // shifts as you go: what's left to place is solid, what's placed is in the answer, and gaps show where tiles were.
+  const bankRef = useRef<HTMLDivElement>(null);
+  const [answerHeight, setAnswerHeight] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    if (step.pieces || !bankRef.current) return;
+    const h = bankRef.current.getBoundingClientRect().height;
+    Promise.resolve().then(() => setAnswerHeight(Math.max(112, h + 24)));
+  }, [step.pieces, step.bank]);
   return (
     <>
       <p style={{ margin: 0, fontWeight: 600 }}>{step.pieces ? 'Put the phrases in order' : 'Put the words in order'}</p>
-      <div className="hr-answer" aria-label="Your answer" style={step.pieces ? { flexDirection: 'column', flexWrap: 'nowrap' } : undefined}>
+      <div className={`hr-answer${step.pieces ? ' pieces' : ''}`} aria-label="Your answer" style={answerHeight ? { minHeight: answerHeight } : undefined}>
         {step.lead && <span className="hr-lead" style={{ alignSelf: step.pieces ? 'flex-start' : 'center' }}>{step.lead}</span>}
         {picked.map((i, at) => (
-          <button key={`${i}-${at}`} type="button" className={tileClass} onClick={() => setPicked((p) => p.filter((_, k) => k !== at))}>{step.bank[i]}</button>
+          <button key={`${i}-${at}`} type="button" className={`${tileClass} placed`} onClick={() => setPicked((p) => p.filter((_, k) => k !== at))} aria-label={`${step.bank[i]} (tap to take back)`}>{step.bank[i]}</button>
         ))}
-        {step.slots && step.tiles.slice(picked.length).map((t, k) => (
-          <span key={`slot-${k}`} className="hr-slot" aria-hidden="true" style={{ width: `${Math.max(3, t.length) + 2.2}ch` }} />
+        {(step.pieces || step.slots) && step.tiles.slice(picked.length).map((t, k) => (
+          step.pieces
+            ? <span key={`slot-${k}`} className="hr-slot piece" aria-hidden="true" />
+            : <span key={`slot-${k}`} className="hr-slot" aria-hidden="true" style={{ width: `${Math.max(3, t.length) + 2.2}ch` }} />
         ))}
       </div>
-      <div className="hr-bank" aria-label="Word bank" style={step.pieces ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}>
+      <div ref={bankRef} className={`hr-bank${step.pieces ? ' pieces' : ''}`} aria-label="Word bank">
         {step.bank.map((t, i) => {
           const used = picked.includes(i);
           return <button key={i} type="button" className={tileClass} data-used={used} disabled={used} aria-hidden={used} onClick={() => setPicked((p) => [...p, i])}>{t}</button>;
         })}
       </div>
-      <button type="button" className="hr-btn" style={{ marginTop: 'auto' }} disabled={!picked.length} onClick={check}>Check</button>
+      <Dock><button type="button" className="hr-btn" disabled={!picked.length} onClick={check}>Check</button></Dock>
     </>
   );
 }
 
-function Choices({ options, onPick, serif }: { options: string[]; onPick(o: string): void; serif?: boolean }) {
+// Answer options. Picking one answers at once, then shows which was right: green with a tick for the right answer,
+// red with a cross for a wrong pick. Before that, nothing is coloured, so a pick never looks like a mistake.
+function Choices({ options, answer, onPick, serif }: { options: string[]; answer: string; onPick(o: string): void; serif?: boolean }) {
   const [chosen, setChosen] = useState<string | null>(null);
+  const stateOf = (o: string) => (!chosen ? undefined : o === answer ? 'right' : o === chosen ? 'wrong' : 'other');
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
       {options.map((o) => (
-        <button key={o} type="button" className="hr-choice" aria-pressed={chosen === o} disabled={!!chosen}
+        <button key={o} type="button" className="hr-choice" data-state={stateOf(o)} aria-pressed={chosen === o} disabled={!!chosen}
           style={{ textAlign: 'left', ...(serif ? { fontFamily: 'var(--font-source-serif), Georgia, serif', fontSize: 18 } : {}) }}
-          onClick={() => { setChosen(o); onPick(o); }}>{o}</button>
+          onClick={() => { setChosen(o); onPick(o); }}>
+          <span style={{ flex: 1 }}>{o}</span>
+          {stateOf(o) === 'right' && <span className="hr-choice-mark" aria-label="Right">✓</span>}
+          {stateOf(o) === 'wrong' && <span className="hr-choice-mark" aria-label="Not this one">✕</span>}
+        </button>
       ))}
     </div>
   );
@@ -121,7 +155,7 @@ export function Meaning({ step, onReport }: { step: Extract<Step, { kind: 'meani
   return (
     <>
       <p className="serif" style={{ margin: 0, fontSize: 22, lineHeight: 1.35, fontWeight: 600 }}>{q.question}</p>
-      <Choices options={step.options} onPick={(o) => onReport({ ok: o === q.answer, note: o === q.answer ? undefined : `The answer: ${q.answer}.`, reveal: <p style={{ margin: 0, lineHeight: 1.5 }}>{q.explain}</p> })} />
+      <Choices options={step.options} answer={q.answer} onPick={(o) => onReport({ ok: o === q.answer, note: o === q.answer ? undefined : `The answer: ${q.answer}.`, reveal: <p style={{ margin: 0, lineHeight: 1.5 }}>{q.explain}</p> })} />
     </>
   );
 }
@@ -131,7 +165,7 @@ export function Next({ step, onReport }: { step: Extract<Step, { kind: 'next' }>
     <>
       <p style={{ margin: 0, fontWeight: 600 }}>What comes next?</p>
       <p className="hr-passage"><Lead text={step.lead} /><span className="hr-hidden-word next" style={{ width: '3em' }} /></p>
-      <Choices serif options={step.options} onPick={(o) => onReport({ ok: o === step.answer, reveal: <Answer lead={step.lead} text={step.answer} /> })} />
+      <Choices serif options={step.options} answer={step.answer} onPick={(o) => onReport({ ok: o === step.answer, reveal: <Answer lead={step.lead} text={step.answer} /> })} />
     </>
   );
 }
@@ -143,7 +177,7 @@ export function Match({ step, onReport }: { step: Extract<Step, { kind: 'match' 
     <>
       <span className="hr-label">{verse ? 'Which verse is this?' : 'Which question does this answer?'}</span>
       <p className="hr-say-text">{step.text}</p>
-      <Choices options={step.options} onPick={(o) => onReport({ ok: o === step.answer, note: o === step.answer ? undefined : verse ? `It’s ${step.answer}.` : `It answers: ${step.answer}` })} />
+      <Choices options={step.options} answer={step.answer} onPick={(o) => onReport({ ok: o === step.answer, note: o === step.answer ? undefined : verse ? `It’s ${step.answer}.` : `It answers: ${step.answer}` })} />
     </>
   );
 }
@@ -159,7 +193,7 @@ export function Spot({ step, onReport }: { step: Extract<Step, { kind: 'spot' }>
       <p className="hr-passage">
         {tokens.map((t, i) => (
           <span key={i}>
-            <button type="button" className="hr-word" aria-pressed={tapped === i} disabled={tapped !== null}
+            <button type="button" className="hr-word" aria-pressed={tapped === i} data-state={tapped === null ? undefined : i === step.wrongIndex ? 'right' : tapped === i ? 'wrong' : undefined} disabled={tapped !== null}
               onClick={() => { setTapped(i); onReport({ ok: i === step.wrongIndex, note: `“${wrong}” should be “${right}”.`, reveal }); }}>{t}</button>{' '}
           </span>
         ))}
@@ -223,10 +257,10 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
           );
         })}
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
-        <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={hint}>Hint</button>
-        <button type="button" className="hr-btn" onClick={check} disabled={step.blanks.some((i) => !(values[i] ?? '').trim())}>Check</button>
-      </div>
+      <Dock row>
+        <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)', flex: 1 }} onClick={hint}>Hint</button>
+        <button type="button" className="hr-btn" style={{ flex: 2 }} onClick={check} disabled={step.blanks.some((i) => !(values[i] ?? '').trim())}>Check</button>
+      </Dock>
     </>
   );
 }
@@ -319,7 +353,7 @@ export function Type({ step, onReport }: { step: Extract<Step, { kind: 'type' }>
       <ContinueFrom lead={step.lead} />
       <textarea ref={area} className="hr-typed" name="heir-typed" rows={4} autoCapitalize="sentences" autoCorrect="off" autoComplete="off" spellCheck={false}
         aria-label="Your answer" value={value} onChange={(e) => setValue(e.target.value)} />
-      <button type="button" className="hr-btn" disabled={!value.trim()} onClick={() => onReport(scored(step.text, step.lead, value, TYPED_PASS, 'missing or misspelled'))}>Check</button>
+      <Dock><button type="button" className="hr-btn" disabled={!value.trim()} onClick={() => onReport(scored(step.text, step.lead, value, TYPED_PASS, 'missing or misspelled'))}>Check</button></Dock>
     </>
   );
 }
@@ -393,15 +427,15 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
       ) : !revealed ? (
         <>
           <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5 }}>Say it aloud without looking. Then check yourself.</p>
-          <button type="button" className="hr-btn" onClick={() => setRevealed(true)}>Show the words</button>
+          <Dock><button type="button" className="hr-btn" onClick={() => setRevealed(true)}>Show the words</button></Dock>
         </>
       ) : (
         <>
           <Answer lead={step.lead} text={step.text} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => onReport({ ok: false })}>I missed some</button>
-            <button type="button" className="hr-btn" onClick={() => onReport({ ok: true })}>I said it all</button>
-          </div>
+          <Dock row>
+            <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)', flex: 1 }} onClick={() => onReport({ ok: false })}>I missed some</button>
+            <button type="button" className="hr-btn" style={{ flex: 1 }} onClick={() => onReport({ ok: true })}>I said it all</button>
+          </Dock>
         </>
       )}
       <button type="button" className="hr-btn quiet" style={{ marginTop: 'auto' }} onClick={() => { rec.current?.abort(); onCantSpeak(); }}>Can’t speak now, type it</button>
