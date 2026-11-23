@@ -112,24 +112,29 @@ test('related references split into passages, and unusable ones are left out', a
   assert.ok(allItems().filter((i) => i.connected.length).every((i) => relatedFor(i).length > 0), 'every item with references has some that can be looked up');
 });
 
-test('Diamond: Sapphire plus every related verse recalled; never without related verses', async () => {
-  const { earnedLevels, relatedDone } = await import('../levels.ts');
-  const { emptyProgress, recallRelated } = await import('../progress.ts');
+test('understanding: Learned, then Understood (explained), then Mastered (every related verse recalled); separate from stones', async () => {
+  const { understanding, earnedLevels } = await import('../levels.ts');
+  const { emptyProgress, markExplained, recallRelated, mergeProgress } = await import('../progress.ts');
   const { relatedFor } = await import('../related.ts');
   const item = getItem('fv-3')!;
   const now = new Date('2026-12-01T12:00:00Z');
-  let p = { ...emptyProgress(), levels: { [item.id]: 5 } };
-  assert.equal(earnedLevels([item], 'adult', p, now)[item.id], 5);
+  const meaning = { at: now.toISOString(), itemId: item.id, kind: 'meaning' as const, correct: true, hints: 0, ms: 1000, review: false };
+  let p = emptyProgress();
+  assert.equal(understanding(item, p), 0);
+  p = { ...p, log: [meaning] };
+  assert.equal(understanding(item, p), 1);
+  // Related verses alone don't make it mastered.
   for (const r of relatedFor(item)) p = recallRelated(p, r, now);
-  assert.ok(relatedDone(item, p));
-  assert.equal(earnedLevels([item], 'adult', p, now)[item.id], 6);
-  // Recalling them all earns nothing before Sapphire.
-  let q = { ...emptyProgress(), levels: { [item.id]: 3 } };
-  for (const r of relatedFor(item)) q = recallRelated(q, r, now);
-  assert.equal(earnedLevels([item], 'adult', q, now)[item.id], 3);
-  // An item with nothing related can't reach Diamond.
-  const bare = { ...item, id: 'x-1', connected: [] };
-  assert.equal(earnedLevels([bare], 'adult', { ...emptyProgress(), levels: { 'x-1': 5 } }, now)['x-1'], 5);
+  assert.equal(understanding(item, p), 1);
+  p = markExplained(p, item.id, now);
+  assert.equal(understanding(item, p), 3);
+  const partial = markExplained({ ...emptyProgress(), log: [meaning] }, item.id, now);
+  assert.equal(understanding(item, partial), 2);
+  // Explanations survive merging two copies, and never raise a stone.
+  assert.ok(mergeProgress(emptyProgress(), p).explained?.[item.id]);
+  assert.equal(earnedLevels([item], 'adult', p, now)[item.id], undefined);
+  // An item with no meaning notes has no understanding track.
+  assert.equal(understanding({ ...item, meaning: [] }, p), 0);
 });
 
 test('words in memory: learned parts count their words; each stage counts whole items at or above it', async () => {
@@ -137,10 +142,13 @@ test('words in memory: learned parts count their words; each stage counts whole 
   const { emptyProgress } = await import('../progress.ts');
   const { unitsFor } = await import('../lesson.ts');
   const a = getItem('fv-1')!, b = getItem('fv-3')!;
-  const p = { ...emptyProgress(), units: [...unitsFor(a, 'adult'), ...unitsFor(b, 'adult')].map((u) => u.key), levels: { [a.id]: 2 } };
+  const typed = (itemId: string, hints = 0) => ({ at: '2026-11-02T15:00:00.000Z', itemId, kind: 'type' as const, correct: true, hints, ms: 1000, review: false });
+  const units = [...unitsFor(a, 'adult'), ...unitsFor(b, 'adult')].map((u) => u.key);
+  const p = { ...emptyProgress(), units, log: unitsFor(b, 'adult').map(() => typed(b.id)), levels: { [a.id]: 2 } };
   const w = wordsIn([a, b], 'adult', p);
-  assert.equal(w.learned, wordCount(a.text) + wordCount(b.text));
-  assert.equal(w.atStage[1], wordCount(a.text), 'Recalled counts only the item with a stone');
+  assert.equal(w.recited, wordCount(a.text) + wordCount(b.text));
+  assert.equal(wordsIn([a, b], 'adult', { ...p, log: unitsFor(b, 'adult').map(() => typed(b.id, 1)) }).recited, wordCount(a.text), 'typed with hints is not recited');
+  assert.equal(w.atStage[1], wordCount(a.text), 'Remembered counts only the item with a stone');
   assert.equal(w.atStage[2], wordCount(a.text));
   assert.equal(w.atStage[3], 0);
   assert.equal(w.inMemory, w.atStage[1]);

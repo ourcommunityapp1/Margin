@@ -6,7 +6,8 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
-import { levelInfo, needsRefresh, nextStep } from '@/heir/levels';
+import { STAGES, levelInfo, needsRefresh, nextStep, recited } from '@/heir/levels';
+import { Explain } from './explain';
 import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import { RelatedVerses } from './related';
@@ -37,7 +38,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', background: 'var(--well)', borderRadius: 16, padding: '10px 12px' }}>
               <Stone level={level} size={40} dim={dim} />
               <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name}${dim ? ' · needs a refresh' : ''}` : 'Learned'}</span>
+                <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name} · ${levelInfo(level)!.counts}${dim ? ' · needs a refresh' : ''}` : recited(item, me?.track ?? 'adult', mine.log) ? STAGES[0].name : 'Practised'}</span>
                 {next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>Next: {next}</span>}
               </span>
             </div>
@@ -46,6 +47,8 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
             {!item.reviewed && <span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span>}
           </div>
         </section>
+
+        <Explain item={item} />
 
         {item.meaning.length > 0 && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

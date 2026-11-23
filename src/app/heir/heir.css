@@ -1051,7 +1051,7 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 
 /* Progress: the ladder of memory, milestones, and the wall of windows. */
 .hr-ladder { display: flex; flex-direction: column; gap: 9px; }
-.hr-ladder-row { display: grid; grid-template-columns: 74px 1fr auto; align-items: center; gap: 10px; }
+.hr-ladder-row { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; }
 .hr-ladder-name { font-size: 13px; font-weight: 600; color: var(--muted); }
 .hr-ladder-n { font-size: 13px; font-weight: 600; min-width: 2.5em; text-align: right; font-variant-numeric: tabular-nums; }
 .hr-ladder-bar { display: block; height: 10px; border-radius: 5px; background: var(--well); overflow: hidden; }

@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { courseItems, courseParts, courseFor, getCollection, getCourse, itemNoun, type Course } from '@/heir/content';
 import { activeMember, setPlan } from '@/heir/household';
 import { groupsOf, unitsFor } from '@/heir/lesson';
-import { levelInfo, needsRefresh } from '@/heir/levels';
+import { levelInfo, needsRefresh, recited } from '@/heir/levels';
 import { courseStats } from '@/heir/path';
 import { project } from '@/heir/planner';
 import { emptyProgress, memberProgress, type MemberProgress } from '@/heir/progress';
@@ -112,7 +112,7 @@ export function CourseScreen({ id }: { id: string }) {
                 const learned = unitsFor(item, track).every((u) => mine.units.includes(u.key));
                 const level = mine.levels[item.id] ?? 0;
                 const dim = needsRefresh(mine, item.id, now);
-                const status = dim ? 'Needs a refresh' : level ? levelInfo(level)!.name : learned ? 'Learned' : null;
+                const status = dim ? 'Needs a refresh' : level ? levelInfo(level)!.name : recited(item, track, mine.log) ? 'Recited' : learned ? 'Practised' : null;
                 const unit = getCollection(item.collection)?.unit;
                 return (
                   <li key={item.id}>

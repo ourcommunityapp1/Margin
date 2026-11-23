@@ -1,7 +1,7 @@
 'use client';
 
 // Progress, in three sections: Overview (the words in your memory, milestones, days kept), Courses (the window of
-// every course you've begun), and Stones (each item's stone, how to earn them, and awards).
+// every course you've begun), and Stones (each item's stone, how to earn them, understanding, and awards).
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -13,11 +13,11 @@ import { allItems, courseItems, courses, itemLabel } from '@/heir/content';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { activeMember } from '@/heir/household';
-import { AWARDS, LEVELS, STAGES, bestDaysKept, daysKept, needsRefresh, nextStep, shelf } from '@/heir/levels';
-import { milestones, wordsIn, wordsLearnedThisWeek } from '@/heir/measures';
+import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, shelf, understanding } from '@/heir/levels';
+import { milestones, wordsIn, wordsRecitedThisWeek } from '@/heir/measures';
 import { localDay, memberProgress } from '@/heir/progress';
 
-// Learned (no stone yet) in warm glass, then each stone's own colour.
+// Recited (no stone yet) in warm glass, then each stone's own colour.
 const STAGE_COLORS = ['#C9A46A', '#7B52B5', '#D99A2B', '#B0442A', '#1E8657', '#2F5DA8', '#BFC6CC'];
 type Section = 'overview' | 'courses' | 'stones';
 
@@ -34,13 +34,16 @@ export default function Progress() {
   const mine = memberProgress(progress, me.id);
   const items = allItems();
   const words = wordsIn(items, me.track, mine);
-  const week = wordsLearnedThisWeek(items, me.track, mine, now);
+  const week = wordsRecitedThisWeek(items, me.track, mine, now);
   const miles = milestones(words.inMemory);
   const prevMile = miles.reached.at(-1) ?? 0;
   const today = localDay(now);
   const kept = daysKept(mine.days, today);
   const best = Math.max(kept, bestDaysKept(mine.days));
   const stones = shelf(items, mine);
+  // Understanding, counted over items that have meaning notes: how many at each step or beyond.
+  const withNotes = items.filter((i) => i.meaning.length);
+  const grasp = UNDERSTANDING.map((u) => withNotes.filter((i) => understanding(i, mine) >= u.n).length);
   // Every course with anything learned, the one in progress first: its window lit as far as you've come.
   const minutes = household.plan?.minutes ?? 15;
   const yours = courses
@@ -83,16 +86,16 @@ export default function Progress() {
               <span className="hr-label">Words in your memory</span>
               <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
                 <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
-                <span style={{ fontSize: 15, color: 'var(--muted)' }}>of {fmt(words.learned)} learned{week ? ` · +${fmt(week)} this week` : ''}</span>
+                <span style={{ fontSize: 15, color: 'var(--muted)' }}>of {fmt(words.recited)} recited{week ? ` · +${fmt(week)} this week` : ''}</span>
               </span>
-              {words.inMemory === 0 && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>Recall something on the day after you learn it, and its words move up into your memory.</p>}
+              {words.inMemory === 0 && <p style={{ margin: 0, fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>Recall something unaided on the day after you recite it, and its words move up into your memory.</p>}
               <div className="hr-ladder">
-                {STAGES.slice(0, 5).map((stage) => {
+                {STAGES.map((stage) => {
                   const n = words.atStage[stage.n];
                   return (
                     <div key={stage.name} className="hr-ladder-row">
                       <span className="hr-ladder-name">{stage.name}</span>
-                      <span className="hr-ladder-bar"><span style={{ width: `${words.learned ? (n / words.learned) * 100 : 0}%`, background: STAGE_COLORS[stage.n] }} /></span>
+                      <span className="hr-ladder-bar"><span style={{ width: `${words.recited ? (n / words.recited) * 100 : 0}%`, background: STAGE_COLORS[stage.n] }} /></span>
                       <span className="hr-ladder-n">{fmt(n)}</span>
                     </div>
                   );
@@ -157,13 +160,13 @@ export default function Progress() {
             <span className="hr-label">Stones</span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>Each question’s highest level</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 4 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', rowGap: 16, columnGap: 8 }}>
             {LEVELS.map((l, i) => (
-              <div key={l.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-                <Stone level={l.n} size={40} dim={stones[i] === 0} />
-                <span style={{ fontSize: 16, fontWeight: 700 }}>{stones[i]}</span>
-                <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)' }}>{l.name}</span>
-                <span style={{ fontSize: 10.5, color: 'var(--muted)', opacity: 0.75, marginTop: -4 }}>{l.counts}</span>
+              <div key={l.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
+                <Stone level={l.n} size={44} dim={stones[i] === 0} />
+                <span style={{ fontSize: 17, fontWeight: 700 }}>{stones[i]}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{l.name}</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: -4 }}>{l.counts}</span>
               </div>
             ))}
           </div>
@@ -177,12 +180,32 @@ export default function Progress() {
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
                     <b>{l.name}{l.counts ? <span style={{ fontWeight: 500, color: 'var(--muted)' }}> · {l.counts}</span> : null}</b>
                     <span>{l.means}</span>
-                    {l.n === 6 && <span style={{ fontSize: 13, color: 'var(--muted)' }}>Open any question or verse that has reached Sapphire, and recall its related verses one by one.</span>}
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{l.rule}.</span>
                   </span>
                 </li>
               ))}
             </ol>
           </details>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>Every stone is earned the way memory research measures it: the whole thing recalled with no hints, after time away. Extra practice keeps it fresh but doesn’t earn a stone by itself.</p>
+        </section>
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Understanding">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span className="hr-label">Understanding</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Separate from memory</span>
+          </div>
+          <div className="hr-ladder">
+            {UNDERSTANDING.map((u, i) => (
+              <div key={u.name} className="hr-ladder-row">
+                <span className="hr-ladder-name">{u.name}</span>
+                <span className="hr-ladder-bar"><span style={{ width: `${withNotes.length ? (grasp[i] / withNotes.length) * 100 : 0}%`, background: 'var(--good)', opacity: 0.55 + i * 0.2 }} /></span>
+                <span className="hr-ladder-n">{grasp[i]}</span>
+              </div>
+            ))}
+          </div>
+          <ol style={{ margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6, fontSize: 14, lineHeight: 1.45 }}>
+            {UNDERSTANDING.map((u) => <li key={u.name}><b>{u.name}:</b> {u.means}</li>)}
+          </ol>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>Open any question or verse to explain it in your own words and recall the verses it rests on.</p>
         </section>
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>

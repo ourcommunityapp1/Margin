@@ -1,39 +1,38 @@
 // What's in your memory, counted in words: one definition each, used on every screen.
-//   learned: words of every part whose lesson you've finished (on your track);
-//   at stage n (1 Recalled … 6 Rooted): words of every item whose stone is at least that level.
+//   recited (stage 0): words of every item you've typed in full with no hints at its lesson (or that has a stone);
+//   at stage n (1 Remembered … 6 Lifelong): words of every item whose stone is at least that level.
+// "In your memory" is stage 1 and up: recalled unaided after at least a night's sleep.
 
-import { unitsFor, unitText } from './lesson.ts';
+import { recited } from './levels.ts';
 import type { MemberProgress } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
 export const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
-export interface Words { learned: number; atStage: number[]; inMemory: number }
+export interface Words { recited: number; atStage: number[]; inMemory: number }
+
+const itemWords = (item: Item, track: Track) => wordCount(item.chunks[track].join(' '));
 
 export function wordsIn(items: Item[], track: Track, p: MemberProgress): Words {
-  const learnedUnits = new Set(p.units);
-  let learned = 0;
   const atStage = [0, 0, 0, 0, 0, 0, 0];
   for (const item of items) {
-    for (const u of unitsFor(item, track)) if (learnedUnits.has(u.key)) learned += wordCount(unitText(item, track, u).text);
     const level = p.levels[item.id] ?? 0;
-    const words = wordCount(item.chunks[track].join(' '));
-    for (let n = 1; n <= Math.min(6, level); n++) atStage[n] += words;
+    if (!level && !recited(item, track, p.log)) continue;
+    const words = itemWords(item, track);
+    for (let n = 0; n <= Math.min(6, level); n++) atStage[n] += words;
   }
-  atStage[0] = learned;
-  return { learned, atStage, inMemory: atStage[1] };
+  return { recited: atStage[0], atStage, inMemory: atStage[1] };
 }
 
-/** Words learned in parts first practised in the last 7 days. */
-export function wordsLearnedThisWeek(items: Item[], track: Track, p: MemberProgress, now: Date): number {
+/** Words of items first recited in the last 7 days. */
+export function wordsRecitedThisWeek(items: Item[], track: Track, p: MemberProgress, now: Date): number {
   const since = now.getTime() - 7 * 86_400_000;
   const firstSeen = new Map<string, number>();
   for (const e of p.log) { const t = Date.parse(e.at); if (!firstSeen.has(e.itemId) || t < firstSeen.get(e.itemId)!) firstSeen.set(e.itemId, t); }
-  const learnedUnits = new Set(p.units);
   let n = 0;
   for (const item of items) {
     if ((firstSeen.get(item.id) ?? 0) < since) continue;
-    for (const u of unitsFor(item, track)) if (learnedUnits.has(u.key)) n += wordCount(unitText(item, track, u).text);
+    if ((p.levels[item.id] ?? 0) > 0 || recited(item, track, p.log)) n += itemWords(item, track);
   }
   return n;
 }

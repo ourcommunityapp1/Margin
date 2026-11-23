@@ -1,7 +1,7 @@
 // Related verses: the Scripture a catechism answer rests on (its proof texts), or the verses a Bible verse
 // goes with. They aren't stored in the app. A learner's phone fetches a related verse's NASB text when they
-// practice it, and keeps it only on that phone. Recalling every one of an item's related verses, on top of
-// Sapphire, earns Diamond.
+// practice it, and keeps it only on that phone. Recalling every one of an item's related verses, once it is
+// understood, makes it Mastered (see `understanding` in levels.ts).
 
 import type { Item } from './types.ts';
 import { toUsfm } from './usfm.ts';

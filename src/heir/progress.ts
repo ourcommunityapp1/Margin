@@ -39,8 +39,10 @@ export interface MemberProgress {
   log: LogEntry[];
   // The last "When you lie down": when, which questions, and whether "When you rise" has followed it.
   night?: { at: string; items: string[]; risen?: boolean };
-  // Related verses recalled from memory (passage → ISO date), toward Diamond. See related.ts.
+  // Related verses recalled from memory (passage → ISO date), toward Mastered. See related.ts.
   related?: Record<string, string>;
+  // Items explained in your own words and checked against the notes (item id → ISO date): Understood.
+  explained?: Record<string, string>;
 }
 
 export type Progress = Record<string, MemberProgress>;
@@ -202,6 +204,9 @@ export function parseProgress(raw: string | null): Progress {
         ...(m.related && typeof m.related === 'object' && !Array.isArray(m.related)
           ? { related: Object.fromEntries(Object.entries(m.related).filter(([, v]) => typeof v === 'string')) }
           : {}),
+        ...(m.explained && typeof m.explained === 'object' && !Array.isArray(m.explained)
+          ? { explained: Object.fromEntries(Object.entries(m.explained).filter(([, v]) => typeof v === 'string')) }
+          : {}),
       };
     }
     return out;
@@ -217,13 +222,18 @@ export const markNight = (p: MemberProgress, items: string[], now: Date): Member
 // After "When you rise".
 export const markRisen = (p: MemberProgress): MemberProgress => (p.night ? { ...p, night: { ...p.night, risen: true } } : p);
 
+/** Record that an item was explained in your own words and checked against the notes. */
+export function markExplained(p: MemberProgress, itemId: string, now: Date): MemberProgress {
+  return p.explained?.[itemId] ? p : { ...p, explained: { ...p.explained, [itemId]: now.toISOString() } };
+}
+
 /** Record that a related verse was recalled from memory. */
 export function recallRelated(p: MemberProgress, passage: string, now: Date): MemberProgress {
   return p.related?.[passage] ? p : { ...p, related: { ...p.related, [passage]: now.toISOString() } };
 }
 
 // ---- Combining two copies of one person's progress (this phone's and the account's), so nothing is ever lost:
-// learned parts, checkpoints, days and recalled verses are joined; each stone takes the higher level; counts take
+// learned parts, checkpoints, days, recalled verses and explanations are joined; each stone takes the higher level; counts take
 // the larger; each award keeps its first date; each schedule keeps the one reviewed most recently; and the answer
 // logs are joined, each answer once, in time order.
 
@@ -244,6 +254,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
   for (const e of [...a.log, ...b.log]) if (!log.has(logKey(e))) log.set(logKey(e), e);
   const night = !a.night ? b.night : !b.night ? a.night : a.night.at >= b.night.at ? a.night : b.night;
   const related = a.related || b.related ? mergeRecord(a.related ?? {}, b.related ?? {}, (x, y) => earliest(x, y)!) : undefined;
+  const explained = a.explained || b.explained ? mergeRecord(a.explained ?? {}, b.explained ?? {}, (x, y) => earliest(x, y)!) : undefined;
   return {
     units: union(a.units, b.units),
     checkpoints: union(a.checkpoints, b.checkpoints),
@@ -256,6 +267,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
     log: [...log.values()].sort((x, y) => x.at.localeCompare(y.at)),
     ...(night ? { night } : {}),
     ...(related ? { related } : {}),
+    ...(explained ? { explained } : {}),
   };
 }
 

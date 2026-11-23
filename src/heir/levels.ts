@@ -1,42 +1,50 @@
 // The stone levels: what each question has earned, worked out from the answer log, plus the counts,
 // streak and awards built on them. Pure functions over progress, so they are easy to test and tune.
 //
-// Levels climb five foundation stones of Revelation 21 (twelfth to second), then Diamond at the top.
-// Each is earned across separate days, so it measures memory, not one good afternoon.
+// Two separate tracks:
+//   Memory, the stones: five foundation stones of Revelation 21 (twelfth to second), then Diamond. Every stone is
+//   earned the same way the research measures memory: recalling the whole thing unaided (no hints, nothing to pick
+//   from) after time away. The longer the time away, the higher the stone. Practising more never earns one by itself.
+//   Understanding: Learned (answered what it means), Understood (explained it in your own words, checked against the
+//   notes), Mastered (also recalled every verse it rests on). See `understanding`.
+//
+// Why these gaps: a night's sleep is when a memory is first consolidated; spaced, successful recall across days
+// (successive relearning, Rawson & Dunlosky) is what keeps it; recall after weeks and months away is the standard
+// test of long-term retention (Cepeda et al. 2008); and Bahrick (1984) found what is still recalled after the first
+// three to six years stays for decades ("permastore"). So Diamond asks for exactly that.
 
 import { unitsFor } from './lesson.ts';
 import { localDay, type LogEntry, type MemberProgress } from './progress.ts';
 import { relatedFor } from './related.ts';
 import type { Item, Track } from './types.ts';
 
-// `counts`: what it means in a word; `means`: in a sentence anyone can follow; `rule`: exactly how it's earned.
+// `counts`: the stage of memory in a word or two; `means`: in a sentence anyone can follow; `rule`: exactly how it's earned.
 export interface Level { n: number; id: string; name: string; foundation: string; counts: string; means: string; rule: string }
 
 export const LEVELS: Level[] = [
-  { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Recalled',
-    means: 'You recalled it after a night’s sleep: it has started to stick.',
-    rule: 'Recalled in full on a day after you learned it' },
-  { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'By heart',
-    means: 'You’ve recalled it on three different days: it’s yours, word for word.',
-    rule: 'Said or typed right on 3 different days' },
-  { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Kept',
-    means: 'Still there after two weeks away, both ways: from the question to the answer, and back.',
-    rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question' },
-  { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'For life',
-    means: 'Right every time for three months, even after a month away. With a short review now and then, you can expect to keep it for life.',
-    rule: 'Every review right for 3 months, including one after a gap of a month' },
-  { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Understood',
-    means: 'Kept for life, and you can say what it means.',
-    rule: 'Emerald, plus its meaning' },
-  // Earned in `earnedLevels`: Sapphire, then every related verse recalled from memory (see related.ts).
-  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: 'Rooted',
-    means: 'Understood, and you’ve also recalled every verse connected to it: a catechism answer’s proof texts, or a verse’s related verses.',
-    rule: 'Sapphire, plus all its related verses recalled' },
+  { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Remembered',
+    means: 'You recalled it, unaided, after a night’s sleep: it has started to stick.',
+    rule: 'Recalled in full with no hints on a day after you first recited it' },
+  { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'Memorized',
+    means: 'You’ve recalled it unaided on three different days: it’s yours, word for word.',
+    rule: 'Recalled in full with no hints on 3 different days' },
+  { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Lasting',
+    means: 'Still there after three weeks away: it has moved past short-term memory.',
+    rule: 'Recalled in full with no hints after a gap of 3 weeks or more' },
+  { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'Long-term',
+    means: 'Right every time for six months, including after two months away: it’s in long-term memory.',
+    rule: 'Every recall right for 6 months, including one after a gap of 2 months or more' },
+  { n: 5, id: 'sapphire', name: 'Sapphire', foundation: '2nd foundation', counts: 'Enduring',
+    means: 'A year after you first knew it, still there after half a year away.',
+    rule: 'Known for a year, and recalled in full with no hints after a gap of 6 months or more' },
+  { n: 6, id: 'diamond', name: 'Diamond', foundation: 'The top', counts: 'Lifelong',
+    means: 'Recalled after a whole year away, three years on. Memories that last this long tend to stay for life.',
+    rule: 'Known for 3 years, and recalled in full with no hints after a gap of a year or more' },
 ];
 
-/** The stages of memory, in order: "Learned" (its lesson finished, no stone yet), then one per stone. */
+/** The stages of memory, in order: "Recited" (said in full, unaided, at its lesson; no stone yet), then one per stone. */
 export const STAGES: { n: number; name: string; means: string }[] = [
-  { n: 0, name: 'Learned', means: 'You’ve finished its lesson.' },
+  { n: 0, name: 'Recited', means: 'You’ve typed it in full, with no hints, at its lesson.' },
   ...LEVELS.map((l) => ({ n: l.n, name: l.counts, means: l.means })),
 ];
 
@@ -44,6 +52,9 @@ export const levelInfo = (n: number): Level | null => LEVELS[n - 1] ?? null;
 
 const DAY = 86_400_000;
 const FULL = new Set(['type', 'say']);
+// Unaided recall: the whole thing produced from memory, with no hints.
+const unaided = (e: LogEntry) => FULL.has(e.kind) && e.correct && !e.hints;
+const anyUnaided = (s: { entries: LogEntry[] }) => s.entries.some(unaided);
 
 // Sessions for one item, oldest first: each is the answers given in one lesson or review.
 function sessions(log: LogEntry[], itemId: string): { at: number; entries: LogEntry[] }[] {
@@ -52,53 +63,82 @@ function sessions(log: LogEntry[], itemId: string): { at: number; entries: LogEn
   return [...by].map(([at, entries]) => ({ at: Date.parse(at), entries })).sort((a, b) => a.at - b.at);
 }
 
-// The level the log shows right now (0: none yet). Stored levels never go down; see `earnedLevels`.
-export function levelFromLog(item: Item, track: Track, log: LogEntry[], now: Date): number {
-  const ss = sessions(log, item.id);
-  const all = ss.flatMap((s) => s.entries);
-  const typedRight = all.filter((e) => e.kind === 'type' && e.correct).length;
-  if (typedRight < unitsFor(item, track).length) return 0;
-  // Know: recalled in full on a later day than it was first learned. Recall in the same sitting is
-  // mostly short-term memory; recall after a night's sleep is the first sign it's stored.
-  const firstDay = ss.length ? localDay(new Date(ss[0].at)) : '';
-  const afterSleep = ss.some((s) => localDay(new Date(s.at)) !== firstDay && s.entries.some((e) => FULL.has(e.kind) && e.correct));
-  if (!afterSleep) return 0;
-
-  const fullDays = new Set(ss.filter((s) => s.entries.some((e) => FULL.has(e.kind) && e.correct)).map((s) => localDay(new Date(s.at))));
-  if (fullDays.size < 3) return 1;
-
-  const afterGap = (gapDays: number) => ss.filter((s, i) => i > 0 && s.at - ss[i - 1].at >= gapDays * DAY);
-  const gapRecall = afterGap(14).some((s) => s.entries.some((e) => FULL.has(e.kind) && e.correct));
-  const bothWays = all.some((e) => e.kind === 'match' && e.correct);
-  if (!gapRecall || !bothWays) return 2;
-
-  const since = now.getTime() - 90 * DAY;
-  const firstFull = ss.find((s) => s.entries.some((e) => FULL.has(e.kind) && e.correct));
-  const recent = ss.filter((s) => s.at >= since);
-  const longEnough = !!firstFull && firstFull.at <= since;
-  const allRight = recent.length >= 2 && recent.every((s) => s.entries.every((e) => e.correct));
-  const monthGap = afterGap(30).some((s) => s.at >= since);
-  if (!longEnough || !allRight || !monthGap) return 3;
-
-  if (!all.some((e) => e.kind === 'meaning' && e.correct)) return 4;
-  return 5; // Diamond (6) also needs the related verses; see `earnedLevels`.
+/** Recited: every part typed in full and right with no hints (stage 0 on the memory ladder). */
+export function recited(item: Item, track: Track, log: LogEntry[]): boolean {
+  const n = log.filter((e) => e.itemId === item.id && e.kind === 'type' && e.correct && !e.hints).length;
+  return n >= unitsFor(item, track).length;
 }
 
-// Diamond: Sapphire, plus every related verse recalled from memory (and the item has some).
-export function relatedDone(item: Item, p: MemberProgress): boolean {
-  const rel = relatedFor(item);
-  return rel.length > 0 && rel.every((r) => !!p.related?.[r]);
+// The level the log shows right now (0: none yet). Stored levels never go down; see `earnedLevels`.
+export function levelFromLog(item: Item, track: Track, log: LogEntry[], now: Date): number {
+  if (!recited(item, track, log)) return 0;
+  const ss = sessions(log, item.id);
+  // Gaps are measured from the item's previous session of any kind: time truly away from it.
+  const afterGap = (days: number) => ss.filter((s, i) => i > 0 && s.at - ss[i - 1].at >= days * DAY && anyUnaided(s));
+  const firstRecall = ss.find(anyUnaided);
+  const knownFor = (days: number) => !!firstRecall && firstRecall.at <= now.getTime() - days * DAY;
+
+  // Remembered: unaided on a later day than it was first practised. Recall in the same sitting is mostly
+  // short-term memory; recall after a night's sleep is the first sign it's stored.
+  const firstDay = ss.length ? localDay(new Date(ss[0].at)) : '';
+  if (!ss.some((s) => localDay(new Date(s.at)) !== firstDay && anyUnaided(s))) return 0;
+
+  // Memorized: unaided on three different days.
+  if (new Set(ss.filter(anyUnaided).map((s) => localDay(new Date(s.at)))).size < 3) return 1;
+
+  // Lasting: unaided after three weeks away.
+  if (!afterGap(21).length) return 2;
+
+  // Long-term: at some point, known six months, with every full recall in those six months right (at least two),
+  // one of them after two months away. Checked as of each session, so a later long gap doesn't undo it.
+  const gap60 = afterGap(60);
+  const longTermAt = (t: number) => {
+    const since = t - 182 * DAY;
+    if (!firstRecall || firstRecall.at > since) return false;
+    const recent = ss.filter((s) => s.at >= since && s.at <= t).flatMap((s) => s.entries.filter((e) => FULL.has(e.kind)));
+    return recent.length >= 2 && recent.every((e) => e.correct) && gap60.some((s) => s.at >= since && s.at <= t);
+  };
+  if (!longTermAt(now.getTime()) && !ss.some((s) => s.at <= now.getTime() && longTermAt(s.at))) return 3;
+
+  // Enduring: known a year, and unaided after half a year away.
+  if (!knownFor(365) || !afterGap(182).length) return 4;
+
+  // Lifelong: known three years, and unaided after a whole year away.
+  if (!knownFor(3 * 365) || !afterGap(365).length) return 5;
+  return 6;
 }
 
 // Levels never go down: a stored level stays, and a higher one replaces it.
 export function earnedLevels(items: Item[], track: Track, p: MemberProgress, now: Date): Record<string, number> {
   const out: Record<string, number> = { ...p.levels };
   for (const item of items) {
-    let n = levelFromLog(item, track, p.log, now);
-    if (Math.max(n, out[item.id] ?? 0) >= 5 && relatedDone(item, p)) n = 6;
+    const n = levelFromLog(item, track, p.log, now);
     if (n > (out[item.id] ?? 0)) out[item.id] = n;
   }
   return out;
+}
+
+// ---- Understanding: a separate track from memory. Shown by explaining, not by recognizing (Chi's self-explanation).
+
+export const UNDERSTANDING = [
+  { n: 1, name: 'Learned', means: 'You’ve answered what it means.' },
+  { n: 2, name: 'Understood', means: 'You’ve explained it in your own words and checked it against the notes.' },
+  { n: 3, name: 'Mastered', means: 'Understood, and you’ve recalled every verse it rests on.' },
+] as const;
+
+/** Every related verse recalled from memory (and the item has some). */
+export function relatedDone(item: Item, p: MemberProgress): boolean {
+  const rel = relatedFor(item);
+  return rel.length > 0 && rel.every((r) => !!p.related?.[r]);
+}
+
+/** 0 (not yet) … 3 Mastered. Only items with meaning notes have an understanding track. */
+export function understanding(item: Item, p: MemberProgress): number {
+  if (!item.meaning.length) return 0;
+  const learned = p.log.some((e) => e.itemId === item.id && e.kind === 'meaning' && e.correct) || !!p.explained?.[item.id];
+  if (!learned) return 0;
+  if (!p.explained?.[item.id]) return 1;
+  return relatedDone(item, p) || !relatedFor(item).length ? 3 : 2;
 }
 
 export const levelOf = (p: MemberProgress, itemId: string): number => p.levels[itemId] ?? 0;
@@ -109,24 +149,20 @@ export function needsRefresh(p: MemberProgress, itemId: string, now: Date): bool
   return !!card && Date.parse(card.due) < now.getTime() - DAY / 2;
 }
 
-// What the next level asks for, in a few words, or null at the top.
+// What the next stone asks for, in a few words, or null at the top.
 export function nextStep(item: Item, track: Track, p: MemberProgress, now: Date): string | null {
   const n = levelOf(p, item.id);
-  if (n === 0) return 'Recall it after a night’s sleep to earn Amethyst';
+  if (n === 0) return recited(item, track, p.log) ? 'Recall it unaided after a night’s sleep for Amethyst' : 'Type it in full with no hints to recite it';
   if (n === 1) {
-    const days = new Set(sessions(p.log, item.id).filter((s) => s.entries.some((e) => FULL.has(e.kind) && e.correct)).map((s) => localDay(new Date(s.at)))).size;
+    const days = new Set(sessions(p.log, item.id).filter(anyUnaided).map((s) => localDay(new Date(s.at)))).size;
     const left = Math.max(1, 3 - days);
-    return `${left} more ${left === 1 ? 'day' : 'days'} to Topaz`;
+    return `Recall it on ${left} more ${left === 1 ? 'day' : 'days'} for Topaz`;
   }
-  if (n === 2) return 'Carnelian after a two-week gap';
-  if (n === 3) return 'Emerald after three months';
-  if (n === 4) return 'Sapphire: answer what it means';
-  void track; void now;
-  if (n === 5) {
-    const rel = relatedFor(item);
-    const left = rel.filter((r) => !p.related?.[r]).length;
-    return rel.length ? `Diamond: ${left} related ${left === 1 ? 'verse' : 'verses'} to recall` : null;
-  }
+  void now;
+  if (n === 2) return 'Carnelian after three weeks away';
+  if (n === 3) return 'Emerald after six months, with a two-month gap';
+  if (n === 4) return 'Sapphire a year on, after six months away';
+  if (n === 5) return 'Diamond three years on, after a year away';
   return null;
 }
 
@@ -178,17 +214,17 @@ export interface Award { id: string; name: string; hint: string }
 
 export const AWARDS: Award[] = [
   { id: 'first-lesson', name: 'First lesson', hint: 'Finish a lesson' },
-  { id: 'first-amethyst', name: 'First Amethyst', hint: 'Type a question in full, right the first time' },
+  { id: 'first-amethyst', name: 'First Amethyst', hint: 'Recall one unaided after a night’s sleep' },
   { id: 'first-lock', name: 'First unit locked in', hint: 'Finish a unit’s Lock it in' },
   { id: 'kept-7', name: '7 days kept', hint: 'Keep 7 days in a row' },
-  { id: 'first-topaz', name: 'First Topaz', hint: 'Get one right on 3 different days' },
+  { id: 'first-topaz', name: 'First Topaz', hint: 'Recall one unaided on 3 different days' },
   { id: 'kept-30', name: '30 days kept', hint: 'Keep 30 days in a row' },
-  { id: 'first-carnelian', name: 'First Carnelian', hint: 'Recall one after a two-week gap' },
+  { id: 'first-carnelian', name: 'First Carnelian', hint: 'Recall one after three weeks away' },
   { id: 'wsc-memorized', name: 'Shorter Catechism memorized', hint: 'Every Shorter question at Topaz' },
   { id: 'wlc-memorized', name: 'Larger Catechism memorized', hint: 'Every Larger question at Topaz' },
   { id: 'apostles-memorized', name: 'Apostles’ Creed memorized', hint: 'Every section at Topaz' },
   { id: 'nicene-memorized', name: 'Nicene Creed memorized', hint: 'Every section at Topaz' },
-  { id: 'first-emerald', name: 'First Emerald', hint: 'Three months of right reviews' },
+  { id: 'first-emerald', name: 'First Emerald', hint: 'Six months of right recalls' },
 ];
 
 export function awardsMet(p: MemberProgress, all: Item[], today: string): string[] {

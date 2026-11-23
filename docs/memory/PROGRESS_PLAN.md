@@ -61,3 +61,30 @@ Panes lit at the end of a lesson; a stone earned; a milestone; a part's window f
       everything before it (the verse or answer up to where this part starts) above the exercise, quieter, so the
       phrase is learned in its place, not on its own. Applies to every exercise kind (order, blanks, letters, say,
       type); long lead-ins fade from the top.
+
+## Stages (research-based, Nov 2026)
+
+Two separate tracks. Stones measure memory only; understanding is its own track. Stones earned under the
+earlier rules are kept (levels never go down); the new rules apply from now on.
+
+**Memory ladder.** Every stone needs unaided recall: the whole thing typed or said, right, with no hints.
+Gaps count from the item's previous session of any kind, so they measure time truly away.
+
+| Stage | Stone | Rule |
+|---|---|---|
+| Recited | — | Every part typed in full with no hints at its lesson |
+| Remembered | Amethyst | Unaided on a later day (after a night's sleep) |
+| Memorized | Topaz | Unaided on 3 different days |
+| Lasting | Carnelian | Unaided after 3+ weeks away |
+| Long-term | Emerald | Known 6 months; every full recall in a 6-month span right (2+), one after 2+ months away |
+| Enduring | Sapphire | Known a year; unaided after 6+ months away |
+| Lifelong | Diamond | Known 3 years; unaided after a year away |
+
+Basis: delayed unaided recall is the standard test of long-term retention; spacing and successive relearning
+(Cepeda et al. 2008; Rawson & Dunlosky) keep it; Bahrick (1984) found that what survives the first 3–6 years
+stays for decades, so Diamond asks for recall after a year away, three years on.
+
+**Understanding.** Learned (answered what it means) → Understood (explained in your own words, self-checked
+against the notes; `explained` in progress) → Mastered (also every related verse recalled from memory).
+Only items with meaning notes have this track. Self-explanation (Chi) is the basis: understanding shows in
+explaining, not in recognizing a right answer.

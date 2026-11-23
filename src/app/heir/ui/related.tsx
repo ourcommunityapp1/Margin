@@ -2,13 +2,13 @@
 
 // An item's related verses: each can be practiced by typing it from memory. The text isn't stored in the app: it's
 // fetched from the verse service when a learner opens one, and kept only on their own phone for next time.
-// Recalling them all, on top of Sapphire, earns Diamond.
+// Recalling them all, once it's understood, makes it Mastered.
 
 import { useState } from 'react';
 import { useHeir } from './provider';
 import { activeMember } from '@/heir/household';
 import { memberProgress, recallRelated } from '@/heir/progress';
-import { settle } from '@/heir/levels';
+import { settle, understanding } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { relatedFor, verseCount } from '@/heir/related';
 import { sameWords } from '@/heir/words';
@@ -80,7 +80,7 @@ export function RelatedVerses({ item }: { item: Item }) {
   if (!me || !passages.length) return null;
   const mine = memberProgress(progress, me.id);
   const done = passages.filter((p) => mine.related?.[p]).length;
-  const level = mine.levels[item.id] ?? 0;
+  const u = understanding(item, mine);
 
   const recalled = (passage: string) => {
     const at = new Date();
@@ -95,7 +95,7 @@ export function RelatedVerses({ item }: { item: Item }) {
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--muted)' }}>{done} of {passages.length} recalled</span>
       </span>
       <span style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--muted)' }}>
-        {level >= 6 ? 'Diamond: you know this and everything it rests on.' : level >= 5 ? 'Recall each one from memory to earn Diamond.' : 'Recall each one from memory. Diamond comes once this has reached Sapphire, too.'}
+        {u >= 3 ? 'Mastered: you understand this and know everything it rests on.' : u === 2 ? 'Recall each one from memory to master it.' : 'Recall each one from memory. Once you’ve also explained it in your own words, it’s mastered.'}
       </span>
       {passages.map((p) => {
         const ok = !!mine.related?.[p];
