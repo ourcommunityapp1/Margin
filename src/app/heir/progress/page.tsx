@@ -13,7 +13,7 @@ import { allItems, courseItems, courses, itemLabel } from '@/heir/content';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { activeMember } from '@/heir/household';
-import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, shelf, understanding } from '@/heir/levels';
+import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, recited, understanding } from '@/heir/levels';
 import { milestones, wordsIn, wordsRecitedThisWeek } from '@/heir/measures';
 import { localDay, memberProgress } from '@/heir/progress';
 
@@ -40,7 +40,10 @@ export default function Progress() {
   const today = localDay(now);
   const kept = daysKept(mine.days, today);
   const best = Math.max(kept, bestDaysKept(mine.days));
-  const stones = shelf(items, mine);
+  // Each stone keeps the ones below it: an item at Topaz also counts toward Amethyst. So counts fall as you climb.
+  const levelOf = (id: string) => mine.levels[id] ?? 0;
+  const recitedCount = items.filter((i) => levelOf(i.id) > 0 || recited(i, me.track, mine.log)).length;
+  const holding = LEVELS.map((l) => items.filter((i) => levelOf(i.id) >= l.n).length);
   // Understanding, counted over items that have meaning notes: how many at each step or beyond.
   const withNotes = items.filter((i) => i.meaning.length);
   const grasp = UNDERSTANDING.map((u) => withNotes.filter((i) => understanding(i, mine) >= u.n).length);
@@ -158,15 +161,19 @@ export default function Progress() {
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <span className="hr-label">Stones</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Each question’s highest level</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>All courses · {recitedCount} recited</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', rowGap: 16, columnGap: 8 }}>
-            {LEVELS.map((l, i) => (
-              <div key={l.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, textAlign: 'center' }}>
-                <Stone level={l.n} size={44} dim={stones[i] === 0} />
-                <span style={{ fontSize: 17, fontWeight: 700 }}>{stones[i]}</span>
-                <span style={{ fontSize: 12.5, fontWeight: 600 }}>{l.name}</span>
-                <span style={{ fontSize: 12, color: 'var(--muted)', marginTop: -4 }}>{l.counts}</span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {[{ n: 0, name: STAGES[0].name, word: 'No stone yet', count: recitedCount, color: STAGE_COLORS[0] },
+              ...LEVELS.map((l, i) => ({ n: l.n, name: l.name, word: l.counts, count: holding[i], color: STAGE_COLORS[l.n] }))].map((r) => (
+              <div key={r.name} className="hr-stone-row">
+                <Stone level={r.n} size={36} dim={r.n > 0 && r.count === 0} />
+                <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  <span style={{ fontWeight: 600, fontSize: 15 }}>{r.name}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{r.word}</span>
+                </span>
+                <span className="hr-ladder-bar"><span style={{ width: `${recitedCount ? (r.count / recitedCount) * 100 : 0}%`, background: r.color }} /></span>
+                <span className="hr-ladder-n" style={{ fontSize: 15 }}>{r.count}</span>
               </div>
             ))}
           </div>

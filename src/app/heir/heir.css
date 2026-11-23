@@ -1054,6 +1054,7 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-ladder-row { display: grid; grid-template-columns: 92px 1fr auto; align-items: center; gap: 10px; }
 .hr-ladder-name { font-size: 13px; font-weight: 600; color: var(--muted); }
 .hr-ladder-n { font-size: 13px; font-weight: 600; min-width: 2.5em; text-align: right; font-variant-numeric: tabular-nums; }
+.hr-stone-row { display: grid; grid-template-columns: 36px 96px 1fr auto; align-items: center; gap: 10px; }
 .hr-ladder-bar { display: block; height: 10px; border-radius: 5px; background: var(--well); overflow: hidden; }
 .hr-ladder-bar > span { display: block; height: 100%; border-radius: 5px; min-width: 0; transition: width 0.6s ease; }
 .hr-miles { display: flex; flex-wrap: wrap; gap: 8px; }
