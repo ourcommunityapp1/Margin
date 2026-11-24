@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...allGuides().map((g) => page(`/guides/${g.slug}`, 0.8)),
     ...PASSAGES.map((p) => page(`/memorize/${p.slug}`, 0.8)),
     page('/about', 0.5),
+    page('/privacy', 0.3),
     ...courseItems(getCourse('westminster-shorter')!).map((i) => page(`/westminster-shorter-catechism/${i.number}`, 0.7, 'yearly')),
   ];
 }

@@ -23,7 +23,7 @@ function Row({ href, title, sub }: { href: string; title: string; sub: string })
 }
 
 export function YouScreen() {
-  const { ready, household, accounts, email, sync, signOut, updateProgress, labs } = useHeir();
+  const { ready, household, accounts, email, sync, signOut, updateProgress } = useHeir();
   const [armed, setArmed] = useState(false);
   const [cleared, setCleared] = useState(false);
   if (!ready) return <main className="hr-page" aria-busy="true" />;
@@ -50,7 +50,7 @@ export function YouScreen() {
           </header>
         )}
         <section className="hr-card" style={{ padding: '4px 20px' }} aria-label="Settings">
-          {labs && accounts && email && <Row href="/heir/profile" title="Your profile" sub="Name, username, city, who can find you" />}
+          {accounts && email && <Row href="/heir/profile" title="Your profile" sub="Name, username, city, who can find you" />}
           <Row href="/heir/plan" title="Course and daily goal" sub={course ? `${course.title} · ${household.plan?.minutes ?? 15} min a day` : 'Choose a course'} />
           <Row href="/heir/family" title="Family" sub={others > 0 ? `You and ${others} more on this phone` : 'Just you · add someone'} />
           {accounts && email && <Row href="/heir/linked" title="Linked accounts" sub="See a family member’s progress, view only" />}

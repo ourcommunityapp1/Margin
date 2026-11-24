@@ -14,8 +14,8 @@ const FRIENDS_TAB = { href: '/heir/friends', label: 'Friends', icon: <><circle c
 
 export function Tabs() {
   const path = usePathname();
-  const { labs, accounts, email } = useHeir();
-  const tabs = labs && accounts && email ? [...TABS, FRIENDS_TAB] : TABS;
+  const { accounts, email } = useHeir();
+  const tabs = accounts && email ? [...TABS, FRIENDS_TAB] : TABS;
   const current = (href: string) => (href === '/heir' ? path === '/heir' : path.startsWith(href) || (href === '/heir/friends' && (path.startsWith('/heir/u') || path.startsWith('/heir/profile'))));
   return (
     <nav className="hr-tabs" aria-label="Main">

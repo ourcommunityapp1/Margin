@@ -196,6 +196,7 @@ export const getProfile = (db: SupabaseClient) => call<MyProfile | null>(db, 'he
 export const usernameFree = (db: SupabaseClient, name: string) => call<boolean>(db, 'heir_username_free', { p_name: name });
 export const saveProfile = (db: SupabaseClient, p: { first: string; last: string; username: string; city: string; region: string; discoverable: boolean; fof: boolean; ageOk: boolean }) =>
   call<MyProfile>(db, 'heir_profile_save', { p_first: p.first, p_last: p.last, p_username: p.username, p_city: p.city, p_region: p.region, p_discoverable: p.discoverable, p_fof: p.fof, p_age_ok: p.ageOk });
+export const deleteProfile = (db: SupabaseClient) => call<void>(db, 'heir_profile_delete');
 export const searchPeople = (db: SupabaseClient, q: string) => call<Person[]>(db, 'heir_search', { p_q: q });
 export const viewPerson = (db: SupabaseClient, username: string) => call<Person | null>(db, 'heir_profile_view', { p_username: username });
 export const listFriends = (db: SupabaseClient) => call<FriendRow[]>(db, 'heir_friends_list');

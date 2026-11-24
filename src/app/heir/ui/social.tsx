@@ -1,6 +1,6 @@
 'use client';
 
-// Friends: your profile, search, requests, your friends and a friend's profile. Shown only to the owner for now (labs).
+// Friends: your profile, search, requests, your friends and a friend's profile.
 // The database decides what each person may see; these screens only show what it returns.
 
 import Link from 'next/link';
@@ -10,7 +10,7 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import {
   answerRequest, blockPerson, cancelRequest, cloud, getProfile, listFriends, listRequests, reportPerson, saveProfile, searchPeople, sendRequest,
-  unfriend, usernameFree, viewPerson, type FriendRow, type MyProfile, type Person, type RequestRow,
+  deleteProfile, unfriend, usernameFree, viewPerson, type FriendRow, type MyProfile, type Person, type RequestRow,
 } from './cloud';
 import { courseFor } from '@/heir/content';
 import { LEVELS } from '@/heir/levels';
@@ -32,20 +32,20 @@ function Blocked({ children }: { children: React.ReactNode }) {
 
 /** Wraps a screen: not for everyone yet, needs an account, and loads the signed-in person's profile. */
 function useProfile() {
-  const { ready, accounts, email, labs } = useHeir();
+  const { ready, accounts, email } = useHeir();
   const [profile, setProfile] = useState<MyProfile | null | undefined>(undefined);
   const reload = useCallback(() => {
     const db = cloud();
     if (!db) return;
     getProfile(db).then((p) => setProfile(p ?? null)).catch(() => setProfile(null));
   }, []);
-  useEffect(() => { if (ready && accounts && email && labs) reload(); }, [ready, accounts, email, labs, reload]);
-  return { ready, accounts, email, labs, profile, reload, setProfile };
+  useEffect(() => { if (ready && accounts && email) reload(); }, [ready, accounts, email, reload]);
+  return { ready, accounts, email, profile, reload, setProfile };
 }
 
 function Gate({ children, g }: { children: React.ReactNode; g: ReturnType<typeof useProfile> }) {
   if (!g.ready) return <main className="hr-page" aria-busy="true" />;
-  if (!g.labs || !g.accounts || !g.email) return <Blocked><p className="serif" style={{ margin: 0, fontSize: 24 }}>Friends isn’t switched on yet.</p><Link className="hr-btn" href="/heir">Back to Today</Link></Blocked>;
+  if (!g.accounts || !g.email) return <Blocked><p className="serif" style={{ margin: 0, fontSize: 24 }}>Sign in to find friends and keep your progress on every phone.</p><Link className="hr-btn" href="/heir/signin?next=%2Fheir%2Ffriends">Sign in</Link></Blocked>;
   return <>{children}</>;
 }
 
@@ -59,6 +59,8 @@ export function ProfileScreen() {
   const [availNote, setAvailNote] = useState('');
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [saved, setSaved] = useState(false);
   const { household } = useHeir();
+  const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const filled = useRef(false);
 
   useEffect(() => {
@@ -100,6 +102,11 @@ export function ProfileScreen() {
       g.setProfile(p); setSaved(true);
     } catch (e) { setError((e as Error).message); }
     setBusy(false);
+  };
+  const removeProfile = async () => {
+    const db = cloud();
+    if (!db) return;
+    try { await deleteProfile(db); router.push('/heir/you'); } catch (e) { setError((e as Error).message); setConfirmDelete(false); }
   };
   const ready = first.trim() && last.trim() && !usernameProblem(username) && avail !== 'taken' && (!creating || ageOk);
 
@@ -148,6 +155,22 @@ export function ProfileScreen() {
             {error && <p role="alert" style={{ margin: '0 4px', color: 'var(--miss)', fontSize: 15 }}>{error}</p>}
             {saved && <p role="status" style={{ margin: '0 4px', color: 'var(--good)', fontSize: 15 }}>Saved.</p>}
             <button type="button" className="hr-btn" disabled={!ready || busy} onClick={save}>{busy ? 'Saving…' : creating ? 'Make my profile' : 'Save'}</button>
+            <p style={{ margin: '0 4px', fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>Your name, username and place are what friends and search can see. Read <Link href="/privacy" style={{ color: 'inherit' }}>how Katekize uses them</Link>.</p>
+            {!creating && (
+              <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {!confirmDelete ? (
+                  <button type="button" className="hr-btn" style={{ background: 'transparent', color: 'var(--miss)' }} onClick={() => setConfirmDelete(true)}>Delete my profile</button>
+                ) : (
+                  <>
+                    <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>Delete your profile? You’ll disappear from search, and your friendships and requests end. Your lessons and progress are not touched.</p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      <button type="button" className="hr-btn" style={{ background: 'var(--well)', color: 'var(--ink)' }} onClick={() => setConfirmDelete(false)}>Keep it</button>
+                      <button type="button" className="hr-btn" style={{ background: 'var(--miss)', color: 'var(--card)' }} onClick={removeProfile}>Delete</button>
+                    </div>
+                  </>
+                )}
+              </section>
+            )}
           </>
         )}
       </main>

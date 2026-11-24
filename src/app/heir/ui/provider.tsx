@@ -268,10 +268,10 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     });
   }, [updateProgress]);
 
-  // For the owner (labs): after progress settles, send the numbers friends see. The database ignores this until a profile exists.
+  // After progress settles, send the numbers friends see. The database ignores this until a profile exists.
   const lastSent = useRef('');
   useEffect(() => {
-    if (!db || !email || !userId || !LABS.includes(userId) || !ready) return;
+    if (!db || !email || !userId || !ready) return;
     const adult = household.members.find((m) => m.track === 'adult');
     const mine = adult ? progress[adult.id] : undefined;
     if (!adult || !mine) return;
