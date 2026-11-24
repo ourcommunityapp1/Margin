@@ -1,6 +1,6 @@
 # Katekize Friends: review, product rules and architecture
 
-Status: plan for review, Nov 24 2026. Nothing here is built yet. Mockups: the "Katekize Friends" page.
+Status: plan approved Nov 24 2026 (decisions in §3). Nothing here is built yet. Mockups: the "Katekize Friends" page.
 
 Version 1 is profiles, friends, one community leaderboard ranked by words in memory, and words that can leave
 memory (with grace). Challenges, groups and category boards come later and are not designed for here beyond
@@ -45,14 +45,14 @@ Found by reading the mockups against each other and against the code and databas
 | P10 | An earlier mockup had "Show Ireland to my friends". Children are out of v1. | Removed. Children never appear in social anything. |
 | P11 | Pending friend requests last forever; "Sent" would show for months. | Requests expire after 30 days. |
 | P12 | "Nearly" (up to 2 wrong words) is shown counting for keeping, but stones today require every word right. Not decided whether "nearly" earns stones. | Decision D-2: keeping yes, stones no. |
-| P13 | Streak grace (one rest day a week) is still open, and friends will see streaks. | Decision D-5. |
+| P13 | Streak grace (one rest day a week) was still open, and friends will see streaks. | Decided (D-5): one rest day a week. |
 | P14 | Content isn't final (0 of 140 items approved). Approving or editing an item changes its word count, which changes everyone's number and order. | Content version stamp; recompute on change (§5.6). |
 | P15 | No account deletion and no privacy policy covering public names, usernames and search. | Required before public launch (§9). |
 | P16 | The animation needs to know where the other rows were before, not just your old rank. | The board function returns each row's previous place (§4.6). |
 
 ---
 
-## 2. Product rules for v1 (final, pending the decisions in §3)
+## 2. Product rules for v1 (final, decisions in §3)
 
 ### 2.1 Profiles
 - One profile per account, opt-in from You › Your profile. It points at one **adult** person in your household
@@ -67,7 +67,7 @@ Found by reading the mockups against each other and against the code and databas
 - Creating a profile asks you to confirm you're 13 or older.
 
 ### 2.2 Search
-- Searches discoverable profiles by username, first name, and first + last name (see D-3), ranked: friends of friends
+- Searches discoverable profiles by username, first name, and first + last name (D-3: last name included), ranked: friends of friends
   first, then exact username, then name. Max 20 results. Never returns blocked people (either direction) or yourself.
 - Limited to 30 searches a minute per account (stops scraping).
 
@@ -121,7 +121,7 @@ courses with progress, and their friends list. Never answers, mistakes, timings 
 - **Rule 2, wrong? try again tomorrow:** a recall with a hint, or more than the allowed mistakes, keeps the words in
   your count until the end of the next day (your time zone). Right by then: nothing changes. Not: the words leave.
 - **Allowed mistakes ("Nearly"):** up to 2 wrong or missing words (1 for items under 12 words), on top of the slips
-  grading already forgives. Counts for keeping; does not earn stones (D-2).
+  grading already forgives. Counts for keeping; does not earn stones (D-2, decided).
 - **Coming back:** one correct recall puts the words back; the window starts again.
 - **Stones never go down.** A stone whose verse is out of memory shows dimmed.
 - **Launch grace:** nothing leaves anyone's count during the first 30 days after this ships.
@@ -129,7 +129,11 @@ courses with progress, and their friends list. Never answers, mistakes, timings 
   after a wrong answer it's due the next day.
 - **Milestones and awards** already reached stay reached even if the number drops.
 
-### 2.7 Today and the review picker
+### 2.7 Streak
+A streak counts days in a row with a lesson. One missed day in any Monday-to-Sunday week is a rest day and doesn't
+break it (shown on the calendar); a second missed day in the same week ends it. The server computes it in your time zone.
+
+### 2.8 Today and the review picker
 - Today, below your course card, at most two cards, in this order: **Try again** (yesterday's misses) and **Review**
   (everything whose window ends within 14 days, across all courses). Label "Community" if you have a community,
   "Your memory" if not.
@@ -138,17 +142,17 @@ courses with progress, and their friends list. Never answers, mistakes, timings 
 
 ---
 
-## 3. Decisions for you
+## 3. Decisions (made Nov 24)
 
-| | Decision | Recommendation |
+| | Decision | Answer |
 |---|---|---|
-| D-1 | Top-stone windows | 90 / 240 / 425 days as above (or a flat 90 and redefine Enduring and Lifelong) |
-| D-2 | Does "Nearly" earn stones? | No. Keeping, yes. Stones keep meaning "word for word". |
-| D-3 | Search by last name? | Yes for discoverable profiles (people expect to find "Sarah Kessler"), accepting that a match confirms the last name. Alternative: username and first name only. |
-| D-4 | Friends of friends on the board by default | On, with the switch to turn it off. |
-| D-5 | Streak rest day | One rest day a week, decided before friends can see streaks. |
-| D-6 | Supabase plan | Pro before launch: daily backups, no pausing, 8 GB. |
-| D-7 | Minimum age for a profile | 13, confirmed at profile creation. |
+| D-1 | Top-stone windows | **Yes:** 90 days, 240 at Emerald, 425 at Sapphire and Diamond |
+| D-2 | "Nearly" (up to 2 small mistakes) | **Keeps words, doesn't earn stones** |
+| D-3 | Search by last name | **Yes**, for discoverable profiles; a match confirms the last name |
+| D-4 | Friends of friends on the board | **On by default**, with the switch to turn it off |
+| D-5 | Streak rest day | **One rest day a week** (Monday to Sunday) doesn't break a streak; a second missed day does |
+| D-6 | Supabase Pro plan | **Not yet.** Stay on the current plan while everything is behind the owner-only flag. Revisit before anyone else sees social features (Phase 4). Until then: keep an eye on database size and keep a recent export of the database. |
+| D-7 | Minimum age for a profile | **13**, confirmed when the profile is created |
 
 ---
 
@@ -347,7 +351,7 @@ with server receive times makes faking hard and visible, not impossible; the app
 | Username squatting or abuse | Impersonation, slurs | Reserved and blocked lists, 30-day change limit, report |
 | Removing a person | Social numbers vanish; old data loss bug | Soft delete with 30-day window; profile member set to null with a prompt |
 | Request spam | Harassment | Daily cap, 30-day cooldown, block |
-| Supabase free plan | Pausing, no backups, storage limit | Pro plan (D-6) |
+| Supabase free plan | Pausing, no backups, storage limit | Deferred (D-6): fine while only you use it; Pro plan required before Phase 4 |
 | Migration drift | Failed deploys | Reconcile history with the Supabase CLI before the first social migration |
 | Free-text names | Offensive names | Blocked-word check on save; report |
 | Account deletion | Orphans or privacy complaints | All social tables cascade from `auth.users`; add Delete account |
@@ -357,7 +361,7 @@ with server receive times makes faking hard and visible, not impossible; the app
 ## 6. Build order
 
 **Phase 0, foundations (no visible change):**
-1. Reconcile migration history; install pg_trgm, citext, pg_cron, pg_net; Pro plan.
+1. Reconcile migration history; install pg_trgm, citext, pg_cron, pg_net. (Pro plan deferred, D-6.)
 2. `heir_answers`; backfill from every `heir_progress` log (ids derived from member, time, item, kind and position);
    the phone writes answers alongside the blob.
 3. Per-item keep record, `misses` from grading, `local_day`, time zone in sync.
@@ -373,7 +377,7 @@ links, Friends tab, friend profile, You page changes.
 **Phase 3, keeping words (labs, then everyone with the 30-day grace):** keep rules on, scheduler clamp, Today cards,
 `/heir/keep`, Progress breakdown, dimmed stones, How it's counted text.
 
-**Phase 4, everyone:** privacy policy, Delete account, What's new, remove the labs gate.
+**Phase 4, everyone:** Pro plan (D-6), privacy policy, Delete account, What's new, remove the labs gate.
 
 ---
 
@@ -381,7 +385,7 @@ links, Friends tab, friend profile, You page changes.
 
 - **Unit (node test, alongside the 73 existing):** keep rules at each boundary (day 75/76/90, window by stone, try
   again across midnight and time zones, nearly counts, launch grace); window selection for every community size and
-  rank; ties; movement with and without community changes; name display; username rules; scheduler clamp.
+  rank; ties; movement with and without community changes; streak with one rest day a week (and a second miss ending it); name display; username rules; scheduler clamp.
 - **Same numbers both sides:** fixtures run through the phone's functions and the stats route must match exactly.
 - **Database (run against a Supabase branch):** a stranger can't read a last name; a friend of a friend can't read
   streak or stones; blocked users vanish from search, board and profiles both ways; nobody can write `heir_stats`;
