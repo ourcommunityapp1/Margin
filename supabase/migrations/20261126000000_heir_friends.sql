@@ -164,9 +164,9 @@ begin
 end $$;
 
 -- "Sarah K." for strangers, "Sarah Kessler" for friends and for yourself.
-create or replace function public.heir_display(p public.heir_profiles, full boolean) returns text
+create or replace function public.heir_display(p public.heir_profiles, show_full boolean) returns text
 language sql immutable as $$
-  select case when full then p.first_name || ' ' || p.last_name else p.first_name || ' ' || upper(left(p.last_name, 1)) || '.' end
+  select case when show_full then p.first_name || ' ' || p.last_name else p.first_name || ' ' || upper(left(p.last_name, 1)) || '.' end
 $$;
 
 create or replace function public.heir_mutual(a uuid, b uuid) returns integer
@@ -186,7 +186,7 @@ begin
   if auth.uid() is null then raise exception 'Sign in first.'; end if;
   perform public.heir_rate('username_check', 60, interval '1 minute');
   if public.heir_username_ok(btrim(p_name)) is not null then return false; end if;
-  return not exists (select 1 from public.heir_profiles where username = btrim(p_name) and user_id <> auth.uid());
+  return not exists (select 1 from public.heir_profiles where username = btrim(p_name)::extensions.citext and user_id <> auth.uid());
 end $$;
 
 create or replace function public.heir_profile_save(
@@ -207,7 +207,7 @@ begin
       raise exception 'You can change your username once every 30 days.';
     end if;
   end if;
-  if exists (select 1 from public.heir_profiles where username = uname and user_id <> me) then raise exception 'That username is taken.'; end if;
+  if exists (select 1 from public.heir_profiles where username = uname::extensions.citext and user_id <> me) then raise exception 'That username is taken.'; end if;
   -- The profile is for an adult in this account's own family (never a child).
   select m.id into mem from public.heir_members m join public.heir_households h on h.id = m.household_id
     where h.owner_id = me and m.track = 'adult' and m.deleted_at is null order by (m.id = old.member_id) desc nulls last, m.created_at limit 1;
@@ -248,7 +248,7 @@ end $$;
 -- ---------------------------------------------------------------------------------------------------- search and view
 create or replace function public.heir_search(p_q text) returns jsonb
 language plpgsql security definer set search_path = public, extensions as $$
-declare me uuid := auth.uid(); q text := lower(btrim(coalesce(p_q, ''))); ql text; out jsonb;
+declare me uuid := auth.uid(); q text := lower(btrim(coalesce(p_q, ''))); ql text; found_rows jsonb;
 begin
   if me is null then raise exception 'Sign in first.'; end if;
   if not exists (select 1 from public.heir_profiles where user_id = me) then raise exception 'Make your profile first.'; end if;
@@ -256,7 +256,7 @@ begin
   if char_length(q) < 2 or char_length(q) > 40 then return '[]'::jsonb; end if;
   perform public.heir_rate('search', 30, interval '1 minute');
   ql := replace(replace(replace(q, '\', '\\'), '%', '\%'), '_', '\_');
-  select coalesce(jsonb_agg(r order by (r->>'rank')::numeric desc), '[]'::jsonb) into out from (
+  select coalesce(jsonb_agg(r order by (r->>'rank')::numeric desc), '[]'::jsonb) into found_rows from (
     select jsonb_build_object(
       'username', p.username, 'name', public.heir_display(p, f.user_id is not null), 'city', p.city, 'region', p.region,
       'friends_count', p.friends_count, 'mutual', public.heir_mutual(me, p.user_id),
@@ -278,7 +278,7 @@ begin
            or lower(p.first_name || ' ' || p.last_name) like ql || '%' or extensions.similarity(lower(p.username::text), q) > 0.4)
     limit 20
   ) s;
-  return out;
+  return found_rows;
 end $$;
 
 create or replace function public.heir_profile_view(p_username text) returns jsonb
@@ -286,7 +286,7 @@ language plpgsql security definer set search_path = public, extensions as $$
 declare me uuid := auth.uid(); p public.heir_profiles; fr boolean; rel text; st public.heir_stats; since timestamptz; fl jsonb;
 begin
   if me is null then raise exception 'Sign in first.'; end if;
-  select * into p from public.heir_profiles where username = btrim(p_username);
+  select * into p from public.heir_profiles where username = btrim(p_username)::extensions.citext;
   if p.user_id is null or public.heir_blocked_either(me, p.user_id) then return null; end if;
   if p.user_id = me then fr := true; else fr := public.heir_is_friend(me, p.user_id); end if;
   select created_at into since from public.heir_friends where user_id = me and friend_id = p.user_id;
@@ -335,7 +335,7 @@ declare me uuid := auth.uid(); t public.heir_profiles; req public.heir_friend_re
 begin
   if me is null then raise exception 'Sign in first.'; end if;
   if not exists (select 1 from public.heir_profiles where user_id = me) then raise exception 'Make your profile first.'; end if;
-  select * into t from public.heir_profiles where username = btrim(p_username);
+  select * into t from public.heir_profiles where username = btrim(p_username)::extensions.citext;
   if t.user_id is null or t.user_id = me or public.heir_blocked_either(me, t.user_id) then raise exception 'We couldn''t find that person.'; end if;
   if public.heir_is_friend(me, t.user_id) then return 'friends'; end if;
   -- They already asked you: asking back makes you friends.
@@ -396,7 +396,7 @@ language plpgsql security definer set search_path = public, extensions as $$
 declare me uuid := auth.uid(); t uuid;
 begin
   if me is null then raise exception 'Sign in first.'; end if;
-  select user_id into t from public.heir_profiles where username = btrim(p_username);
+  select user_id into t from public.heir_profiles where username = btrim(p_username)::extensions.citext;
   if t is null then return; end if;
   delete from public.heir_friends where (user_id = me and friend_id = t) or (user_id = t and friend_id = me);
   perform public.heir_recount(me); perform public.heir_recount(t);
@@ -407,7 +407,7 @@ language plpgsql security definer set search_path = public, extensions as $$
 declare me uuid := auth.uid(); t uuid;
 begin
   if me is null then raise exception 'Sign in first.'; end if;
-  select user_id into t from public.heir_profiles where username = btrim(p_username);
+  select user_id into t from public.heir_profiles where username = btrim(p_username)::extensions.citext;
   if t is null or t = me then return; end if;
   insert into public.heir_blocks (blocker, blocked) values (me, t) on conflict do nothing;
   delete from public.heir_friends where (user_id = me and friend_id = t) or (user_id = t and friend_id = me);
@@ -420,7 +420,7 @@ create or replace function public.heir_unblock(p_username text) returns void
 language plpgsql security definer set search_path = public, extensions as $$
 begin
   if auth.uid() is null then raise exception 'Sign in first.'; end if;
-  delete from public.heir_blocks where blocker = auth.uid() and blocked = (select user_id from public.heir_profiles where username = btrim(p_username));
+  delete from public.heir_blocks where blocker = auth.uid() and blocked = (select user_id from public.heir_profiles where username = btrim(p_username)::extensions.citext);
 end $$;
 
 create or replace function public.heir_report(p_username text, p_reason text, p_note text) returns void
@@ -428,7 +428,7 @@ language plpgsql security definer set search_path = public, extensions as $$
 declare t uuid;
 begin
   if auth.uid() is null then raise exception 'Sign in first.'; end if;
-  select user_id into t from public.heir_profiles where username = btrim(p_username);
+  select user_id into t from public.heir_profiles where username = btrim(p_username)::extensions.citext;
   if t is null then return; end if;
   perform public.heir_rate('report', 10, interval '1 day');
   insert into public.heir_reports (reporter, reported, reason, note) values (auth.uid(), t, p_reason, nullif(left(coalesce(p_note, ''), 500), ''));
