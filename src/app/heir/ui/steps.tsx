@@ -12,7 +12,7 @@ import { getCollection, getItem, isVerse, itemLabel, itemNoun } from '@/heir/con
 import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
 // `slip`: right, but not cleanly (a spelling slip, a missed word), so the praise should be quieter.
-export interface Outcome { ok: boolean; close?: boolean; slip?: boolean; hints?: number; note?: string; reveal?: ReactNode }
+export interface Outcome { ok: boolean; close?: boolean; slip?: boolean; hints?: number; misses?: number; note?: string; reveal?: ReactNode }
 export type Report = (o: Outcome) => void;
 
 // Splits "God," into the word to type and the punctuation around it.
@@ -215,10 +215,10 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
     const missed = step.blanks.filter((i) => !right.includes(i) && !near.includes(i));
     const reveal = <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={step.lead} />{tokens.map((t, i) => <span key={i}>{step.blanks.includes(i) ? <strong>{t}</strong> : t}{' '}</span>)}</p>;
     if (!missed.length) {
-      onReport({ ok: true, slip: near.length > 0, hints, note: near.length ? `Check the spelling: ${quoteList(near.map((i) => tokens[i]))}.` : undefined, reveal: near.length ? reveal : undefined });
+      onReport({ ok: true, slip: near.length > 0, hints, misses: 0, note: near.length ? `Check the spelling: ${quoteList(near.map((i) => tokens[i]))}.` : undefined, reveal: near.length ? reveal : undefined });
       return;
     }
-    onReport({ ok: false, hints, close: missed.length === 1 && step.blanks.length > 1, note: `${plural(missed.length, 'The missing word was', 'The missing words were')} ${quoteList(missed.map((i) => tokens[i]))}.`, reveal });
+    onReport({ ok: false, hints, misses: missed.length, close: missed.length === 1 && step.blanks.length > 1, note: `${plural(missed.length, 'The missing word was', 'The missing words were')} ${quoteList(missed.map((i) => tokens[i]))}.`, reveal });
   };
   const hint = () => {
     setHints((h) => h + 1);
@@ -282,7 +282,7 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
     reported.current = true;
     const allowed = Math.max(1, Math.floor(tokens.length / 10));
     const ok = m + h <= allowed;
-    onReport({ ok, slip: ok && m + h > 0, close: !ok && m + h <= allowed + 2, hints: h, note: m ? `${m} wrong ${plural(m, 'letter', 'letters')}${h ? `, ${h} ${plural(h, 'word', 'words')} shown` : ''}.` : h ? `${h} ${plural(h, 'word', 'words')} shown.` : undefined, reveal: m || h ? <Answer lead={step.lead} text={step.text} /> : undefined });
+    onReport({ ok, slip: ok && m + h > 0, close: !ok && m + h <= allowed + 2, hints: h, misses: m, note: m ? `${m} wrong ${plural(m, 'letter', 'letters')}${h ? `, ${h} ${plural(h, 'word', 'words')} shown` : ''}.` : h ? `${h} ${plural(h, 'word', 'words')} shown.` : undefined, reveal: m || h ? <Answer lead={step.lead} text={step.text} /> : undefined });
   };
   const advance = (m: number, h: number) => {
     const n = shown + 1;
@@ -332,6 +332,7 @@ function scored(text: string, lead: string, said: string, pass: number, verb: st
   if (missing) notes.push(`${missing} ${plural(missing, 'word', 'words')} ${verb}${moved.length ? '' : '. They’re underlined'}.`);
   return {
     ok: r.score >= pass,
+    misses: missing + moved.length,
     slip: r.score >= pass && notes.length > 0,
     close: r.score < pass && r.score >= NEARLY,
     note: notes.join(' ') || undefined,

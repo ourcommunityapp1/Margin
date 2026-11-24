@@ -18,6 +18,15 @@ export interface LogEntry {
   hints: number;
   ms: number;
   review: boolean;
+  // Added Nov 2026, so answers can be kept one by one on the server. Older entries have none of these.
+  // `id`: unique per answer (the same answer is never stored twice; two answers in one lesson are never mistaken for one).
+  id?: string;
+  // The part of the item this answer was about ("wsc-1#2"); only set for text answers (type, say, letters, blanks).
+  part?: string;
+  // Words wrong or missing in a typed or spoken answer (0 for a perfect one).
+  misses?: number;
+  // The phone's local date when it was answered, so days are never worked out in another time zone.
+  day?: string;
 }
 
 export interface MemberProgress {
@@ -55,6 +64,8 @@ export const memberProgress = (p: Progress, memberId: string | null | undefined)
 export interface StepResult {
   itemId: string;
   kind: StepKind;
+  part?: string;
+  misses?: number;
   // Right on the first try.
   correct: boolean;
   hints: number;
@@ -108,7 +119,7 @@ export function waitingForSleep(p: MemberProgress, itemId: string, now: Date): b
   return !!c && c.state === State.New && Date.parse(c.due) > now.getTime();
 }
 
-export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date }): MemberProgress {
+export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date; newId?: () => string }): MemberProgress {
   const newUnits = o.learned ? (Array.isArray(o.learned) ? o.learned : [o.learned]) : [];
   const cards = { ...p.cards };
   const byItem = new Map<string, StepResult[]>();
@@ -130,6 +141,7 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   }
   const at = o.now.toISOString();
   const day = localDay(o.now);
+  const newId = o.newId ?? (() => crypto.randomUUID());
   return {
     units: [...p.units, ...newUnits.map((u) => u.key).filter((k) => !p.units.includes(k))],
     checkpoints: o.checkpoint && !p.checkpoints.includes(o.checkpoint) ? [...p.checkpoints, o.checkpoint] : p.checkpoints,
@@ -139,7 +151,7 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     levels: p.levels,
     awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
-    log: [...p.log, ...o.results.map((r) => ({ ...r, at }))].slice(-1500),
+    log: [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day }))].slice(-1500),
   };
 }
 
@@ -247,7 +259,9 @@ function mergeRecord<T>(a: Record<string, T>, b: Record<string, T>, pick: (x: T,
   return out;
 }
 
-const logKey = (e: LogEntry) => `${e.at}|${e.itemId}|${e.kind}|${e.review ? 1 : 0}`;
+// An answer with an id is itself; an older one (no id) is told apart by when, what and how, which is why two older answers
+// of the same kind to the same question in one lesson were once taken for one.
+const logKey = (e: LogEntry) => e.id ?? `${e.at}|${e.itemId}|${e.kind}|${e.review ? 1 : 0}`;
 
 export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgress {
   const log = new Map<string, LogEntry>();

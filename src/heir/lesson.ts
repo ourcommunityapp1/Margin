@@ -94,7 +94,7 @@ export function lockInsWaiting(items: Item[], isWaiting: (itemId: string) => boo
 
 export type StepKind = 'intro' | 'order' | 'meaning' | 'blanks' | 'letters' | 'say' | 'type' | 'next' | 'match' | 'spot' | 'info' | 'quiz' | 'verse';
 
-interface Base { id: string; itemId: string; review: boolean }
+interface Base { id: string; itemId: string; review: boolean; part?: string }
 // `lead` is the piece that comes just before the words being practiced, shown as the start of the answer.
 export type Step =
   | (Base & { kind: 'intro'; unit: Unit })
@@ -282,7 +282,7 @@ function spotStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null 
 
 function textStep(c: Ctx, kind: 'blanks' | 'letters' | 'say' | 'type', item: Item, unit: Unit, review: boolean, blankShare = 0.3): Step {
   const { text, lead } = unitText(item, c.track, unit);
-  const base = { id: nextId(c, kind, item.id), itemId: item.id, review, text, lead };
+  const base = { id: nextId(c, kind, item.id), itemId: item.id, review, text, lead, part: unit.key };
   if (kind === 'blanks') return { ...base, kind, blanks: pickBlanks(text, blankShare, review ? 6 : 4, c.rng) };
   return { ...base, kind };
 }
