@@ -1,5 +1,7 @@
 # Katekize on the App Store: plan
 
+> **Superseded (2026-11-25)** by the Flutter plan in [docs/app/README.md](../app/README.md). Kept for the reasoning about store requirements.
+
 Status: plan, 2026-11-25. Nothing built yet.
 
 ## The approach
