@@ -184,18 +184,26 @@ export function shelf(items: Item[], p: MemberProgress): number[] {
   return out;
 }
 
-// ---- Days kept: Sunday is a day of rest. Learning on Sunday counts; skipping it never breaks the run.
+// ---- Days kept: Sunday is a day of rest, and each week (Monday to Sunday) has one more free day. Learning on those days
+// counts; skipping one never breaks the run. A second skipped day in the same week does.
 
 const isSunday = (day: string) => { const [y, m, d] = day.split('-').map(Number); return new Date(y, m - 1, d).getDay() === 0; };
 const prevDay = (day: string) => { const [y, m, d] = day.split('-').map(Number); return localDay(new Date(y, m - 1, d - 1)); };
+// The Monday that starts the week a day is in.
+const weekOf = (day: string) => { const [y, m, d] = day.split('-').map(Number); const w = new Date(y, m - 1, d); return localDay(new Date(y, m - 1, d - ((w.getDay() + 6) % 7))); };
 
 export function daysKept(days: string[], today: string): number {
   const set = new Set(days);
   let d = set.has(today) ? today : prevDay(today);
+  const freeUsed = new Set<string>();
   let n = 0;
   for (let guard = 0; guard < 4000; guard++) {
     if (set.has(d)) n++;
-    else if (!isSunday(d)) break;
+    else if (!isSunday(d)) {
+      const week = weekOf(d);
+      if (freeUsed.has(week)) break;
+      freeUsed.add(week);
+    }
     d = prevDay(d);
   }
   return n;

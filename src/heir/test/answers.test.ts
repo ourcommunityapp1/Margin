@@ -86,3 +86,17 @@ test('merging takes the latest right and latest missed recall from either copy, 
   assert.deepEqual(mergeProgress(b, a).keep, m.keep);
   assert.deepEqual(parseProgress(JSON.stringify({ m1: m })).m1.keep, m.keep);
 });
+
+test('the keep record also notes a whole-item recall: every part of the item right in one lesson', () => {
+  const parts = (n: number) => Array.from({ length: n }, (_, i) => res('wsc-9', 'type', { part: `wsc-9#${i + 1}`, of: 3 }));
+  const two = updateKeep(undefined, parts(2), '2026-11-20T10:00:00.000Z');
+  assert.equal(two['wsc-9'].good, '2026-11-20T10:00:00.000Z');
+  assert.equal(two['wsc-9'].full, undefined, 'two of three parts is not the whole item');
+  assert.equal(updateKeep(undefined, parts(3), '2026-11-21T10:00:00.000Z')['wsc-9'].full, '2026-11-21T10:00:00.000Z');
+  const withMiss = updateKeep(undefined, [...parts(2), res('wsc-9', 'say', { part: 'wsc-9#3', of: 3, correct: false })], '2026-11-22T10:00:00.000Z');
+  assert.equal(withMiss['wsc-9'].full, undefined);
+  assert.equal(withMiss['wsc-9'].miss, '2026-11-22T10:00:00.000Z');
+  assert.equal(updateKeep(undefined, [res('fv-1', 'say', { part: 'fv-1#1', of: 1 })], '2026-11-23T10:00:00.000Z')['fv-1'].full, '2026-11-23T10:00:00.000Z', 'a one-part item is whole by itself');
+  const m = mergeProgress({ ...emptyProgress(), keep: { x: { good: '2026-11-01T00:00:00Z', full: '2026-11-01T00:00:00Z' } } }, { ...emptyProgress(), keep: { x: { good: '2026-11-02T00:00:00Z' } } });
+  assert.deepEqual(m.keep, { x: { good: '2026-11-02T00:00:00Z', full: '2026-11-01T00:00:00Z' } });
+});

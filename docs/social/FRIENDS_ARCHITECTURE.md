@@ -130,8 +130,8 @@ courses with progress, and their friends list. Never answers, mistakes, timings 
 - **Milestones and awards** already reached stay reached even if the number drops.
 
 ### 2.7 Streak
-A streak counts days in a row with a lesson. One missed day in any Monday-to-Sunday week is a rest day and doesn't
-break it (shown on the calendar); a second missed day in the same week ends it. The server computes it in your time zone.
+A streak counts days in a row with a lesson. Sundays are rest days, and each Monday-to-Sunday week has one more free
+day (its first skipped weekday); a second skipped weekday in the same week ends it. The server computes it in your time zone.
 
 ### 2.8 Today and the review picker
 - Today, below your course card, at most two cards, in this order: **Try again** (yesterday's misses) and **Review**
@@ -150,7 +150,7 @@ break it (shown on the calendar); a second missed day in the same week ends it. 
 | D-2 | "Nearly" (up to 2 small mistakes) | **Keeps words, doesn't earn stones** |
 | D-3 | Search by last name | **Yes**, for discoverable profiles; a match confirms the last name |
 | D-4 | Friends of friends on the board | **On by default**, with the switch to turn it off |
-| D-5 | Streak rest day | **One rest day a week** (Monday to Sunday) doesn't break a streak; a second missed day does |
+| D-5 | Streak rest day | **Sunday plus one free day a week** (Monday to Sunday); a second skipped weekday in the same week ends the streak. Built. |
 | D-6 | Supabase Pro plan | **Not yet.** Stay on the current plan while everything is behind the owner-only flag. Revisit before anyone else sees social features (Phase 4). Until then: keep an eye on database size and keep a recent export of the database. |
 | D-7 | Minimum age for a profile | **13**, confirmed when the profile is created |
 
@@ -398,13 +398,14 @@ with server receive times makes faking hard and visible, not impossible; the app
 - Waiting on Phase 1: the `heir_stats` table, the refresh and sweep routes and the cron job. They need profiles to
   exist, and the server key added to Netlify (§9 setup).
 
-**Two findings while building this, to settle before Phase 3:**
-1. **Reviews ask for one random part of an item, never the whole item.** So the keep record is per item: a right typed
-   or said recall of any part keeps the item. Requiring every part would mean four or more reviews per catechism
-   answer inside 90 days. (Server-side, `heir_answers.part` allows a stricter rule later.)
-2. **The app already has a Sunday rest day** (skipping a Sunday never breaks days kept). Decision D-5 (one rest day a
-   week) therefore needs restating: keep Sunday free and add one more free day in any week, or Sunday only (what exists).
-   Friends will show the streak, so this should be settled first.
+**Two findings while building this, settled Nov 24:**
+1. **Whole verse or passage, eventually.** Reviews today ask for one random part of an item. The keeping rules will need
+   the whole item recalled (every part, in one review), so Phase 3 must change reviews to ask for whole items when a
+   verse or answer is due. The keep record already notes the last whole-item recall (`keep.full`: every part right in
+   one lesson), alongside the last right and last missed recall of any part.
+2. **Streak: Sunday plus one free day a week (done).** Sundays were already rest days. Each Monday-to-Sunday week now
+   also has one free day: the first skipped weekday never breaks the run, a second one does. Live in the app, shown on
+   the Today week strip as "Rest". Friends will see the same number.
 
 **Phase 1, profiles and friends (labs):** profiles, usernames, search, requests, friends, block, report, invite
 links, Friends tab, friend profile, You page changes.

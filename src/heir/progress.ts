@@ -57,7 +57,9 @@ export interface MemberProgress {
   keep?: Record<string, Keep>;
 }
 
-export interface Keep { good?: string; miss?: string }
+// `good`/`miss`: last time any part was recalled right / not. `full`: last time every part of the item was recalled right in
+// one lesson (the whole verse or answer): the recall the keeping rules will eventually ask for.
+export interface Keep { good?: string; miss?: string; full?: string }
 
 export type Progress = Record<string, MemberProgress>;
 
@@ -70,6 +72,8 @@ export interface StepResult {
   itemId: string;
   kind: StepKind;
   part?: string;
+  // How many parts the item has (so a lesson that recalled every part can be told from one that recalled one).
+  of?: number;
   misses?: number;
   // Right on the first try.
   correct: boolean;
@@ -166,12 +170,21 @@ const FULL_RECALL = new Set(['type', 'say']);
 /** Fold one lesson's typed and said answers into the keep record. */
 export function updateKeep(keep: Record<string, Keep> | undefined, results: StepResult[], at: string): Record<string, Keep> {
   const out = { ...keep };
+  const rightParts = new Map<string, { parts: Set<string>; of: number }>();
   for (const r of results) {
     if (!FULL_RECALL.has(r.kind)) continue;
     const k = { ...out[r.itemId] };
-    if (r.correct && !r.hints) k.good = latest(k.good, at); else k.miss = latest(k.miss, at);
+    if (r.correct && !r.hints) {
+      k.good = latest(k.good, at);
+      const w = rightParts.get(r.itemId) ?? { parts: new Set<string>(), of: r.of ?? 1 };
+      w.parts.add(r.part ?? '*');
+      w.of = Math.max(w.of, r.of ?? 1);
+      rightParts.set(r.itemId, w);
+    } else k.miss = latest(k.miss, at);
     out[r.itemId] = k;
   }
+  // Every part of an item right in one lesson is a whole-item recall (an item of one part is whole by itself).
+  for (const [itemId, w] of rightParts) if (w.parts.size >= w.of) out[itemId] = { ...out[itemId], full: latest(out[itemId].full, at) };
   return out;
 }
 
@@ -251,7 +264,7 @@ export function parseProgress(raw: string | null): Progress {
           ? { explained: Object.fromEntries(Object.entries(m.explained).filter(([, v]) => typeof v === 'string')) }
           : {}),
         ...(m.keep && typeof m.keep === 'object' && !Array.isArray(m.keep)
-          ? { keep: Object.fromEntries(Object.entries(m.keep).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [k, { ...(typeof v.good === 'string' ? { good: v.good } : {}), ...(typeof v.miss === 'string' ? { miss: v.miss } : {}) }])) }
+          ? { keep: Object.fromEntries(Object.entries(m.keep).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [k, { ...(typeof v.good === 'string' ? { good: v.good } : {}), ...(typeof v.miss === 'string' ? { miss: v.miss } : {}), ...(typeof v.full === 'string' ? { full: v.full } : {}) }])) }
           : {}),
       };
     }
@@ -303,7 +316,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
   const night = !a.night ? b.night : !b.night ? a.night : a.night.at >= b.night.at ? a.night : b.night;
   const related = a.related || b.related ? mergeRecord(a.related ?? {}, b.related ?? {}, (x, y) => earliest(x, y)!) : undefined;
   const explained = a.explained || b.explained ? mergeRecord(a.explained ?? {}, b.explained ?? {}, (x, y) => earliest(x, y)!) : undefined;
-  const keep = a.keep || b.keep ? mergeRecord(a.keep ?? {}, b.keep ?? {}, (x, y) => ({ ...(latest(x.good, y.good) ? { good: latest(x.good, y.good) } : {}), ...(latest(x.miss, y.miss) ? { miss: latest(x.miss, y.miss) } : {}) })) : undefined;
+  const keep = a.keep || b.keep ? mergeRecord(a.keep ?? {}, b.keep ?? {}, (x, y) => ({ ...(latest(x.good, y.good) ? { good: latest(x.good, y.good) } : {}), ...(latest(x.miss, y.miss) ? { miss: latest(x.miss, y.miss) } : {}), ...(latest(x.full, y.full) ? { full: latest(x.full, y.full) } : {}) })) : undefined;
   return {
     units: union(a.units, b.units),
     checkpoints: union(a.checkpoints, b.checkpoints),

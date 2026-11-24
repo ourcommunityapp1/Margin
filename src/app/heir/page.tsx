@@ -114,15 +114,18 @@ function DaysKept({ days, today, now, dueCount }: { days: string[]; today: strin
   const best = Math.max(kept, bestDaysKept(days));
   const set = new Set(days);
   const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
-  const week = Array.from({ length: 7 }, (_, i) => {
+  // The first skipped weekday of the week is its free day (shown as rest); a second skipped day shows as missed.
+  const days7 = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
     const key = localDay(d);
     const state = set.has(key) ? 'kept' : key === today ? 'today' : d.getDay() === 0 ? 'rest' : key < today ? 'missed' : 'later';
     return { key, label: 'MTWTFSS'[i], state };
   });
+  const firstMissed = days7.findIndex((d) => d.state === 'missed');
+  const week = days7.map((d, i) => (i === firstMissed ? { ...d, state: 'rest' } : d));
   const doneToday = set.has(today);
   const sunday = now.getDay() === 0;
-  const line = sunday && !doneToday ? 'Sunday is a day of rest: learn if you like, but skipping it never breaks the count.'
+  const line = sunday && !doneToday ? 'Sunday is a day of rest: learn if you like, but skipping it never breaks the count. Each week also has one more free day.'
     : doneToday ? `Today is kept.${dueCount ? ` ${dueCount} ${dueCount === 1 ? 'review is' : 'reviews are'} still due.` : ''}`
     : 'One lesson or review keeps the day.';
   return (

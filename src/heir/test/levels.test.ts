@@ -87,11 +87,14 @@ test('an overdue item needs a refresh', () => {
   assert.ok(!needsRefresh(p, 'wsc-1', at('2026-11-10T13:00:00Z')));
 });
 
-test('days kept: Sunday is a rest day that never breaks the run, but still counts when used', () => {
+test('days kept: Sunday is a rest day, and each week has one more free day; neither breaks the run, both count when used', () => {
   // 2026-11-22 is a Sunday.
   assert.equal(daysKept(['2026-11-20', '2026-11-21', '2026-11-23'], '2026-11-23'), 3);
   assert.equal(daysKept(['2026-11-20', '2026-11-21', '2026-11-22', '2026-11-23'], '2026-11-23'), 4);
-  assert.equal(daysKept(['2026-11-19', '2026-11-21'], '2026-11-21'), 1, 'a missed Friday breaks it');
+  assert.equal(daysKept(['2026-11-19', '2026-11-21'], '2026-11-21'), 2, 'one missed Friday in a week is the free day');
+  assert.equal(daysKept(['2026-11-18', '2026-11-21'], '2026-11-21'), 1, 'a second missed day in the same week breaks it');
+  assert.equal(daysKept(['2026-11-16', '2026-11-18', '2026-11-20', '2026-11-21'], '2026-11-21'), 3, 'Thursday is the free day; the second missed day (Tuesday) ends the run');
+  assert.equal(daysKept(['2026-11-12', '2026-11-14', '2026-11-16', '2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21'], '2026-11-21'), 7, 'a free day in each of two weeks, plus the Sunday between, all forgiven');
   assert.equal(daysKept(['2026-11-21'], '2026-11-22'), 1, 'today not done yet does not break it');
   assert.equal(bestDaysKept(['2026-11-02', '2026-11-03', '2026-11-04', '2026-11-10']), 3);
 });

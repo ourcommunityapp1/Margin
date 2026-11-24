@@ -166,7 +166,7 @@ export default function Progress() {
             {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
             {cells.map((c) => <span key={c.key} className="hr-cal" data-state={c.state}>{c.n}</span>)}
           </div>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest: learning counts, and skipping never breaks the run.</p>
+          <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest, and each week has one more free day: learning on them counts, and skipping one never breaks the run.</p>
         </section>
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Awards">

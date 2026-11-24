@@ -168,7 +168,7 @@ export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'ri
     const key = step.id.replace(/:typed$/, '');
     // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
     if (step.kind === 'quiz') { setFeedback(o); return; }
-    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(step.part ? { part: step.part } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
+    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
     if (!o.ok && !retried.has(key)) {
       setRetried((s) => new Set(s).add(key));
       setQueue((q) => [...q, step]);

@@ -40,7 +40,7 @@ export default function HowPage() {
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <h2 className="serif" style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>Spaced review</h2>
           <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>Each review waits until you’re close to forgetting, which is when recalling it helps most. Something you find hard comes back soon; something you know well waits longer each time.</p>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>A unit is locked in after a night’s sleep, all its questions together from memory. A day is kept by finishing a lesson or review, and Sundays are days of rest: learning counts, and skipping never breaks the run.</p>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>A unit is locked in after a night’s sleep, all its questions together from memory. A day is kept by finishing a lesson or review, and Sundays are days of rest, with one more free day each week: learning on them counts, and skipping one never breaks the run.</p>
         </section>
       </main>
       <Tabs />
