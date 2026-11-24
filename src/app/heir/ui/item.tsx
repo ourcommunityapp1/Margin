@@ -13,6 +13,7 @@ import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import { RelatedVerses } from './related';
 import { relatedFor } from '@/heir/related';
+import { strongUntilFor } from '@/heir/keep';
 import type { Item } from '@/heir/types';
 
 export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses' }: { item: Item; collectionTitle: string; unit: string; back?: string }) {
@@ -23,6 +24,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
   const level = mine.levels[item.id] ?? 0;
   const dim = needsRefresh(mine, item.id, now);
   const next = learned ? nextStep(item, me?.track ?? 'adult', mine, now) : null;
+  const strong = learned ? strongUntilFor(item, mine, me?.track ?? 'adult') : null;
 
   return (
     <>
@@ -42,6 +44,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
                 <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name} · ${levelInfo(level)!.counts}` : recited(item, me?.track ?? 'adult', mine.log) ? STAGES[0].name : 'Practiced'}</span>
                   {dim && <span style={{ fontSize: 14, color: 'var(--miss)' }}>Due for a refresh</span>}
+                  {strong && !dim && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span>}
                 </span>
               </div>
               {next && <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{level === 0 && !recited(item, me?.track ?? 'adult', mine.log) ? 'Next' : 'Next stone'}: {next}.</span>}

@@ -283,10 +283,39 @@ holds (3 to 8).
 **Look-alikes are kept apart.** A review never puts two verses or answers that share half their distinctive words
 next to each other.
 
+### Built since (2026-11-24, on for everyone)
+
+**Due dates from each line's memory.** An item comes back when its weakest line is due, not only when the whole item is.
+A line you missed or haven't recalled for a while brings the item back sooner, but never within 12 hours of the session.
+
+**"In memory" from the model (Decision 6).**
+- An item leaves your count when its weakest line has been under 70% for a week: the date that line crosses 70%, plus 7
+  days. A miss not put right by the end of the next day still takes it out, as before.
+- The server and the phone use the same rule with the **population** correction only, so the board stays fair.
+- Items with no line memories yet (older progress) keep the fixed 90 / 240 / 425-day windows until they are recalled.
+- **Guard rail:** the model's date is never later than twice the stone's old window after the last recall. FSRS's defaults
+  are generous (five recalls over seven weeks reads as a year or more); this stays until the fitted corrections show the
+  long windows hold up. Then it can be loosened.
+- "Strong until about March" on each item's page: the weakest line falling to 80%, never later than one stone-window after
+  the last recall.
+
+**Calibration and fitting (Decision 7).**
+- `heir_model_params` holds corrections (two numbers, a and b) fitted by logistic regression with a pull toward "no
+  correction". The daily job refits from every answer that carries a prediction.
+- A fit is kept only if it predicts the newest 20% of answers better (by at least 0.002 log loss). The population needs
+  300 answers; one person needs 400 of their own.
+- The population correction decides what is in memory. A person's own only sharpens which reviews come first.
+- The stored prediction stays the raw model's, so refitting never chases its own tail. Thresholds are converted back to the
+  raw curve, so "70%" and "80%" mean calibrated chances.
+
+**Two phones that trimmed differently.** Snapshots merge per line (each keeps its most recent memory) and each line skips
+answers older than its own last review, so nothing is lost or double counted. The only thing not recovered is an answer
+older than a line's last review that only the other phone held; the server's full history would recover it.
+
 ### Not yet
 
-- **Due dates from part memories.** Item cards still schedule.
-- **A snapshot edge case.** If two phones trimmed at different times, the later snapshot wins. An answer older than it
-  that only the other phone held is then not replayed. This is rare; the server's full answer history would fix it.
-- **"In memory" from the model (Decision 6).**
-- **Settings fitted to Katekize's data (Decision 7).** This waits for enough answers with predictions.
+- **A retention target per person (Decision 8).** The correction above sharpens ranking only; a 0.85 to 0.92 target waits
+  for data.
+- **A stronger model (Decision 9).** Neural models predict better on the open benchmark but need far more answers than
+  Katekize has. The same replay and prediction logging makes it a drop-in comparison once there are enough.
+- **Dropping the guard rail**, once the population fit exists.

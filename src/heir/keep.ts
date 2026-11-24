@@ -8,6 +8,7 @@
 // Pure functions over the keep record the phone and the server both store (progress.ts, `Keep`), so both agree.
 
 import { levelOf } from './levels.ts';
+import { itemParts, outAt, partMemories, strongUntil } from './memory.ts';
 import { itemWords } from './measures.ts';
 import { unitsFor } from './lesson.ts';
 import { keepFromLog, localDay, type Keep, type MemberProgress } from './progress.ts';
@@ -51,6 +52,8 @@ export interface KeepOptions {
   launch: Date | null;
   /** The person's time zone, for "the end of the next day". */
   tz?: string | null;
+  /** Work out when an item leaves your count from the memory model (the default); false uses the fixed windows only. */
+  model?: boolean;
 }
 
 const formats = new Map<string, Intl.DateTimeFormat | null>();
@@ -88,7 +91,7 @@ export function endOfNextDay(from: Date, tz?: string | null): Date {
  * Where one item stands. `level` is the stone it has reached (0: no stone, so it isn't counted at all, and is reported kept).
  * `keep` is its record: the last right recall and the last miss.
  */
-export function keepState(level: number, keep: Keep | undefined, now: Date, o: KeepOptions): KeepState {
+export function keepState(level: number, keep: Keep | undefined, now: Date, o: KeepOptions, modelOut?: Date | null): KeepState {
   if (level < 1) return { state: 'kept' };
   const good = ((o.mode ?? 'whole') === 'whole' ? keep?.full : keep?.good) ?? null;
   const miss = keep?.miss ?? null;
@@ -100,6 +103,12 @@ export function keepState(level: number, keep: Keep | undefined, now: Date, o: K
   if (miss && (!good || miss > good)) {
     const deadline = endOfNextDay(new Date(miss), o.tz);
     return t <= deadline.getTime() ? { state: 'try-again', deadline } : leave(deadline);
+  }
+  // The model's own date (memory.ts): when the weakest line has been under 70% for a week. Used whenever every line has a
+  // memory; items without line memories yet (older progress) keep the fixed windows below until they are recalled.
+  if (modelOut) {
+    if (t >= modelOut.getTime()) return leave(modelOut);
+    return t >= modelOut.getTime() - REVIEW_NOTICE_DAYS * DAY ? { state: 'review', deadline: modelOut } : { state: 'kept' };
   }
   if (!good) {
     // Never recalled since it earned its stone (older progress): the window starts when the rules do.
@@ -119,9 +128,17 @@ export interface Held { item: Item; level: number; state: KeepState; words: numb
 export function heldItems(items: Item[], p: MemberProgress, track: Track, now: Date, o: KeepOptions): Held[] {
   const counts = new Map(items.map((i) => [i.id, unitsFor(i, track).length]));
   const keep = keepOf(p, (id) => counts.get(id));
+  const parts = o.model === false ? null : partMemories(p.log, p.partSnap);
   return items
     .filter((i) => levelOf(p, i.id) >= 1)
-    .map((item) => ({ item, level: levelOf(p, item.id), state: keepState(levelOf(p, item.id), keep[item.id], now, o), words: itemWords(item, track) }));
+    .map((item) => {
+      const mems = parts ? itemParts(unitsFor(item, track).map((u) => u.key), parts) : null;
+      const level = levelOf(p, item.id);
+      // A guard rail while the model is uncalibrated: the model's date is never later than twice the stone's old window after
+      // the last recall. (To be loosened once the population fit shows the model's long windows hold up.)
+      const model = mems ? new Date(Math.min(outAt(mems).getTime(), Math.max(...mems.map((m) => Date.parse(m.last))) + 2 * windowDays(level) * DAY)) : null;
+      return { item, level, state: keepState(level, keep[item.id], now, o, model), words: itemWords(item, track) };
+    });
 }
 
 export interface KeepSummary {
@@ -155,4 +172,14 @@ export function clampDue(due: Date, level: number, keep: Keep | undefined, now: 
   if (good === null) return due;
   const latest = good + (windowDays(level) - REVIEW_NOTICE_DAYS) * DAY;
   return new Date(Math.min(due.getTime(), Math.max(latest, now.getTime())));
+}
+
+
+/** "Strong until about": the month an item's weakest line falls to 80%, never later than one stone-window after the last
+ *  recall (the same guard rail). Null until every line of the item has a memory. */
+export function strongUntilFor(item: Item, p: MemberProgress, track: Track): Date | null {
+  const mems = itemParts(unitsFor(item, track).map((u) => u.key), partMemories(p.log, p.partSnap));
+  if (!mems) return null;
+  const last = Math.max(...mems.map((m) => Date.parse(m.last)));
+  return new Date(Math.min(strongUntil(mems).getTime(), last + windowDays(levelOf(p, item.id)) * DAY));
 }

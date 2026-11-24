@@ -14,7 +14,9 @@ import { memberProgress, mergeProgress, parseProgress, sameProgress, type Member
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
-import { cloud, getBoardStatus, loadProgressRows, loadRemote, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { cloud, getBoardStatus, loadCalibration, loadProgressRows, loadRemote, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { setPersonCal, setPopulationCal } from '@/heir/memory';
+import { activeMember } from '@/heir/household';
 import { hasAlert, type BoardStatus } from '@/heir/board';
 import { LABS } from '@/heir/labs';
 
@@ -158,6 +160,10 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
           const merged = await pullProgress(db, remote.current.householdId, pick.household.members.map((m) => m.id));
           if (!live) return;
           setProgress(merged);
+          // The model's fitted corrections, before anything is ranked (a missing table or no fit yet means none).
+          const cal = await loadCalibration(db, activeMember(pick.household)?.id ?? null);
+          setPopulationCal(cal.population);
+          setPersonCal(cal.person);
         }
         setSync('synced');
       } catch {

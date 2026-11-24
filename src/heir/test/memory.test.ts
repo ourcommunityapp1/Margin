@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Rating, State } from 'ts-fsrs';
-import { daysUntil, foldTrimmed, gradeRecall, itemChance, markOf, overlap, partChance, partMemories, predictedChance, recallChance, speedBaseline, spreadApart, stepSeconds, weakParts, whyNow, recalledRecently } from '../memory.ts';
+import { daysUntil, foldTrimmed, mergeSnapshot, gradeRecall, itemChance, markOf, overlap, partChance, partMemories, predictedChance, recallChance, speedBaseline, spreadApart, stepSeconds, weakParts, whyNow, recalledRecently } from '../memory.ts';
 import { recallChance as plannerChance } from '../planner.ts';
 import { buildReview, seeded, unitsFor } from '../lesson.ts';
 import { allItems, getItem } from '../content/index.ts';
-import type { LogEntry, SavedCard, StepResult } from '../progress.ts';
+import type { LogEntry, MemberProgress, SavedCard, StepResult } from '../progress.ts';
 
 const now = new Date('2026-11-24T12:00:00Z');
 const card = (o: Partial<SavedCard> = {}): SavedCard => ({ due: '2026-11-30T12:00:00.000Z', last_review: '2026-11-14T12:00:00.000Z', stability: 10, difficulty: 5, scheduled_days: 16, reps: 3, lapses: 0, learning_steps: 0, state: State.Review, ...o });
@@ -86,4 +86,70 @@ test('no strength number on the day something was last practiced; recently recal
   assert.equal(whyNow('wsc-10', [{ ...missed, at: '2026-11-20T13:56:00Z' }], 0.8, at), '6 words off last time · strength 80%');
   assert.deepEqual([...recalledRecently([missed], at)], ['wsc-10']);
   assert.equal(recalledRecently([missed], new Date('2026-11-25T12:00:00Z')).size, 0);
+});
+
+test('an item comes back when its weakest line is due, not only when the whole item is', async () => {
+  const { finishSession, emptyProgress } = await import('../progress.ts');
+  const item = getItem('wsc-12')!;
+  const keys = unitsFor(item, 'adult').map((u) => u.key);
+  const t0 = new Date('2026-11-01T10:00:00Z');
+  const day = (n: number) => new Date(t0.getTime() + n * 86_400_000);
+  const rec = (part: string, correct: boolean, hints = 0): StepResult => ({ itemId: 'wsc-12', kind: 'type', part, correct, hints, ms: 5000, review: true, words: 12, ...(correct ? {} : { misses: 8 }) });
+  let p: MemberProgress = { ...emptyProgress(), units: keys, cards: { 'wsc-12': card({ state: State.Review, due: day(60).toISOString(), last_review: t0.toISOString(), stability: 40, scheduled_days: 60, reps: 3 }) } };
+  // Both lines right on day 1, day 9 and day 21: the item is far off.
+  for (const n of [1, 9, 21]) p = finishSession(p, { results: keys.map((k) => rec(k, true)), now: day(n), grading: 'v2', newId: () => `i${n}${Math.random()}` });
+  const farDue = Date.parse(p.cards['wsc-12'].due);
+  // Line 2 missed on day 22: the item's own schedule is long, but its weakest line is not.
+  p = finishSession(p, { results: [rec(keys[0], true), rec(keys[1], false)], now: day(22), grading: 'v2' });
+  const due = Date.parse(p.cards['wsc-12'].due);
+  assert.ok(due < farDue, 'sooner than before');
+  assert.ok(due >= day(22).getTime() + 12 * 3_600_000, 'but not within 12 hours of this session');
+  assert.ok(due < day(22).getTime() + 8 * 86_400_000, 'within about a week');
+});
+
+test('in memory from the model: a strong item stays well past the old window; a weak line brings it out sooner; unfitted items use the windows', async () => {
+  const { heldItems } = await import('../keep.ts');
+  const { emptyProgress } = await import('../progress.ts');
+  const item = getItem('wsc-12')!;
+  const keys = unitsFor(item, 'adult').map((u) => u.key);
+  const e = (part: string, at: string, correct: boolean): LogEntry => ({ id: part + at, at, day: at.slice(0, 10), itemId: 'wsc-12', part, kind: 'type', correct, hints: 0, ms: 1, review: true, words: 10, ...(correct ? {} : { misses: 8 }) });
+  const days = ['2026-09-01', '2026-09-03', '2026-09-10', '2026-09-24', '2026-10-20'];
+  const strong = keys.flatMap((k) => days.map((d) => e(k, `${d}T10:00:00Z`, true)));
+  const base = { ...emptyProgress(), levels: { 'wsc-12': 2 }, keep: { 'wsc-12': { good: '2026-10-20T10:00:00Z', full: '2026-10-20T10:00:00Z' } } };
+  const o: { launch: Date; tz: string; model?: boolean } = { launch: new Date('2026-06-01T00:00:00Z'), tz: 'UTC' };
+  const state = (p: typeof base & { log: LogEntry[] }, at: string, opts = o) => heldItems([item], p, 'adult', new Date(at), opts)[0].state.state;
+  // Recalled right five times over seven weeks: well past the old 90-day window it is still kept, and the model keeps it.
+  assert.equal(state({ ...base, log: strong }, '2027-03-01T00:00:00Z'), 'kept');
+  assert.equal(state({ ...base, log: strong }, '2027-03-01T00:00:00Z', { ...o, model: false }), 'out', 'the fixed window would have dropped it');
+  // One line only ever recalled once, long ago: it is the weak line, and the item leaves sooner.
+  const weak = [...keys.slice(0, 1).flatMap((k) => days.map((d) => e(k, `${d}T10:00:00Z`, true))), ...keys.slice(1).map((k) => e(k, '2026-09-01T10:00:00Z', true))];
+  assert.equal(state({ ...base, log: weak }, '2026-12-15T00:00:00Z'), 'out');
+  // No line memories yet (older progress): the fixed windows, as before.
+  assert.equal(state({ ...base, log: [] }, '2027-03-01T00:00:00Z'), 'out');
+  assert.equal(state({ ...base, log: [] }, '2026-12-15T00:00:00Z'), 'kept');
+  // A guard rail while the model is uncalibrated: even a very strong item leaves within twice its stone's old window.
+  assert.equal(state({ ...base, log: strong }, '2027-06-01T00:00:00Z'), 'out');
+});
+
+test('"strong until about": the weakest line at 80%, never past one stone-window; nothing until every line has a memory', async () => {
+  const { strongUntilFor } = await import('../keep.ts');
+  const { emptyProgress } = await import('../progress.ts');
+  const item = getItem('wsc-12')!;
+  const keys = unitsFor(item, 'adult').map((u) => u.key);
+  const e = (part: string, at: string): LogEntry => ({ id: part + at, at, day: at.slice(0, 10), itemId: 'wsc-12', part, kind: 'type', correct: true, hints: 0, ms: 1, review: true, words: 10 });
+  const p: MemberProgress = { ...emptyProgress(), levels: { 'wsc-12': 2 }, log: keys.flatMap((k) => ['2026-09-01', '2026-09-03', '2026-09-10', '2026-09-24', '2026-10-20'].map((d) => e(k, `${d}T10:00:00Z`))) };
+  const d = strongUntilFor(item, p, 'adult')!;
+  assert.equal(d.toISOString().slice(0, 10), '2027-01-18', 'capped at 90 days after the last recall');
+  assert.equal(strongUntilFor(item, { ...p, log: p.log.filter((x) => x.part === keys[0]) }, 'adult'), null, 'a line with no memory yet');
+});
+
+test('two phones that trimmed at different times: each line keeps its most recent memory, and nothing is double counted', () => {
+  const e = (part: string, at: string, id: string): LogEntry => ({ id, at, day: at.slice(0, 10), itemId: 'wsc-12', part, kind: 'type', correct: true, hints: 0, ms: 1, review: true, words: 10 });
+  const all = [e('wsc-12#1', '2026-11-01T10:00:00Z', 'a'), e('wsc-12#2', '2026-11-02T10:00:00Z', 'b'), e('wsc-12#1', '2026-11-10T10:00:00Z', 'c'), e('wsc-12#2', '2026-11-12T10:00:00Z', 'd'), e('wsc-12#1', '2026-11-20T10:00:00Z', 'f')];
+  const full = partMemories(all);
+  // Phone A trimmed the first two answers; phone B trimmed the first three. Each holds the rest.
+  const snapA = foldTrimmed(all.slice(0, 2)), snapB = foldTrimmed(all.slice(0, 3));
+  const merged = mergeSnapshot(snapA, snapB)!;
+  assert.deepEqual(partMemories(all.slice(3), merged), full, 'the union of what they hold gives the same memories');
+  assert.deepEqual(partMemories(all, merged), full, 'and replaying answers a snapshot already holds changes nothing');
 });

@@ -11,26 +11,46 @@ const DAY = 86_400_000;
 const DECAY = generatorParameters().w[20];
 const FACTOR = Math.pow(0.9, -1 / DECAY) - 1;
 
-/** The chance of recalling it now: 90% when the days since the last review equal its stability (the FSRS-6 curve). */
+// ---- Calibration: the model's chance, corrected by how its predictions have actually turned out (calibrate.ts).
+// `population` is fitted on everyone's answers and decides what is "in memory" (so the board stays fair); `person` is
+// fitted on one person's own answers and only sharpens what to review next. Both default to no correction.
+export interface Cal { a: number; b: number }
+const IDENTITY: Cal = { a: 1, b: 0 };
+let population: Cal = IDENTITY, person: Cal | null = null;
+export const setPopulationCal = (c: Cal | null) => { population = c ?? IDENTITY; };
+export const setPersonCal = (c: Cal | null) => { person = c; };
+const logit = (p: number) => Math.log(p / (1 - p));
+const sigmoid = (x: number) => 1 / (1 + Math.exp(-x));
+const clamp = (p: number) => Math.min(0.999, Math.max(0.001, p));
+/** A raw model chance corrected by a calibration. */
+export const calibrate = (p: number, c: Cal = population) => (c === IDENTITY ? p : sigmoid(c.a * logit(clamp(p)) + c.b));
+/** The raw model chance that a calibrated chance of `target` corresponds to (so thresholds stay in calibrated terms). */
+export const rawFor = (target: number, c: Cal = population) => (c === IDENTITY ? target : sigmoid((logit(clamp(target)) - c.b) / c.a));
+
+const rawChance = (last: number, s: number, now: Date) => Math.pow(1 + FACTOR * (Math.max(0, now.getTime() - last) / DAY / Math.max(0.1, s)), -DECAY);
+
+/** The chance of recalling it now: 90% when the days since the last review equal its stability (the FSRS-6 curve),
+ *  corrected by the person's own calibration when there is one, else the population's. */
 export function recallChance(card: SavedCard, now: Date): number {
   const last = card.last_review ? Date.parse(card.last_review) : Date.parse(card.due) - card.scheduled_days * DAY;
-  const days = Math.max(0, (now.getTime() - last) / DAY);
-  const s = Math.max(0.1, card.stability);
-  return Math.pow(1 + FACTOR * (days / s), -DECAY);
+  return calibrate(rawChance(last, card.stability, now), person ?? population);
 }
 
 /** The chance the model gives before an answer, for an item it has scheduled; null for one not yet recalled after sleep. */
+// The raw model chance, never the calibrated one: it is what we later check and refit against.
 export function predictedChance(card: SavedCard | undefined, now: Date): number | null {
   if (!card || card.state === State.New) return null;
-  return Math.round(recallChance(card, now) * 1000) / 1000;
+  const last = card.last_review ? Date.parse(card.last_review) : Date.parse(card.due) - card.scheduled_days * DAY;
+  return Math.round(rawChance(last, card.stability, now) * 1000) / 1000;
 }
 
 /** Days from `now` until the chance falls to `target`. */
 export function daysUntil(card: SavedCard, target: number, now: Date): number {
   const last = card.last_review ? Date.parse(card.last_review) : now.getTime();
-  const t = (card.stability * (Math.pow(target, -1 / DECAY) - 1)) / FACTOR;
-  return Math.max(0, (last + t * DAY - now.getTime()) / DAY);
+  return Math.max(0, (last + daysToChance(card.stability, target) * DAY - now.getTime()) / DAY);
 }
+/** Days after the last review until the (population-calibrated) chance falls to `target`. */
+export const daysToChance = (stability: number, target: number) => (stability * (Math.pow(rawFor(target), -1 / DECAY) - 1)) / FACTOR;
 
 // ---- Speed: each person's own typical seconds per word, by kind of answer.
 
@@ -135,7 +155,9 @@ export function replayParts(entries: LogEntry[], start: Record<string, PartMem> 
 
 /** Every part's memory now: the snapshot, then the answers after it. */
 export function partMemories(log: LogEntry[], snap?: PartSnapshot): Record<string, PartMem> {
-  return replayParts(snap ? log.filter((e) => e.at > snap.asOf) : log, snap?.mem ?? {});
+  // Each part skips answers older than its own last review, so a snapshot never double counts, and an answer for a part
+  // the snapshot doesn't know is still replayed.
+  return replayParts(log, snap?.mem ?? {});
 }
 
 /** When the phone trims old answers, fold them into the snapshot first so no part forgets its history. */
@@ -147,7 +169,7 @@ export function foldTrimmed(dropped: LogEntry[], snap?: PartSnapshot): PartSnaps
 }
 
 /** The chance of recalling one part now. */
-export const partChance = (m: PartMem, now: Date) => Math.pow(1 + FACTOR * (Math.max(0, now.getTime() - Date.parse(m.last)) / DAY / Math.max(0.1, m.s)), -DECAY);
+export const partChance = (m: PartMem, now: Date) => calibrate(rawChance(Date.parse(m.last), m.s, now), person ?? population);
 
 /** An item's chance is its weakest part's (when its parts have memories). */
 export function itemChance(itemId: string, parts: Record<string, PartMem>, now: Date): number | null {
@@ -163,7 +185,13 @@ export function weakPartsNow(log: LogEntry[], parts: Record<string, PartMem>, no
   return out;
 }
 
-export const mergeSnapshot = (a?: PartSnapshot, b?: PartSnapshot): PartSnapshot | undefined => (!a ? b : !b ? a : a.asOf >= b.asOf ? a : b);
+/** Two phones' snapshots: each part keeps whichever memory was reviewed most recently. */
+export const mergeSnapshot = (a?: PartSnapshot, b?: PartSnapshot): PartSnapshot | undefined => {
+  if (!a || !b) return a ?? b;
+  const mem: Record<string, PartMem> = { ...a.mem };
+  for (const [k, m] of Object.entries(b.mem)) if (!mem[k] || m.last > mem[k].last) mem[k] = m;
+  return { asOf: a.asOf >= b.asOf ? a.asOf : b.asOf, mem };
+};
 
 export function parseSnapshot(v: unknown): PartSnapshot | undefined {
   if (!v || typeof v !== 'object') return undefined;
@@ -218,4 +246,27 @@ export function whyNow(itemId: string, log: LogEntry[], chance: number | null, n
 export function recalledRecently(log: LogEntry[], now: Date, hours = 16): Set<string> {
   const since = now.getTime() - hours * 3_600_000;
   return new Set(log.filter((e) => RECALL.has(e.kind) && Date.parse(e.at) >= since).map((e) => e.itemId));
+}
+
+
+// ---- In memory, from the model (ADR-001 Decision 6). An item stays in your count until its weakest line's chance has
+// been under 70% for a week. A line's chance only falls between reviews, so that is a date: when it crosses 70%, plus 7 days.
+export const OUT_BELOW = 0.7;
+export const OUT_AFTER_DAYS = 7;
+export const STRONG_ABOVE = 0.8;
+
+/** The memories of every part of an item, or null if any part has none yet (then the old fixed windows apply). */
+export function itemParts(unitKeys: string[], parts: Record<string, PartMem>): PartMem[] | null {
+  const mems = unitKeys.map((k) => parts[k]);
+  return mems.length && mems.every(Boolean) ? mems : null;
+}
+
+/** When the item leaves your count if nothing more is recalled: its weakest line crossing 70%, plus a week. */
+export function outAt(mems: PartMem[]): Date {
+  return new Date(Math.min(...mems.map((m) => Date.parse(m.last) + (daysToChance(m.s, OUT_BELOW) + OUT_AFTER_DAYS) * DAY)));
+}
+
+/** When the item's weakest line falls to 80%: "strong until about" this date. */
+export function strongUntil(mems: PartMem[]): Date {
+  return new Date(Math.min(...mems.map((m) => Date.parse(m.last) + daysToChance(m.s, STRONG_ABOVE) * DAY)));
 }

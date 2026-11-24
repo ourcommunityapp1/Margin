@@ -10,6 +10,7 @@ import { fromRows, removedMemberIds, toRows, type HouseholdRow, type MemberRow }
 import type { Household } from '@/heir/types';
 import { mergeProgress, parseProgress, sameProgress, type MemberProgress } from '@/heir/progress';
 import { dayEvents } from '@/heir/dayplan';
+import { MODEL_VERSION } from '@/heir/memory';
 import { toAnswerRows, unsent } from '@/heir/answers';
 import type { Board, BoardStatus, Period } from '@/heir/board';
 import type { Plan } from '@/heir/types';
@@ -116,6 +117,14 @@ export async function sendAnswers(db: SupabaseClient, householdId: string, progr
     sent[memberId] = fresh[fresh.length - 1].at;
     writeSent(sent);
   }
+}
+
+// ---- The model's corrections (fitted daily from everyone's answers, and from your own once there are enough).
+export async function loadCalibration(db: SupabaseClient, memberId: string | null): Promise<{ population: { a: number; b: number } | null; person: { a: number; b: number } | null }> {
+  const { data, error } = await db.from('heir_model_params').select('scope, member_id, a, b').eq('model_version', MODEL_VERSION).order('fitted_at', { ascending: false }).limit(30);
+  if (error) return { population: null, person: null };
+  const pick = (f: (r: { scope: string; member_id: string | null }) => boolean) => { const r = (data ?? []).find(f); return r ? { a: Number(r.a), b: Number(r.b) } : null; };
+  return { population: pick((r) => r.scope === 'population'), person: memberId ? pick((r) => r.scope === 'member' && r.member_id === memberId) : null };
 }
 
 // ---- Card events: what happened to each recommended card on Today (shown, opened, finished). Sent once each.

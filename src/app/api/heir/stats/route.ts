@@ -2,6 +2,7 @@ import { courses, courseItems, allItems } from '@/heir/content';
 import { dayIn, refreshStats } from '@/heir/statsjob';
 import { KEEP_LAUNCH } from '@/heir/keep';
 import { adminClient, dbStore } from './store';
+import { loadPopulationCal } from './fit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 25;
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
   const { data, error } = await db.auth.getUser(token);
   if (error || !data.user) return Response.json({ error: 'Sign in first.' }, { status: 401 });
   try {
+    await loadPopulationCal(db).catch(() => { /* no fit yet: no correction */ });
     const out = await refreshStats(dbStore(db), data.user.id, { courses: courses.map((c) => ({ id: c.id, items: courseItems(c) })), items: allItems(), now: new Date(), today: dayIn, keepFor: (id, tz) => ({ launch: KEEP_LAUNCH, tz }) });
     if (!out.ok) return Response.json({ ok: false, reason: out.reason }, { status: out.reason === 'too-soon' ? 200 : 404 });
     return Response.json({ ok: true, changed: out.changed });

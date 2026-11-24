@@ -3,6 +3,7 @@ import { courses, courseItems, allItems } from '@/heir/content';
 import { dayIn, refreshStats } from '@/heir/statsjob';
 import { KEEP_LAUNCH } from '@/heir/keep';
 import { adminClient, dbStore } from '../store';
+import { fitAll, loadPopulationCal } from '../fit';
 
 export const runtime = 'nodejs';
 export const maxDuration = 25;
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
   const q = db.from('heir_profiles').select('user_id').order('user_id').limit(BATCH);
   const { data, error } = await (after && /^[0-9a-f-]{36}$/.test(after) ? q.gt('user_id', after) : q);
   if (error) return Response.json({ error: 'Couldn’t list profiles.' }, { status: 500 });
+  await loadPopulationCal(db).catch(() => { /* no fit yet, or the table isn't there: no correction */ });
   const store = dbStore(db);
   const opts = { courses: courses.map((c) => ({ id: c.id, items: courseItems(c) })), items: allItems(), now: new Date(), today: dayIn, force: true, keepFor: (id: string, tz: string | null) => ({ launch: KEEP_LAUNCH, tz }) };
   let done = 0, failed = 0;
@@ -36,9 +38,12 @@ export async function POST(request: Request) {
   }
   const next = (data?.length ?? 0) === BATCH ? (data![data!.length - 1].user_id as string) : null;
   let purged: number | null = null;
+  let fit: { population: boolean; members: number; answers: number } | null = null;
   if (!next) {
+    // Once a day, after the last batch: refit the model's corrections from the answers so far.
+    fit = await fitAll(db).catch(() => null);
     const r = await db.rpc('heir_purge_removed');
     purged = r.error ? null : (r.data as number);
   }
-  return Response.json({ done, failed, next, purged });
+  return Response.json({ done, failed, next, purged, fit });
 }

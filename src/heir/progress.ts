@@ -4,7 +4,7 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
 import { clampDue } from './keep.ts';
-import { foldTrimmed, gradeRecall, mergeSnapshot, MODEL_VERSION, parseSnapshot, speedBaseline, type PartSnapshot } from './memory.ts';
+import { daysToChance, foldTrimmed, gradeRecall, mergeSnapshot, MODEL_VERSION, parseSnapshot, partMemories, speedBaseline, type PartSnapshot } from './memory.ts';
 
 // How many answers the phone keeps (the account keeps them all).
 export const LOG_KEEP = 1500;
@@ -155,6 +155,10 @@ export function waitingForSleep(p: MemberProgress, itemId: string, now: Date): b
 export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date; newId?: () => string; keepRules?: { tz?: string | null }; grading?: 'v2' }): MemberProgress {
   const newUnits = o.learned ? (Array.isArray(o.learned) ? o.learned : [o.learned]) : [];
   const cards = { ...p.cards };
+  const at = o.now.toISOString();
+  const day = localDay(o.now);
+  const newId = o.newId ?? (() => crypto.randomUUID());
+  const log = [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day, ...(r.p !== undefined ? { mv: MODEL_VERSION } : {}) }))];
   const speed = o.grading === 'v2' ? speedBaseline(p.log) : {};
   const byItem = new Map<string, StepResult[]>();
   for (const r of o.results) byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
@@ -174,6 +178,19 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     if (grade === null) continue;
     cards[itemId] = fromCard(scheduler.next(card, o.now, grade).card);
   }
+  // With the newer engine, an item also comes back when its weakest line is due: a line you missed or haven't recalled for
+  // a while brings the item back sooner than the whole-item schedule would. Never within 12 hours of this session.
+  if (o.grading === 'v2') {
+    const parts = partMemories(log, p.partSnap);
+    for (const itemId of byItem.keys()) {
+      const c = cards[itemId];
+      if (!c || c.state === State.New) continue;
+      const mine = Object.entries(parts).filter(([k]) => k.startsWith(`${itemId}#`)).map(([, m]) => Date.parse(m.last) + daysToChance(m.s, 0.9) * 86_400_000);
+      if (!mine.length) continue;
+      const due = Math.max(Math.min(Date.parse(c.due), ...mine), o.now.getTime() + 12 * 3_600_000);
+      cards[itemId] = { ...c, due: new Date(due).toISOString() };
+    }
+  }
   const keep = updateKeep(p.keep ?? keepFromLog(p.log), o.results, o.now.toISOString());
   // With the keeping rules on, no review is set later than two weeks before its window ends, or past the day after a miss.
   if (o.keepRules) {
@@ -182,10 +199,6 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
       if (c && level >= 1) cards[itemId] = { ...c, due: clampDue(new Date(c.due), level, keep[itemId], o.now, o.keepRules.tz, 'whole').toISOString() };
     }
   }
-  const at = o.now.toISOString();
-  const day = localDay(o.now);
-  const newId = o.newId ?? (() => crypto.randomUUID());
-  const log = [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day, ...(r.p !== undefined ? { mv: MODEL_VERSION } : {}) }))];
   // Answers about to be trimmed are folded into the parts' snapshot first, so no part loses its history.
   const partSnap = log.length > LOG_KEEP ? foldTrimmed(log.slice(0, log.length - LOG_KEEP), p.partSnap) : p.partSnap;
   return {
