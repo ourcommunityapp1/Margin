@@ -14,7 +14,8 @@ import { memberProgress, mergeProgress, parseProgress, sameProgress, type Member
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
-import { cloud, loadProgressRows, loadRemote, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { cloud, getBoardStatus, loadProgressRows, loadRemote, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { hasAlert, type BoardStatus } from '@/heir/board';
 import { LABS } from '@/heir/labs';
 
 const KEY = 'heir-household-v1';
@@ -42,6 +43,12 @@ interface Heir {
   restorePerson(id: string, name: string, track: Track): Promise<boolean>;
   /** Fold a removed person's saved progress into someone already in the family. */
   mergeProgressInto(fromId: string, toId: string): void;
+  /** Where you stand on the community board compared with when you last opened it (null until known). */
+  board: BoardStatus | null;
+  /** Something moved since you last opened the board: the dot on Progress. */
+  boardAlert: boolean;
+  /** You opened the board: forget the alert. */
+  boardSeen(): void;
 }
 
 const Ctx = createContext<Heir | null>(null);
@@ -282,11 +289,28 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(timer);
   }, [db, email, userId, ready, household.members, progress]);
 
+  // The board: has your place changed since you last opened it? Checked when the app opens, when you come back to it,
+  // and a few seconds after your numbers are updated.
+  const [board, setBoard] = useState<BoardStatus | null>(null);
+  const checkBoard = useCallback(() => {
+    if (!db || !email) return;
+    getBoardStatus(db).then(setBoard).catch(() => { /* the dot is a convenience */ });
+  }, [db, email]);
+  useEffect(() => {
+    if (!ready) return;
+    const t = setTimeout(checkBoard, 1500);
+    const t2 = setTimeout(checkBoard, 9000);
+    const onShow = () => { if (document.visibilityState === 'visible') checkBoard(); };
+    document.addEventListener('visibilitychange', onShow);
+    return () => { clearTimeout(t); clearTimeout(t2); document.removeEventListener('visibilitychange', onShow); };
+  }, [ready, checkBoard, progress]);
+  const boardSeen = useCallback(() => setBoard((b) => (b ? { ...b, moved: 0, entered_top10: false, left_top10: false } : b)), []);
+
   const now = useMemo(() => clock ?? new Date(0), [clock]);
   const time = clock ? timeOfDay(clock) : 'day';
   const labs = !!userId && LABS.includes(userId);
-  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto }),
-    [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut, restorePerson, mergeProgressInto]);
+  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto, board, boardAlert: hasAlert(board), boardSeen }),
+    [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut, restorePerson, mergeProgressInto, board, boardSeen]);
 
   return (
     <Ctx.Provider value={value}>

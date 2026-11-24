@@ -1101,3 +1101,35 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 /* Screens with no tab bar (welcome, sign in, start) have nothing for the bottom band to sit behind; left on, it
    covered the bottom of their card and cut it off. */
 .hr:has(.hr-page.bare)::after { display: none; }
+
+/* ---- The community leaderboard ---------------------------------------------------------------------------- */
+.hr-lb { list-style: none; margin: 0; padding: 0; position: relative; }
+.hr-lb-row { list-style: none; border-radius: 16px; }
+.hr-lb > .hr-lb-row { position: absolute; left: 0; right: 0; top: 0; transition: transform 1100ms cubic-bezier(0.22, 0.9, 0.24, 1); }
+.hr-lb > .hr-lb-row.moving { z-index: 2; box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
+.hr-lb-gap { position: absolute; left: 0; right: 0; top: 0; text-align: center; color: var(--muted); letter-spacing: 0.3em; font-size: 13px; line-height: 22px; list-style: none; }
+.hr-lb-static { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.hr-lb-gap-static { text-align: center; color: var(--muted); letter-spacing: 0.3em; font-size: 13px; line-height: 18px; list-style: none; }
+.hr-lb-link { display: grid; grid-template-columns: 28px 28px 1fr auto; align-items: center; gap: 10px; padding: 8px 8px; min-height: 54px; box-sizing: border-box; border-radius: 16px; color: inherit; text-decoration: none; height: 100%; }
+.hr-lb-rank { text-align: right; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 14px; }
+.hr-lb-name { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.hr-lb-name b { font-weight: 600; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hr-lb-name span { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hr-lb-words { font-weight: 600; font-variant-numeric: tabular-nums; }
+.hr-lb-move { font-style: normal; font-weight: 700; }
+.hr-lb-move.up { color: var(--good); }
+.hr-lb-move.dn { color: var(--miss); }
+.hr-lb-row.me { background: #3a3123; box-shadow: inset 0 0 0 1.5px #e8b867; }
+.hr-lb-row.me .hr-lb-rank { color: #e8b867; }
+.hr-lb-row.me .hr-lb-name span { color: #e8cfa0; }
+.hr-lb-card.alert { box-shadow: 0 0 0 1.5px #e8b867; }
+.hr-lb-pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #e8b867; color: #1d2327; }
+.hr-golink { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 0 8px 0 20px; border-radius: 22px; text-decoration: none; color: #f7f1e6; font-weight: 600; font-size: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08)); border: 1px solid rgba(255, 255, 255, 0.22); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25); }
+.hr-golink i { width: 42px; height: 42px; border-radius: 14px; background: #f3ece2; color: #1d2327; display: grid; place-items: center; }
+.hr-golink:active { transform: scale(0.985); }
+.hr-tabs a { position: relative; }
+.hr-dot { position: absolute; top: 6px; left: calc(50% + 8px); width: 9px; height: 9px; border-radius: 50%; background: #e8b867; box-shadow: 0 0 0 2px #11161c; }
+.hr-sheet-wrap { position: fixed; inset: 0; z-index: 20; background: rgba(5, 7, 10, 0.6); display: flex; align-items: flex-end; justify-content: center; }
+.hr-sheet-card { width: min(520px, 100%); box-sizing: border-box; background: var(--card); border-radius: 26px 26px 0 0; padding: 22px 20px calc(env(safe-area-inset-bottom, 0px) + 22px); display: flex; flex-direction: column; gap: 12px; }
+@media (prefers-reduced-motion: reduce) { .hr-lb > .hr-lb-row { transition: none; } }

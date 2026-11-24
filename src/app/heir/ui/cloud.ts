@@ -10,6 +10,7 @@ import { fromRows, removedMemberIds, toRows, type HouseholdRow, type MemberRow }
 import type { Household } from '@/heir/types';
 import { mergeProgress, parseProgress, sameProgress, type MemberProgress } from '@/heir/progress';
 import { toAnswerRows, unsent } from '@/heir/answers';
+import type { Board, BoardStatus, Period } from '@/heir/board';
 import type { Plan } from '@/heir/types';
 
 let client: SupabaseClient | null = null;
@@ -216,3 +217,8 @@ export async function refreshStatsOnServer(db: SupabaseClient): Promise<void> {
   const res = await fetch('/api/heir/stats', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
   if (!res.ok && res.status !== 404) throw new Error('stats not updated');
 }
+
+// ---- The community leaderboard (see supabase/migrations/20261130000000_heir_board.sql).
+export const getBoard = (db: SupabaseClient, period: Period) => call<Board>(db, 'heir_board', { p_period: period });
+export const getBoardStatus = (db: SupabaseClient) => call<BoardStatus>(db, 'heir_board_status');
+export const markBoardSeen = (db: SupabaseClient, period: Period) => call<void>(db, 'heir_board_seen_mark', { p_period: period });

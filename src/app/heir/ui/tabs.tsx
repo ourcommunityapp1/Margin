@@ -14,7 +14,7 @@ const FRIENDS_TAB = { href: '/heir/friends', label: 'Friends', icon: <><circle c
 
 export function Tabs() {
   const path = usePathname();
-  const { accounts, email } = useHeir();
+  const { accounts, email, boardAlert } = useHeir();
   const tabs = accounts && email ? [...TABS, FRIENDS_TAB] : TABS;
   const current = (href: string) => (href === '/heir' ? path === '/heir' : path.startsWith(href) || (href === '/heir/friends' && (path.startsWith('/heir/u') || path.startsWith('/heir/profile'))));
   return (
@@ -23,6 +23,7 @@ export function Tabs() {
         <Link key={t.href} href={t.href} aria-current={current(t.href) ? 'page' : undefined}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{t.icon}</svg>
           {t.label}
+          {t.href === '/heir/progress' && boardAlert && <span className="hr-dot" role="img" aria-label="Your place on the leaderboard changed" />}
         </Link>
       ))}
     </nav>

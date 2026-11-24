@@ -6,6 +6,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useHeir } from '../ui/provider';
+import { CommunityPreview } from '../ui/community';
 import { Tabs } from '../ui/tabs';
 import { Stone } from '../ui/stone';
 import Link from 'next/link';
@@ -80,6 +81,8 @@ export default function Progress() {
     <>
       <main className="hr-page">
         <h1 className="serif" style={{ margin: '20px 4px 4px', fontSize: 34, fontWeight: 500 }}>Progress</h1>
+
+        <CommunityPreview />
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Words in your memory">
           <span className="hr-label">Words in your memory</span>

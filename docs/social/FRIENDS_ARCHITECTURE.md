@@ -407,6 +407,17 @@ with server receive times makes faking hard and visible, not impossible; the app
    also has one free day: the first skipped weekday never breaks the run, a second one does. Live in the app, shown on
    the Today week strip as "Rest". Friends will see the same number.
 
+**Phase 2 progress (Nov 24):**
+- Live in the database: `heir_stats` is written only by the server (`/api/heir/stats`, from the full answer history, in the
+  person's time zone), the phone-write path is removed, `heir_words_history` records a point whenever words change, and
+  the leaderboard functions (`heir_board`, `heir_board_status`, `heir_board_seen_mark`) with ranking, ties, movement since
+  you last looked, the top 3 / around-you windows and the top-10 alerts. Tested on a local Postgres with 16 made-up people.
+- Live in the app: Community preview at the top of Progress (top 3 and you, gold dot on the Progress tab and an arrow when
+  your place changed), the full Community board with This month / All time, the one-move animation, and "How it's counted".
+- Known simplifications: the streak shown to friends is as of the last refresh (no daily job yet), so a long-idle friend's
+  streak can look stale; a person's first history point is their number on the day it was first worked out, so "this month"
+  is exact only from now on; no daily recount for people who haven't opened the app.
+
 **Phase 1 progress (Nov 24):**
 - Live in the database: profiles, usernames (unique, case-insensitive), search, friend requests, friends, blocks, reports,
   rate limits, and the friend-visible stats table (phone-sent for now; the server job replaces it). 15 functions callable
