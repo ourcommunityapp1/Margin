@@ -4,6 +4,7 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
 import { clampDue } from './keep.ts';
+import { gradeRecall, MODEL_VERSION, speedBaseline } from './memory.ts';
 import { mergeToday, parseToday, type Today } from './dayplan.ts';
 
 // Day-sized intervals: same-day repetition happens inside the lesson itself.
@@ -32,6 +33,9 @@ export interface LogEntry {
   words?: number;
   // The phone's local date when it was answered, so days are never worked out in another time zone.
   day?: string;
+  // The chance of recall the model gave just before this answer, and which model gave it (to check the model is right).
+  p?: number;
+  mv?: string;
 }
 
 export interface MemberProgress {
@@ -89,6 +93,8 @@ export interface StepResult {
   hints: number;
   ms: number;
   review: boolean;
+  // The chance the model gave just before this answer (only for an item it has scheduled).
+  p?: number;
 }
 
 export function localDay(d: Date): string {
@@ -137,9 +143,10 @@ export function waitingForSleep(p: MemberProgress, itemId: string, now: Date): b
   return !!c && c.state === State.New && Date.parse(c.due) > now.getTime();
 }
 
-export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date; newId?: () => string; keepRules?: { tz?: string | null } }): MemberProgress {
+export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date; newId?: () => string; keepRules?: { tz?: string | null }; grading?: 'v2' }): MemberProgress {
   const newUnits = o.learned ? (Array.isArray(o.learned) ? o.learned : [o.learned]) : [];
   const cards = { ...p.cards };
+  const speed = o.grading === 'v2' ? speedBaseline(p.log) : {};
   const byItem = new Map<string, StepResult[]>();
   for (const r of o.results) byItem.set(r.itemId, [...(byItem.get(r.itemId) ?? []), r]);
   for (const [itemId, rs] of byItem) {
@@ -153,7 +160,8 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     const card = toCard(existing);
     // Still waiting for its first night: practice today is welcome, but doesn't count yet.
     if (card.state === State.New && o.now < card.due) continue;
-    const grade = ratingFor(rs, card);
+    // The newer grading (accuracy, cues and your own speed; see memory.ts) is tried on owner accounts first.
+    const grade = o.grading === 'v2' ? gradeRecall(rs, card, speed) : ratingFor(rs, card);
     if (grade === null) continue;
     cards[itemId] = fromCard(scheduler.next(card, o.now, grade).card);
   }
@@ -179,7 +187,7 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     levels: p.levels,
     awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
-    log: [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day }))].slice(-1500),
+    log: [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day, ...(r.p !== undefined ? { mv: MODEL_VERSION } : {}) }))].slice(-1500),
     keep,
   };
 }

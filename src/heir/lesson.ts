@@ -314,11 +314,18 @@ function practiceStep(c: Ctx, item: Item, units: Unit[], kinds: PracticeKind[], 
 // An item already in progress: the parts learned so far and how many times it has been practiced.
 export interface Mate { item: Item; units: Unit[]; seen: number }
 // An item from a finished group that is due on the schedule; strength is FSRS stability in days.
-export interface Due { item: Item; strength: number }
+// With the newer engine (owner accounts first): `weak` names the parts whose last recall went wrong, asked first, and
+// `chance` is the chance of recall now, which sets how much help the first step gives.
+export interface Due { item: Item; strength: number; weak?: string[]; chance?: number }
+
+// The parts to ask about: the weak ones when there are any, otherwise any part.
+const partsFor = (c: Ctx, d: Due) => { const all = unitsFor(d.item, c.track); const weak = all.filter((u) => d.weak?.includes(u.key)); return weak.length ? weak : all; };
 
 function dueStep(c: Ctx, d: Due, avoid?: StepKind): Step {
-  const kinds: PracticeKind[] = d.strength < 7 ? ['letters', 'spot', 'match', 'blanks'] : ['type', 'say', 'match'];
-  return practiceStep(c, d.item, unitsFor(d.item, c.track), kinds, true, avoid);
+  // Cue fading: when recall is likely, ask for it whole with no help; when it's shaky, start from the first letters.
+  const kinds: PracticeKind[] = d.chance !== undefined ? (d.chance < 0.75 ? ['letters', 'blanks'] : ['type', 'say'])
+    : d.strength < 7 ? ['letters', 'spot', 'match', 'blanks'] : ['type', 'say', 'match'];
+  return practiceStep(c, d.item, partsFor(c, d), kinds, true, avoid);
 }
 
 // A second new question in the same lesson, learned more briefly: see it, build it, fill it in, type it.
@@ -454,7 +461,7 @@ export function buildReview(o: { due: Due[]; track: Track; pool: Item[]; rng: Rn
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
   const chosen = o.due.slice(0, o.max ?? 6);
   const first = chosen.map((d) => dueStep(c, { ...d, strength: Math.min(d.strength, 6) }));
-  const second = chosen.map((d, i) => practiceStep(c, d.item, unitsFor(d.item, o.track), ['say', 'type'], true, first[i].kind));
+  const second = chosen.map((d, i) => practiceStep(c, d.item, partsFor(c, d), ['say', 'type'], true, first[i].kind));
   return [...first, ...shuffle(second, o.rng)];
 }
 

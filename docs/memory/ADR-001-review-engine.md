@@ -235,3 +235,45 @@ It comes back with one right whole recall. This replaces the 90 / 240 / 425-day 
 - **The native optimizer on Netlify.** Mitigation: the GitHub Action fallback.
 - **Behaviour change for current users.** Labs first, then everyone. Keep the 30-day grace for anything that changes
   counts.
+
+---
+
+## Progress
+
+### Built (owner accounts first, 2026-11-24)
+
+**One memory module.** `src/heir/memory.ts` holds everything about how well something is remembered:
+- the FSRS-6 curve, used by the planner and the scheduler alike;
+- the chance before each answer;
+- days until a target;
+- each person's own speed;
+- the grading table (Decision 4);
+- weak parts;
+- each person's step time.
+
+**Grading (Decision 4).** `finishSession(..., { grading: 'v2' })`:
+- First letters counts as cued recall: at best Shaky.
+- A slip within the allowance, a hint, or one misheard spoken word is Shaky.
+- Effortless needs a seasoned item *and* a faster pace than your own usual (after 20 answers).
+
+**Calibration (Decision 8).**
+- Every recall stores the chance the model gave just before it (`p`) and the model version (`mv`).
+- These are sent to `heir_answers.p_recall` and `model_version`. The migration is
+  `20261202010000_heir_answers_prediction.sql` (applied).
+- The query is in `calibration.sql`.
+
+**Weak parts and cue fading (Decision 5, in part).**
+- Reviews ask the parts whose last recall went wrong first.
+- A review starts with first letters when the chance is under 75%. Otherwise it asks for the whole thing with no help.
+
+**Reviews fit their time.** A review card's minutes, divided by the person's own step time, sets how many items it
+holds (3 to 8).
+
+### Not yet
+
+- **Memory per part as its own schedule (Decision 2).** Weak parts are read from the answer log for now.
+- **Rebuilding schedules by replaying answers (Decision 1).**
+- **Lessons (not just reviews) fitted to time.**
+- **The look-alike index.**
+- **"In memory" from the model (Decision 6).**
+- **Settings fitted to Katekize's data (Decision 7).** This waits for enough answers with predictions.

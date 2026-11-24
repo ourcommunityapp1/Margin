@@ -20,6 +20,7 @@ import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { startedCourses, withSession } from '@/heir/dayplan';
+import { predictedChance, recallChance, stepSeconds, weakParts } from '@/heir/memory';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
@@ -89,12 +90,25 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     if (!household.members.length) { router.replace('/heir/welcome'); return; }
     if (session || !me) return;
     const pool = allItems();
-    const toDue = (list: { itemId: string; strength: number }[]) => list.flatMap((d) => { const item = getItem(d.itemId); return item ? [{ item, strength: d.strength }] : []; });
+    // With the newer engine (owner accounts first): each review knows its weak parts and its chance of recall now.
+    const weak = keepRules ? weakParts(mine.log) : null;
+    const toDue = (list: { itemId: string; strength: number }[]) => list.flatMap((d) => {
+      const item = getItem(d.itemId);
+      if (!item) return [];
+      const card = mine.cards[d.itemId];
+      return [weak ? { item, strength: d.strength, weak: [...weak].filter((k) => k.startsWith(`${item.id}#`)), ...(card ? { chance: recallChance(card, new Date()) } : {}) } : { item, strength: d.strength }];
+    });
     const learnedUnits = new Set(mine.units);
     const ids = new Set(items.map((i) => i.id));
     const done = lessonsDone(mine, course.id, ids);
     const plan = mode === 'review'
-      ? (() => { const picks = riskOrder(mine, ids, new Date()); return picks.length ? { kind: 'practice' as const, picks: picks.slice(0, 6), why: 'catch-up' as const } : null; })()
+      ? (() => {
+        // A review fits its time: the card's minutes (or about four) at this person's own pace, two steps an item.
+        const est = mine.today?.cards?.find((c) => c.id === cardId)?.est ?? 4;
+        const fit = keepRules ? Math.min(8, Math.max(3, Math.round((est * 60) / (2 * stepSeconds(mine.log))))) : 6;
+        const picks = riskOrder(mine, ids, new Date());
+        return picks.length ? { kind: 'practice' as const, picks: picks.slice(0, fit), why: 'catch-up' as const } : null;
+      })()
       : planNext({ courseId: course.id, items, track, p: mine, now: new Date() });
     const seen = seenCounts(mine);
     const fromPicks = (picks: { itemId: string; strength: number }[]) => toDue(picks);
@@ -197,7 +211,9 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     const key = step.id.replace(/:typed$/, '');
     // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
     if (step.kind === 'quiz') { setFeedback(o); return; }
-    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
+    // The chance the model gave before this answer, kept beside it so we can check the model is right.
+    const chance = ['type', 'say', 'letters'].includes(step.kind) ? predictedChance(mine.cards[step.itemId], new Date()) : null;
+    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(chance !== null ? { p: chance } : {}), ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
     if (!o.ok && !retried.has(key)) {
       setRetried((s) => new Set(s).add(key));
       setQueue((q) => [...q, step]);
@@ -213,7 +229,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     if (n < queue.length) { setPos(n); return; }
     const recorded = Object.values(results);
     const now = new Date();
-    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now, keepRules: keepRules ? { tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; } })() } : undefined });
+    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now, ...(keepRules ? { grading: 'v2' as const } : {}), keepRules: keepRules ? { tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; } })() } : undefined });
     // Raise levels the log now shows and stamp new awards, so the done screen can show what changed.
     const settled = settle(next, allItems(), track, now);
     const marked = session.rise ? markRisen(settled.progress) : session.night ? markNight(settled.progress, [...new Set(session.steps.map((s) => s.itemId))], now) : settled.progress;

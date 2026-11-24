@@ -18,6 +18,8 @@ export interface AnswerRow {
   part: string | null;
   session_at: string;
   local_day: string | null;
+  p_recall: number | null;
+  model_version: string | null;
 }
 
 export const toAnswerRows = (householdId: string, memberId: string, entries: LogEntry[]): AnswerRow[] =>
@@ -25,6 +27,7 @@ export const toAnswerRows = (householdId: string, memberId: string, entries: Log
     id: e.id!, household_id: householdId, member_id: memberId, item_id: e.itemId, kind: e.kind, correct: e.correct,
     misses: typeof e.misses === 'number' ? e.misses : null, words: typeof e.words === 'number' ? e.words : null, hints: Math.max(0, Math.round(e.hints) || 0), ms: Math.max(0, Math.round(e.ms) || 0),
     review: !!e.review, part: e.part ?? null, session_at: e.at, local_day: e.day ?? null,
+    p_recall: typeof e.p === 'number' && e.p >= 0 && e.p <= 1 ? e.p : null, model_version: e.mv ?? null,
   }));
 
 /** Answers newer than the last one this phone sent (`since` is that answer's time), oldest first. */
