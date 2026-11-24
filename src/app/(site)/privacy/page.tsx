@@ -55,6 +55,11 @@ export default function Privacy() {
             <p>Katekize stores its data with Supabase, is hosted on Netlify, and sends sign-in codes by email through Resend. These services handle your data only to run Katekize for you.</p>
           </section>
 
+          <section aria-labelledby="ask-h">
+            <h2 id="ask-h">Questions and requests</h2>
+            <p>Write to <a href="mailto:hello@katekize.com">hello@katekize.com</a> with a question, to report a problem, or to ask for your information to be corrected or removed.</p>
+          </section>
+
           <section aria-labelledby="chg-h">
             <h2 id="chg-h">Changes</h2>
             <p>If this changes in a way that matters, the date at the top changes and the app tells people who use it. Back to <Link href="/about">About Katekize</Link>.</p>

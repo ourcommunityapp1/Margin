@@ -36,6 +36,7 @@ export function SiteFooter({ notice }: { notice?: string }) {
         <Link href="/memorize/the-lords-prayer">Memorize the Lord’s Prayer</Link>
         <Link href="/about">About Katekize</Link>
         <Link href="/privacy">Privacy</Link>
+        <a href="mailto:hello@katekize.com">Contact</a>
         <Link href="/heir/about">Photo credits</Link>
         <Link href="/heir">Open the app</Link>
       </div>
