@@ -14,7 +14,8 @@ import { MiniWindow } from './glass/mini';
 import { partOf, partWindow, type PartWindow } from './glass/light';
 import { courseFor, courseItems, itemLabel, type Course } from '@/heir/content';
 import { cardStates, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, type CardState, type DayCard } from '@/heir/dayplan';
-import { dueCards, localDay, memberProgress, type MemberProgress } from '@/heir/progress';
+import { dueCards, localDay, memberProgress, waitingForSleep, type MemberProgress } from '@/heir/progress';
+import { recalledRecently } from '@/heir/memory';
 import { nightOffer, riseOffer, riskOrder } from '@/heir/planner';
 import type { Track } from '@/heir/types';
 
@@ -98,7 +99,8 @@ export function TodayCards() {
   if (night && focusCourse) slides.push({ type: 'live', key: 'night', course: focusCourse, href: '/heir/lesson?mode=night', tag: 'Before sleep', title: 'When you lie down', button: 'Start' });
   if (allDone) {
     const allIds = new Set(started.flatMap((c) => [...ids(c)]));
-    const extra = riskOrder(mine, allIds, now).some((x) => x.recall < 0.85);
+    const recent = recalledRecently(mine.log, now);
+    const extra = riskOrder(mine, allIds, now).some((x) => x.recall < 0.85 && !waitingForSleep(mine, x.itemId, now) && !recent.has(x.itemId));
     // The window shown is the course you spent longest on today, lit only as far as you've learned. Never a finished
     // window that hasn't been earned.
     const most = [...states].sort((a, b) => b.secs - a.secs)[0];

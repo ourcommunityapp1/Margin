@@ -200,7 +200,10 @@ export function spreadApart<T>(list: T[], text: (t: T) => string): T[] {
 export function whyNow(itemId: string, log: LogEntry[], chance: number | null, now: Date): string | null {
   let last: LogEntry | undefined;
   for (const e of log) if (e.itemId === itemId && RECALL.has(e.kind) && (!last || e.at > last.at)) last = e;
-  const strength = chance === null ? '' : ` · strength ${Math.round(chance * 100)}%`;
+  // The model only knows memory across nights: on the day something was last practiced its chance means little (it was
+  // just seen), so no number is shown then.
+  const sameDay = !!last && (now.getTime() - Date.parse(last.at)) < 20 * 3_600_000;
+  const strength = chance === null || sameDay ? '' : ` · strength ${Math.round(chance * 100)}%`;
   if (!last) return chance === null ? null : `Strength ${Math.round(chance * 100)}%`;
   if (!last.correct || last.hints) {
     const off = last.misses ? `${last.misses} ${last.misses === 1 ? 'word' : 'words'} off last time` : last.hints ? 'Needed a hint last time' : 'Missed last time';
@@ -209,4 +212,10 @@ export function whyNow(itemId: string, log: LogEntry[], chance: number | null, n
   const days = Math.floor((now.getTime() - Date.parse(last.at)) / DAY);
   const ago = days <= 0 ? 'Practiced today' : days === 1 ? 'Last practiced yesterday' : `Last practiced ${days} days ago`;
   return `${ago}${strength}`;
+}
+
+/** Items recalled (typed, said or first letters) in the last `hours`: not picked again for a review so soon. */
+export function recalledRecently(log: LogEntry[], now: Date, hours = 16): Set<string> {
+  const since = now.getTime() - hours * 3_600_000;
+  return new Set(log.filter((e) => RECALL.has(e.kind) && Date.parse(e.at) >= since).map((e) => e.itemId));
 }

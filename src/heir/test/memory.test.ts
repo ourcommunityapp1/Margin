@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Rating, State } from 'ts-fsrs';
-import { daysUntil, foldTrimmed, gradeRecall, itemChance, markOf, overlap, partChance, partMemories, predictedChance, recallChance, speedBaseline, spreadApart, stepSeconds, weakParts } from '../memory.ts';
+import { daysUntil, foldTrimmed, gradeRecall, itemChance, markOf, overlap, partChance, partMemories, predictedChance, recallChance, speedBaseline, spreadApart, stepSeconds, weakParts, whyNow, recalledRecently } from '../memory.ts';
 import { recallChance as plannerChance } from '../planner.ts';
 import { buildReview, seeded, unitsFor } from '../lesson.ts';
 import { allItems, getItem } from '../content/index.ts';
@@ -77,4 +77,13 @@ test('look-alikes are kept apart in a review', () => {
   const t = { a: 'the lord is my shepherd i shall not want', b: 'the lord is my shepherd he leadeth me', c: 'what is the chief end of man' };
   assert.ok(overlap(t.a, t.b) >= 0.5);
   assert.deepEqual(spreadApart(['a', 'b', 'c'] as const, (k) => t[k]), ['a', 'c', 'b']);
+});
+
+test('no strength number on the day something was last practiced; recently recalled items are known', () => {
+  const at = new Date('2026-11-24T17:40:00Z');
+  const missed: LogEntry = { at: '2026-11-24T13:56:00Z', itemId: 'wsc-10', part: 'wsc-10#1', kind: 'type', correct: false, misses: 6, hints: 0, ms: 1, review: true };
+  assert.equal(whyNow('wsc-10', [missed], 0.92, at), '6 words off last time');
+  assert.equal(whyNow('wsc-10', [{ ...missed, at: '2026-11-20T13:56:00Z' }], 0.8, at), '6 words off last time · strength 80%');
+  assert.deepEqual([...recalledRecently([missed], at)], ['wsc-10']);
+  assert.equal(recalledRecently([missed], new Date('2026-11-25T12:00:00Z')).size, 0);
 });

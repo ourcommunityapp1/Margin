@@ -13,14 +13,14 @@ import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Ty
 import { buildCheckpoint, buildKeep, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
 import { wordCount } from '@/heir/measures';
 import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
-import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
+import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, waitingForSleep, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { startedCourses, withSession } from '@/heir/dayplan';
-import { itemChance, partMemories, predictedChance, recallChance, stepSeconds, weakPartsNow, whyNow } from '@/heir/memory';
+import { itemChance, partMemories, predictedChance, recallChance, stepSeconds, weakPartsNow, whyNow, recalledRecently } from '@/heir/memory';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
@@ -111,7 +111,11 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
         // A review fits its time: the card's minutes (or about four) at this person's own pace, two steps an item.
         const est = mine.today?.cards?.find((c) => c.id === cardId)?.est ?? 4;
         const fit = keepRules ? Math.min(8, Math.max(3, Math.round((est * 60) / (2 * stepSeconds(mine.log))))) : 6;
-        const picks = riskOrder(mine, ids, new Date(), parts);
+        // Not something still waiting for its first night's sleep, or recalled in the last few hours: a review then
+        // measures short-term memory, not what's kept.
+        const recent = recalledRecently(mine.log, new Date());
+        const fresh = riskOrder(mine, ids, new Date(), parts).filter((x) => !waitingForSleep(mine, x.itemId, new Date()) && !recent.has(x.itemId));
+        const picks = fresh.length ? fresh : riskOrder(mine, ids, new Date(), parts).filter((x) => !waitingForSleep(mine, x.itemId, new Date()));
         return picks.length ? { kind: 'practice' as const, picks: picks.slice(0, fit), why: 'catch-up' as const } : null;
       })()
       : planNext({ courseId: course.id, items, track, p: mine, now: new Date() });
@@ -125,7 +129,8 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       // Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
       const started = startedCourses(mine, track, household.plan?.course ?? null);
       const allIds = new Set(started.flatMap((c) => courseItems(c).map((i) => i.id)));
-      const picks = riskOrder(mine, allIds, new Date(), parts);
+      const recent = recalledRecently(mine.log, new Date());
+      const picks = riskOrder(mine, allIds, new Date(), parts).filter((x) => !waitingForSleep(mine, x.itemId, new Date()) && !recent.has(x.itemId));
       const slipping = picks.filter((x) => x.recall < 0.85);
       next = { ...base, courseId: '', label: 'Extra practice', kind: 'review', steps: buildReview({ due: fromPicks((slipping.length ? slipping : picks).slice(0, 5)), track, pool, rng: Math.random, max: 5 }), units: [], group: null };
     } else if (one) {
