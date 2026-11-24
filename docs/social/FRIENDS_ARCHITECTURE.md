@@ -407,6 +407,17 @@ with server receive times makes faking hard and visible, not impossible; the app
    also has one free day: the first skipped weekday never breaks the run, a second one does. Live in the app, shown on
    the Today week strip as "Rest". Friends will see the same number.
 
+**Phase 1 progress (Nov 24):**
+- Live in the database: profiles, usernames (unique, case-insensitive), search, friend requests, friends, blocks, reports,
+  rate limits, and the friend-visible stats table (phone-sent for now; the server job replaces it). 15 functions callable
+  by signed-in people, 8 helpers callable by none; no table can be written directly. Tested on a local Postgres with five
+  made-up accounts before being applied.
+- Live in the app, owner only: Friends tab, make or edit your profile, search, requests (accept, not now, cancel), your
+  friends with streak and words, a friend's profile (stones, courses, their friends), remove, block, report. The owner's
+  numbers are sent after progress settles.
+- Still to do in Phase 1: invite links for people not on Katekize; the "Your profile" sharing switches beyond the two
+  already there; a way for the owner to review reports; a second real account to test with.
+
 **Phase 1, profiles and friends (labs):** profiles, usernames, search, requests, friends, block, report, invite
 links, Friends tab, friend profile, You page changes.
 
