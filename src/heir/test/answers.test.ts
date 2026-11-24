@@ -43,7 +43,7 @@ test('answer rows carry the whole answer, and only answers with an id are sent',
   const legacy: LogEntry = { at: '2026-11-19T10:00:00Z', itemId: 'wsc-1', kind: 'type', correct: true, hints: 0, ms: 5, review: false };
   const rows = toAnswerRows('hh', 'mm', [legacy, ...p.log]);
   assert.equal(rows.length, 1);
-  assert.deepEqual({ ...rows[0], id: 'x' }, { id: 'x', household_id: 'hh', member_id: 'mm', item_id: 'wsc-1', kind: 'say', correct: true, misses: 1, words: null, hints: 1, ms: 900, review: false, part: 'wsc-1#1', session_at: at.toISOString(), local_day: '2026-11-24', p_recall: null, model_version: null });
+  assert.deepEqual({ ...rows[0], id: 'x' }, { id: 'x', household_id: 'hh', member_id: 'mm', item_id: 'wsc-1', kind: 'say', correct: true, misses: 1, words: null, hints: 1, ms: 900, review: false, part: 'wsc-1#1', session_at: at.toISOString(), local_day: '2026-11-24', p_recall: null, model_version: null, missed: null });
   // With the chance the model gave before the answer: stamped with the model that gave it.
   const q = finishSession(emptyProgress(), { results: [res('wsc-1', 'type', { p: 0.83 })], now: at, newId: ids });
   const row = toAnswerRows('hh', 'mm', q.log)[0];
@@ -117,4 +117,11 @@ test('a whole-item recall is found in an answer log when every part was right in
   assert.equal(none['wsc-9'].full, undefined, 'unknown part count: not claimed as whole');
   const old = { at: '2026-11-01T10:00:00Z', itemId: 'fv-1', kind: 'type' as const, correct: true, hints: 0, ms: 1, review: false };
   assert.equal(keepFromLog([old], () => 1)['fv-1'].full, '2026-11-01T10:00:00Z', 'a one-part item recalled once is whole (older answers too)');
+});
+
+test('missed word positions are kept with the answer, never what was typed', () => {
+  const p = finishSession(emptyProgress(), { results: [res('wsc-1', 'type', { part: 'wsc-1#1', missed: [3, 4, 9] }), res('wsc-1', 'type', { missed: [999, -1, 2.5] })], now: at, newId: ids });
+  const rows = toAnswerRows('hh', 'mm', p.log);
+  assert.deepEqual(rows[0].missed, [3, 4, 9]);
+  assert.equal(rows[1].missed, null, 'out of range or not whole numbers are dropped');
 });

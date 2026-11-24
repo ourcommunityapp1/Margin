@@ -34,6 +34,8 @@ export interface LogEntry {
   // Words wrong or missing in a typed or spoken answer (0 for a perfect one), and how many words the text had.
   misses?: number;
   words?: number;
+  // Positions (0-based) of the words missed or shown, in the part's text.
+  missed?: number[];
   // The phone's local date when it was answered, so days are never worked out in another time zone.
   day?: string;
   // The chance of recall the model gave just before this answer, and which model gave it (to check the model is right).
@@ -93,6 +95,8 @@ export interface StepResult {
   // Words in the text recalled, so a couple of slips in a long text can still keep it (see `allowedMisses`).
   words?: number;
   misses?: number;
+  // Positions (0-based) of the words missed or shown, in the part's text. Never what was typed.
+  missed?: number[];
   // Right on the first try.
   correct: boolean;
   hints: number;

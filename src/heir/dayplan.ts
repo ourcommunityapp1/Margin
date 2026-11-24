@@ -16,7 +16,7 @@ export type CardKind = 'lesson' | 'review' | 'fix';
 export interface DayCard { id: string; kind: CardKind; course: string; est: number }
 /** One finished session today: a lesson, review, fix, extra practice, or a night or morning recall. */
 export interface DaySession { id: string; at: string; secs: number; course: string; kind: CardKind | 'extra' | 'night' | 'rise'; card?: string }
-export interface Today { day: string; cards?: DayCard[]; sessions: DaySession[] }
+export interface Today { day: string; cards?: DayCard[]; sessions: DaySession[]; /** Cards opened today (ids), finished or not. */ started?: string[] }
 
 export const LESSON_EST = 6;
 export const FIX_EST = 3;
@@ -111,6 +111,27 @@ export function withPlan(today: Today | undefined, day: string, cards: DayCard[]
   return { day, cards, sessions: today?.day === day ? today.sessions : [] };
 }
 
+/** Record that a card was opened. */
+export function withStarted(today: Today | undefined, day: string, cardId: string): Today {
+  const base: Today = today?.day === day ? today : { day, sessions: [] };
+  return base.started?.includes(cardId) ? base : { ...base, started: [...(base.started ?? []), cardId] };
+}
+
+export interface DayEvent { day: string; card_id: string; course: string; kind: CardKind; event: 'shown' | 'started' | 'finished'; secs: number | null }
+
+/** What happened to each of today's cards: shown, opened, finished (with its seconds). Sent to the account so we can tell whether the recommendations work. */
+export function dayEvents(today: Today | undefined): DayEvent[] {
+  if (!today?.cards) return [];
+  const states = cardStates(today);
+  return today.cards.flatMap((c, i) => {
+    const base = { day: today.day, card_id: c.id, course: c.course, kind: c.kind };
+    const out: DayEvent[] = [{ ...base, event: 'shown', secs: null }];
+    if (today.started?.includes(c.id) || states[i].done) out.push({ ...base, event: 'started', secs: null });
+    if (states[i].done) out.push({ ...base, event: 'finished', secs: states[i].secs });
+    return out;
+  });
+}
+
 /** Add a fix card made necessary during the day (a recall missed in a lesson), at the end. */
 export function withFix(today: Today, card: DayCard): Today {
   return today.cards?.some((c) => c.id === card.id) ? today : { ...today, cards: [...(today.cards ?? []), card] };
@@ -129,7 +150,8 @@ export function mergeToday(a?: Today, b?: Today): Today | undefined {
   if (a.day !== b.day) return a.day > b.day ? a : b;
   const cards = a.cards || b.cards ? [...(a.cards ?? b.cards ?? []), ...((a.cards ? b.cards : []) ?? []).filter((c) => !(a.cards ?? []).some((x) => x.id === c.id))] : undefined;
   const sessions = [...a.sessions, ...b.sessions.filter((s) => !a.sessions.some((x) => x.id === s.id))];
-  return { day: a.day, ...(cards ? { cards } : {}), sessions };
+  const started = [...new Set([...(a.started ?? []), ...(b.started ?? [])])];
+  return { day: a.day, ...(cards ? { cards } : {}), sessions, ...(started.length ? { started } : {}) };
 }
 
 export function parseToday(v: unknown): Today | undefined {
@@ -139,7 +161,8 @@ export function parseToday(v: unknown): Today | undefined {
   const kinds = ['lesson', 'review', 'fix'];
   const cards = Array.isArray(t.cards) ? t.cards.filter((c) => c && typeof c.id === 'string' && typeof c.course === 'string' && kinds.includes(c.kind) && typeof c.est === 'number') : undefined;
   const sessions = Array.isArray(t.sessions) ? t.sessions.filter((s) => s && typeof s.id === 'string' && typeof s.at === 'string' && typeof s.secs === 'number' && typeof s.course === 'string' && typeof s.kind === 'string') : [];
-  return { day: t.day, ...(cards ? { cards } : {}), sessions };
+  const started = Array.isArray(t.started) ? t.started.filter((x) => typeof x === 'string').slice(0, 20) : [];
+  return { day: t.day, ...(cards ? { cards } : {}), sessions, ...(started.length ? { started } : {}) };
 }
 
 /** What a course's row says under its name in "Keep going". */

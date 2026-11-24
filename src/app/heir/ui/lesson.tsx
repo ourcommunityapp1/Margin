@@ -19,7 +19,7 @@ import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
-import { startedCourses, withSession } from '@/heir/dayplan';
+import { startedCourses, withSession, withStarted } from '@/heir/dayplan';
 import { itemChance, partMemories, predictedChance, recallChance, stepSeconds, weakPartsNow, whyNow, recalledRecently } from '@/heir/memory';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
@@ -206,8 +206,10 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
       activeMs.current = 0;
+      // Opening a card from Today is recorded (finished or not), to tell whether the recommendations are used.
+      if (cardId && me) updateProgress((all) => { const p = memberProgress(all, me.id); return p.today?.started?.includes(cardId) ? all : { ...all, [me.id]: { ...p, today: withStarted(p.today, localDay(new Date()), cardId) } }; });
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan?.course, courseId, cardId, course.title]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan?.course, courseId, cardId, course.title, updateProgress]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
@@ -234,7 +236,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     if (step.kind === 'quiz') { setFeedback(o); return; }
     // The chance the model gave before this answer, kept beside it so we can check the model is right.
     const chance = ['type', 'say', 'letters'].includes(step.kind) ? predictedChance(mine.cards[step.itemId], new Date()) : null;
-    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(chance !== null ? { p: chance } : {}), ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
+    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(chance !== null ? { p: chance } : {}), ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}), ...(o.missedAt?.length ? { missed: o.missedAt.slice(0, 60) } : {}) } }));
     if (!o.ok && !retried.has(key)) {
       setRetried((s) => new Set(s).add(key));
       setQueue((q) => [...q, step]);

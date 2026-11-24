@@ -123,8 +123,8 @@ Mockup first, then build.
     parts).
   - It depends on recording which words were missed (below). It can also show patterns across everyone, never
     anyone's answers.
-- **Needs:**
-  1. **Missed-word positions:** store which words were missed in each typed or spoken answer, as positions in the
-     text, not what was typed (`heir_answers.missed`, an integer array).
-  2. **Card events:** shown, started, finished and skipped, kept by day, to tell whether recommendations work
-     (`heir_events`).
+- **Needs (both now recorded, since 2026-11-24, so history is building):**
+  1. **Missed-word positions:** `heir_answers.missed`, the 0-based positions of the words missed or shown in the part's
+     text (typed, said, fill-in-the-blank and first-letters answers). Never what was typed.
+  2. **Card events:** `heir_events`, one row per card per event (shown, started, finished with its seconds). A card
+     that was shown but never finished was skipped.

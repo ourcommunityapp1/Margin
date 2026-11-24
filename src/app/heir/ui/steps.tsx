@@ -12,7 +12,8 @@ import { getCollection, getItem, isVerse, itemLabel, itemNoun } from '@/heir/con
 import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
 // `slip`: right, but not cleanly (a spelling slip, a missed word), so the praise should be quieter.
-export interface Outcome { ok: boolean; close?: boolean; slip?: boolean; hints?: number; misses?: number; note?: string; reveal?: ReactNode }
+// `missedAt`: positions (0-based) of the words missed or shown, in the step's text. Kept with the answer, never what was typed.
+export interface Outcome { ok: boolean; close?: boolean; slip?: boolean; hints?: number; misses?: number; missedAt?: number[]; note?: string; reveal?: ReactNode }
 export type Report = (o: Outcome) => void;
 
 // Splits "God," into the word to type and the punctuation around it.
@@ -215,10 +216,10 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
     const missed = step.blanks.filter((i) => !right.includes(i) && !near.includes(i));
     const reveal = <p className="hr-say-text" style={{ fontSize: 19 }}><Lead text={step.lead} />{tokens.map((t, i) => <span key={i}>{step.blanks.includes(i) ? <strong>{t}</strong> : t}{' '}</span>)}</p>;
     if (!missed.length) {
-      onReport({ ok: true, slip: near.length > 0, hints, misses: 0, note: near.length ? `Check the spelling: ${quoteList(near.map((i) => tokens[i]))}.` : undefined, reveal: near.length ? reveal : undefined });
+      onReport({ ok: true, slip: near.length > 0, hints, misses: 0, missedAt: [], note: near.length ? `Check the spelling: ${quoteList(near.map((i) => tokens[i]))}.` : undefined, reveal: near.length ? reveal : undefined });
       return;
     }
-    onReport({ ok: false, hints, misses: missed.length, close: missed.length === 1 && step.blanks.length > 1, note: `${plural(missed.length, 'The missing word was', 'The missing words were')} ${quoteList(missed.map((i) => tokens[i]))}.`, reveal });
+    onReport({ ok: false, hints, misses: missed.length, missedAt: missed, close: missed.length === 1 && step.blanks.length > 1, note: `${plural(missed.length, 'The missing word was', 'The missing words were')} ${quoteList(missed.map((i) => tokens[i]))}.`, reveal });
   };
   const hint = () => {
     setHints((h) => h + 1);
@@ -272,6 +273,8 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
   const [misses, setMisses] = useState(0);
   const [hints, setHints] = useState(0);
   const [shake, setShake] = useState(0);
+  // Where the wrong letters and shown words were, in the text.
+  const slips = useRef<number[]>([]);
   const [focused, setFocused] = useState(false);
   const reported = useRef(false);
   const input = useRef<HTMLInputElement>(null);
@@ -282,7 +285,7 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
     reported.current = true;
     const allowed = Math.max(1, Math.floor(tokens.length / 10));
     const ok = m + h <= allowed;
-    onReport({ ok, slip: ok && m + h > 0, close: !ok && m + h <= allowed + 2, hints: h, misses: m, note: m ? `${m} wrong ${plural(m, 'letter', 'letters')}${h ? `, ${h} ${plural(h, 'word', 'words')} shown` : ''}.` : h ? `${h} ${plural(h, 'word', 'words')} shown.` : undefined, reveal: m || h ? <Answer lead={step.lead} text={step.text} /> : undefined });
+    onReport({ ok, slip: ok && m + h > 0, close: !ok && m + h <= allowed + 2, hints: h, misses: m, missedAt: [...new Set(slips.current)].sort((a, b) => a - b), note: m ? `${m} wrong ${plural(m, 'letter', 'letters')}${h ? `, ${h} ${plural(h, 'word', 'words')} shown` : ''}.` : h ? `${h} ${plural(h, 'word', 'words')} shown.` : undefined, reveal: m || h ? <Answer lead={step.lead} text={step.text} /> : undefined });
   };
   const advance = (m: number, h: number) => {
     const n = shown + 1;
@@ -292,7 +295,7 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
   const press = (ch: string) => {
     if (shown >= tokens.length) return;
     if (ch.toLowerCase() === firstLetter(tokens[shown])) advance(misses, hints);
-    else { setMisses(misses + 1); setShake((s) => s + 1); }
+    else { slips.current.push(shown); setMisses(misses + 1); setShake((s) => s + 1); }
   };
   return (
     <>
@@ -311,7 +314,7 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
       </div>
       {!focused && shown < tokens.length && <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>Tap the words to bring up the keyboard.</p>}
       <button type="button" className="hr-btn quiet" disabled={shown >= tokens.length}
-        onPointerDown={(e) => e.preventDefault()} onClick={() => { setHints(hints + 1); advance(misses, hints + 1); }}>Show the next word</button>
+        onPointerDown={(e) => e.preventDefault()} onClick={() => { slips.current.push(shown); setHints(hints + 1); advance(misses, hints + 1); }}>Show the next word</button>
     </>
   );
 }
@@ -333,6 +336,7 @@ function scored(text: string, lead: string, said: string, pass: number, verb: st
   return {
     ok: r.score >= pass,
     misses: missing + moved.length,
+    missedAt: tokens.map((_, i) => i).filter((i) => !r.heard[i]),
     slip: r.score >= pass && notes.length > 0,
     close: r.score < pass && r.score >= NEARLY,
     note: notes.join(' ') || undefined,

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cardStates, mergeToday, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, withSession, type Today } from '../dayplan.ts';
+import { cardStates, dayEvents, mergeToday, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, withSession, withStarted, type Today } from '../dayplan.ts';
 import { emptyProgress, finishSession, mergeProgress, parseProgress, type MemberProgress, type SavedCard } from '../progress.ts';
 import { courseItems, courses } from '../content/index.ts';
 import { unitsFor } from '../lesson.ts';
@@ -118,4 +118,23 @@ test('the brake: when reviews fill most of the day and something new came lately
   // Three days without anything new: the lesson comes back.
   const quiet = { ...p, log: [{ ...p.log[0], at: '2026-11-20T10:00:00Z' }] };
   assert.ok(planDay({ p: quiet, track: 'adult', started, focus: 'westminster-shorter', goal: 5, now }).some((c) => c.kind === 'lesson'));
+});
+
+test('card events: shown, opened, finished, and merged across phones', () => {
+  const cards = [
+    { id: `${day}:fix:creeds`, kind: 'fix' as const, course: 'creeds', est: 3 },
+    { id: `${day}:lesson:psalm-23`, kind: 'lesson' as const, course: 'psalm-23', est: 6 },
+    { id: `${day}:review:westminster-shorter`, kind: 'review' as const, course: 'westminster-shorter', est: 4 },
+  ];
+  let t: Today = withPlan(undefined, day, cards);
+  t = withStarted(t, day, cards[1].id);
+  t = withStarted(withStarted(t, day, cards[1].id), day, cards[1].id);
+  t = withSession(t, day, { id: 's1', at: `${day}T10:00:00Z`, secs: 240, course: 'creeds', kind: 'review', card: cards[0].id });
+  const ev = dayEvents(t).map((e) => `${e.kind}:${e.event}`);
+  assert.deepEqual(ev, ['fix:shown', 'fix:started', 'fix:finished', 'lesson:shown', 'lesson:started', 'review:shown']);
+  assert.equal(dayEvents(t).find((e) => e.event === 'finished')!.secs, 240);
+  assert.equal(t.started!.length, 1);
+  const other: Today = { ...withPlan(undefined, day, cards), started: [cards[2].id] };
+  assert.deepEqual(mergeToday(t, other)!.started!.sort(), [cards[1].id, cards[2].id].sort());
+  assert.deepEqual(dayEvents(undefined), []);
 });

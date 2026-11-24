@@ -9,6 +9,7 @@ import { HEIR_SUPABASE_KEY, HEIR_SUPABASE_URL, heirCloudConfigured } from '@/hei
 import { fromRows, removedMemberIds, toRows, type HouseholdRow, type MemberRow } from '@/heir/sync';
 import type { Household } from '@/heir/types';
 import { mergeProgress, parseProgress, sameProgress, type MemberProgress } from '@/heir/progress';
+import { dayEvents } from '@/heir/dayplan';
 import { toAnswerRows, unsent } from '@/heir/answers';
 import type { Board, BoardStatus, Period } from '@/heir/board';
 import type { Plan } from '@/heir/types';
@@ -92,6 +93,7 @@ export async function saveProgressRows(db: SupabaseClient, householdId: string, 
   // Every answer also goes up as its own row, so the account keeps the whole history even though the phone trims its copy.
   // A failure here never fails the save above: the same answers are sent again next time.
   await sendAnswers(db, householdId, merged).catch(() => { /* retried on the next save */ });
+  await sendEvents(db, householdId, merged).catch(() => { /* retried on the next save */ });
   return merged;
 }
 
@@ -114,6 +116,17 @@ export async function sendAnswers(db: SupabaseClient, householdId: string, progr
     sent[memberId] = fresh[fresh.length - 1].at;
     writeSent(sent);
   }
+}
+
+// ---- Card events: what happened to each recommended card on Today (shown, opened, finished). Sent once each.
+const sentEvents = new Set<string>();
+export async function sendEvents(db: SupabaseClient, householdId: string, progress: Record<string, MemberProgress>): Promise<void> {
+  const rows = Object.entries(progress).flatMap(([memberId, p]) => dayEvents(p.today).map((e) => ({ ...e, household_id: householdId, member_id: memberId })))
+    .filter((r) => !sentEvents.has(`${r.member_id}|${r.card_id}|${r.event}`));
+  if (!rows.length) return;
+  const { error } = await db.from('heir_events').upsert(rows, { onConflict: 'member_id,card_id,event', ignoreDuplicates: true });
+  if (error) throw error;
+  for (const r of rows) sentEvents.add(`${r.member_id}|${r.card_id}|${r.event}`);
 }
 
 // ---- Linking two accounts (a couple): each can VIEW the other's family and progress, and nothing more. The database
