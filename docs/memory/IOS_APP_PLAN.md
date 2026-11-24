@@ -52,7 +52,7 @@ Chosen because each does something the website can't, and we need the first one 
 - **Offline.** Service workers don't run in a WKWebView unless the site is registered as an "app-bound domain". Bundling
   the app (B) is the reliable fix. Static bundling means the lesson, item and profile pages can't depend on server-side
   rendering; they're already client components but some read search parameters on the server.
-- **Sign-in.** The emailed code works in a WKWebView. The code field should offer iOS's one-time-code autofill.
+- **Sign-in.** The emailed code works in a WKWebView. The code field already offers iOS one-time-code autofill.
 - **Sessions.** Sign-in cookies must persist in the shell. Loading the live site (A) keeps them on the same domain.
 - **A Mac.** Building for iOS needs Xcode on macOS. We don't have one here. Either yours, or a hosted build service
   (Xcode Cloud, Codemagic, or GitHub's macOS runners). The Capacitor project itself can be made on Linux.
@@ -64,7 +64,7 @@ Chosen because each does something the website can't, and we need the first one 
 | Phase | Work | Rough effort |
 |---|---|---|
 | **0. Decisions and accounts** | Apple Developer Program ($99 a year), a Mac or build service, the bundle id (for example `com.katekize.app`), app name, free or paid | A day, plus Apple's approval wait |
-| **1. Prerequisites in the web app** | "Delete my account"; reviewer sign-in; one-time-code autofill; the apple-app-site-association file; a support page; a written moderation process; confirm verse text rights | 3 to 4 days |
+| **1. Prerequisites in the web app** | "Delete my account"; reviewer sign-in; the apple-app-site-association file; a support page; a written moderation process; confirm verse text rights | 3 to 4 days |
 | **2. The shell** | Capacitor project; icons and launch screen; safe areas and keyboard; links open in Safari; loads katekize.com | 2 to 3 days |
 | **3. Native features** | Speech; reminders; haptics; share sheet; universal links | 1 to 2 weeks |
 | **4. TestFlight** | A few people on real iPhones; fix what they find. Internal testing needs no review; external testing gets a light beta review. | 1 to 2 weeks |
