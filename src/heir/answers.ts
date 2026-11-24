@@ -11,6 +11,7 @@ export interface AnswerRow {
   kind: string;
   correct: boolean;
   misses: number | null;
+  words: number | null;
   hints: number;
   ms: number;
   review: boolean;
@@ -22,7 +23,7 @@ export interface AnswerRow {
 export const toAnswerRows = (householdId: string, memberId: string, entries: LogEntry[]): AnswerRow[] =>
   entries.filter((e) => !!e.id).map((e) => ({
     id: e.id!, household_id: householdId, member_id: memberId, item_id: e.itemId, kind: e.kind, correct: e.correct,
-    misses: typeof e.misses === 'number' ? e.misses : null, hints: Math.max(0, Math.round(e.hints) || 0), ms: Math.max(0, Math.round(e.ms) || 0),
+    misses: typeof e.misses === 'number' ? e.misses : null, words: typeof e.words === 'number' ? e.words : null, hints: Math.max(0, Math.round(e.hints) || 0), ms: Math.max(0, Math.round(e.ms) || 0),
     review: !!e.review, part: e.part ?? null, session_at: e.at, local_day: e.day ?? null,
   }));
 

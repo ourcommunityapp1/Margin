@@ -11,7 +11,7 @@ export const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).len
 
 export interface Words { recited: number; atStage: number[]; inMemory: number }
 
-const itemWords = (item: Item, track: Track) => wordCount(item.chunks[track].join(' '));
+export const itemWords = (item: Item, track: Track) => wordCount(item.chunks[track].join(' '));
 
 export function wordsIn(items: Item[], track: Track, p: MemberProgress): Words {
   const atStage = [0, 0, 0, 0, 0, 0, 0];

@@ -30,7 +30,7 @@ export function dbStore(db: SupabaseClient): Store {
     async answersFor(memberId) {
       const out: AnswerIn[] = [];
       for (let from = 0; ; from += 1000) {
-        const { data, error } = await db.from('heir_answers').select('item_id, kind, correct, hints, ms, review, part, misses, session_at, local_day')
+        const { data, error } = await db.from('heir_answers').select('item_id, kind, correct, hints, ms, review, part, misses, words, session_at, local_day')
           .eq('member_id', memberId).order('session_at').order('id').range(from, from + 999);
         if (error) throw error;
         out.push(...((data ?? []) as AnswerIn[]));

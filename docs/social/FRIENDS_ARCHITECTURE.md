@@ -407,6 +407,21 @@ with server receive times makes faking hard and visible, not impossible; the app
    also has one free day: the first skipped weekday never breaks the run, a second one does. Live in the app, shown on
    the Today week strip as "Rest". Friends will see the same number.
 
+**Phase 3 progress (Nov 24): keeping words in memory, owner accounts only.**
+- Rules in `src/heir/keep.ts` (pure, 14 tests including daylight saving and a quarter-hour time zone): windows of 90, 240
+  and 425 days by stone; a review notice 14 days before; a missed recall must be put right by the end of the next local day;
+  one right recall brings words back; stones never go down; nothing leaves anyone's count for 30 days after launch
+  (`KEEP_LAUNCH`, Nov 25 2026 for the owner accounts, so the first words could leave Dec 25).
+- "Nearly" keeps words (up to 2 wrong or missing, 1 under 12 words) and never earns a stone; the word count of each answer
+  is saved (`heir_answers.words`).
+- App: Today cards "Try again" and "Review", the Review picker (`/heir/keep`, three soonest ticked, you choose), a review
+  lesson that asks each chosen item whole, part by part, the Progress words card with "Try again today", "Review soon" and
+  "Out of memory", and review dates never set past two weeks before a window ends.
+- Server: friends and the leaderboard count only kept words for accounts with the rules on.
+- Left: turn it on for everyone (move `KEEP_LAUNCH` to the launch day, remove the owner-only flag, tell people first); the
+  rule still counts a right recall of any part, because regular lessons only ask for one part; switch to whole-item
+  (`mode: 'whole'`) once reviews are all whole-item; dimmed stones for items that are out.
+
 **Phase 2 progress (Nov 24):**
 - Live in the database: `heir_stats` is written only by the server (`/api/heir/stats`, from the full answer history, in the
   person's time zone), the phone-write path is removed, `heir_words_history` records a point whenever words change, and

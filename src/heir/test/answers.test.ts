@@ -43,7 +43,7 @@ test('answer rows carry the whole answer, and only answers with an id are sent',
   const legacy: LogEntry = { at: '2026-11-19T10:00:00Z', itemId: 'wsc-1', kind: 'type', correct: true, hints: 0, ms: 5, review: false };
   const rows = toAnswerRows('hh', 'mm', [legacy, ...p.log]);
   assert.equal(rows.length, 1);
-  assert.deepEqual({ ...rows[0], id: 'x' }, { id: 'x', household_id: 'hh', member_id: 'mm', item_id: 'wsc-1', kind: 'say', correct: true, misses: 1, hints: 1, ms: 900, review: false, part: 'wsc-1#1', session_at: at.toISOString(), local_day: '2026-11-24' });
+  assert.deepEqual({ ...rows[0], id: 'x' }, { id: 'x', household_id: 'hh', member_id: 'mm', item_id: 'wsc-1', kind: 'say', correct: true, misses: 1, words: null, hints: 1, ms: 900, review: false, part: 'wsc-1#1', session_at: at.toISOString(), local_day: '2026-11-24' });
 });
 
 test('only answers newer than the last one sent go up, oldest first', () => {

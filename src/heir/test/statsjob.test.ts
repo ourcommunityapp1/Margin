@@ -86,3 +86,15 @@ test('the day is worked out in the person’s time zone', () => {
   assert.equal(dayIn('Not/AZone', new Date('2026-12-30T03:00:00Z')), '2026-12-30');
   assert.equal(dayIn(null, new Date('2026-12-30T03:00:00Z')), '2026-12-30');
 });
+
+test('with the keeping rules on, words not recalled in time are not counted; without them they are', async () => {
+  // The last right recall was Nov 22; by Dec 30 that is 38 days: still kept at Topaz. Make it long ago instead.
+  const stale: AnswerIn[] = [...parts.map((u) => row('2026-06-01T10:00:00Z', { part: u.key })), ...parts.map((u) => row('2026-06-02T10:00:00Z', { part: u.key })), ...parts.map((u) => row('2026-06-03T10:00:00Z', { part: u.key }))];
+  const without = memoryStore(stale);
+  await refreshStats(without.store, 'u1', opts);
+  const rules = memoryStore(stale);
+  await refreshStats(rules.store, 'u1', { ...opts, keepFor: () => ({ launch: new Date('2026-10-01T00:00:00Z'), tz: 'UTC' }) });
+  assert.ok(without.saved.stats!.wordsInMemory > 0);
+  assert.equal(rules.saved.stats!.wordsInMemory, 0, 'it has been over 90 days since the last right recall');
+  assert.deepEqual(rules.saved.stats!.stones, without.saved.stats!.stones, 'stones never go down');
+});

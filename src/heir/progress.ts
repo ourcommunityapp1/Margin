@@ -3,6 +3,7 @@
 
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
+import { clampDue } from './keep.ts';
 
 // Day-sized intervals: same-day repetition happens inside the lesson itself.
 // Fuzz spreads reviews by a day or so, so questions learned together don't all come due together.
@@ -23,8 +24,9 @@ export interface LogEntry {
   id?: string;
   // The part of the item this answer was about ("wsc-1#2"); only set for text answers (type, say, letters, blanks).
   part?: string;
-  // Words wrong or missing in a typed or spoken answer (0 for a perfect one).
+  // Words wrong or missing in a typed or spoken answer (0 for a perfect one), and how many words the text had.
   misses?: number;
+  words?: number;
   // The phone's local date when it was answered, so days are never worked out in another time zone.
   day?: string;
 }
@@ -74,6 +76,8 @@ export interface StepResult {
   part?: string;
   // How many parts the item has (so a lesson that recalled every part can be told from one that recalled one).
   of?: number;
+  // Words in the text recalled, so a couple of slips in a long text can still keep it (see `allowedMisses`).
+  words?: number;
   misses?: number;
   // Right on the first try.
   correct: boolean;
@@ -128,7 +132,7 @@ export function waitingForSleep(p: MemberProgress, itemId: string, now: Date): b
   return !!c && c.state === State.New && Date.parse(c.due) > now.getTime();
 }
 
-export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date; newId?: () => string }): MemberProgress {
+export function finishSession(p: MemberProgress, o: { results: StepResult[]; learned?: Unit | Unit[] | null; checkpoint?: string | null; courseId?: string; now: Date; newId?: () => string; keepRules?: { tz?: string | null } }): MemberProgress {
   const newUnits = o.learned ? (Array.isArray(o.learned) ? o.learned : [o.learned]) : [];
   const cards = { ...p.cards };
   const byItem = new Map<string, StepResult[]>();
@@ -148,6 +152,14 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     if (grade === null) continue;
     cards[itemId] = fromCard(scheduler.next(card, o.now, grade).card);
   }
+  const keep = updateKeep(p.keep ?? keepFromLog(p.log), o.results, o.now.toISOString());
+  // With the keeping rules on, no review is set later than two weeks before its window ends, or past the day after a miss.
+  if (o.keepRules) {
+    for (const itemId of byItem.keys()) {
+      const c = cards[itemId], level = p.levels[itemId] ?? 0;
+      if (c && level >= 1) cards[itemId] = { ...c, due: clampDue(new Date(c.due), level, keep[itemId], o.now, o.keepRules.tz).toISOString() };
+    }
+  }
   const at = o.now.toISOString();
   const day = localDay(o.now);
   const newId = o.newId ?? (() => crypto.randomUUID());
@@ -161,11 +173,18 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
     log: [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day }))].slice(-1500),
-    keep: updateKeep(p.keep ?? keepFromLog(p.log), o.results, at),
+    keep,
   };
 }
 
 const FULL_RECALL = new Set(['type', 'say']);
+
+/** Wrong or missing words that still count as keeping a verse or answer ("Nearly"): 1 in a short text, 2 in a longer one. Never earns a stone. */
+export const allowedMisses = (words?: number): number => (words !== undefined && words < 12 ? 1 : 2);
+
+/** Whether a typed or said answer keeps the item: no hints, and right, or "Nearly" (a couple of slips). */
+export const keptRecall = (r: { correct: boolean; hints: number; misses?: number; words?: number }): boolean =>
+  !r.hints && (r.correct || (r.misses !== undefined && r.misses <= allowedMisses(r.words)));
 
 /** Fold one lesson's typed and said answers into the keep record. */
 export function updateKeep(keep: Record<string, Keep> | undefined, results: StepResult[], at: string): Record<string, Keep> {
@@ -174,7 +193,7 @@ export function updateKeep(keep: Record<string, Keep> | undefined, results: Step
   for (const r of results) {
     if (!FULL_RECALL.has(r.kind)) continue;
     const k = { ...out[r.itemId] };
-    if (r.correct && !r.hints) {
+    if (keptRecall(r)) {
       k.good = latest(k.good, at);
       const w = rightParts.get(r.itemId) ?? { parts: new Set<string>(), of: r.of ?? 1 };
       w.parts.add(r.part ?? '*');
@@ -194,7 +213,7 @@ export function keepFromLog(log: LogEntry[]): Record<string, Keep> {
   for (const e of log) {
     if (!FULL_RECALL.has(e.kind)) continue;
     const k = out[e.itemId] ?? (out[e.itemId] = {});
-    if (e.correct && !e.hints) k.good = latest(k.good, e.at); else k.miss = latest(k.miss, e.at);
+    if (keptRecall(e)) k.good = latest(k.good, e.at); else k.miss = latest(k.miss, e.at);
   }
   return out;
 }

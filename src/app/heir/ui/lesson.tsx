@@ -10,7 +10,8 @@ import { useHeir } from './provider';
 import type { Item, Track } from '@/heir/types';
 import { groupLabel, useCourse } from './course';
 import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report, Dock, Context } from './steps';
-import { buildCheckpoint, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
+import { buildCheckpoint, buildKeep, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
+import { wordCount } from '@/heir/measures';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
@@ -48,11 +49,12 @@ function useKeyboardLift() {
   }, []);
 }
 
-export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item'; itemId?: string }) {
+export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'keep'; itemId?: string; itemIds?: string[] }) {
   useKeyboardLift();
   const router = useRouter();
-  const { ready, household, updateProgress, progress } = useHeir();
+  const { ready, household, updateProgress, progress, keepRules } = useHeir();
   const { me, items, track, mine, due, course } = useCourse();
+  const idsKey = itemIds.join(',');
   const [session, setSession] = useState<Session | null>(null);
   const [queue, setQueue] = useState<Step[]>([]);
   const [pos, setPos] = useState(0);
@@ -100,6 +102,10 @@ export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'ri
       // One question or verse, practiced on its own from its page: a quick recall, then said or typed in full.
       // Not numbered as a lesson of the course: no course id.
       next = { ...base, courseId: '', label: `Practice · ${itemLabel(one)}`, kind: 'review', steps: buildReview({ due: [{ item: one, strength: Math.min(6, mine.cards[one.id]?.stability ?? 1) }], track, pool, rng: Math.random, max: 1 }), units: [], group: null };
+    } else if (mode === 'keep') {
+      // Keeping words in memory: the verses and answers you chose, each recalled whole.
+      const chosen = idsKey.split(',').filter(Boolean).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
+      next = { ...base, courseId: '', label: chosen.length === 1 ? `Review · ${itemLabel(chosen[0])}` : `Review · ${chosen.length} to keep`, kind: 'review', steps: buildKeep({ items: chosen, track, pool, rng: Math.random }), units: [], group: null };
     } else if (mode === 'night') {
       // When you lie down: today's questions first, then a few on the edge, one quiet step each.
       const picked = bedtimePicks(mine, ids, new Date()).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
@@ -143,7 +149,7 @@ export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'ri
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, router]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, router]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
@@ -168,7 +174,7 @@ export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'ri
     const key = step.id.replace(/:typed$/, '');
     // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
     if (step.kind === 'quiz') { setFeedback(o); return; }
-    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
+    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}) } }));
     if (!o.ok && !retried.has(key)) {
       setRetried((s) => new Set(s).add(key));
       setQueue((q) => [...q, step]);
@@ -183,7 +189,7 @@ export function LessonRunner({ mode, itemId }: { mode: 'lesson' | 'review' | 'ri
     if (n < queue.length) { setPos(n); return; }
     const recorded = Object.values(results);
     const now = new Date();
-    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now });
+    const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now, keepRules: keepRules ? { tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; } })() } : undefined });
     // Raise levels the log now shows and stamp new awards, so the done screen can show what changed.
     const settled = settle(next, allItems(), track, now);
     const saved = session.rise ? markRisen(settled.progress) : session.night ? markNight(settled.progress, [...new Set(session.steps.map((s) => s.itemId))], now) : settled.progress;

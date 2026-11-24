@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHeir } from './ui/provider';
 import { groupLabel, useCourse } from './ui/course';
+import { KeepCards } from './ui/keep-cards';
 import { Tabs } from './ui/tabs';
 import { Stone } from './ui/stone';
 import { getItem, itemLabel, itemNoun, itemSubtitle } from '@/heir/content';
@@ -94,6 +95,8 @@ export default function Today() {
             </Link>
           ) : <p className="serif" style={{ margin: 0, fontSize: 17 }}>All caught up for today.</p>}
         </section>
+
+        <KeepCards />
 
         <DaysKept days={mine.days} today={today} now={now} dueCount={due.length} />
 

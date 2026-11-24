@@ -416,6 +416,16 @@ export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Ma
   return steps;
 }
 
+// Keeping words in memory: each chosen verse or answer recalled whole, part by part, typed or said (alternating). Nothing else:
+// a recall of every part in one lesson is what the keeping rules will eventually ask for.
+export function buildKeep(o: { items: Item[]; track: Track; pool: Item[]; rng: Rng }): Step[] {
+  const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
+  const out: Step[] = [];
+  let k = 0;
+  for (const item of o.items) for (const u of unitsFor(item, o.track)) out.push(textStep(c, k++ % 2 === 0 ? 'type' : 'say', item, u, true));
+  return out;
+}
+
 // "Lock it in": every item in the group recalled in full, typed or said, with a quick check in between.
 export function buildCheckpoint(o: { group: Group; track: Track; pool: Item[]; rng: Rng }): Step[] {
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };

@@ -8,6 +8,7 @@
 // that slow and visible, not impossible.
 
 import { earnedLevels } from './levels.ts';
+import type { KeepOptions } from './keep.ts';
 import type { LogEntry, MemberProgress } from './progress.ts';
 import { emptyProgress } from './progress.ts';
 import { statsFor, type CourseInput, type Stats } from './stats.ts';
@@ -15,7 +16,7 @@ import type { Item, Track } from './types.ts';
 
 export interface AnswerIn {
   item_id: string; kind: string; correct: boolean; hints: number; ms: number; review: boolean;
-  part: string | null; misses: number | null; session_at: string; local_day: string | null;
+  part: string | null; misses: number | null; words?: number | null; session_at: string; local_day: string | null;
 }
 
 export interface Store {
@@ -36,7 +37,7 @@ export interface Store {
 
 const logFromAnswers = (rows: AnswerIn[]): LogEntry[] => rows.map((r) => ({
   at: r.session_at, itemId: r.item_id, kind: r.kind as LogEntry['kind'], correct: r.correct, hints: r.hints, ms: r.ms, review: r.review,
-  ...(r.part ? { part: r.part } : {}), ...(r.misses !== null ? { misses: r.misses } : {}), ...(r.local_day ? { day: r.local_day } : {}),
+  ...(r.part ? { part: r.part } : {}), ...(r.misses !== null ? { misses: r.misses } : {}), ...(typeof r.words === 'number' ? { words: r.words } : {}), ...(r.local_day ? { day: r.local_day } : {}),
 }));
 
 /** Progress as the server sees it: the full answer history in place of the phone's trimmed log, and days from both. */
@@ -52,14 +53,15 @@ const THROTTLE_MS = 20_000;
 
 export type Outcome = { ok: true; stats: Stats; changed: boolean } | { ok: false; reason: 'no-profile' | 'too-soon' };
 
-export async function refreshStats(store: Store, userId: string, o: { courses: CourseInput[]; items: Item[]; now: Date; today: (tz: string | null, now: Date) => string; force?: boolean }): Promise<Outcome> {
+export async function refreshStats(store: Store, userId: string, o: { courses: CourseInput[]; items: Item[]; now: Date; today: (tz: string | null, now: Date) => string; force?: boolean; keepFor?: (userId: string, tz: string | null) => KeepOptions | null }): Promise<Outcome> {
   const last = await store.lastStats(userId);
   if (!o.force && last && last.source === 'server' && o.now.getTime() - Date.parse(last.updatedAt) < THROTTLE_MS) return { ok: false, reason: 'too-soon' };
   const profile = await store.profileFor(userId);
   if (!profile) return { ok: false, reason: 'no-profile' };
   const [blob, rows] = await Promise.all([store.progressFor(profile.memberId), store.answersFor(profile.memberId)]);
   const p = progressForStats(blob, rows, profile.track, o.items, o.now);
-  const stats = statsFor(o.courses, o.items, profile.track, p, o.today(profile.tz, o.now));
+  const rules = o.keepFor?.(userId, profile.tz) ?? null;
+  const stats = statsFor(o.courses, o.items, profile.track, p, o.today(profile.tz, o.now), rules ? { options: rules, now: o.now } : null);
   await store.save(userId, stats, o.now);
   // A history point is added when the number differs from the newest point (and the first time, so there is a starting point).
   const lastPoint = await store.lastRecordedWords(userId);

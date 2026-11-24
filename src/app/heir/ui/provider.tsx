@@ -43,6 +43,8 @@ interface Heir {
   restorePerson(id: string, name: string, track: Track): Promise<boolean>;
   /** Fold a removed person's saved progress into someone already in the family. */
   mergeProgressInto(fromId: string, toId: string): void;
+  /** The keeping rules (words leave your count if not recalled in time) are on for this account. */
+  keepRules: boolean;
   /** Where you stand on the community board compared with when you last opened it (null until known). */
   board: BoardStatus | null;
   /** Something moved since you last opened the board: the dot on Progress. */
@@ -309,7 +311,7 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const now = useMemo(() => clock ?? new Date(0), [clock]);
   const time = clock ? timeOfDay(clock) : 'day';
   const labs = !!userId && LABS.includes(userId);
-  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto, board, boardAlert: hasAlert(board), boardSeen }),
+  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto, keepRules: labs, board, boardAlert: hasAlert(board), boardSeen }),
     [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut, restorePerson, mergeProgressInto, board, boardSeen]);
 
   return (

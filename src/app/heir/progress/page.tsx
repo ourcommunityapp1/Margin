@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useHeir } from '../ui/provider';
 import { CommunityPreview } from '../ui/community';
+import { useKeep } from '../ui/keep';
 import { Tabs } from '../ui/tabs';
 import { Stone } from '../ui/stone';
 import Link from 'next/link';
@@ -27,6 +28,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 
 export default function Progress() {
   const { ready, household, progress, now, labs } = useHeir();
+  const keep = useKeep();
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { if (ready && !household.members.length) router.replace('/heir/welcome'); }, [ready, household.members.length, router]);
@@ -36,7 +38,9 @@ export default function Progress() {
   const mine = memberProgress(progress, me.id);
   const items = allItems();
   const words = wordsIn(items, me.track, mine);
-  const miles = milestones(words.inMemory);
+  // With the keeping rules on, words not recalled in time aren't counted.
+  const inMemory = keep ? keep.wordsKept : words.inMemory;
+  const miles = milestones(inMemory);
   const prevMile = miles.reached.at(-1) ?? 0;
   const today = localDay(now);
   const kept = daysKept(mine.days, today);
@@ -87,20 +91,27 @@ export default function Progress() {
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Words in your memory">
           <span className="hr-label">Words in your memory</span>
           <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(words.inMemory)}</span>
+            <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(inMemory)}</span>
             {words.recited > words.inMemory && <span style={{ fontSize: 14, color: 'var(--muted)', flex: '1 1 160px' }}>{fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day</span>}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {miles.reached.length > 0 && <span className="hr-mile" data-reached="true" aria-label={`Milestone reached: ${fmt(prevMile)}`}>{fmt(prevMile)}</span>}
             {miles.next ? (
               <>
-                <span className="hr-ladder-bar" style={{ flex: 1 }} aria-hidden="true"><span style={{ width: `${((words.inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
+                <span className="hr-ladder-bar" style={{ flex: 1 }} aria-hidden="true"><span style={{ width: `${((inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
                 <span className="hr-mile" aria-label={`Next milestone: ${fmt(miles.next)}`}>{fmt(miles.next)}</span>
               </>
             ) : <span style={{ fontSize: 14, color: 'var(--muted)' }}>Every milestone reached</span>}
           </div>
-          {miles.next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{fmt(miles.next - words.inMemory)} more {miles.next - words.inMemory === 1 ? 'word' : 'words'} to {fmt(miles.next)}</span>}
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.</p>
+          {miles.next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{fmt(miles.next - inMemory)} more {miles.next - inMemory === 1 ? 'word' : 'words'} to {fmt(miles.next)}</span>}
+          {keep && (keep.tryAgain.length > 0 || keep.review.length > 0 || keep.out.length > 0) && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--line)', paddingTop: 10, fontSize: 14 }}>
+              {keep.tryAgain.length > 0 && <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>Try again today</span><b>{keep.tryAgain.length} {keep.tryAgain.length === 1 ? 'verse or answer' : 'verses and answers'}</b></span>}
+              {keep.review.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'inherit', textDecoration: 'none' }}><span>Review soon</span><b>{fmt(keep.review.reduce((n, h) => n + h.words, 0))} words ›</b></Link>}
+              {keep.out.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', textDecoration: 'none' }}><span>Out of memory · one recall brings back</span><b>{keep.out.length} ›</b></Link>}
+            </div>
+          )}
+          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{keep ? 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it, and stays there as long as you recall it again in time.' : 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.'}</p>
         </section>
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Stones">

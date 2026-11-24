@@ -5,6 +5,7 @@
 import { daysKept, levelOf } from './levels.ts';
 import { wordsIn } from './measures.ts';
 import { unitsFor } from './lesson.ts';
+import { heldItems, summarize, type KeepOptions } from './keep.ts';
 import type { MemberProgress } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
@@ -29,10 +30,11 @@ export const learnedItems = (items: Item[], track: Track, p: MemberProgress): nu
   return items.filter((i) => unitsFor(i, track).every((u) => learned.has(u.key))).length;
 };
 
-export function statsFor(courses: CourseInput[], allItems: Item[], track: Track, p: MemberProgress, today: string): Stats {
+export function statsFor(courses: CourseInput[], allItems: Item[], track: Track, p: MemberProgress, today: string, keepRules?: { options: KeepOptions; now: Date } | null): Stats {
   const stones = [1, 2, 3, 4, 5, 6].map((n) => allItems.filter((i) => levelOf(p, i.id) >= n).length);
   return {
-    wordsInMemory: wordsIn(allItems, track, p).inMemory,
+    // With the keeping rules on, words that have left (not recalled in time) are not counted.
+    wordsInMemory: keepRules ? summarize(heldItems(allItems, p, track, keepRules.now, keepRules.options)).wordsKept : wordsIn(allItems, track, p).inMemory,
     stones,
     streak: daysKept(p.days, today),
     lastDay: p.days.length ? [...p.days].sort().at(-1)! : null,

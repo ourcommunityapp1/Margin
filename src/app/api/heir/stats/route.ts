@@ -1,5 +1,7 @@
 import { courses, courseItems, allItems } from '@/heir/content';
 import { dayIn, refreshStats } from '@/heir/statsjob';
+import { KEEP_LAUNCH } from '@/heir/keep';
+import { LABS } from '@/heir/labs';
 import { adminClient, dbStore } from './store';
 
 export const runtime = 'nodejs';
@@ -16,7 +18,7 @@ export async function POST(request: Request) {
   const { data, error } = await db.auth.getUser(token);
   if (error || !data.user) return Response.json({ error: 'Sign in first.' }, { status: 401 });
   try {
-    const out = await refreshStats(dbStore(db), data.user.id, { courses: courses.map((c) => ({ id: c.id, items: courseItems(c) })), items: allItems(), now: new Date(), today: dayIn });
+    const out = await refreshStats(dbStore(db), data.user.id, { courses: courses.map((c) => ({ id: c.id, items: courseItems(c) })), items: allItems(), now: new Date(), today: dayIn, keepFor: (id, tz) => (LABS.includes(id) ? { launch: KEEP_LAUNCH, tz } : null) });
     if (!out.ok) return Response.json({ ok: false, reason: out.reason }, { status: out.reason === 'too-soon' ? 200 : 404 });
     return Response.json({ ok: true, changed: out.changed });
   } catch {

@@ -1140,3 +1140,9 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-lb-card .hr-lb-link { min-height: 60px; padding: 10px 10px; }
 .hr-lb-card .hr-lb-gap-static { padding: 2px 0; }
 .hr-lb-card .hr-golink { margin-top: 4px; }
+
+/* Keeping words in memory */
+.hr-keep-card { display: flex; flex-direction: column; gap: 12px; box-shadow: 0 0 0 1.5px #e8b867; }
+.hr-keep-line { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 8px 4px; border-top: 1px solid var(--line); cursor: pointer; }
+.hr-keep-line:first-of-type { border-top: 0; }
+.hr-keep-bar { position: sticky; bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); display: flex; flex-direction: column; gap: 8px; margin: 0 -8px; padding: 22px 8px 6px; background: linear-gradient(to bottom, rgba(17, 22, 28, 0), rgba(17, 22, 28, 0.94) 38%); z-index: 3; }
