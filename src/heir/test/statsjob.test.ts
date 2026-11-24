@@ -74,6 +74,8 @@ test('it doesn’t redo work within 20 seconds, and does nothing without a profi
   assert.equal(soon.saved.stats, undefined);
   const none = memoryStore(history); none.store.profileFor = async () => null;
   assert.deepEqual(await refreshStats(none.store, 'u1', opts), { ok: false, reason: 'no-profile' });
+  const forced = memoryStore(history, { words: 5, updatedAt: new Date(NOW.getTime() - 5000).toISOString(), source: 'server' });
+  assert.ok((await refreshStats(forced.store, 'u1', { ...opts, force: true })).ok, 'the daily sweep isn’t throttled');
   const phone = memoryStore(history, { words: 5, updatedAt: new Date(NOW.getTime() - 5000).toISOString(), source: 'phone' });
   assert.ok((await refreshStats(phone.store, 'u1', opts)).ok, 'a phone-sent row is replaced at once');
 });

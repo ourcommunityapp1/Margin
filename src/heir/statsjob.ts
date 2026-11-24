@@ -52,9 +52,9 @@ const THROTTLE_MS = 20_000;
 
 export type Outcome = { ok: true; stats: Stats; changed: boolean } | { ok: false; reason: 'no-profile' | 'too-soon' };
 
-export async function refreshStats(store: Store, userId: string, o: { courses: CourseInput[]; items: Item[]; now: Date; today: (tz: string | null, now: Date) => string }): Promise<Outcome> {
+export async function refreshStats(store: Store, userId: string, o: { courses: CourseInput[]; items: Item[]; now: Date; today: (tz: string | null, now: Date) => string; force?: boolean }): Promise<Outcome> {
   const last = await store.lastStats(userId);
-  if (last && last.source === 'server' && o.now.getTime() - Date.parse(last.updatedAt) < THROTTLE_MS) return { ok: false, reason: 'too-soon' };
+  if (!o.force && last && last.source === 'server' && o.now.getTime() - Date.parse(last.updatedAt) < THROTTLE_MS) return { ok: false, reason: 'too-soon' };
   const profile = await store.profileFor(userId);
   if (!profile) return { ok: false, reason: 'no-profile' };
   const [blob, rows] = await Promise.all([store.progressFor(profile.memberId), store.answersFor(profile.memberId)]);
