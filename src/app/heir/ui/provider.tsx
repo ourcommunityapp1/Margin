@@ -14,7 +14,10 @@ import { memberProgress, mergeProgress, parseProgress, sameProgress, type Member
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
-import { cloud, loadProgressRows, loadRemote, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { cloud, loadProgressRows, loadRemote, putStats, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { statsFor } from '@/heir/stats';
+import { courses as allCourses, courseItems } from '@/heir/content';
+import { localDay as dayOf } from '@/heir/progress';
 import { LABS } from '@/heir/labs';
 
 const KEY = 'heir-household-v1';
@@ -264,6 +267,23 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
   }, [updateProgress]);
+
+  // For the owner (labs): after progress settles, send the numbers friends see. The database ignores this until a profile exists.
+  const lastSent = useRef('');
+  useEffect(() => {
+    if (!db || !email || !userId || !LABS.includes(userId) || !ready) return;
+    const adult = household.members.find((m) => m.track === 'adult');
+    const mine = adult ? progress[adult.id] : undefined;
+    if (!adult || !mine) return;
+    const timer = setTimeout(() => {
+      const s = statsFor(allCourses.map((c) => ({ id: c.id, items: courseItems(c) })), allItems(), 'adult', mine, dayOf(new Date()));
+      const payload = { words: s.wordsInMemory, stones: s.stones, streak: s.streak, lastDay: s.lastDay, courses: s.courses };
+      const key = JSON.stringify(payload);
+      if (key === lastSent.current) return;
+      putStats(db, payload).then(() => { lastSent.current = key; }).catch(() => { /* sent again after the next change */ });
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [db, email, userId, ready, household.members, progress]);
 
   const now = useMemo(() => clock ?? new Date(0), [clock]);
   const time = clock ? timeOfDay(clock) : 'day';

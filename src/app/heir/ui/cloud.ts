@@ -169,3 +169,42 @@ export async function loadLinked(db: SupabaseClient): Promise<LinkedAccount[]> {
     };
   });
 }
+
+// ---- Friends. Everything goes through database functions that decide what each person may see (see
+// supabase/migrations/20261126000000_heir_friends.sql); the app never reads other people's rows directly.
+
+export interface MyProfile {
+  username: string; first_name: string; last_name: string; city: string | null; region: string | null;
+  discoverable: boolean; fof_visible: boolean; friends_count: number; member_id: string | null; username_changed_at: string | null;
+}
+export type Relation = 'none' | 'friend' | 'requested' | 'incoming' | 'me';
+export interface Person {
+  username: string; name: string; city: string | null; region: string | null; friends_count: number; mutual: number; relation: Relation;
+  friends_since?: string | null; words_in_memory?: number; stones?: number[]; streak?: number; last_day?: string | null;
+  courses?: { course: string; learned: number; total: number }[]; friends?: { username: string; name: string }[];
+}
+export interface FriendRow { username: string; name: string; city: string | null; region: string | null; friends_since: string; words_in_memory: number; streak: number; last_day: string | null }
+export interface RequestRow { id: string; username: string; name: string; city?: string | null; region?: string | null; friends_count?: number; mutual?: number; created_at: string }
+
+async function call<T>(db: SupabaseClient, fn: string, args?: Record<string, unknown>): Promise<T> {
+  const { data, error } = await db.rpc(fn, args);
+  if (error) throw new Error(error.message || 'Something went wrong. Try again.');
+  return data as T;
+}
+
+export const getProfile = (db: SupabaseClient) => call<MyProfile | null>(db, 'heir_profile_get');
+export const usernameFree = (db: SupabaseClient, name: string) => call<boolean>(db, 'heir_username_free', { p_name: name });
+export const saveProfile = (db: SupabaseClient, p: { first: string; last: string; username: string; city: string; region: string; discoverable: boolean; fof: boolean; ageOk: boolean }) =>
+  call<MyProfile>(db, 'heir_profile_save', { p_first: p.first, p_last: p.last, p_username: p.username, p_city: p.city, p_region: p.region, p_discoverable: p.discoverable, p_fof: p.fof, p_age_ok: p.ageOk });
+export const searchPeople = (db: SupabaseClient, q: string) => call<Person[]>(db, 'heir_search', { p_q: q });
+export const viewPerson = (db: SupabaseClient, username: string) => call<Person | null>(db, 'heir_profile_view', { p_username: username });
+export const listFriends = (db: SupabaseClient) => call<FriendRow[]>(db, 'heir_friends_list');
+export const listRequests = (db: SupabaseClient) => call<{ incoming: RequestRow[]; outgoing: RequestRow[] }>(db, 'heir_requests_list');
+export const sendRequest = (db: SupabaseClient, username: string) => call<'requested' | 'friends'>(db, 'heir_request_send', { p_username: username });
+export const answerRequest = (db: SupabaseClient, id: string, accept: boolean) => call<void>(db, 'heir_request_answer', { p_id: id, p_accept: accept });
+export const cancelRequest = (db: SupabaseClient, id: string) => call<void>(db, 'heir_request_cancel', { p_id: id });
+export const unfriend = (db: SupabaseClient, username: string) => call<void>(db, 'heir_unfriend', { p_username: username });
+export const blockPerson = (db: SupabaseClient, username: string) => call<void>(db, 'heir_block', { p_username: username });
+export const reportPerson = (db: SupabaseClient, username: string, reason: 'name' | 'username' | 'abuse' | 'other', note = '') => call<void>(db, 'heir_report', { p_username: username, p_reason: reason, p_note: note });
+export const putStats = (db: SupabaseClient, s: { words: number; stones: number[]; streak: number; lastDay: string | null; courses: { course: string; learned: number; total: number }[] }) =>
+  call<void>(db, 'heir_stats_put', { p_words: s.words, p_stones: s.stones, p_streak: s.streak, p_last_day: s.lastDay, p_courses: s.courses });
