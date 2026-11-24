@@ -90,7 +90,7 @@ export default function Progress() {
         <CommunityPreview />
 
         {/* With the new Today, the week of days kept lives here. */}
-        {labs && <DaysKept days={mine.days} today={localDay(now)} now={now} dueCount={0} />}
+        <DaysKept days={mine.days} today={localDay(now)} now={now} dueCount={0} />
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Words in your memory">
           <span className="hr-label">Words in your memory</span>

@@ -278,3 +278,17 @@ test('path: mastered means recalled well after long gaps; streaks count days in 
   assert.equal(streak(['2026-11-17'], '2026-11-20'), 0);
   assert.equal(streak(['2026-02-28', '2026-03-01'], '2026-03-01'), 2);
 });
+
+test('voice typing slips are forgiven, different words are not', () => {
+  assert.ok(wordMatches('Mann', 'man'));
+  assert.ok(wordMatches('principal', 'principally'));
+  assert.ok(wordMatches('duties', 'duty'));
+  assert.ok(wordMatches('works', 'work'));
+  assert.ok(!wordMatches('Cards', "God's"));
+  assert.ok(!wordMatches('word', 'lord'));
+  assert.ok(!wordMatches('glory', 'glorify'));
+  assert.ok(!wordMatches('men', 'man'));
+  assert.ok(!wordMatches('his', 'him'));
+  assert.ok(!wordMatches('good', 'God'));
+  assert.ok(!wordMatches('thee', 'the'));
+});

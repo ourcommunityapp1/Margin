@@ -311,7 +311,7 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
   const now = useMemo(() => clock ?? new Date(0), [clock]);
   const time = clock ? timeOfDay(clock) : 'day';
   const labs = !!userId && LABS.includes(userId);
-  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto, keepRules: labs, board, boardAlert: hasAlert(board), boardSeen }),
+  const value = useMemo(() => ({ ready, household, update, progress, updateProgress, time, now, accounts, email: email ?? null, labs, sync, signOut, restorePerson, mergeProgressInto, keepRules: true, board, boardAlert: hasAlert(board), boardSeen }),
     [ready, household, update, progress, updateProgress, time, now, accounts, email, labs, sync, signOut, restorePerson, mergeProgressInto, board, boardSeen]);
 
   return (

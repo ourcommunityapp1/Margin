@@ -2,7 +2,6 @@ import { timingSafeEqual } from 'node:crypto';
 import { courses, courseItems, allItems } from '@/heir/content';
 import { dayIn, refreshStats } from '@/heir/statsjob';
 import { KEEP_LAUNCH } from '@/heir/keep';
-import { LABS } from '@/heir/labs';
 import { adminClient, dbStore } from '../store';
 
 export const runtime = 'nodejs';
@@ -30,7 +29,7 @@ export async function POST(request: Request) {
   const { data, error } = await (after && /^[0-9a-f-]{36}$/.test(after) ? q.gt('user_id', after) : q);
   if (error) return Response.json({ error: 'Couldn’t list profiles.' }, { status: 500 });
   const store = dbStore(db);
-  const opts = { courses: courses.map((c) => ({ id: c.id, items: courseItems(c) })), items: allItems(), now: new Date(), today: dayIn, force: true, keepFor: (id: string, tz: string | null) => (LABS.includes(id) ? { launch: KEEP_LAUNCH, tz } : null) };
+  const opts = { courses: courses.map((c) => ({ id: c.id, items: courseItems(c) })), items: allItems(), now: new Date(), today: dayIn, force: true, keepFor: (id: string, tz: string | null) => ({ launch: KEEP_LAUNCH, tz }) };
   let done = 0, failed = 0;
   for (const row of data ?? []) {
     try { await refreshStats(store, row.user_id as string, opts); done++; } catch { failed++; }

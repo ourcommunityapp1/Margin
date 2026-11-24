@@ -322,9 +322,18 @@ export interface Due { item: Item; strength: number; weak?: string[]; chance?: n
 // The parts to ask about: the weak ones when there are any, otherwise any part.
 const partsFor = (c: Ctx, d: Due) => { const all = unitsFor(d.item, c.track); const weak = all.filter((u) => d.weak?.includes(u.key)); return weak.length ? weak : all; };
 
+// A gentle ladder for reviews (with the newer engine): help to start with when recall is shaky, then a little less.
+//   under 75%: fill in the blanks, then first letters;  75 to 90%: first letters, then the whole thing;
+//   90% and over: the whole thing, once.
+type Rung = PracticeKind[];
+function ladder(chance: number): [Rung, Rung | null] {
+  if (chance < 0.75) return [['blanks', 'match'], ['letters']];
+  if (chance < 0.9) return [['letters'], ['type', 'say']];
+  return [['type', 'say'], null];
+}
+
 function dueStep(c: Ctx, d: Due, avoid?: StepKind): Step {
-  // Cue fading: when recall is likely, ask for it whole with no help; when it's shaky, start from the first letters.
-  const kinds: PracticeKind[] = d.chance !== undefined ? (d.chance < 0.75 ? ['letters', 'blanks'] : ['type', 'say'])
+  const kinds: PracticeKind[] = d.chance !== undefined ? ladder(d.chance)[0]
     : d.strength < 7 ? ['letters', 'spot', 'match', 'blanks'] : ['type', 'say', 'match'];
   return practiceStep(c, d.item, partsFor(c, d), kinds, true, avoid);
 }
@@ -463,7 +472,10 @@ export function buildReview(o: { due: Due[]; track: Track; pool: Item[]; rng: Rn
   // Look-alikes (verses or answers sharing many words) are kept apart, so neither prompts the other.
   const chosen = spreadApart(o.due.slice(0, o.max ?? 6), (d) => d.item.chunks[o.track].join(' '));
   const first = chosen.map((d) => dueStep(c, { ...d, strength: Math.min(d.strength, 6) }));
-  const second = chosen.map((d, i) => practiceStep(c, d.item, partsFor(c, d), ['say', 'type'], true, first[i].kind));
+  const second = chosen.flatMap((d, i) => {
+    const rung = d.chance !== undefined ? ladder(d.chance)[1] : ['say', 'type'] as PracticeKind[];
+    return rung ? [practiceStep(c, d.item, partsFor(c, d), rung, true, first[i].kind)] : [];
+  });
   return [...first, ...shuffle(second, o.rng)];
 }
 

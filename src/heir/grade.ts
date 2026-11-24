@@ -17,12 +17,25 @@ function editDistance(a: string, b: string): number {
   return row[b.length];
 }
 
-// One typed word against the expected word. Short words must be exact; long ones allow one slip.
+// Forgiving what voice typing does to a right word: a doubled last letter ("Mann" for "man"), an ending cut short or added
+// ("principal" for "principally"), or the plural or -ly form of it ("duties" for "duty"). Never a different short word.
+// A final consonant doubled ("Mann", "Godd"); never a vowel, so "good" is not "God" and "thee" is not "the".
+const doubledEnd = (a: string, b: string) => a.length === b.length + 1 && a.startsWith(b) && a.at(-1) === b.at(-1) && /[bcdfghjklmnpqrstvwxz]/.test(b.at(-1) ?? '');
+const stem = (w: string) => w.replace(/ies$/, 'y').replace(/(ly|es|s)$/, '');
+function dictationSlip(t: string, e: string): boolean {
+  if (doubledEnd(t, e) || doubledEnd(e, t)) return true;
+  const [a, b] = t.length < e.length ? [t, e] : [e, t];
+  if (a.length >= 5 && b.startsWith(a) && b.length - a.length <= 2) return true;
+  return e.length >= 4 && t.length >= 4 && stem(t) === stem(e) && stem(e).length >= 3;
+}
+
+// One typed word against the expected word. Short words must be exact; long ones allow one slip; voice typing's
+// usual slips (above) are forgiven.
 export function wordMatches(typed: string, expected: string): boolean {
   const t = normalizeWord(typed).replace(/'/g, ''), e = normalizeWord(expected).replace(/'/g, '');
   if (!t) return false;
   if (t === e) return true;
-  return e.length >= 6 && editDistance(t, e) <= 1;
+  return (e.length >= 6 && editDistance(t, e) <= 1) || dictationSlip(t, e);
 }
 
 // A near miss: the right word with a spelling slip that is more than wordMatches allows.

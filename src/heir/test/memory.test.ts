@@ -53,7 +53,9 @@ test('weak parts are the ones whose last recall went wrong, and reviews ask them
   assert.ok(steps.every((s) => !('part' in s) || !s.part || s.part === 'wsc-12#2'), 'only the weak part is asked');
   assert.ok(['type', 'say'].includes(steps[0].kind), 'likely recall: asked whole, no help');
   const shaky = buildReview({ due: [{ item, strength: 10, chance: 0.5 }], track: 'adult', pool: allItems(), rng: seeded(3) });
-  assert.ok(['letters', 'blanks'].includes(shaky[0].kind), 'shaky: starts with a cue');
+  assert.ok(['blanks', 'match'].includes(shaky[0].kind), 'shaky: starts with the most help');
+  assert.ok(shaky.some((s) => s.kind === 'letters'), 'then first letters');
+  assert.equal(steps.length, 1, 'a strong item is asked once, whole');
 });
 
 test('part memories: replayed from the answers, the same whatever order they arrive in', () => {

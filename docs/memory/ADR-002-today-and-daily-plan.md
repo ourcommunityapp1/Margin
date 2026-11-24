@@ -1,6 +1,6 @@
 # ADR-002: Today and the daily plan, joined with the review engine
 
-- **Status:** Accepted. Phase A is built, behind the owner-only (labs) flag.
+- **Status:** Accepted. Built and on for everyone (2026-11-24).
 - **Date:** 2026-11-24
 - **Amends:** [ADR-001](./ADR-001-review-engine.md), Decision 5
 - **Mockups:** "Katekize Daily Lesson", version 5
@@ -168,3 +168,23 @@ Decisions needed are marked ⚑.
 **Fixed along the way:**
 - The planner now uses the scheduler's FSRS-6 curve.
 - Finishing a lesson no longer drops the night review, related verses or explanations.
+
+## After first use (2026-11-24)
+
+These changes are now on for everyone, along with the memory engine and the keeping rules.
+
+- **Gentler reviews.** Reviews follow a ladder by the chance of recall:
+  - under 75%: fill in the blanks, then first letters;
+  - 75 to 90%: first letters, then the whole thing;
+  - 90% and over: the whole thing, once.
+- **Each review says why it's here,** in one quiet line: "2 words off last time · strength 78%" or "Last practiced 12
+  days ago · strength 84%".
+- **A brake on new material.**
+  - When reviews already fill more than 70% of the daily goal and something new came in the last 3 days, the day has
+    no new lesson.
+  - The planner turns a lesson into practice sooner: at 6 due, or under 80% right in the last lesson.
+- **Voice typing is forgiven:**
+  - a doubled last consonant ("Mann");
+  - an ending cut short ("principal" for "principally");
+  - a plural or -ly form ("duties" for "duty").
+  "Good" is never "God" and "thee" is never "the".

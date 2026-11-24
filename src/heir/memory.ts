@@ -194,3 +194,19 @@ export function spreadApart<T>(list: T[], text: (t: T) => string): T[] {
   }
   return out;
 }
+
+// ---- Why a review is here, in a few plain words, shown on the review: how it went last time, or how long it has been,
+// and how strong it is now.
+export function whyNow(itemId: string, log: LogEntry[], chance: number | null, now: Date): string | null {
+  let last: LogEntry | undefined;
+  for (const e of log) if (e.itemId === itemId && RECALL.has(e.kind) && (!last || e.at > last.at)) last = e;
+  const strength = chance === null ? '' : ` · strength ${Math.round(chance * 100)}%`;
+  if (!last) return chance === null ? null : `Strength ${Math.round(chance * 100)}%`;
+  if (!last.correct || last.hints) {
+    const off = last.misses ? `${last.misses} ${last.misses === 1 ? 'word' : 'words'} off last time` : last.hints ? 'Needed a hint last time' : 'Missed last time';
+    return `${off}${strength}`;
+  }
+  const days = Math.floor((now.getTime() - Date.parse(last.at)) / DAY);
+  const ago = days <= 0 ? 'Practiced today' : days === 1 ? 'Last practiced yesterday' : `Last practiced ${days} days ago`;
+  return `${ago}${strength}`;
+}

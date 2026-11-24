@@ -1175,3 +1175,5 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-keepclose { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.35); color: #F4EFE6; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .hr-glass-btn-quiet { justify-content: center; padding: 0 22px; background: rgba(255, 255, 255, 0.05); }
 @media (prefers-reduced-motion: reduce) { .hr-dots button { transition: none; } .hr-carousel { scroll-behavior: auto; } }
+/* On a review: why it's here and how strong it is, in one quiet line. */
+.hr-why { margin: -8px 0 0; font-size: 13.5px; color: var(--muted); }

@@ -20,13 +20,13 @@ import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { startedCourses, withSession } from '@/heir/dayplan';
-import { itemChance, partMemories, predictedChance, recallChance, stepSeconds, weakPartsNow } from '@/heir/memory';
+import { itemChance, partMemories, predictedChance, recallChance, stepSeconds, weakPartsNow, whyNow } from '@/heir/memory';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
-interface Session { course?: string; card?: string; kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] }; rise?: boolean; night?: boolean }
+interface Session { course?: string; card?: string; why?: Record<string, string>; kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] }; rise?: boolean; night?: boolean }
 
 const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
@@ -118,7 +118,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     const seen = seenCounts(mine);
     const fromPicks = (picks: { itemId: string; strength: number }[]) => toDue(picks);
     const glassBefore = windowLight(items, track, mine, new Date());
-    const base = { memberId: me.id, courseId: course.id, label: done === 0 ? 'Welcome' : `Lesson ${done + 1}`, before: { lit: glassBefore.lit, dusty: glassBefore.dusty } };
+    const base = { memberId: me.id, courseId: course.id, label: mode === 'review' ? `Review · ${course.title}` : done === 0 ? 'Welcome' : `Lesson ${done + 1}`, before: { lit: glassBefore.lit, dusty: glassBefore.dusty } };
     let next: Session;
     const one = mode === 'item' && itemId ? getItem(itemId) : undefined;
     if (mode === 'extra') {
@@ -185,7 +185,16 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       if (extra.length) next = { ...next, steps: [...next.steps, ...buildKeep({ items: extra, track, pool, rng: Math.random })] };
     }
     // Which course's window and "up next" the done screen shows: the one this lesson was for.
-    next = { ...next, course: courseId, card: cardId };
+    // Why each review is here, shown on it (newer engine): how it went last time or how long ago, and its strength now.
+    const why: Record<string, string> = {};
+    if (parts) for (const st of next.steps) if (st.review && !why[st.itemId]) {
+      const card = mine.cards[st.itemId];
+      const byPart = itemChance(st.itemId, parts, new Date());
+      const chance = card ? Math.min(recallChance(card, new Date()), byPart ?? 1) : byPart;
+      const w = whyNow(st.itemId, mine.log, chance, new Date());
+      if (w) why[st.itemId] = w;
+    }
+    next = { ...next, course: courseId, card: cardId, why };
     Promise.resolve().then(() => {
       setSession(next);
       setQueue(next.steps);
@@ -304,6 +313,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
             {step.kind === 'match' || step.kind === 'meaning'
               ? <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{tag && <span className="hr-tag">{tag}</span>}{step.kind === 'meaning' ? title : 'Match'}{retry ? ' · Second try' : ''}</span>
               : <Cue item={item} step={step} tag={tag} title={`${title}${retry ? ' · Second try' : ''}`} />}
+            {step.review && session.why?.[step.itemId] && <p className="hr-why">{session.why[step.itemId]}</p>}
             {'lead' in step && step.kind !== 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'order' && <Order step={step} onReport={report} />}

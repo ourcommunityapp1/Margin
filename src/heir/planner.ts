@@ -87,9 +87,9 @@ export function planNext(o: { courseId: string; items: Item[]; track: Track; p: 
 
   const dueNow = picks.filter((x) => x.recall < 0.9).length;
   const acc = recentAccuracy(p, ids);
-  const struggling = acc.length > 0 && acc[0] < 0.7;
+  const struggling = acc.length > 0 && acc[0] < 0.8;
   const lessonNumber = done + 1;
-  if (picks.length >= 3 && (dueNow >= 8 || struggling)) return { kind: 'practice', picks: picks.slice(0, 6), why: struggling ? 'steady' : 'catch-up' };
+  if (picks.length >= 3 && (dueNow >= 6 || struggling)) return { kind: 'practice', picks: picks.slice(0, 6), why: struggling ? 'steady' : 'catch-up' };
   if (picks.length >= 3 && lessonNumber % PRACTICE_EVERY === 0) return { kind: 'practice', picks: picks.slice(0, 6), why: 'rhythm' };
 
   // Flying: the last two lessons nearly perfect and nothing waiting, so bring a second short question.

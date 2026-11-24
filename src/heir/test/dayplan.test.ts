@@ -108,3 +108,14 @@ test('the Keep going line', () => {
   const line = nextLine({ ...all, checkpoints: ['lords-prayer:1-1', ...all.checkpoints] }, 'adult', course('lords-prayer'), now);
   assert.ok(['All learned', 'Lock-in next'].includes(line.text));
 });
+
+test('the brake: when reviews fill most of the day and something new came lately, no new material today', () => {
+  let p = learn(emptyProgress(), 'westminster-shorter', 3, later);
+  p = learn(p, 'psalm-23', 6, past);
+  p = { ...p, log: [{ at: '2026-11-23T10:00:00Z', itemId: 'wsc-3', kind: 'intro', correct: true, hints: 0, ms: 1, review: false }] };
+  const started = startedCourses(p, 'adult', 'westminster-shorter');
+  assert.deepEqual(planDay({ p, track: 'adult', started, focus: 'westminster-shorter', goal: 5, now }).map((c) => `${c.kind}:${c.course}`), ['review:psalm-23']);
+  // Three days without anything new: the lesson comes back.
+  const quiet = { ...p, log: [{ ...p.log[0], at: '2026-11-20T10:00:00Z' }] };
+  assert.ok(planDay({ p: quiet, track: 'adult', started, focus: 'westminster-shorter', goal: 5, now }).some((c) => c.kind === 'lesson'));
+});
