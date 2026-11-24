@@ -386,6 +386,12 @@ with server receive times makes faking hard and visible, not impossible; the app
 5. **Confirm the server copy really holds the full history** (the phone trims its copy, the server merges without
    trimming). Check by counting answers per member before the backfill.
 
+**Phase 0 progress (Nov 24):**
+- Done and live: `heir_answers` table (145 of 145 existing answers copied, append-only, owner-only); every new answer
+  gets an id, `part`, `misses` and the phone's local `day`; new answers are uploaded one row each; the merge no longer
+  collapses same-kind answers in one lesson (existing history already merged that way can't be recovered).
+- Still to do in Phase 0: per-item keep record, soft delete for people, time zone in sync, stats route and sweep.
+
 **Phase 1, profiles and friends (labs):** profiles, usernames, search, requests, friends, block, report, invite
 links, Friends tab, friend profile, You page changes.
 
