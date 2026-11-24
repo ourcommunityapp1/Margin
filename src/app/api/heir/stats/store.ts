@@ -50,6 +50,11 @@ export function dbStore(db: SupabaseClient): Store {
       });
       if (error) throw error;
     },
+    async lastRecordedWords(userId) {
+      const { data, error } = await db.from('heir_words_history').select('words').eq('user_id', userId).order('at', { ascending: false }).limit(1).maybeSingle();
+      if (error) throw error;
+      return data ? (data.words as number) : null;
+    },
     async recordWords(userId, words, now) {
       const { error } = await db.from('heir_words_history').insert({ user_id: userId, at: now.toISOString(), words });
       if (error) throw error;

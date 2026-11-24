@@ -28,6 +28,8 @@ export interface Store {
   /** What was last saved for this person (to skip work, and to know whether words changed). */
   lastStats(userId: string): Promise<{ words: number; updatedAt: string; source: string } | null>;
   save(userId: string, s: Stats, now: Date): Promise<void>;
+  /** The newest point in the words-over-time history, or null if there is none yet. */
+  lastRecordedWords(userId: string): Promise<number | null>;
   /** Add a point to the words-over-time history. */
   recordWords(userId: string, words: number, now: Date): Promise<void>;
 }
@@ -59,7 +61,9 @@ export async function refreshStats(store: Store, userId: string, o: { courses: C
   const p = progressForStats(blob, rows, profile.track, o.items, o.now);
   const stats = statsFor(o.courses, o.items, profile.track, p, o.today(profile.tz, o.now));
   await store.save(userId, stats, o.now);
-  const changed = !last || last.words !== stats.wordsInMemory;
+  // A history point is added when the number differs from the newest point (and the first time, so there is a starting point).
+  const lastPoint = await store.lastRecordedWords(userId);
+  const changed = lastPoint === null || lastPoint !== stats.wordsInMemory;
   if (changed) await store.recordWords(userId, stats.wordsInMemory, o.now);
   return { ok: true, stats, changed };
 }

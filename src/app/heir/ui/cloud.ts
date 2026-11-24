@@ -207,14 +207,12 @@ export const cancelRequest = (db: SupabaseClient, id: string) => call<void>(db, 
 export const unfriend = (db: SupabaseClient, username: string) => call<void>(db, 'heir_unfriend', { p_username: username });
 export const blockPerson = (db: SupabaseClient, username: string) => call<void>(db, 'heir_block', { p_username: username });
 export const reportPerson = (db: SupabaseClient, username: string, reason: 'name' | 'username' | 'abuse' | 'other', note = '') => call<void>(db, 'heir_report', { p_username: username, p_reason: reason, p_note: note });
-export const putStats = (db: SupabaseClient, s: { words: number; stones: number[]; streak: number; lastDay: string | null; courses: { course: string; learned: number; total: number }[] }) =>
-  call<void>(db, 'heir_stats_put', { p_words: s.words, p_stones: s.stones, p_streak: s.streak, p_last_day: s.lastDay, p_courses: s.courses });
 
-/** Ask the server to work out this person's numbers for friends. Returns false when the server isn't set up for it (501). */
-export async function refreshStatsOnServer(db: SupabaseClient): Promise<boolean> {
+/** Ask the server to work out this person's numbers for friends (it reads their answers; nothing is sent from the phone). */
+export async function refreshStatsOnServer(db: SupabaseClient): Promise<void> {
   const { data: session } = await db.auth.getSession();
   const token = session.session?.access_token;
-  if (!token) return true;
+  if (!token) return;
   const res = await fetch('/api/heir/stats', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-  return res.status !== 501;
+  if (!res.ok && res.status !== 404) throw new Error('stats not updated');
 }

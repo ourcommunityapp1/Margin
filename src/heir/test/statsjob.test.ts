@@ -20,13 +20,14 @@ const history: AnswerIn[] = [
   ...parts.map((u) => row('2026-12-20T10:00:00Z', { part: u.key })),
 ];
 
-function memoryStore(rows: AnswerIn[], last: { words: number; updatedAt: string; source: string } | null = null) {
+function memoryStore(rows: AnswerIn[], last: { words: number; updatedAt: string; source: string } | null = null, lastPoint: number | null = null) {
   const saved: { stats?: Stats; words: number[] } = { words: [] };
   const store: Store = {
     profileFor: async () => ({ memberId: 'm1', track: 'adult', tz: 'America/Chicago' }),
     progressFor: async () => ({ ...emptyProgress(), units: parts.map((u) => u.key) }),
     answersFor: async () => rows,
     lastStats: async () => last,
+    lastRecordedWords: async () => lastPoint,
     save: async (_u, s) => { saved.stats = s; },
     recordWords: async (_u, w) => { saved.words.push(w); },
   };
@@ -55,9 +56,16 @@ test('words history only grows a point when the number changed', async () => {
   const first = memoryStore(history);
   await refreshStats(first.store, 'u1', opts);
   const w = first.saved.stats!.wordsInMemory;
-  const same = memoryStore(history, { words: w, updatedAt: '2026-12-30T11:00:00Z', source: 'server' });
+  const same = memoryStore(history, { words: w, updatedAt: '2026-12-30T11:00:00Z', source: 'server' }, w);
   await refreshStats(same.store, 'u1', opts);
   assert.deepEqual(same.saved.words, []);
+  const moved = memoryStore(history, { words: w, updatedAt: '2026-12-30T11:00:00Z', source: 'server' }, w - 7);
+  await refreshStats(moved.store, 'u1', opts);
+  assert.deepEqual(moved.saved.words, [w]);
+  // A number saved earlier by the phone, but no history yet: the first server run still records a starting point.
+  const firstRun = memoryStore(history, { words: w, updatedAt: '2026-12-30T11:00:00Z', source: 'phone' }, null);
+  await refreshStats(firstRun.store, 'u1', opts);
+  assert.deepEqual(firstRun.saved.words, [w]);
 });
 
 test('it doesn’t redo work within 20 seconds, and does nothing without a profile', async () => {
