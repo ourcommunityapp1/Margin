@@ -91,16 +91,27 @@ export type CardState = { card: DayCard; done: boolean; secs: number };
  * `satisfied` marks a card done with no session, e.g. a review whose items were all reviewed elsewhere.
  */
 export function cardStates(today: Today | undefined, satisfied: (c: DayCard) => boolean = () => false): CardState[] {
+  return match(today, satisfied).states;
+}
+
+/** Sessions that finished no card (a review from Keep going with nothing left to match, extra practice, the evening or
+ *  morning recall), oldest first. They count toward the day's minutes and show on Today as their own done card. */
+export function extraSessions(today: Today | undefined): DaySession[] {
+  return match(today).extras;
+}
+
+function match(today: Today | undefined, satisfied: (c: DayCard) => boolean = () => false): { states: CardState[]; extras: DaySession[] } {
   const cards = today?.cards ?? [];
   const states: CardState[] = cards.map((card) => ({ card, done: false, secs: 0 }));
+  const extras: DaySession[] = [];
   const sessions = [...(today?.sessions ?? [])].sort((a, b) => a.at.localeCompare(b.at));
   for (const s of sessions) {
     let st = s.card ? states.find((x) => x.card.id === s.card && !x.done) : undefined;
     if (!st && !s.card) st = states.find((x) => !x.done && x.card.course === s.course && (x.card.kind === s.kind || (s.kind === 'review' && x.card.kind === 'fix')));
-    if (st) { st.done = true; st.secs = s.secs; }
+    if (st) { st.done = true; st.secs = s.secs; } else extras.push(s);
   }
   for (const st of states) if (!st.done && satisfied(st.card)) st.done = true;
-  return states;
+  return { states, extras };
 }
 
 /** Minutes practiced today, all sessions counted. */

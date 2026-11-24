@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cardStates, dayEvents, mergeToday, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, withSession, withStarted, type Today } from '../dayplan.ts';
+import { cardStates, dayEvents, extraSessions, mergeToday, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, withSession, withStarted, type Today } from '../dayplan.ts';
 import { emptyProgress, finishSession, mergeProgress, parseProgress, type MemberProgress, type SavedCard } from '../progress.ts';
 import { courseItems, courses } from '../content/index.ts';
 import { unitsFor } from '../lesson.ts';
@@ -137,4 +137,19 @@ test('card events: shown, opened, finished, and merged across phones', () => {
   const other: Today = { ...withPlan(undefined, day, cards), started: [cards[2].id] };
   assert.deepEqual(mergeToday(t, other)!.started!.sort(), [cards[1].id, cards[2].id].sort());
   assert.deepEqual(dayEvents(undefined), []);
+});
+
+test('sessions that finish no card are extras, so the day\'s minutes match what Today shows', () => {
+  const cards = [
+    { id: `${day}:lesson:westminster-shorter`, kind: 'lesson' as const, course: 'westminster-shorter', est: 6 },
+    { id: `${day}:fix:westminster-shorter`, kind: 'fix' as const, course: 'westminster-shorter', est: 3 },
+  ];
+  let t: Today = withPlan(undefined, day, cards);
+  t = withSession(t, day, { id: 'a', at: `${day}T10:00:00Z`, secs: 304, course: 'westminster-shorter', kind: 'lesson', card: cards[0].id });
+  t = withSession(t, day, { id: 'b', at: `${day}T10:01:00Z`, secs: 26, course: 'westminster-shorter', kind: 'review', card: cards[1].id });
+  t = withSession(t, day, { id: 'c', at: `${day}T11:00:00Z`, secs: 376, course: 'westminster-shorter', kind: 'review' });
+  assert.deepEqual(extraSessions(t).map((s) => s.id), ['c']);
+  assert.equal(minutesToday(t), 12, 'the day\'s minutes are the cards plus the extra: 5 + 0 + 6, rounded from seconds');
+  assert.equal(cardStates(t).filter((s) => s.done).length, 2);
+  assert.deepEqual(extraSessions(undefined), []);
 });

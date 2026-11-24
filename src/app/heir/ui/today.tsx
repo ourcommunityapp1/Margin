@@ -13,7 +13,7 @@ import { RoundWindow } from './glass/round';
 import { MiniWindow } from './glass/mini';
 import { partOf, partWindow, type PartWindow } from './glass/light';
 import { courseFor, courseItems, itemLabel, type Course } from '@/heir/content';
-import { cardStates, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, type CardState, type DayCard } from '@/heir/dayplan';
+import { cardStates, extraSessions, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, type CardState, type DayCard, type DaySession } from '@/heir/dayplan';
 import { dueCards, localDay, memberProgress, waitingForSleep, type MemberProgress } from '@/heir/progress';
 import { recalledRecently } from '@/heir/memory';
 import { nightOffer, riseOffer, riskOrder } from '@/heir/planner';
@@ -37,6 +37,7 @@ function windowFor(course: Course, kind: DayCard['kind'] | 'live', track: Track,
 
 type Slide =
   | { type: 'card'; state: CardState; course: Course; href: string; tag: string; button: string }
+  | { type: 'extra'; session: DaySession; course: Course; tag: string }
   | { type: 'live'; key: 'rise' | 'night'; course: Course; href: string; tag: string; title: string; button: string }
   | { type: 'done'; minutes: number; course: Course; extra: boolean };
 
@@ -108,6 +109,10 @@ export function TodayCards() {
     if (course) slides.push({ type: 'done', minutes, course, extra });
   }
   for (const s of states.filter((x) => x.done)) { const sl = cardSlide(s); if (sl) slides.push(sl); }
+  // Sessions that finished no card (a review started from Keep going, extra practice, the evening or morning recall) show as
+  // their own done card, so the day's minutes add up to what the cards show.
+  const extraTag = (k: DaySession['kind']) => (k === 'night' ? 'Before sleep' : k === 'rise' ? 'This morning' : k === 'lesson' ? 'Lesson' : k === 'fix' ? 'Fix' : k === 'review' ? 'Review' : 'Extra');
+  for (const x of today?.day === day ? extraSessions(today) : []) { const course = courseFor(x.course); if (course) slides.push({ type: 'extra', session: x, course, tag: extraTag(x.kind) }); }
 
   // Warnings: words about to leave your count, or already gone. One line, at most.
   const soon = keep?.review.filter((h) => h.state.state === 'review' && (h.state as { deadline: Date }).deadline.getTime() - now.getTime() < 4 * 86_400_000) ?? [];
@@ -133,7 +138,7 @@ export function TodayCards() {
 function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track; mine: MemberProgress; now: Date }) {
   const ref = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
-  const first = slides[0] ? (slides[0].type === 'card' ? slides[0].state.card.id : slides[0].type) : '';
+  const first = slides[0] ? (slides[0].type === 'card' ? slides[0].state.card.id : slides[0].type === 'extra' ? slides[0].session.id : slides[0].type) : '';
   // When the front card changes (one was finished), go back to the front.
   useEffect(() => { ref.current?.scrollTo({ left: 0 }); Promise.resolve().then(() => setAt(0)); }, [first]);
   const onScroll = () => {
@@ -164,15 +169,18 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
           }
           const kind = s.type === 'card' ? s.state.card.kind : 'live';
           const w = windowFor(s.course, kind, track, mine, now);
-          const done = s.type === 'card' && s.state.done;
+          const done = s.type === 'extra' || (s.type === 'card' && s.state.done);
+          // A finished card says what it was in one word (Lesson, Fix, Review); an extra says Extra.
+          const word = s.type === 'card' ? (s.state.done ? ({ lesson: 'Lesson', review: 'Review', fix: 'Fix' } as const)[s.state.card.kind] : s.tag) : s.tag;
+          const secs = s.type === 'extra' ? s.session.secs : s.type === 'card' ? s.state.secs : 0;
           return (
-            <section key={s.type === 'card' ? s.state.card.id : s.key} role="listitem" className="hr-rose-card hr-slide" data-done={done || undefined} aria-label={s.type === 'live' ? s.title : s.course.title}>
+            <section key={s.type === 'card' ? s.state.card.id : s.type === 'extra' ? s.session.id : s.key} role="listitem" className="hr-rose-card hr-slide" data-done={done || undefined} aria-label={s.type === 'live' ? s.title : s.course.title}>
               <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
-              <span className="hr-day-tag" data-fix={s.tag === 'Fix today' || undefined}>{done ? 'Done' : s.tag}</span>
+              <span className="hr-day-tag" data-fix={(s.type === 'card' && s.state.card.kind === 'fix' && !done) || undefined}>{word}</span>
               <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.12, textAlign: 'center' }}>{s.type === 'live' ? s.title : s.course.title}</h2>
               <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={240} label={`${s.course.title} window`} />
               {done ? (
-                <div className="hr-day-done"><span className="hr-day-tick">{check}</span>{Math.max(1, Math.round(s.state.secs / 60))} min</div>
+                <div className="hr-day-done"><span className="hr-day-tick">{check}</span>{Math.max(1, Math.round(secs / 60))} min</div>
               ) : (
                 <Link className="hr-glass-btn" href={s.href}><span>{s.button}</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
               )}
@@ -182,7 +190,7 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
       </div>
       {slides.length > 1 && (
         <div className="hr-dots" role="group" aria-label="Cards">
-          {slides.map((s, i) => <button key={i} type="button" aria-label={`Card ${i + 1} of ${slides.length}`} aria-current={i === at || undefined} data-done={(s.type === 'card' && s.state.done) || undefined} onClick={() => go(i)} />)}
+          {slides.map((s, i) => <button key={i} type="button" aria-label={`Card ${i + 1} of ${slides.length}`} aria-current={i === at || undefined} data-done={(s.type === 'extra' || (s.type === 'card' && s.state.done)) || undefined} onClick={() => go(i)} />)}
         </div>
       )}
     </>
