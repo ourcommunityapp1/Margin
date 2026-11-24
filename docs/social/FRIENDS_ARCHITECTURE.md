@@ -390,7 +390,21 @@ with server receive times makes faking hard and visible, not impossible; the app
 - Done and live: `heir_answers` table (145 of 145 existing answers copied, append-only, owner-only); every new answer
   gets an id, `part`, `misses` and the phone's local `day`; new answers are uploaded one row each; the merge no longer
   collapses same-kind answers in one lesson (existing history already merged that way can't be recovered).
-- Still to do in Phase 0: per-item keep record, soft delete for people, time zone in sync, stats route and sweep.
+- Done and live: per-question keep record (`keep`: last right and last missed typed or said recall, kept apart from the
+  trimmed log and seeded from it for existing people); removing a person only marks them removed (`deleted_at`),
+  restorable from any phone for 30 days (`heir_purge_removed()` deletes after that; to be scheduled with pg_cron);
+  the household's time zone (`tz`) saved with every sync.
+- Done, not wired: `src/heir/stats.ts` (words in memory, stones, streak, courses from progress) with tests.
+- Waiting on Phase 1: the `heir_stats` table, the refresh and sweep routes and the cron job. They need profiles to
+  exist, and the server key added to Netlify (§9 setup).
+
+**Two findings while building this, to settle before Phase 3:**
+1. **Reviews ask for one random part of an item, never the whole item.** So the keep record is per item: a right typed
+   or said recall of any part keeps the item. Requiring every part would mean four or more reviews per catechism
+   answer inside 90 days. (Server-side, `heir_answers.part` allows a stricter rule later.)
+2. **The app already has a Sunday rest day** (skipping a Sunday never breaks days kept). Decision D-5 (one rest day a
+   week) therefore needs restating: keep Sunday free and add one more free day in any week, or Sunday only (what exists).
+   Friends will show the streak, so this should be settled first.
 
 **Phase 1, profiles and friends (labs):** profiles, usernames, search, requests, friends, block, report, invite
 links, Friends tab, friend profile, You page changes.
