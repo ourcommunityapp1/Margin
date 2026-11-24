@@ -14,7 +14,7 @@ import { memberProgress, mergeProgress, parseProgress, sameProgress, type Member
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
-import { cloud, loadProgressRows, loadRemote, putStats, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { cloud, loadProgressRows, loadRemote, putStats, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
 import { statsFor } from '@/heir/stats';
 import { courses as allCourses, courseItems } from '@/heir/content';
 import { localDay as dayOf } from '@/heir/progress';
@@ -280,7 +280,11 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
       const payload = { words: s.wordsInMemory, stones: s.stones, streak: s.streak, lastDay: s.lastDay, courses: s.courses };
       const key = JSON.stringify(payload);
       if (key === lastSent.current) return;
-      putStats(db, payload).then(() => { lastSent.current = key; }).catch(() => { /* sent again after the next change */ });
+      // The server works the numbers out from the full answer history. Until it is set up, the phone sends its own.
+      refreshStatsOnServer(db)
+        .then((served) => served ? undefined : putStats(db, payload))
+        .then(() => { lastSent.current = key; })
+        .catch(() => { /* sent again after the next change */ });
     }, 4000);
     return () => clearTimeout(timer);
   }, [db, email, userId, ready, household.members, progress]);

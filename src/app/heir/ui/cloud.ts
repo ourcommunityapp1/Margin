@@ -209,3 +209,12 @@ export const blockPerson = (db: SupabaseClient, username: string) => call<void>(
 export const reportPerson = (db: SupabaseClient, username: string, reason: 'name' | 'username' | 'abuse' | 'other', note = '') => call<void>(db, 'heir_report', { p_username: username, p_reason: reason, p_note: note });
 export const putStats = (db: SupabaseClient, s: { words: number; stones: number[]; streak: number; lastDay: string | null; courses: { course: string; learned: number; total: number }[] }) =>
   call<void>(db, 'heir_stats_put', { p_words: s.words, p_stones: s.stones, p_streak: s.streak, p_last_day: s.lastDay, p_courses: s.courses });
+
+/** Ask the server to work out this person's numbers for friends. Returns false when the server isn't set up for it (501). */
+export async function refreshStatsOnServer(db: SupabaseClient): Promise<boolean> {
+  const { data: session } = await db.auth.getSession();
+  const token = session.session?.access_token;
+  if (!token) return true;
+  const res = await fetch('/api/heir/stats', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+  return res.status !== 501;
+}
