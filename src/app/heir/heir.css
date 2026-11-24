@@ -1162,8 +1162,6 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-day-tag { align-self: center; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #F3D8B6; background: rgba(243, 216, 182, 0.12); border: 1px solid rgba(243, 216, 182, 0.3); padding: 4px 11px; border-radius: 999px; }
 .hr-day-tag[data-fix] { color: #F7C2A8; background: rgba(240, 167, 137, 0.16); border-color: rgba(240, 167, 137, 0.45); }
 .hr-day-done { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; min-height: 62px; }
-.hr-day-windows { position: relative; width: 220px; height: 220px; border-radius: 50%; overflow: hidden; background: #0E0C0A; box-shadow: 0 0 0 6px #b39a6a, 0 0 0 8px rgba(0, 0, 0, 0.3); margin: 8px 0; }
-.hr-day-windows span { position: absolute; inset: 0; background-size: cover; background-position: center; }
 .hr-day-extra { color: #E4DDD0; font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgba(228, 221, 208, 0.45); }
 .hr-dots { display: flex; justify-content: center; gap: 7px; margin-top: -4px; }
 .hr-dots button { width: 8px; height: 8px; border-radius: 4px; border: 0; padding: 0; background: rgba(244, 239, 230, 0.3); cursor: pointer; transition: width 0.2s, background 0.2s; }

@@ -37,7 +37,7 @@ function windowFor(course: Course, kind: DayCard['kind'] | 'live', track: Track,
 type Slide =
   | { type: 'card'; state: CardState; course: Course; href: string; tag: string; button: string }
   | { type: 'live'; key: 'rise' | 'night'; course: Course; href: string; tag: string; title: string; button: string }
-  | { type: 'done'; minutes: number; bases: string[]; extra: boolean };
+  | { type: 'done'; minutes: number; course: Course; extra: boolean };
 
 export function TodayCards() {
   const { household, now, updateProgress } = useHeir();
@@ -99,7 +99,11 @@ export function TodayCards() {
   if (allDone) {
     const allIds = new Set(started.flatMap((c) => [...ids(c)]));
     const extra = riskOrder(mine, allIds, now).some((x) => x.recall < 0.85);
-    slides.push({ type: 'done', minutes, bases: states.map((s) => courseFor(s.card.course)).filter((c): c is Course => !!c).map((c) => partWindow(c, track, mine, now).base), extra });
+    // The window shown is the course you spent longest on today, lit only as far as you've learned. Never a finished
+    // window that hasn't been earned.
+    const most = [...states].sort((a, b) => b.secs - a.secs)[0];
+    const course = courseFor(most?.card.course) ?? focusCourse;
+    if (course) slides.push({ type: 'done', minutes, course, extra });
   }
   for (const s of states.filter((x) => x.done)) { const sl = cardSlide(s); if (sl) slides.push(sl); }
 
@@ -144,17 +148,18 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
     <>
       <div ref={ref} className="hr-carousel" onScroll={onScroll} role="list" aria-label="Today’s lessons">
         {slides.map((s) => {
-          if (s.type === 'done') return (
-            <section key="done" role="listitem" className="hr-rose-card hr-slide" aria-label="Done for today">
-              {s.bases[0] && <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.bases[0]}/glass.webp)` }} aria-hidden="true" />}
-              <h2 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500 }}>Done for today</h2>
-              <div className="hr-day-windows" aria-hidden="true">
-                {s.bases.slice(0, 4).map((b, i, all) => <span key={i} style={{ backgroundImage: `url(${b}/glass-mini.webp)`, clipPath: wedge(i, all.length) }} />)}
-              </div>
-              <span className="serif" style={{ fontSize: 32, lineHeight: 1 }}>{s.minutes} min</span>
-              {s.extra && <Link href="/heir/lesson?mode=extra" className="hr-day-extra">Extra practice</Link>}
-            </section>
-          );
+          if (s.type === 'done') {
+            const w = partWindow(s.course, track, mine, now);
+            return (
+              <section key="done" role="listitem" className="hr-rose-card hr-slide" aria-label="Done for today">
+                <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
+                <h2 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500 }}>Done for today</h2>
+                <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={240} label={`${s.course.title} window`} />
+                <span className="serif" style={{ fontSize: 32, lineHeight: 1 }}>{s.minutes} min</span>
+                {s.extra && <Link href="/heir/lesson?mode=extra" className="hr-day-extra">Extra practice</Link>}
+              </section>
+            );
+          }
           const kind = s.type === 'card' ? s.state.card.kind : 'live';
           const w = windowFor(s.course, kind, track, mine, now);
           const done = s.type === 'card' && s.state.done;
@@ -180,15 +185,6 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
       )}
     </>
   );
-}
-
-// One wedge of a circle, for the windows sharing the "Done for today" circle.
-function wedge(i: number, n: number): string {
-  if (n <= 1) return 'none';
-  const pts = ['50% 50%'];
-  const a0 = (i / n) * 2 * Math.PI, a1 = ((i + 1) / n) * 2 * Math.PI;
-  for (let k = 0; k <= 12; k++) { const a = a0 + ((a1 - a0) * k) / 12; pts.push(`${50 + 75 * Math.sin(a)}% ${50 - 75 * Math.cos(a)}%`); }
-  return `polygon(${pts.join(', ')})`;
 }
 
 function KeepGoing({ started, track, mine, now }: { started: Course[]; track: Track; mine: MemberProgress; now: Date }) {
