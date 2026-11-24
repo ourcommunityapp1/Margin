@@ -70,7 +70,7 @@
 
 .kz-courses { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .kz-course { display: grid; grid-template-columns: 76px 1fr; gap: 16px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 14px 18px 14px 14px; }
-.kz-course img { width: 76px; height: 76px; border-radius: 50%; display: block; background: #0b0d0f; }
+.kz-course img { width: 76px; height: 76px; border-radius: 50%; display: block; background: #0b0d0f; filter: brightness(0.32) saturate(0.4); }
 .kz-course h3 { font-size: 19px; }
 .kz-course p { color: var(--muted); font-size: 15px; line-height: 1.45; margin-top: 3px; }
 .kz-course .n { display: block; font-size: 13px; font-weight: 600; color: var(--gold); margin-top: 6px; }
