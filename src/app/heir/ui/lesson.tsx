@@ -202,7 +202,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       sessionStart.current = Date.now();
       activeMs.current = 0;
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan?.course, courseId, cardId]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan?.course, courseId, cardId, course.title]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
