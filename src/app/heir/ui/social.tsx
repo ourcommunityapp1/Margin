@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import {
-  answerRequest, blockPerson, cancelRequest, cloud, getProfile, listFriends, listRequests, reportPerson, saveProfile, searchPeople, sendRequest,
+  answerRequest, blockPerson, createFriendInvite, cancelRequest, cloud, getProfile, listFriends, listRequests, reportPerson, saveProfile, searchPeople, sendRequest,
   deleteProfile, unfriend, usernameFree, viewPerson, type FriendRow, type MyProfile, type Person, type RequestRow,
 } from './cloud';
 import { courseFor } from '@/heir/content';
@@ -31,7 +31,7 @@ function Blocked({ children }: { children: React.ReactNode }) {
 }
 
 /** Wraps a screen: not for everyone yet, needs an account, and loads the signed-in person's profile. */
-function useProfile() {
+export function useProfile() {
   const { ready, accounts, email } = useHeir();
   const [profile, setProfile] = useState<MyProfile | null | undefined>(undefined);
   const reload = useCallback(() => {
@@ -43,7 +43,7 @@ function useProfile() {
   return { ready, accounts, email, profile, reload, setProfile };
 }
 
-function Gate({ children, g }: { children: React.ReactNode; g: ReturnType<typeof useProfile> }) {
+export function Gate({ children, g }: { children: React.ReactNode; g: ReturnType<typeof useProfile> }) {
   if (!g.ready) return <main className="hr-page" aria-busy="true" />;
   if (!g.accounts || !g.email) return <Blocked><p className="serif" style={{ margin: 0, fontSize: 24 }}>Sign in to find friends and keep your progress on every phone.</p><Link className="hr-btn" href="/heir/signin?next=%2Fheir%2Ffriends">Sign in</Link></Blocked>;
   return <>{children}</>;
@@ -100,6 +100,9 @@ export function ProfileScreen() {
     try {
       const p = await saveProfile(db, { first, last, username: username.trim(), city, region, discoverable, fof, ageOk });
       g.setProfile(p); setSaved(true);
+      // Sent here to make a profile first (for example from a friend's invite link): carry on to where they were going.
+      const next = new URLSearchParams(window.location.search).get('next');
+      if (creating && next && /^\/heir\/[^/]/.test(next)) router.replace(next);
     } catch (e) { setError((e as Error).message); }
     setBusy(false);
   };
@@ -187,6 +190,32 @@ function relationButton(p: Person, act: (p: Person) => void, busy: boolean) {
   return <button type="button" className="hr-tag" disabled={busy} onClick={(e) => { e.preventDefault(); act(p); }} style={{ border: 0, cursor: 'pointer', background: 'var(--button)', color: 'var(--button-ink)', padding: '8px 14px', fontSize: 14 }}>{p.relation === 'incoming' ? 'Accept' : 'Add'}</button>;
 }
 
+function InviteCard() {
+  const [link, setLink] = useState('');
+  const [busy, setBusy] = useState(false), [message, setMessage] = useState('');
+  const send = async () => {
+    const db = cloud();
+    if (!db) return;
+    setBusy(true); setMessage('');
+    try {
+      const url = link || `${window.location.origin}/heir/invite?code=${await createFriendInvite(db)}`;
+      setLink(url);
+      try { if (navigator.share) { await navigator.share({ title: 'Memorize with me on Katekize', text: 'Memorize with me on Katekize:', url }); setBusy(false); return; } } catch { /* cancelled: fall through to copying */ }
+      try { await navigator.clipboard.writeText(url); setMessage('Link copied. Paste it in a message.'); } catch { setMessage('Copy the link below and send it.'); }
+    } catch (e) { setMessage((e as Error).message || 'Couldn’t make an invite. Try again.'); }
+    setBusy(false);
+  };
+  return (
+    <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Invite someone to Katekize">
+      <p className="serif" style={{ margin: 0, fontSize: 22, lineHeight: 1.2 }}>Invite someone who isn’t on Katekize yet.</p>
+      <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>They get a link that works once, for a week. When they make a profile and accept, you’re friends.</p>
+      <button type="button" className="hr-btn" disabled={busy} onClick={send}>{busy ? 'Making your link…' : link ? 'Send it again' : 'Send an invite'}</button>
+      {message && <p role="status" style={{ margin: 0, fontSize: 15, color: 'var(--muted)' }}>{message}</p>}
+      {link && <input readOnly aria-label="Invite link" value={link} onFocus={(e) => e.currentTarget.select()} style={{ fontSize: 13 }} />}
+    </section>
+  );
+}
+
 export function FriendsScreen() {
   const g = useProfile();
   const [q, setQ] = useState('');
@@ -196,6 +225,7 @@ export function FriendsScreen() {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const { now } = useHeir();
+  const [invite, setInvite] = useState(false);
 
   const load = useCallback(() => {
     const db = cloud();
@@ -240,7 +270,15 @@ export function FriendsScreen() {
   return (
     <Gate g={g}>
       <main className="hr-page">
-        <h1 className="serif" style={{ margin: '8px 4px 0', fontSize: 34, fontWeight: 500 }}>Friends</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 4px 0' }}>
+          <h1 className="serif" style={{ margin: 0, fontSize: 34, fontWeight: 500 }}>Friends</h1>
+          {g.profile && (
+            <button type="button" aria-label="Invite someone to Katekize" aria-expanded={invite} onClick={() => setInvite((v) => !v)} style={{ width: 44, height: 44, borderRadius: 22, border: 0, cursor: 'pointer', background: 'var(--button)', color: 'var(--button-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            </button>
+          )}
+        </div>
+        {g.profile && invite && <InviteCard />}
         {g.profile === undefined ? <p style={{ margin: '0 4px', color: 'var(--muted)' }}>Loading…</p> : g.profile === null ? (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.2 }}>Memorize with friends. Make a profile to find people and be found.</p>

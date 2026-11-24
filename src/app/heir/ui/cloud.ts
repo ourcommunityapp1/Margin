@@ -205,6 +205,9 @@ export const listRequests = (db: SupabaseClient) => call<{ incoming: RequestRow[
 export const sendRequest = (db: SupabaseClient, username: string) => call<'requested' | 'friends'>(db, 'heir_request_send', { p_username: username });
 export const answerRequest = (db: SupabaseClient, id: string, accept: boolean) => call<void>(db, 'heir_request_answer', { p_id: id, p_accept: accept });
 export const cancelRequest = (db: SupabaseClient, id: string) => call<void>(db, 'heir_request_cancel', { p_id: id });
+export const createFriendInvite = (db: SupabaseClient) => call<string>(db, 'heir_friend_invite_create');
+export const peekFriendInvite = (db: SupabaseClient, code: string) => call<{ status: 'ok' | 'friends' | 'used' | 'own' | 'invalid'; name?: string; username?: string }>(db, 'heir_friend_invite_peek', { p_code: code });
+export const acceptFriendInvite = (db: SupabaseClient, code: string) => call<{ name: string; username: string }>(db, 'heir_friend_invite_accept', { p_code: code });
 export const unfriend = (db: SupabaseClient, username: string) => call<void>(db, 'heir_unfriend', { p_username: username });
 export const blockPerson = (db: SupabaseClient, username: string) => call<void>(db, 'heir_block', { p_username: username });
 export const reportPerson = (db: SupabaseClient, username: string, reason: 'name' | 'username' | 'abuse' | 'other', note = '') => call<void>(db, 'heir_report', { p_username: username, p_reason: reason, p_note: note });

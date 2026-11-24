@@ -483,3 +483,10 @@ social is visible to anyone but the owner until Phase 4.
 
 Privacy policy (names, usernames, search, boards), Delete account, report review routine, Pro plan with backups,
 and a message to existing users about words in memory now going up and down.
+
+## Friend invite links (people not on Katekize yet)
+
+A "+" at the top right of the Friends tab makes a single-use link (`/heir/invite?code=…`, 7 days). The person signs in, makes a profile if needed (`/heir/profile?next=…` returns them), sees "<First L.> invited you", and accepts; both become friends and any pending request between them is closed.
+- Stored in `heir_invites` with `kind = 'friend'`. `heir_accept_invite` (linking accounts) only accepts `kind = 'link'`, so a friend link can never link accounts.
+- Functions: `heir_friend_invite_create`, `_peek` (first name and last initial only, signed-in users), `_accept`. All rate limited; blocked pairs see "isn't valid".
+- Migration: `20261202000000_heir_friend_invites.sql` (applied).
