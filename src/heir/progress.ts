@@ -4,6 +4,7 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
 import { clampDue } from './keep.ts';
+import { mergeToday, parseToday, type Today } from './dayplan.ts';
 
 // Day-sized intervals: same-day repetition happens inside the lesson itself.
 // Fuzz spreads reviews by a day or so, so questions learned together don't all come due together.
@@ -59,6 +60,8 @@ export interface MemberProgress {
   // Per item, when it was last recalled from memory (typed or said) right with no hints (`good`), and when last not
   // (`miss`). Kept apart from the answer log, which the phone trims, so "when did I last recall this" is never lost.
   keep?: Record<string, Keep>;
+  // Today's plan (the recommended lessons and reviews) and the sessions finished today. See dayplan.ts.
+  today?: Today;
 }
 
 // `good`/`miss`: last time any part was recalled right / not. `full`: last time every part of the item was recalled right in
@@ -166,6 +169,8 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   const day = localDay(o.now);
   const newId = o.newId ?? (() => crypto.randomUUID());
   return {
+    // Everything not changed here (the night review, related verses, explanations, today's plan) is kept as it was.
+    ...p,
     units: [...p.units, ...newUnits.map((u) => u.key).filter((k) => !p.units.includes(k))],
     checkpoints: o.checkpoint && !p.checkpoints.includes(o.checkpoint) ? [...p.checkpoints, o.checkpoint] : p.checkpoints,
     cards,
@@ -299,6 +304,7 @@ export function parseProgress(raw: string | null): Progress {
         ...(m.keep && typeof m.keep === 'object' && !Array.isArray(m.keep)
           ? { keep: Object.fromEntries(Object.entries(m.keep).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [k, { ...(typeof v.good === 'string' ? { good: v.good } : {}), ...(typeof v.miss === 'string' ? { miss: v.miss } : {}), ...(typeof v.full === 'string' ? { full: v.full } : {}) }])) }
           : {}),
+        ...(parseToday(m.today) ? { today: parseToday(m.today) } : {}),
       };
     }
     return out;
@@ -349,6 +355,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
   const night = !a.night ? b.night : !b.night ? a.night : a.night.at >= b.night.at ? a.night : b.night;
   const related = a.related || b.related ? mergeRecord(a.related ?? {}, b.related ?? {}, (x, y) => earliest(x, y)!) : undefined;
   const explained = a.explained || b.explained ? mergeRecord(a.explained ?? {}, b.explained ?? {}, (x, y) => earliest(x, y)!) : undefined;
+  const today = mergeToday(a.today, b.today);
   const keep = a.keep || b.keep ? mergeRecord(a.keep ?? {}, b.keep ?? {}, (x, y) => ({ ...(latest(x.good, y.good) ? { good: latest(x.good, y.good) } : {}), ...(latest(x.miss, y.miss) ? { miss: latest(x.miss, y.miss) } : {}), ...(latest(x.full, y.full) ? { full: latest(x.full, y.full) } : {}) })) : undefined;
   return {
     units: union(a.units, b.units),
@@ -364,6 +371,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
     ...(related ? { related } : {}),
     ...(explained ? { explained } : {}),
     ...(keep ? { keep } : {}),
+    ...(today ? { today } : {}),
   };
 }
 

@@ -18,13 +18,14 @@ import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
-import { allItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
+import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
+import { startedCourses, withSession } from '@/heir/dayplan';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
 
 type Kind = 'learn' | 'checkpoint' | 'review';
-interface Session { kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] }; rise?: boolean; night?: boolean }
+interface Session { course?: string; card?: string; kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] }; rise?: boolean; night?: boolean }
 
 const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
 
@@ -50,11 +51,11 @@ function useKeyboardLift() {
   }, []);
 }
 
-export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'keep'; itemId?: string; itemIds?: string[] }) {
+export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'keep' | 'extra'; itemId?: string; itemIds?: string[]; courseId?: string; cardId?: string }) {
   useKeyboardLift();
   const router = useRouter();
   const { ready, household, updateProgress, progress, keepRules } = useHeir();
-  const { me, items, track, mine, due, course } = useCourse();
+  const { me, items, track, mine, due, course } = useCourse(courseId);
   const idsKey = itemIds.join(',');
   const [session, setSession] = useState<Session | null>(null);
   const [queue, setQueue] = useState<Step[]>([]);
@@ -80,6 +81,8 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
   }, [session]);
   const startedAt = useRef(0);
   const sessionStart = useRef(0);
+  // Time actually spent: each step's time, with any pause over two minutes cut, so a phone left on the table doesn't count.
+  const activeMs = useRef(0);
 
   useEffect(() => {
     if (!ready) return;
@@ -99,7 +102,14 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
     const base = { memberId: me.id, courseId: course.id, label: done === 0 ? 'Welcome' : `Lesson ${done + 1}`, before: { lit: glassBefore.lit, dusty: glassBefore.dusty } };
     let next: Session;
     const one = mode === 'item' && itemId ? getItem(itemId) : undefined;
-    if (one) {
+    if (mode === 'extra') {
+      // Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
+      const started = startedCourses(mine, track, household.plan?.course ?? null);
+      const allIds = new Set(started.flatMap((c) => courseItems(c).map((i) => i.id)));
+      const picks = riskOrder(mine, allIds, new Date());
+      const slipping = picks.filter((x) => x.recall < 0.85);
+      next = { ...base, courseId: '', label: 'Extra practice', kind: 'review', steps: buildReview({ due: fromPicks((slipping.length ? slipping : picks).slice(0, 5)), track, pool, rng: Math.random, max: 5 }), units: [], group: null };
+    } else if (one) {
       // One question or verse, practiced on its own from its page: a quick recall, then said or typed in full.
       // Not numbered as a lesson of the course: no course id.
       next = { ...base, courseId: '', label: `Practice · ${itemLabel(one)}`, kind: 'review', steps: buildReview({ due: [{ item: one, strength: Math.min(6, mine.cards[one.id]?.stability ?? 1) }], track, pool, rng: Math.random, max: 1 }), units: [], group: null };
@@ -153,13 +163,16 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
       const extra = [...urgent.tryAgain, ...urgent.review].filter((h) => !inLesson.has(h.item.id)).slice(0, 2).map((h) => h.item);
       if (extra.length) next = { ...next, steps: [...next.steps, ...buildKeep({ items: extra, track, pool, rng: Math.random })] };
     }
+    // Which course's window and "up next" the done screen shows: the one this lesson was for.
+    next = { ...next, course: courseId, card: cardId };
     Promise.resolve().then(() => {
       setSession(next);
       setQueue(next.steps);
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
+      activeMs.current = 0;
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan?.course, courseId, cardId]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 
@@ -195,6 +208,7 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
   const advance = () => {
     setFeedback(null);
     const n = pos + 1;
+    activeMs.current += Math.min(Date.now() - startedAt.current, 120_000);
     startedAt.current = Date.now();
     if (n < queue.length) { setPos(n); return; }
     const recorded = Object.values(results);
@@ -202,10 +216,13 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
     const next = finishSession(memberProgress(progress, session.memberId), { results: recorded, learned: session.units, courseId: session.courseId, checkpoint: session.kind === 'checkpoint' ? session.group?.key : null, now, keepRules: keepRules ? { tz: (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; } })() } : undefined });
     // Raise levels the log now shows and stamp new awards, so the done screen can show what changed.
     const settled = settle(next, allItems(), track, now);
-    const saved = session.rise ? markRisen(settled.progress) : session.night ? markNight(settled.progress, [...new Set(session.steps.map((s) => s.itemId))], now) : settled.progress;
+    const marked = session.rise ? markRisen(settled.progress) : session.night ? markNight(settled.progress, [...new Set(session.steps.map((s) => s.itemId))], now) : settled.progress;
+    // Today's record: this session and how long it took, so Today can tick off its card and add up the minutes.
+    const kind = session.rise ? 'rise' : session.night ? 'night' : mode === 'extra' || mode === 'item' || (mode === 'keep' && !cardId) ? 'extra' : session.kind === 'review' ? 'review' : 'lesson';
+    const saved = { ...marked, today: withSession(marked.today, localDay(now), { id: crypto.randomUUID(), at: now.toISOString(), secs: Math.max(1, Math.round(activeMs.current / 1000)), course: courseId ?? course.id, kind, ...(cardId ? { card: cardId } : {}) }) };
     updateProgress((p) => ({ ...p, [session.memberId]: saved }));
     const recall = recorded.filter((r) => r.kind !== 'intro');
-    setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round((Date.now() - sessionStart.current) / 60000)), ups: settled.ups, awards: settled.awards, kept: daysKept(settled.progress.days, localDay(now)) });
+    setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round(activeMs.current / 60000)), ups: settled.ups, awards: settled.awards, kept: daysKept(settled.progress.days, localDay(now)) });
   };
 
   // Say steps become typing; a typing step that would then repeat the same words right after is dropped.
@@ -295,7 +312,7 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
 }
 
 function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
-  const { activity, group, groupLearned, mine, items, track, course, path } = useCourse();
+  const { activity, group, groupLearned, mine, items, track, course, path } = useCourse(session.course);
   const lockTomorrow = path.find((u) => u.lockWaiting && session.units.some((x) => u.group.items.some((i) => i.id === x.itemId)));
   const { now } = useHeir();
   const upNext = planNext({ courseId: course.id, items, track, p: mine, now });
@@ -316,7 +333,8 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
     : lockTomorrow ? `That’s all of ${groupLabel(lockTomorrow.group)}. Lock them in tomorrow, after a night’s sleep: recalling them then is what fixes them in memory. Keep going if you like.`
     : activity?.kind === 'checkpoint' ? `That’s all of ${groupLabel(activity.group)}. Next: lock them in, all together, from memory.`
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
-  const cta = upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;
+  // Started from a card on Today: back to Today, where the next card is waiting.
+  const cta = session.card ? null : upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;
   const awardNames = finished.awards.map((id) => AWARDS.find((a) => a.id === id)?.name).filter(Boolean);
 
   return (
@@ -389,7 +407,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
       {message && <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.5 }}>{message}</p>}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {cta && !session.night && !session.rise && <button type="button" className="hr-btn" onClick={again}>{cta}</button>}
-        <Link className={cta && !session.night && !session.rise ? 'hr-btn quiet' : 'hr-btn'} style={cta && !session.night && !session.rise ? { background: 'var(--card)' } : undefined} href="/heir">Done</Link>
+        <Link className={cta && !session.night && !session.rise ? 'hr-btn quiet' : 'hr-btn'} style={cta && !session.night && !session.rise ? { background: 'var(--card)' } : undefined} href="/heir">{session.card ? 'Back to Today' : 'Done'}</Link>
       </div>
     </main>
     </>
@@ -399,7 +417,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
 // The payoff: the window as it was before this lesson, then the glass just earned lights up while you watch.
 // A review wipes the dust from the glass it refreshed.
 function DoneWindow({ session }: { session: Session }) {
-  const { items, track, mine, course } = useCourse();
+  const { items, track, mine, course } = useCourse(session.course);
   const { now } = useHeir();
   const win = useRef<WindowHandle>(null);
   const after = windowLight(items, track, mine, now);

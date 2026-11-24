@@ -19,10 +19,11 @@ export function groupLabel(g: Group): string {
   return g.items.length === c?.items.length ? (c?.title ?? '') : `${c?.title ?? ''}, parts ${a}–${b}`;
 }
 
-export function useCourse() {
+/** The active person's course: the household's chosen course, or `courseId` when a lesson is started for another one. */
+export function useCourse(courseId?: string) {
   const { household, progress, now } = useHeir();
   const me = activeMember(household);
-  const course = courseFor(household.plan?.course) ?? courses[0];
+  const course = courseFor(courseId ?? household.plan?.course) ?? courses[0];
   const items = courseItems(course);
   const track = me?.track ?? 'adult';
   const mine = memberProgress(progress, me?.id);

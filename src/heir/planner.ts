@@ -9,6 +9,7 @@
 import { groupsOf, lockInsWaiting, nextActivity, unitsFor, unitText, type Group, type Unit } from './lesson.ts';
 import { localDay, waitingForSleep, type MemberProgress, type SavedCard } from './progress.ts';
 import type { Item, Track } from './types.ts';
+import { generatorParameters } from 'ts-fsrs';
 
 const DAY = 86_400_000;
 export const AWAY_DAYS = 21;
@@ -23,12 +24,15 @@ export type LessonPlan =
   | { kind: 'checkpoint'; group: Group }
   | { kind: 'welcome-back'; picks: Pick[] };
 
-// The chance of recalling an item right now, from its schedule (the FSRS forgetting curve).
+// The chance of recalling an item right now, from its schedule: the same FSRS-6 forgetting curve the scheduler uses
+// (chance = 90% when the days since the last review equal the stability).
+const DECAY = generatorParameters().w[20];
+const FACTOR = Math.pow(0.9, -1 / DECAY) - 1;
 export function recallChance(card: SavedCard, now: Date): number {
   const last = card.last_review ? Date.parse(card.last_review) : Date.parse(card.due) - card.scheduled_days * DAY;
   const days = Math.max(0, (now.getTime() - last) / DAY);
   const s = Math.max(0.1, card.stability);
-  return Math.pow(1 + (19 / 81) * (days / s), -0.5);
+  return Math.pow(1 + FACTOR * (days / s), -DECAY);
 }
 
 // Learned items, most at risk first: likely forgotten by now, weighted up for a history of misses.

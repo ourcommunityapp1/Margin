@@ -10,9 +10,11 @@ import { useHeir } from './ui/provider';
 import { groupLabel, useCourse } from './ui/course';
 import { KeepCards } from './ui/keep-cards';
 import { Tabs } from './ui/tabs';
+import { DaysKept } from './ui/days-kept';
+import { TodayCards } from './ui/today';
 import { Stone } from './ui/stone';
 import { getItem, itemLabel, itemNoun, itemSubtitle } from '@/heir/content';
-import { bestDaysKept, daysKept, levelInfo, needsRefresh, recited } from '@/heir/levels';
+import { levelInfo, needsRefresh, recited } from '@/heir/levels';
 import { localDay, type MemberProgress } from '@/heir/progress';
 import type { PathUnit } from '@/heir/path';
 import { describe, lessonsDone, nightOffer, planNext, riseOffer } from '@/heir/planner';
@@ -24,7 +26,7 @@ import { partWindow, type PartWindow } from './ui/glass/light';
 import type { WindowHandle } from './ui/glass/window';
 
 export default function Today() {
-  const { ready, household, time, now } = useHeir();
+  const { ready, household, time, now, labs } = useHeir();
   const router = useRouter();
   const { me, course, mine, track, items, path, due, chosen } = useCourse();
 
@@ -60,7 +62,7 @@ export default function Today() {
           <Link href="/heir/you" aria-label={`You: ${me.name}, settings and family`} style={{ width: 44, height: 44, borderRadius: 22, background: 'var(--card)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600, fontSize: 17, textDecoration: 'none', flex: 'none' }}>{me.name[0]}</Link>
         </header>
 
-        {riseItems ? (
+        {labs ? null : riseItems ? (
           <Link className="hr-invite morning" href="/heir/lesson?mode=rise">
             <span className="hr-invite-icon" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 18a8 8 0 0 1 16 0M2 18h20M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1" /></svg></span>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}><span className="serif" style={{ fontSize: 18, fontWeight: 500 }}>When you rise</span><span style={{ fontSize: 13, opacity: 0.8 }}>1 minute · recall last night’s {riseItems.length}</span></span>
@@ -74,6 +76,7 @@ export default function Today() {
           </Link>
         ) : null}
 
+        {labs ? <TodayCards /> : <>
         {/* The course's window: lit glass is what you've learned, dark glass is still to come. */}
         <section className="hr-rose-card">
           <div className="hr-rose-wash" style={{ backgroundImage: `url(${light.base}/glass.webp)` }} aria-hidden="true" />
@@ -106,50 +109,10 @@ export default function Today() {
           const unit = path[at >= 0 ? at : path.length - 1];
           return unit ? <UnitCard unit={unit} mine={mine} track={track} now={now} courseId={course.id} /> : null;
         })()}
+        </>}
       </main>
       <Tabs />
     </>
-  );
-}
-
-function DaysKept({ days, today, now, dueCount }: { days: string[]; today: string; now: Date; dueCount: number }) {
-  const kept = daysKept(days, today);
-  const best = Math.max(kept, bestDaysKept(days));
-  const set = new Set(days);
-  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7));
-  // The first skipped weekday of the week is its free day (shown as rest); a second skipped day shows as missed.
-  const days7 = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
-    const key = localDay(d);
-    const state = set.has(key) ? 'kept' : key === today ? 'today' : d.getDay() === 0 ? 'rest' : key < today ? 'missed' : 'later';
-    return { key, label: 'MTWTFSS'[i], state };
-  });
-  const firstMissed = days7.findIndex((d) => d.state === 'missed');
-  const week = days7.map((d, i) => (i === firstMissed ? { ...d, state: 'rest' } : d));
-  const doneToday = set.has(today);
-  const sunday = now.getDay() === 0;
-  const line = sunday && !doneToday ? 'Sunday is a day of rest: learn if you like, but skipping it never breaks the count. Each week also has one more free day.'
-    : doneToday ? `Today is kept.${dueCount ? ` ${dueCount} ${dueCount === 1 ? 'review is' : 'reviews are'} still due.` : ''}`
-    : 'One lesson or review keeps the day.';
-  return (
-    <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '18px 20px' }} aria-label="Days kept">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <span className="serif" style={{ fontSize: 34, fontWeight: 600, lineHeight: 1 }}>{kept}</span>
-          <span style={{ fontWeight: 600 }}>{kept === 1 ? 'day kept' : 'days kept'}</span>
-        </span>
-        {best > 0 && <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>Best: {best}</span>}
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 4, textAlign: 'center' }}>
-        {week.map((d) => (
-          <span key={d.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>{d.label}</span>
-            <span className="hr-day" data-state={d.state} aria-label={`${d.key}: ${d.state}`}>{d.state === 'rest' ? 'Rest' : ''}</span>
-          </span>
-        ))}
-      </div>
-      <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{line}</p>
-    </section>
   );
 }
 

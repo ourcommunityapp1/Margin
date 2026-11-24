@@ -1,6 +1,6 @@
 # ADR-002: Today and the daily plan, joined with the review engine
 
-- **Status:** Proposed
+- **Status:** Accepted. Phase A is built, behind the owner-only (labs) flag.
 - **Date:** 2026-11-24
 - **Amends:** [ADR-001](./ADR-001-review-engine.md), Decision 5
 - **Mockups:** "Katekize Daily Lesson", version 5
@@ -146,3 +146,25 @@ Decisions needed are marked ⚑.
    for Keep going.
 6. **Progress:** days-kept week view moved in.
 7. **Labs flag, browser tests (Playwright with the fake server), deploy.**
+
+## Decided and built (phase A)
+
+- **Fix today:** a fix card's tag reads "Fix today".
+- **Days kept:** the week view moved to Progress. The slim line shows only "Today · 1 of 3 done" and the minutes left; no
+  streak.
+- **Night and morning:** "When you lie down" and "When you rise" are carousel cards at their times. They don't count
+  toward the day.
+- **Coming back after a break:** nobody is expected to catch up in a day. Cards still put what matters most first. One
+  slim warning line appears when words are about to leave your count ("Review X by Friday to keep it in your count") or
+  already have ("N words have left your count"). It links to the review picker.
+
+**Code:**
+- `src/heir/dayplan.ts`: the plan, card states, today's record and merging it.
+- `src/app/heir/ui/today.tsx`: the carousel, Keep going, banner and done card.
+- `src/app/heir/ui/days-kept.tsx`: the week view.
+
+**Lesson links:** `?course=` and `?card=`, plus `mode=extra` for extra practice.
+
+**Fixed along the way:**
+- The planner now uses the scheduler's FSRS-6 curve.
+- Finishing a lesson no longer drops the night review, related verses or explanations.
