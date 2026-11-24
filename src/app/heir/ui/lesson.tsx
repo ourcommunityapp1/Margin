@@ -186,7 +186,10 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       const inLesson = new Set(next.steps.map((s) => s.itemId));
       const held = heldItems(pool, mine, track, new Date(), { launch: KEEP_LAUNCH, tz: null, mode: 'whole' });
       const urgent = summarize(held);
-      const extra = [...urgent.tryAgain, ...urgent.review].filter((h) => !inLesson.has(h.item.id)).slice(0, 2).map((h) => h.item);
+      // Only from this lesson's own course (a Christmas review never brings in a catechism answer), and not anything
+      // recalled in the last few hours.
+      const recentNow = recalledRecently(mine.log, new Date());
+      const extra = [...urgent.tryAgain, ...urgent.review].filter((h) => !inLesson.has(h.item.id) && ids.has(h.item.id) && !recentNow.has(h.item.id)).slice(0, 2).map((h) => h.item);
       if (extra.length) next = { ...next, steps: [...next.steps, ...buildKeep({ items: extra, track, pool, rng: Math.random })] };
     }
     // Which course's window and "up next" the done screen shows: the one this lesson was for.
