@@ -12,6 +12,7 @@ import { groupLabel, useCourse } from './course';
 import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report, Dock, Context } from './steps';
 import { buildCheckpoint, buildKeep, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
 import { wordCount } from '@/heir/measures';
+import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
@@ -143,13 +144,22 @@ export function LessonRunner({ mode, itemId, itemIds = [] }: { mode: 'lesson' | 
     } else {
       next = { ...base, kind: 'review', steps: [], units: [], group: null };
     }
+    // With the keeping rules on, a lesson also carries up to two whole-verse reviews for what needs keeping most (a miss to
+    // put right first, then what is due soonest), so everyday lessons keep words in your memory without a separate trip.
+    if (keepRules && (mode === 'lesson' || mode === 'review') && next.steps.length) {
+      const inLesson = new Set(next.steps.map((s) => s.itemId));
+      const held = heldItems(pool, mine, track, new Date(), { launch: KEEP_LAUNCH, tz: null, mode: 'whole' });
+      const urgent = summarize(held);
+      const extra = [...urgent.tryAgain, ...urgent.review].filter((h) => !inLesson.has(h.item.id)).slice(0, 2).map((h) => h.item);
+      if (extra.length) next = { ...next, steps: [...next.steps, ...buildKeep({ items: extra, track, pool, rng: Math.random })] };
+    }
     Promise.resolve().then(() => {
       setSession(next);
       setQueue(next.steps);
       startedAt.current = Date.now();
       sessionStart.current = Date.now();
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, router]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 

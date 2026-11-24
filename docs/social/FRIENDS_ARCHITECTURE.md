@@ -418,9 +418,13 @@ with server receive times makes faking hard and visible, not impossible; the app
   lesson that asks each chosen item whole, part by part, the Progress words card with "Try again today", "Review soon" and
   "Out of memory", and review dates never set past two weeks before a window ends.
 - Server: friends and the leaderboard count only kept words for accounts with the rules on.
-- Left: turn it on for everyone (move `KEEP_LAUNCH` to the launch day, remove the owner-only flag, tell people first); the
-  rule still counts a right recall of any part, because regular lessons only ask for one part; switch to whole-item
-  (`mode: 'whole'`) once reviews are all whole-item; dimmed stones for items that are out.
+- Decided Nov 24: **a recall means the whole item** (every part right in one lesson). Done: the rule counts only whole-item
+  recalls (`full`), found in the log from parts; lock-ins, the Review lesson and the two whole-verse reviews every lesson now
+  carries (a miss to put right first, then what is due soonest) all set it. Older progress has no whole-item recall on record,
+  so its window starts when the rules do (90 days from `KEEP_LAUNCH`, after the 30-day grace).
+- Left: turn it on for everyone (move `KEEP_LAUNCH` to the launch day, remove the owner-only flag, tell people first);
+  dimmed stones for items that are out; a daily recount of kept words for people who haven't opened the app (the daily job
+  does it for friends and the board).
 
 **Phase 2 progress (Nov 24):**
 - Live in the database: `heir_stats` is written only by the server (`/api/heir/stats`, from the full answer history, in the

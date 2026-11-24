@@ -17,7 +17,7 @@ export function useKeep(): KeepSummary | null {
   const me = activeMember(household);
   return useMemo(() => {
     if (!keepRules || !me) return null;
-    return summarize(heldItems(allItems(), memberProgress(progress, me.id), me.track, now, { launch: KEEP_LAUNCH, tz: tz(), mode: 'any-part' }));
+    return summarize(heldItems(allItems(), memberProgress(progress, me.id), me.track, now, { launch: KEEP_LAUNCH, tz: tz(), mode: 'whole' }));
   }, [keepRules, me, progress, now]);
 }
 

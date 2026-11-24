@@ -24,6 +24,8 @@ export interface LogEntry {
   id?: string;
   // The part of the item this answer was about ("wsc-1#2"); only set for text answers (type, say, letters, blanks).
   part?: string;
+  // How many parts the item had (so a lesson that recalled every part is a whole-item recall).
+  of?: number;
   // Words wrong or missing in a typed or spoken answer (0 for a perfect one), and how many words the text had.
   misses?: number;
   words?: number;
@@ -157,7 +159,7 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   if (o.keepRules) {
     for (const itemId of byItem.keys()) {
       const c = cards[itemId], level = p.levels[itemId] ?? 0;
-      if (c && level >= 1) cards[itemId] = { ...c, due: clampDue(new Date(c.due), level, keep[itemId], o.now, o.keepRules.tz).toISOString() };
+      if (c && level >= 1) cards[itemId] = { ...c, due: clampDue(new Date(c.due), level, keep[itemId], o.now, o.keepRules.tz, 'whole').toISOString() };
     }
   }
   const at = o.now.toISOString();
@@ -207,14 +209,26 @@ export function updateKeep(keep: Record<string, Keep> | undefined, results: Step
   return out;
 }
 
-/** The keep record worked out from an answer log (for progress saved before the record existed). */
-export function keepFromLog(log: LogEntry[]): Record<string, Keep> {
+/**
+ * The keep record worked out from an answer log. `partsOf` says how many parts an item has, so a lesson in which every part was
+ * right shows as a whole-item recall (answers saved before parts were recorded can't show one).
+ */
+export function keepFromLog(log: LogEntry[], partsOf?: (itemId: string) => number | undefined): Record<string, Keep> {
   const out: Record<string, Keep> = {};
+  const sessions = new Map<string, { itemId: string; at: string; parts: Set<string>; of: number }>();
   for (const e of log) {
     if (!FULL_RECALL.has(e.kind)) continue;
     const k = out[e.itemId] ?? (out[e.itemId] = {});
-    if (keptRecall(e)) k.good = latest(k.good, e.at); else k.miss = latest(k.miss, e.at);
+    if (keptRecall(e)) {
+      k.good = latest(k.good, e.at);
+      if (e.part) {
+        const s = sessions.get(`${e.itemId}|${e.at}`) ?? { itemId: e.itemId, at: e.at, parts: new Set<string>(), of: e.of ?? partsOf?.(e.itemId) ?? Infinity };
+        s.parts.add(e.part);
+        sessions.set(`${e.itemId}|${e.at}`, s);
+      } else if ((partsOf?.(e.itemId) ?? 0) === 1) k.full = latest(k.full, e.at);
+    } else k.miss = latest(k.miss, e.at);
   }
+  for (const s of sessions.values()) if (s.parts.size >= s.of) out[s.itemId] = { ...out[s.itemId], full: latest(out[s.itemId]?.full, s.at) };
   return out;
 }
 

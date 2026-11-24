@@ -100,3 +100,16 @@ test('the keep record also notes a whole-item recall: every part of the item rig
   const m = mergeProgress({ ...emptyProgress(), keep: { x: { good: '2026-11-01T00:00:00Z', full: '2026-11-01T00:00:00Z' } } }, { ...emptyProgress(), keep: { x: { good: '2026-11-02T00:00:00Z' } } });
   assert.deepEqual(m.keep, { x: { good: '2026-11-02T00:00:00Z', full: '2026-11-01T00:00:00Z' } });
 });
+
+test('a whole-item recall is found in an answer log when every part was right in one lesson', () => {
+  const e = (at: string, part: string, correct = true) => ({ at, itemId: 'wsc-9', kind: 'type' as const, correct, hints: 0, ms: 1, review: false, part });
+  const three = (at: string, bad?: string) => ['wsc-9#1', 'wsc-9#2', 'wsc-9#3'].map((p) => e(at, p, p !== bad));
+  const k = keepFromLog([...three('2026-11-20T10:00:00Z'), ...three('2026-11-25T10:00:00Z', 'wsc-9#3')], (id) => (id === 'wsc-9' ? 3 : undefined));
+  assert.equal(k['wsc-9'].full, '2026-11-20T10:00:00Z', 'the second lesson missed a part: not whole');
+  assert.equal(k['wsc-9'].good, '2026-11-25T10:00:00Z');
+  assert.equal(k['wsc-9'].miss, '2026-11-25T10:00:00Z');
+  const none = keepFromLog(three('2026-11-20T10:00:00Z'), () => undefined);
+  assert.equal(none['wsc-9'].full, undefined, 'unknown part count: not claimed as whole');
+  const old = { at: '2026-11-01T10:00:00Z', itemId: 'fv-1', kind: 'type' as const, correct: true, hints: 0, ms: 1, review: false };
+  assert.equal(keepFromLog([old], () => 1)['fv-1'].full, '2026-11-01T10:00:00Z', 'a one-part item recalled once is whole (older answers too)');
+});

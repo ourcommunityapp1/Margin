@@ -9,6 +9,7 @@
 
 import { levelOf } from './levels.ts';
 import { itemWords } from './measures.ts';
+import { unitsFor } from './lesson.ts';
 import { keepFromLog, localDay, type Keep, type MemberProgress } from './progress.ts';
 import type { Item, Track } from './types.ts';
 
@@ -24,8 +25,8 @@ export const REVIEW_NOTICE_DAYS = 14;
 export const KEEP_LAUNCH = new Date('2026-11-25T00:00:00Z');
 
 /** The keep record for a person: what is stored, with anything newer in the answer log folded in (and the log alone for older progress). */
-export function keepOf(p: MemberProgress): Record<string, Keep> {
-  const fromLog = keepFromLog(p.log);
+export function keepOf(p: MemberProgress, partsOf?: (itemId: string) => number | undefined): Record<string, Keep> {
+  const fromLog = keepFromLog(p.log, partsOf);
   const out: Record<string, Keep> = { ...fromLog };
   const later = (a?: string, b?: string) => (!a ? b : !b ? a : a >= b ? a : b);
   for (const [id, k] of Object.entries(p.keep ?? {})) {
@@ -44,7 +45,7 @@ export type KeepState =
   | { state: 'out'; since: Date };
 
 export interface KeepOptions {
-  /** Which recall counts: a right recall of any part of the item, or of the whole item (every part in one lesson). */
+  /** Which recall counts: of the whole item (every part right in one lesson, the default), or of any one part. */
   mode?: 'any-part' | 'whole';
   /** When the rules start for this person; nothing leaves their count for the first 30 days after this. Null: not started. */
   launch: Date | null;
@@ -74,7 +75,7 @@ export function endOfNextDay(from: Date, tz?: string | null): Date {
  */
 export function keepState(level: number, keep: Keep | undefined, now: Date, o: KeepOptions): KeepState {
   if (level < 1) return { state: 'kept' };
-  const good = (o.mode === 'whole' ? keep?.full : keep?.good) ?? null;
+  const good = ((o.mode ?? 'whole') === 'whole' ? keep?.full : keep?.good) ?? null;
   const miss = keep?.miss ?? null;
   const t = now.getTime();
   const graceEnds = o.launch ? o.launch.getTime() + GRACE_DAYS_AFTER_LAUNCH * DAY : Infinity;
@@ -101,7 +102,8 @@ export interface Held { item: Item; level: number; state: KeepState; words: numb
 
 /** Every item that has a stone, with where it stands. */
 export function heldItems(items: Item[], p: MemberProgress, track: Track, now: Date, o: KeepOptions): Held[] {
-  const keep = keepOf(p);
+  const counts = new Map(items.map((i) => [i.id, unitsFor(i, track).length]));
+  const keep = keepOf(p, (id) => counts.get(id));
   return items
     .filter((i) => levelOf(p, i.id) >= 1)
     .map((item) => ({ item, level: levelOf(p, item.id), state: keepState(levelOf(p, item.id), keep[item.id], now, o), words: itemWords(item, track) }));
@@ -130,10 +132,11 @@ export function summarize(held: Held[]): KeepSummary {
 }
 
 /** The latest a review may be scheduled: two weeks before its window ends, or the next day after a miss. */
-export function clampDue(due: Date, level: number, keep: Keep | undefined, now: Date, tz?: string | null): Date {
-  const good = keep?.good ? Date.parse(keep.good) : null;
+export function clampDue(due: Date, level: number, keep: Keep | undefined, now: Date, tz?: string | null, mode: 'any-part' | 'whole' = 'whole'): Date {
+  const goodIso = (mode === 'whole' ? keep?.full : keep?.good) ?? null;
+  const good = goodIso ? Date.parse(goodIso) : null;
   const miss = keep?.miss ?? null;
-  if (miss && (!keep?.good || miss > keep.good)) return new Date(Math.min(due.getTime(), endOfNextDay(new Date(miss), tz).getTime()));
+  if (miss && (!goodIso || miss > goodIso)) return new Date(Math.min(due.getTime(), endOfNextDay(new Date(miss), tz).getTime()));
   if (good === null) return due;
   const latest = good + (windowDays(level) - REVIEW_NOTICE_DAYS) * DAY;
   return new Date(Math.min(due.getTime(), Math.max(latest, now.getTime())));

@@ -4,7 +4,7 @@ import { clampDue, endOfNextDay, keepState, summarize, windowDays, type Held } f
 
 const d = (s: string) => new Date(s);
 const LAUNCH = d('2026-10-01T00:00:00Z'); // long before the dates below: the 30-day grace is over
-const opts = { launch: LAUNCH, tz: 'UTC' };
+const opts = { launch: LAUNCH, tz: 'UTC', mode: 'any-part' as const };
 
 test('the window grows with the stone: 90 days, then 240 at Emerald, then 425 at Sapphire and above', () => {
   assert.deepEqual([1, 2, 3, 4, 5, 6].map(windowDays), [90, 90, 90, 240, 425, 425]);
@@ -53,19 +53,19 @@ test('a slipped item comes back with one right recall', () => {
 test('for 30 days after launch nothing leaves anyone’s count', () => {
   const launch = d('2026-12-01T00:00:00Z');
   const old = { good: '2026-06-01T00:00:00Z' }; // would be long out
-  const during = keepState(2, old, d('2026-12-20T00:00:00Z'), { launch, tz: 'UTC' });
+  const during = keepState(2, old, d('2026-12-20T00:00:00Z'), { launch, tz: 'UTC', mode: 'any-part' as const });
   assert.equal(during.state, 'review');
   assert.equal((during as { deadline: Date }).deadline.toISOString(), '2026-12-31T00:00:00.000Z');
-  assert.equal(keepState(2, old, d('2026-12-31T00:00:01Z'), { launch, tz: 'UTC' }).state, 'out');
+  assert.equal(keepState(2, old, d('2026-12-31T00:00:01Z'), { launch, tz: 'UTC', mode: 'any-part' as const }).state, 'out');
   // A miss during the grace period leaves nothing out either.
-  assert.equal(keepState(2, { good: '2026-11-01T00:00:00Z', miss: '2026-12-02T10:00:00Z' }, d('2026-12-10T00:00:00Z'), { launch, tz: 'UTC' }).state, 'review');
+  assert.equal(keepState(2, { good: '2026-11-01T00:00:00Z', miss: '2026-12-02T10:00:00Z' }, d('2026-12-10T00:00:00Z'), { launch, tz: 'UTC', mode: 'any-part' as const }).state, 'review');
 });
 
 test('progress from before the keep record: the window starts when the rules do', () => {
   assert.equal(keepState(2, undefined, d('2026-12-15T00:00:00Z'), opts).state, 'kept');    // day 75 after launch
   assert.equal(keepState(2, undefined, d('2026-12-16T00:00:00Z'), opts).state, 'review');  // day 76
   assert.equal(keepState(2, undefined, d('2026-12-30T00:00:00Z'), opts).state, 'out');     // day 90
-  assert.equal(keepState(2, undefined, d('2030-01-01T00:00:00Z'), { launch: null }).state, 'kept', 'not started yet');
+  assert.equal(keepState(2, undefined, d('2030-01-01T00:00:00Z'), { launch: null, mode: 'any-part' as const }).state, 'kept', 'not started yet');
 });
 
 test('whole-item mode counts only a recall of every part (reviews will ask for that later)', () => {
@@ -96,9 +96,16 @@ test('the summary counts kept words, lists what to try again and review, and cou
 test('the scheduler never sets a review past two weeks before the window ends, or past the day after a miss', () => {
   const now = d('2026-11-20T00:00:00Z');
   const far = d('2027-06-01T00:00:00Z');
-  assert.equal(clampDue(far, 2, { good: '2026-11-15T00:00:00Z' }, now, 'UTC').toISOString(), '2027-01-30T00:00:00.000Z', 'recalled Nov 15 + 76 days');
-  assert.equal(clampDue(d('2026-12-01T00:00:00Z'), 2, { good: '2026-11-15T00:00:00Z' }, now, 'UTC').toISOString(), '2026-12-01T00:00:00.000Z', 'earlier than the limit: unchanged');
-  assert.equal(clampDue(far, 2, { good: '2026-11-01T00:00:00Z', miss: '2026-11-19T20:00:00Z' }, now, 'UTC').toISOString(), '2026-11-20T23:59:59.999Z', 'after a miss: tomorrow');
-  assert.equal(clampDue(far, 4, { good: '2026-11-15T00:00:00Z' }, now, 'UTC').toISOString(), '2027-06-01T00:00:00.000Z', 'Emerald: 226 days is later than this due date, so unchanged');
-  assert.equal(clampDue(far, 2, undefined, now, 'UTC').toISOString(), far.toISOString());
+  assert.equal(clampDue(far, 2, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2027-01-30T00:00:00.000Z', 'recalled Nov 15 + 76 days');
+  assert.equal(clampDue(d('2026-12-01T00:00:00Z'), 2, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2026-12-01T00:00:00.000Z', 'earlier than the limit: unchanged');
+  assert.equal(clampDue(far, 2, { good: '2026-11-01T00:00:00Z', miss: '2026-11-19T20:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2026-11-20T23:59:59.999Z', 'after a miss: tomorrow');
+  assert.equal(clampDue(far, 4, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2027-06-01T00:00:00.000Z', 'Emerald: 226 days is later than this due date, so unchanged');
+  assert.equal(clampDue(far, 2, undefined, now, 'UTC', 'any-part').toISOString(), far.toISOString());
+});
+
+test('by default a recall means the whole item: a right recall of one part keeps nothing', () => {
+  const onlyPart = { good: '2026-12-20T00:00:00Z', full: '2026-06-01T00:00:00Z' };
+  assert.equal(keepState(2, onlyPart, d('2026-12-25T00:00:00Z'), { launch: LAUNCH, tz: 'UTC' }).state, 'out');
+  assert.equal(keepState(2, { good: '2026-12-20T00:00:00Z', full: '2026-12-20T00:00:00Z' }, d('2026-12-25T00:00:00Z'), { launch: LAUNCH, tz: 'UTC' }).state, 'kept');
+  assert.equal(clampDue(d('2027-06-01T00:00:00Z'), 2, { good: '2026-12-20T00:00:00Z', full: '2026-11-15T00:00:00Z' }, d('2026-11-20T00:00:00Z'), 'UTC').toISOString(), '2027-01-30T00:00:00.000Z', 'the whole-item recall sets the limit');
 });
