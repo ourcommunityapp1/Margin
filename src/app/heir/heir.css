@@ -1133,3 +1133,10 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-sheet-wrap { position: fixed; inset: 0; z-index: 20; background: rgba(5, 7, 10, 0.6); display: flex; align-items: flex-end; justify-content: center; }
 .hr-sheet-card { width: min(520px, 100%); box-sizing: border-box; background: var(--card); border-radius: 26px 26px 0 0; padding: 22px 20px calc(env(safe-area-inset-bottom, 0px) + 22px); display: flex; flex-direction: column; gap: 12px; }
 @media (prefers-reduced-motion: reduce) { .hr-lb > .hr-lb-row { transition: none; } }
+
+/* Roomier preview on Progress */
+.hr-lb-card { display: flex; flex-direction: column; gap: 14px; padding: 18px 16px 16px; }
+.hr-lb-card .hr-lb-static { gap: 8px; }
+.hr-lb-card .hr-lb-link { min-height: 60px; padding: 10px 10px; }
+.hr-lb-card .hr-lb-gap-static { padding: 2px 0; }
+.hr-lb-card .hr-golink { margin-top: 4px; }

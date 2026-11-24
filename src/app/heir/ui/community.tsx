@@ -4,7 +4,7 @@
 // The database decides who is on the board and in what order; these screens show it.
 
 import Link from 'next/link';
-import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { cloud, getBoard, getBoardStatus, markBoardSeen, getProfile } from './cloud';
@@ -50,12 +50,12 @@ function Rows({ rows, animate, note }: { rows: BoardRow[]; animate: boolean; not
   const order = [...rows].sort((a, b) => a.idx - b.idx);
   const [phase, setPhase] = useState<'start' | 'end'>(animate ? 'start' : 'end');
   const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  useLayoutEffect(() => { Promise.resolve().then(() => setPhase('start')); }, [rows]);
   useEffect(() => {
-    if (!animate || reduce) { Promise.resolve().then(() => setPhase('end')); return; }
+    if (phase === 'end') return;
+    if (reduce) { Promise.resolve().then(() => setPhase('end')); return; }
     const t = setTimeout(() => setPhase('end'), 700);
     return () => clearTimeout(t);
-  }, [rows, animate, reduce]);
+  }, [phase, reduce]);
 
   const gapBefore = (slot: number) => [...gaps].filter((g) => g < slot).length;
   const y = (r: BoardRow) => phase === 'end' ? end[r.username] * ROW_H + gapBefore(end[r.username]) * GAP_H : start[r.username] * ROW_H;
@@ -82,6 +82,9 @@ export function CommunityScreen() {
   const [error, setError] = useState('');
   const [noProfile, setNoProfile] = useState(false);
   const [explain, setExplain] = useState(false);
+  // The move is shown when the board first opens; switching between This month and All time just swaps the rows.
+  const [animateMove, setAnimateMove] = useState(true);
+  const pick = (p: Period) => { if (p === period) return; setAnimateMove(false); setPeriod(p); };
   const [status, setStatus] = useState<{ entered_top10: boolean; left_top10: boolean; moved: number; place: number | null; total: number } | null>(null);
 
   const load = useCallback((p: Period) => {
@@ -116,8 +119,8 @@ export function CommunityScreen() {
         ) : (
           <>
             <div className="hr-seg" role="tablist" aria-label="Period" style={{ gridTemplateColumns: '1fr 1fr' }}>
-              <button type="button" role="tab" aria-selected={period === 'month'} className={period === 'month' ? 'on' : ''} onClick={() => { setBoard(null); setPeriod('month'); }}>This month</button>
-              <button type="button" role="tab" aria-selected={period === 'all'} className={period === 'all' ? 'on' : ''} onClick={() => { setBoard(null); setPeriod('all'); }}>All time</button>
+              <button type="button" role="tab" aria-selected={period === 'month'} className={period === 'month' ? 'on' : ''} onClick={() => pick('month')}>This month</button>
+              <button type="button" role="tab" aria-selected={period === 'all'} className={period === 'all' ? 'on' : ''} onClick={() => pick('all')}>All time</button>
             </div>
             <p style={{ margin: '0 4px', fontSize: 13, color: 'var(--muted)' }}>
               {period === 'all' ? 'Words in memory' : 'Words added to memory this month'}{board ? ` · ${board.total} ${board.total === 1 ? 'person' : 'people'} in your community` : ''} · <button type="button" onClick={() => setExplain(true)} style={{ background: 'none', border: 0, padding: 0, color: 'inherit', textDecoration: 'underline', font: 'inherit', cursor: 'pointer' }}>How it’s counted</button>
@@ -129,8 +132,8 @@ export function CommunityScreen() {
                 <Link className="hr-btn" href="/heir/friends">Find friends</Link>
               </section>
             ) : board ? (
-              <section className="hr-card" style={{ padding: '10px 12px' }}>
-                <Rows rows={board.rows} animate note={note} />
+              <section className="hr-card" style={{ padding: '10px 12px', opacity: board.period === period ? 1 : 0.55, transition: 'opacity 150ms' }} aria-busy={board.period !== period}>
+                <Rows key={board.period} rows={board.rows} animate={animateMove} note={note} />
               </section>
             ) : <p style={{ margin: '0 4px', color: 'var(--muted)' }}>Loading…</p>}
           </>
