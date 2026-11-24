@@ -79,6 +79,9 @@ async function pullProgress(db: NonNullable<ReturnType<typeof cloud>>, household
     if (merged[id] && (!b || !sameProgress(b, merged[id]))) send[id] = merged[id];
     if (!merged[id]) delete merged[id];
   }
+  // People removed within the last 30 days (on this phone or another) still have progress on the account: bring it in, so
+  // "Bring back a removed person" can restore them from any phone.
+  for (const [id, b] of Object.entries(theirs)) if (!memberIds.includes(id) && !merged[id]) merged[id] = b;
   if (Object.keys(send).length) await saveProgressRows(db, householdId, send);
   saveProgressLocal(merged);
   return merged;

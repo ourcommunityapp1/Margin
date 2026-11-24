@@ -52,3 +52,37 @@ test('only answers newer than the last one sent go up, oldest first', () => {
   assert.deepEqual(unsent(log, '2026-11-20T10:00:00Z').map((e) => e.id), ['2026-11-21T10:00:00Z', '2026-11-22T10:00:00Z']);
   assert.equal(unsent(log, '').length, 3);
 });
+
+import { keepFromLog, updateKeep, parseProgress } from '../progress.ts';
+
+test('the keep record holds when each question was last recalled right, and last not, apart from the trimmed log', () => {
+  const p1 = finishSession(emptyProgress(), { results: [res('wsc-1', 'type'), res('wsc-2', 'say', { correct: false })], now: new Date('2026-11-20T10:00:00Z'), newId: ids });
+  assert.equal(p1.keep?.['wsc-1']?.good, '2026-11-20T10:00:00.000Z');
+  assert.equal(p1.keep?.['wsc-2']?.miss, '2026-11-20T10:00:00.000Z');
+  const p2 = finishSession(p1, { results: [res('wsc-2', 'type'), res('wsc-1', 'type', { hints: 1 })], now: new Date('2026-11-25T10:00:00Z'), newId: ids });
+  assert.equal(p2.keep?.['wsc-2']?.good, '2026-11-25T10:00:00.000Z');
+  assert.equal(p2.keep?.['wsc-2']?.miss, '2026-11-20T10:00:00.000Z');
+  assert.equal(p2.keep?.['wsc-1']?.good, '2026-11-20T10:00:00.000Z', 'a hint is not a right recall');
+  assert.equal(p2.keep?.['wsc-1']?.miss, '2026-11-25T10:00:00.000Z');
+});
+
+test('quick checks (blanks, spot, match, order) never count as recall for keeping', () => {
+  const k = updateKeep(undefined, [res('a', 'blanks'), res('a', 'letters'), res('a', 'spot'), res('a', 'match'), res('a', 'order')], '2026-11-20T10:00:00.000Z');
+  assert.deepEqual(k, {});
+});
+
+test('progress saved before the keep record existed gets it from its log, once', () => {
+  const old = (at: string, correct = true): LogEntry => ({ at, itemId: 'fv-1', kind: 'type', correct, hints: 0, ms: 1, review: false });
+  assert.deepEqual(keepFromLog([old('2026-11-01T10:00:00Z'), old('2026-11-10T10:00:00Z', false), old('2026-11-05T10:00:00Z')]), { 'fv-1': { good: '2026-11-05T10:00:00Z', miss: '2026-11-10T10:00:00Z' } });
+  const seeded = finishSession({ ...emptyProgress(), log: [old('2026-11-01T10:00:00Z')] }, { results: [res('fv-2', 'type')], now: at, newId: ids });
+  assert.equal(seeded.keep?.['fv-1']?.good, '2026-11-01T10:00:00Z');
+});
+
+test('merging takes the latest right and latest missed recall from either copy, and survives saving and loading', () => {
+  const a = { ...emptyProgress(), keep: { x: { good: '2026-11-01T00:00:00Z', miss: '2026-11-09T00:00:00Z' } } };
+  const b = { ...emptyProgress(), keep: { x: { good: '2026-11-05T00:00:00Z' }, y: { good: '2026-11-02T00:00:00Z' } } };
+  const m = mergeProgress(a, b);
+  assert.deepEqual(m.keep, { x: { good: '2026-11-05T00:00:00Z', miss: '2026-11-09T00:00:00Z' }, y: { good: '2026-11-02T00:00:00Z' } });
+  assert.deepEqual(mergeProgress(b, a).keep, m.keep);
+  assert.deepEqual(parseProgress(JSON.stringify({ m1: m })).m1.keep, m.keep);
+});

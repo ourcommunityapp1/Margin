@@ -20,6 +20,11 @@ export function cloud(): SupabaseClient | null {
   return client;
 }
 
+/** This phone's time zone (an IANA name such as America/Chicago), so the server works out local days the way the phone does. */
+function timeZone(): string | null {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; }
+}
+
 export interface Remote { householdId: string; household: Household; memberRows: MemberRow[] }
 
 // The signed-in account's own household. (A linked account's household is readable too, so this asks for its own.)
@@ -30,7 +35,7 @@ export async function loadRemote(db: SupabaseClient): Promise<Remote | null> {
   const { data: hh, error } = await db.from('heir_households').select('id, plan, active_member_id').eq('owner_id', me).maybeSingle();
   if (error) throw error;
   if (!hh) return null;
-  const { data: members, error: e2 } = await db.from('heir_members').select('id, household_id, name, track, created_at').eq('household_id', hh.id);
+  const { data: members, error: e2 } = await db.from('heir_members').select('id, household_id, name, track, created_at').eq('household_id', hh.id).is('deleted_at', null);
   if (e2) throw e2;
   const rows = (members ?? []) as MemberRow[];
   return { householdId: hh.id, household: fromRows(hh as HouseholdRow, rows), memberRows: rows };
@@ -46,15 +51,17 @@ export async function saveRemote(db: SupabaseClient, h: Household, known: Remote
   }
   const rows = toRows(h, householdId);
   if (rows.members.length) {
-    const { error } = await db.from('heir_members').upsert(rows.members);
+    // deleted_at: null also brings back a person who was removed (their row, and so their progress, is still there).
+    const { error } = await db.from('heir_members').upsert(rows.members.map((m) => ({ ...m, deleted_at: null })));
     if (error) throw error;
   }
+  // A removed person is only marked removed, so their lessons, stones and days stay for 30 days and can be brought back.
   const gone = removedMemberIds(known?.memberRows ?? [], h);
   if (gone.length) {
-    const { error } = await db.from('heir_members').delete().in('id', gone);
+    const { error } = await db.from('heir_members').update({ deleted_at: new Date().toISOString() }).in('id', gone);
     if (error) throw error;
   }
-  const { error } = await db.from('heir_households').update({ plan: rows.household.plan, active_member_id: rows.household.active_member_id, updated_at: new Date().toISOString() }).eq('id', householdId);
+  const { error } = await db.from('heir_households').update({ plan: rows.household.plan, active_member_id: rows.household.active_member_id, tz: timeZone(), updated_at: new Date().toISOString() }).eq('id', householdId);
   if (error) throw error;
   return { householdId, household: h, memberRows: rows.members };
 }
@@ -146,7 +153,7 @@ export async function loadLinked(db: SupabaseClient): Promise<LinkedAccount[]> {
   if (!hhs?.length) return [];
   const ids = hhs.map((h) => h.id as string);
   const [{ data: members, error: e2 }, { data: rows, error: e3 }] = await Promise.all([
-    db.from('heir_members').select('id, household_id, name, track, created_at').in('household_id', ids).order('created_at'),
+    db.from('heir_members').select('id, household_id, name, track, created_at').in('household_id', ids).is('deleted_at', null).order('created_at'),
     db.from('heir_progress').select('member_id, household_id, data').in('household_id', ids),
   ]);
   if (e2) throw e2;

@@ -52,7 +52,12 @@ export interface MemberProgress {
   related?: Record<string, string>;
   // Items explained in your own words and checked against the notes (item id → ISO date): Understood.
   explained?: Record<string, string>;
+  // Per item, when it was last recalled from memory (typed or said) right with no hints (`good`), and when last not
+  // (`miss`). Kept apart from the answer log, which the phone trims, so "when did I last recall this" is never lost.
+  keep?: Record<string, Keep>;
 }
+
+export interface Keep { good?: string; miss?: string }
 
 export type Progress = Record<string, MemberProgress>;
 
@@ -152,7 +157,33 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
     log: [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day }))].slice(-1500),
+    keep: updateKeep(p.keep ?? keepFromLog(p.log), o.results, at),
   };
+}
+
+const FULL_RECALL = new Set(['type', 'say']);
+
+/** Fold one lesson's typed and said answers into the keep record. */
+export function updateKeep(keep: Record<string, Keep> | undefined, results: StepResult[], at: string): Record<string, Keep> {
+  const out = { ...keep };
+  for (const r of results) {
+    if (!FULL_RECALL.has(r.kind)) continue;
+    const k = { ...out[r.itemId] };
+    if (r.correct && !r.hints) k.good = latest(k.good, at); else k.miss = latest(k.miss, at);
+    out[r.itemId] = k;
+  }
+  return out;
+}
+
+/** The keep record worked out from an answer log (for progress saved before the record existed). */
+export function keepFromLog(log: LogEntry[]): Record<string, Keep> {
+  const out: Record<string, Keep> = {};
+  for (const e of log) {
+    if (!FULL_RECALL.has(e.kind)) continue;
+    const k = out[e.itemId] ?? (out[e.itemId] = {});
+    if (e.correct && !e.hints) k.good = latest(k.good, e.at); else k.miss = latest(k.miss, e.at);
+  }
+  return out;
 }
 
 // How many separate sessions each item has been practiced in (a session's answers share one timestamp).
@@ -219,6 +250,9 @@ export function parseProgress(raw: string | null): Progress {
         ...(m.explained && typeof m.explained === 'object' && !Array.isArray(m.explained)
           ? { explained: Object.fromEntries(Object.entries(m.explained).filter(([, v]) => typeof v === 'string')) }
           : {}),
+        ...(m.keep && typeof m.keep === 'object' && !Array.isArray(m.keep)
+          ? { keep: Object.fromEntries(Object.entries(m.keep).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [k, { ...(typeof v.good === 'string' ? { good: v.good } : {}), ...(typeof v.miss === 'string' ? { miss: v.miss } : {}) }])) }
+          : {}),
       };
     }
     return out;
@@ -269,6 +303,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
   const night = !a.night ? b.night : !b.night ? a.night : a.night.at >= b.night.at ? a.night : b.night;
   const related = a.related || b.related ? mergeRecord(a.related ?? {}, b.related ?? {}, (x, y) => earliest(x, y)!) : undefined;
   const explained = a.explained || b.explained ? mergeRecord(a.explained ?? {}, b.explained ?? {}, (x, y) => earliest(x, y)!) : undefined;
+  const keep = a.keep || b.keep ? mergeRecord(a.keep ?? {}, b.keep ?? {}, (x, y) => ({ ...(latest(x.good, y.good) ? { good: latest(x.good, y.good) } : {}), ...(latest(x.miss, y.miss) ? { miss: latest(x.miss, y.miss) } : {}) })) : undefined;
   return {
     units: union(a.units, b.units),
     checkpoints: union(a.checkpoints, b.checkpoints),
@@ -282,6 +317,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
     ...(night ? { night } : {}),
     ...(related ? { related } : {}),
     ...(explained ? { explained } : {}),
+    ...(keep ? { keep } : {}),
   };
 }
 
