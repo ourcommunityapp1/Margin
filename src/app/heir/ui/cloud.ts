@@ -9,6 +9,7 @@ import { HEIR_SUPABASE_KEY, HEIR_SUPABASE_URL, heirCloudConfigured } from '@/hei
 import { fromRows, removedMemberIds, toRows, type HouseholdRow, type MemberRow } from '@/heir/sync';
 import type { Household } from '@/heir/types';
 import { mergeProgress, parseProgress, sameProgress, type MemberProgress } from '@/heir/progress';
+import { toAnswerRows, unsent } from '@/heir/answers';
 import type { Plan } from '@/heir/types';
 
 let client: SupabaseClient | null = null;
@@ -80,7 +81,31 @@ export async function saveProgressRows(db: SupabaseClient, householdId: string, 
     const { error } = await db.from('heir_progress').upsert(changed.map((id) => ({ member_id: id, household_id: householdId, data: merged[id], updated_at: at })));
     if (error) throw error;
   }
+  // Every answer also goes up as its own row, so the account keeps the whole history even though the phone trims its copy.
+  // A failure here never fails the save above: the same answers are sent again next time.
+  await sendAnswers(db, householdId, merged).catch(() => { /* retried on the next save */ });
   return merged;
+}
+
+// ---- Answers: one row each. This phone remembers, per person, the time of the newest answer it has sent.
+const SENT_KEY = 'heir-answers-sent-v1';
+const readSent = (): Record<string, string> => { try { return JSON.parse(localStorage.getItem(SENT_KEY) ?? '{}') ?? {}; } catch { return {}; } };
+const writeSent = (s: Record<string, string>) => { try { localStorage.setItem(SENT_KEY, JSON.stringify(s)); } catch { /* storage full or blocked: everything is sent again next time, harmlessly */ } };
+
+/** Send answers this phone hasn't sent yet. Sending one twice is harmless (same id, ignored). */
+export async function sendAnswers(db: SupabaseClient, householdId: string, progress: Record<string, MemberProgress>): Promise<void> {
+  const sent = readSent();
+  for (const [memberId, p] of Object.entries(progress)) {
+    const fresh = unsent(p.log, sent[memberId] ?? '');
+    if (!fresh.length) continue;
+    const rows = toAnswerRows(householdId, memberId, fresh);
+    for (let i = 0; i < rows.length; i += 400) {
+      const { error } = await db.from('heir_answers').upsert(rows.slice(i, i + 400), { onConflict: 'id', ignoreDuplicates: true });
+      if (error) throw error;
+    }
+    sent[memberId] = fresh[fresh.length - 1].at;
+    writeSent(sent);
+  }
 }
 
 // ---- Linking two accounts (a couple): each can VIEW the other's family and progress, and nothing more. The database
