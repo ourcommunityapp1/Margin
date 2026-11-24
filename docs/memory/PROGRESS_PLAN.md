@@ -105,3 +105,26 @@ Progress, the Mastered wording on related verses) shows only to the accounts in 
       doctrine, and quotes Scripture only from the verse service (exact text).
 - [ ] Children's track: simpler questions, encouraging feedback.
 - [ ] Server route for the model (key kept server-side), rate limits, and a fallback when offline.
+
+## To do: everything you know, and how strong (requested 2026-11-24)
+
+Mockup first, then build.
+
+- **Entry point.** A link on Progress, e.g. "Everything you've learned", opens a new page.
+- **The list.**
+  - Every verse, catechism answer and creed section you've ever learned, across all courses.
+  - Each shows its strength now (the same number reviews use), its stone, and when it was last practiced.
+- **Filter:** by course, by kind (Scripture, catechism, creed), and by strength band (strong, holding, needs a look).
+- **Sort:** weakest first (the default), strongest first, longest since practiced, or course order.
+- **Tap an item:** its page, with strength over time and a "Practice this" button.
+- **Common mistakes (data visualization).**
+  - Per item: the words most often missed or swapped, highlighted in the text.
+  - Across items: which verses or answers trip people up most, and where in the text (start, middle, joins between
+    parts).
+  - It depends on recording which words were missed (below). It can also show patterns across everyone, never
+    anyone's answers.
+- **Needs:**
+  1. **Missed-word positions:** store which words were missed in each typed or spoken answer, as positions in the
+     text, not what was typed (`heir_answers.missed`, an integer array).
+  2. **Card events:** shown, started, finished and skipped, kept by day, to tell whether recommendations work
+     (`heir_events`).
