@@ -4,7 +4,7 @@ import { Crumbs, JsonLd, SITE, SiteFooter, SiteHeader, breadcrumbLd } from '../s
 
 const TITLE = 'Privacy: What Katekize Keeps and Who Can See It';
 const DESCRIPTION = 'What Katekize stores about you, what friends and other people can see, how to delete your profile, and which services run the app.';
-const UPDATED = 'November 24, 2026';
+const UPDATED = 'November 25, 2026';
 export const metadata: Metadata = {
   title: { absolute: TITLE }, description: DESCRIPTION, alternates: { canonical: `${SITE}/privacy` },
   openGraph: { type: 'website', url: `${SITE}/privacy`, siteName: 'Katekize', title: TITLE, description: DESCRIPTION },
@@ -29,6 +29,7 @@ export default function Privacy() {
               <li><b>Your sign-in.</b> Your email address, used to send you a sign-in code.</li>
               <li><b>Your family and progress.</b> The names you give people in your family, what each has learned, their answers and schedule, days kept and stones. This is private to your account. A linked account (a spouse) can see it, view only.</li>
               <li><b>Your profile, if you make one.</b> Your first and last name, a username, optionally a city and state, and your friends. A profile is optional and you choose whether people can find you.</li>
+              <li><b>How you practice.</b> For each answer: which question and part, what kind of step it was, whether you were right, how many words were missed and where in the text (their positions, never what you typed), any hints, how long it took, and the chance of recall the app predicted before it. Also which of Today’s cards were shown, opened and finished, and for how long. It is used to schedule your reviews and to improve how well the app predicts what you remember. When that improvement is worked out across everyone, it uses the answers without names, and never shows anyone’s answers to anyone else.</li>
               <li><b>The numbers friends see.</b> Words in memory, streak, stone counts and course progress, worked out from your lessons.</li>
             </ul>
           </section>
