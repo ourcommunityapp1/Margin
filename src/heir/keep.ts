@@ -53,11 +53,26 @@ export interface KeepOptions {
   tz?: string | null;
 }
 
+const formats = new Map<string, Intl.DateTimeFormat | null>();
+/** The calendar day (yyyy-mm-dd) of a moment in a time zone. One formatter is built per zone and reused. */
+export function dayKeyIn(ms: number, tz?: string | null): string {
+  const zone = tz || '';
+  let f = formats.get(zone);
+  if (f === undefined) {
+    try { f = new Intl.DateTimeFormat('en-CA', { timeZone: tz || undefined, year: 'numeric', month: '2-digit', day: '2-digit' }); } catch { f = null; }
+    formats.set(zone, f);
+  }
+  return f ? f.format(new Date(ms)) : localDay(new Date(ms));
+}
+
+/** Whether a missed recall (due by `deadline`, the end of the day after the miss) happened today or yesterday. */
+export function missedWhen(deadline: Date, now: Date, tz?: string | null): 'today' | 'yesterday' {
+  return dayKeyIn(deadline.getTime(), tz) === dayKeyIn(now.getTime(), tz) ? 'yesterday' : 'today';
+}
+
 /** The last moment of the local day after `from`'s day (the time a missed recall must be put right by). */
 export function endOfNextDay(from: Date, tz?: string | null): Date {
-  const key = (ms: number) => {
-    try { return new Intl.DateTimeFormat('en-CA', { timeZone: tz || undefined, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms)); } catch { return localDay(new Date(ms)); }
-  };
+  const key = (ms: number) => dayKeyIn(ms, tz);
   // Walk forward a quarter hour at a time (every real time zone changes date on a quarter hour) until the date has changed
   // twice, then find the minute of the second change.
   const QUARTER = 15 * 60_000;

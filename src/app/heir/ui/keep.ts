@@ -9,7 +9,7 @@ import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
 import { useHeir } from './provider';
 
-const tz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; } };
+export const localTz = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || null; } catch { return null; } };
 
 /** null when the rules are off for this account. */
 export function useKeep(): KeepSummary | null {
@@ -17,7 +17,7 @@ export function useKeep(): KeepSummary | null {
   const me = activeMember(household);
   return useMemo(() => {
     if (!keepRules || !me) return null;
-    return summarize(heldItems(allItems(), memberProgress(progress, me.id), me.track, now, { launch: KEEP_LAUNCH, tz: tz(), mode: 'whole' }));
+    return summarize(heldItems(allItems(), memberProgress(progress, me.id), me.track, now, { launch: KEEP_LAUNCH, tz: localTz(), mode: 'whole' }));
   }, [keepRules, me, progress, now]);
 }
 

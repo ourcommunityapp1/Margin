@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clampDue, endOfNextDay, keepState, summarize, windowDays, type Held } from '../keep.ts';
+import { clampDue, dayKeyIn, endOfNextDay, missedWhen, keepState, summarize, windowDays, type Held } from '../keep.ts';
 
 const d = (s: string) => new Date(s);
 const LAUNCH = d('2026-10-01T00:00:00Z'); // long before the dates below: the 30-day grace is over
@@ -108,4 +108,19 @@ test('by default a recall means the whole item: a right recall of one part keeps
   assert.equal(keepState(2, onlyPart, d('2026-12-25T00:00:00Z'), { launch: LAUNCH, tz: 'UTC' }).state, 'out');
   assert.equal(keepState(2, { good: '2026-12-20T00:00:00Z', full: '2026-12-20T00:00:00Z' }, d('2026-12-25T00:00:00Z'), { launch: LAUNCH, tz: 'UTC' }).state, 'kept');
   assert.equal(clampDue(d('2027-06-01T00:00:00Z'), 2, { good: '2026-12-20T00:00:00Z', full: '2026-11-15T00:00:00Z' }, d('2026-11-20T00:00:00Z'), 'UTC').toISOString(), '2027-01-30T00:00:00.000Z', 'the whole-item recall sets the limit');
+});
+
+test('a missed recall says whether it happened today or yesterday', () => {
+  const miss = d('2026-11-10T15:00:00Z');
+  const deadline = endOfNextDay(miss, 'America/Chicago');
+  assert.equal(missedWhen(deadline, d('2026-11-10T20:00:00Z'), 'America/Chicago'), 'today');
+  assert.equal(missedWhen(deadline, d('2026-11-11T15:00:00Z'), 'America/Chicago'), 'yesterday');
+  // Late evening in Chicago is already the next day in UTC: the zone decides.
+  assert.equal(missedWhen(deadline, d('2026-11-11T03:00:00Z'), 'America/Chicago'), 'today');
+});
+
+test('day keys follow the zone, and an unknown zone falls back instead of throwing', () => {
+  assert.equal(dayKeyIn(d('2026-11-11T03:00:00Z').getTime(), 'America/Chicago'), '2026-11-10');
+  assert.equal(dayKeyIn(d('2026-11-11T03:00:00Z').getTime(), 'UTC'), '2026-11-11');
+  assert.equal(typeof dayKeyIn(d('2026-11-11T03:00:00Z').getTime(), 'Not/AZone'), 'string');
 });
