@@ -1,7 +1,7 @@
 // The memory model, in one place: the chance of recalling something now, how a recall is graded, and each person's
 // typical speed. Wraps FSRS-6 (ts-fsrs). Everything that asks "how well is this remembered?" asks here. See ADR-001.
 
-import { generatorParameters, Rating, State, type Grade } from 'ts-fsrs';
+import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import { allowedMisses, type LogEntry, type SavedCard, type StepResult } from './progress.ts';
 
 /** Stamped on every answer with the chance the model gave just before it, so we can check the model is right. */
@@ -91,4 +91,106 @@ export function weakParts(log: LogEntry[]): Set<string> {
 export function stepSeconds(log: LogEntry[]): number {
   const ms = log.filter((e) => e.review && e.ms > 0 && e.ms < 180_000).map((e) => e.ms).sort((a, b) => a - b);
   return ms.length >= 20 ? Math.max(8, ms[Math.floor(ms.length / 2)] / 1000) : 25;
+}
+
+// ---- Memory per part (ADR-001 Decisions 1 and 2): every line of a long answer has its own memory, rebuilt by replaying
+// the answers in time order. Nothing is stored that can drift: the answers are the truth, so two phones that hold the
+// same answers always agree. Answers the phone has trimmed are kept as a snapshot (see `foldTrimmed`).
+
+export interface PartMem { s: number; d: number; last: string; reps: number; lapses: number; state: State }
+export interface PartSnapshot { asOf: string; mem: Record<string, PartMem> }
+
+// No fuzz: the same answers must always give the same memory.
+const replayer = fsrs(generatorParameters({ enable_fuzz: false, enable_short_term: false }));
+const GRADE = { again: Rating.Again, hard: Rating.Hard, good: Rating.Good } as const;
+
+/** Replay answers (any order) on top of `start`. Only the first graded recall of a part on a given day moves its memory. */
+export function replayParts(entries: LogEntry[], start: Record<string, PartMem> = {}): Record<string, PartMem> {
+  const mem: Record<string, PartMem> = { ...start };
+  // Group by part and session; one mark per part per session (the worst), and the first session of each day counts.
+  const sessions = new Map<string, { part: string; at: string; day: string; marks: Mark[] }>();
+  for (const e of entries) {
+    if (!e.part || !RECALL.has(e.kind)) continue;
+    const key = `${e.part}|${e.at}`;
+    const s = sessions.get(key) ?? { part: e.part, at: e.at, day: e.day ?? e.at.slice(0, 10), marks: [] };
+    s.marks.push(markOf(e as StepResult));
+    sessions.set(key, s);
+  }
+  const seenDay = new Set<string>();
+  for (const s of [...sessions.values()].sort((a, b) => a.at.localeCompare(b.at))) {
+    const m = mem[s.part];
+    if (m && s.at <= m.last) continue;
+    if (seenDay.has(`${s.part}|${s.day}`) || (m && (m.last.slice(0, 10) === s.day))) continue;
+    seenDay.add(`${s.part}|${s.day}`);
+    const mark: Mark = s.marks.includes('again') ? 'again' : s.marks.includes('hard') ? 'hard' : 'good';
+    const at = new Date(s.at);
+    const card: Card = m
+      ? { ...createEmptyCard(new Date(m.last)), stability: m.s, difficulty: m.d, reps: m.reps, lapses: m.lapses, state: m.state, last_review: new Date(m.last), due: new Date(Date.parse(m.last) + m.s * DAY) }
+      : createEmptyCard(at);
+    const next = replayer.next(card, at, GRADE[mark]).card;
+    mem[s.part] = { s: next.stability, d: next.difficulty, last: s.at, reps: next.reps, lapses: next.lapses, state: next.state };
+  }
+  return mem;
+}
+
+/** Every part's memory now: the snapshot, then the answers after it. */
+export function partMemories(log: LogEntry[], snap?: PartSnapshot): Record<string, PartMem> {
+  return replayParts(snap ? log.filter((e) => e.at > snap.asOf) : log, snap?.mem ?? {});
+}
+
+/** When the phone trims old answers, fold them into the snapshot first so no part forgets its history. */
+export function foldTrimmed(dropped: LogEntry[], snap?: PartSnapshot): PartSnapshot | undefined {
+  const graded = dropped.filter((e) => e.part && (!snap || e.at > snap.asOf));
+  if (!graded.length) return snap;
+  const asOf = graded.reduce((m, e) => (e.at > m ? e.at : m), snap?.asOf ?? '');
+  return { asOf, mem: replayParts(graded, snap?.mem) };
+}
+
+/** The chance of recalling one part now. */
+export const partChance = (m: PartMem, now: Date) => Math.pow(1 + FACTOR * (Math.max(0, now.getTime() - Date.parse(m.last)) / DAY / Math.max(0.1, m.s)), -DECAY);
+
+/** An item's chance is its weakest part's (when its parts have memories). */
+export function itemChance(itemId: string, parts: Record<string, PartMem>, now: Date): number | null {
+  let min: number | null = null;
+  for (const [k, m] of Object.entries(parts)) if (k.startsWith(`${itemId}#`)) { const c = partChance(m, now); if (min === null || c < min) min = c; }
+  return min;
+}
+
+/** Parts to ask first: last recalled wrong, or with a chance under `below`. */
+export function weakPartsNow(log: LogEntry[], parts: Record<string, PartMem>, now: Date, below = 0.85): Set<string> {
+  const out = weakParts(log);
+  for (const [k, m] of Object.entries(parts)) if (partChance(m, now) < below) out.add(k);
+  return out;
+}
+
+export const mergeSnapshot = (a?: PartSnapshot, b?: PartSnapshot): PartSnapshot | undefined => (!a ? b : !b ? a : a.asOf >= b.asOf ? a : b);
+
+export function parseSnapshot(v: unknown): PartSnapshot | undefined {
+  if (!v || typeof v !== 'object') return undefined;
+  const s = v as Partial<PartSnapshot>;
+  if (typeof s.asOf !== 'string' || !s.mem || typeof s.mem !== 'object') return undefined;
+  const mem = Object.fromEntries(Object.entries(s.mem).filter(([, m]) => m && typeof m.s === 'number' && typeof m.d === 'number' && typeof m.last === 'string'));
+  return { asOf: s.asOf, mem };
+}
+
+// ---- Look-alikes: verses and answers that share many words get confused, so a review keeps them apart.
+
+const words = (t: string) => new Set(t.toLowerCase().replace(/[^a-z\s']/g, ' ').split(/\s+/).filter((w) => w.length > 3));
+/** Share of distinctive words two texts have in common (0 to 1). */
+export function overlap(a: string, b: string): number {
+  const x = words(a), y = words(b);
+  if (!x.size || !y.size) return 0;
+  let n = 0; for (const w of x) if (y.has(w)) n++;
+  return n / Math.min(x.size, y.size);
+}
+
+/** Reorder so no two neighbours are look-alikes (overlap of 0.5 or more), keeping the order otherwise. */
+export function spreadApart<T>(list: T[], text: (t: T) => string): T[] {
+  const left = [...list], out: T[] = [];
+  while (left.length) {
+    const prev = out[out.length - 1];
+    const i = prev === undefined ? 0 : left.findIndex((x) => overlap(text(prev), text(x)) < 0.5);
+    out.push(...left.splice(i === -1 ? 0 : i, 1));
+  }
+  return out;
 }

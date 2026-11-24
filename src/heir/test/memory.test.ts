@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Rating, State } from 'ts-fsrs';
-import { daysUntil, gradeRecall, markOf, predictedChance, recallChance, speedBaseline, stepSeconds, weakParts } from '../memory.ts';
+import { daysUntil, foldTrimmed, gradeRecall, itemChance, markOf, overlap, partChance, partMemories, predictedChance, recallChance, speedBaseline, spreadApart, stepSeconds, weakParts } from '../memory.ts';
 import { recallChance as plannerChance } from '../planner.ts';
 import { buildReview, seeded, unitsFor } from '../lesson.ts';
 import { allItems, getItem } from '../content/index.ts';
@@ -54,4 +54,25 @@ test('weak parts are the ones whose last recall went wrong, and reviews ask them
   assert.ok(['type', 'say'].includes(steps[0].kind), 'likely recall: asked whole, no help');
   const shaky = buildReview({ due: [{ item, strength: 10, chance: 0.5 }], track: 'adult', pool: allItems(), rng: seeded(3) });
   assert.ok(['letters', 'blanks'].includes(shaky[0].kind), 'shaky: starts with a cue');
+});
+
+test('part memories: replayed from the answers, the same whatever order they arrive in', () => {
+  const e = (part: string, at: string, correct: boolean, id: string): LogEntry => ({ id, at, day: at.slice(0, 10), itemId: part.split('#')[0], part, kind: 'type', correct, hints: 0, ms: 1, review: true, words: 10 });
+  const log = [e('wsc-12#1', '2026-11-01T10:00:00Z', true, 'a'), e('wsc-12#2', '2026-11-01T10:00:00Z', false, 'b'), e('wsc-12#1', '2026-11-05T10:00:00Z', true, 'c'), e('wsc-12#2', '2026-11-05T10:00:00Z', true, 'd'),
+    e('wsc-12#1', '2026-11-05T18:00:00Z', false, 'e')];
+  const m = partMemories(log);
+  assert.deepEqual(partMemories([...log].reverse()), m);
+  assert.ok(m['wsc-12#1'].s > m['wsc-12#2'].s, 'the line missed first is weaker');
+  assert.equal(m['wsc-12#1'].reps, 2, 'a second session the same day does not move it');
+  const at = new Date('2026-11-24T12:00:00Z');
+  assert.equal(itemChance('wsc-12', m, at), Math.min(partChance(m['wsc-12#1'], at), partChance(m['wsc-12#2'], at)));
+  // Trimming: folding the oldest answers into a snapshot gives the same memories as keeping them all.
+  const snap = foldTrimmed(log.slice(0, 2));
+  assert.deepEqual(partMemories(log.slice(2), snap), m);
+});
+
+test('look-alikes are kept apart in a review', () => {
+  const t = { a: 'the lord is my shepherd i shall not want', b: 'the lord is my shepherd he leadeth me', c: 'what is the chief end of man' };
+  assert.ok(overlap(t.a, t.b) >= 0.5);
+  assert.deepEqual(spreadApart(['a', 'b', 'c'] as const, (k) => t[k]), ['a', 'c', 'b']);
 });

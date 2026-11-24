@@ -7,6 +7,7 @@
 //   - after that the group's items leave the lessons and come back on the spaced schedule (FSRS).
 // Due items from finished groups are mixed into lessons too, and have their own review sessions.
 
+import { spreadApart } from './memory.ts';
 import type { Item, MeaningQuestion, Track } from './types.ts';
 import { normalizeWord, words } from './words.ts';
 import { SWAPS } from './swaps.ts';
@@ -355,7 +356,7 @@ export function buildWelcome(o: { intro: Intro; unit: Unit; item: Item; track: T
   return [...opening, ...buildLesson({ unit: o.unit, item: o.item, track: o.track, mates: [], due: [], pool: o.pool, rng: o.rng })];
 }
 
-export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Mate[]; due: Due[]; pool: Item[]; rng: Rng }): Step[] {
+export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Mate[]; due: Due[]; pool: Item[]; rng: Rng; maxSteps?: number }): Step[] {
   const { unit, item, track } = o;
   const c: Ctx = { n: 0, rng: o.rng, track, pool: o.pool };
   const { text } = unitText(item, track, unit);
@@ -398,7 +399,7 @@ export function buildLesson(o: { unit: Unit; item: Item; track: Track; mates: Ma
   const due = o.due.slice(0, 2).map((d) => dueStep(c, d));
 
   // Room left for practice once the new item and due reviews are in.
-  const room = Math.max(o.mates.length, MAX_STEPS - learn.length - 1 - due.length);
+  const room = Math.max(o.mates.length, (o.maxSteps ?? MAX_STEPS) - learn.length - 1 - due.length);
   const kept = practice.length > room ? practice.filter((_, i) => i % perMate === 0) : practice;
 
   // Warm up with an earlier item first, then spread the rest between the new steps, never next to a
@@ -459,7 +460,8 @@ export function buildCheckpoint(o: { group: Group; track: Track; pool: Item[]; r
 // Reviews only: each due item twice, first a quicker recall, then said or typed in full, spread apart.
 export function buildReview(o: { due: Due[]; track: Track; pool: Item[]; rng: Rng; max?: number }): Step[] {
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
-  const chosen = o.due.slice(0, o.max ?? 6);
+  // Look-alikes (verses or answers sharing many words) are kept apart, so neither prompts the other.
+  const chosen = spreadApart(o.due.slice(0, o.max ?? 6), (d) => d.item.chunks[o.track].join(' '));
   const first = chosen.map((d) => dueStep(c, { ...d, strength: Math.min(d.strength, 6) }));
   const second = chosen.map((d, i) => practiceStep(c, d.item, partsFor(c, d), ['say', 'type'], true, first[i].kind));
   return [...first, ...shuffle(second, o.rng)];

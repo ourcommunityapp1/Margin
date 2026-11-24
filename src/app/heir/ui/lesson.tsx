@@ -20,7 +20,7 @@ import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { startedCourses, withSession } from '@/heir/dayplan';
-import { predictedChance, recallChance, stepSeconds, weakParts } from '@/heir/memory';
+import { itemChance, partMemories, predictedChance, recallChance, stepSeconds, weakPartsNow } from '@/heir/memory';
 import { type WindowHandle } from './glass/window';
 import { RoundWindow } from './glass/round';
 import { partOf, partWindow, windowBase, windowLight } from './glass/light';
@@ -91,12 +91,17 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     if (session || !me) return;
     const pool = allItems();
     // With the newer engine (owner accounts first): each review knows its weak parts and its chance of recall now.
-    const weak = keepRules ? weakParts(mine.log) : null;
+    // Each part's own memory, rebuilt from the answers (memory.ts): an item is as strong as its weakest part.
+    const parts = keepRules ? partMemories(mine.log, mine.partSnap) : undefined;
+    const weak = parts ? weakPartsNow(mine.log, parts, new Date()) : null;
     const toDue = (list: { itemId: string; strength: number }[]) => list.flatMap((d) => {
       const item = getItem(d.itemId);
       if (!item) return [];
       const card = mine.cards[d.itemId];
-      return [weak ? { item, strength: d.strength, weak: [...weak].filter((k) => k.startsWith(`${item.id}#`)), ...(card ? { chance: recallChance(card, new Date()) } : {}) } : { item, strength: d.strength }];
+      if (!weak || !parts) return [{ item, strength: d.strength }];
+      const byPart = itemChance(item.id, parts, new Date());
+      const chance = card ? Math.min(recallChance(card, new Date()), byPart ?? 1) : byPart ?? undefined;
+      return [{ item, strength: d.strength, weak: [...weak].filter((k) => k.startsWith(`${item.id}#`)), ...(chance !== undefined ? { chance } : {}) }];
     });
     const learnedUnits = new Set(mine.units);
     const ids = new Set(items.map((i) => i.id));
@@ -106,7 +111,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
         // A review fits its time: the card's minutes (or about four) at this person's own pace, two steps an item.
         const est = mine.today?.cards?.find((c) => c.id === cardId)?.est ?? 4;
         const fit = keepRules ? Math.min(8, Math.max(3, Math.round((est * 60) / (2 * stepSeconds(mine.log))))) : 6;
-        const picks = riskOrder(mine, ids, new Date());
+        const picks = riskOrder(mine, ids, new Date(), parts);
         return picks.length ? { kind: 'practice' as const, picks: picks.slice(0, fit), why: 'catch-up' as const } : null;
       })()
       : planNext({ courseId: course.id, items, track, p: mine, now: new Date() });
@@ -120,7 +125,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       // Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
       const started = startedCourses(mine, track, household.plan?.course ?? null);
       const allIds = new Set(started.flatMap((c) => courseItems(c).map((i) => i.id)));
-      const picks = riskOrder(mine, allIds, new Date());
+      const picks = riskOrder(mine, allIds, new Date(), parts);
       const slipping = picks.filter((x) => x.recall < 0.85);
       next = { ...base, courseId: '', label: 'Extra practice', kind: 'review', steps: buildReview({ due: fromPicks((slipping.length ? slipping : picks).slice(0, 5)), track, pool, rng: Math.random, max: 5 }), units: [], group: null };
     } else if (one) {
@@ -158,7 +163,9 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       if (ownLearned.length) mates.unshift({ item, units: ownLearned, seen: seen.get(item.id) ?? 0 });
       const inGroup = new Set(plan.group.items.map((i) => i.id));
       const reviews = toDue(due.filter((d) => !inGroup.has(d.itemId)));
-      let steps = buildLesson({ unit, item, track, mates: second ? mates.slice(0, 1) : mates, due: second ? [] : reviews, pool, rng: Math.random });
+      // A lesson fits about six minutes at this person's own pace (owner accounts first).
+      const maxSteps = keepRules ? Math.min(18, Math.max(10, Math.round((6 * 60) / stepSeconds(mine.log)))) : undefined;
+      let steps = buildLesson({ unit, item, track, mates: second ? mates.slice(0, 1) : mates, due: second ? [] : reviews, pool, rng: Math.random, maxSteps });
       if (second) steps = [...steps, ...buildLite({ unit: second, item: getItem(second.itemId)!, track, pool, rng: Math.random })];
       next = { ...base, kind: 'learn', steps, units: plan.units, group: plan.group };
     } else if (plan?.kind === 'checkpoint') {

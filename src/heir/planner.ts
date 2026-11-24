@@ -25,16 +25,18 @@ export type LessonPlan =
 
 // The chance of recalling an item right now: see memory.ts.
 export { recallChance } from './memory.ts';
-import { recallChance } from './memory.ts';
+import { itemChance, recallChance, type PartMem } from './memory.ts';
 
 // Learned items, most at risk first: likely forgotten by now, weighted up for a history of misses.
-export function riskOrder(p: MemberProgress, itemIds: Set<string>, now: Date): Pick[] {
+// With part memories (the newer engine), an item is as likely to slip as its weakest part.
+export function riskOrder(p: MemberProgress, itemIds: Set<string>, now: Date, parts?: Record<string, PartMem>): Pick[] {
   const misses = new Map<string, number>();
   for (const e of p.log) if (!e.correct && e.kind !== 'intro' && itemIds.has(e.itemId)) misses.set(e.itemId, (misses.get(e.itemId) ?? 0) + 1);
   return Object.entries(p.cards)
     .filter(([id]) => itemIds.has(id))
     .map(([itemId, card]) => {
-      const recall = recallChance(card, now);
+      const byPart = parts ? itemChance(itemId, parts, now) : null;
+      const recall = byPart === null ? recallChance(card, now) : Math.min(recallChance(card, now), byPart);
       const trouble = 1 + 0.4 * card.lapses + 0.15 * Math.min(6, misses.get(itemId) ?? 0);
       return { itemId, recall, strength: card.stability, risk: (1 - recall) * trouble };
     })

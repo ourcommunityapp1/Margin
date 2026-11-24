@@ -269,11 +269,24 @@ It comes back with one right whole recall. This replaces the 90 / 240 / 425-day 
 **Reviews fit their time.** A review card's minutes, divided by the person's own step time, sets how many items it
 holds (3 to 8).
 
+**Memory per part, rebuilt from the answers (Decisions 1 and 2).**
+- `partMemories(log, partSnap)` replays the answers in time order through FSRS, with no fuzz. The same answers always
+  give the same memory.
+- Only the first graded recall of a part each day moves it.
+- When the phone trims old answers (over 1,500), they're folded into `partSnap` first.
+- An item is as strong as its weakest part. That sets which reviews come first, the cue a review starts with, and which
+  parts are asked: the last wrong, or under 85%.
+- The item cards still decide when something is due. The part memories rank and target.
+
+**Lessons fit about six minutes** at the person's own step time (10 to 18 steps).
+
+**Look-alikes are kept apart.** A review never puts two verses or answers that share half their distinctive words
+next to each other.
+
 ### Not yet
 
-- **Memory per part as its own schedule (Decision 2).** Weak parts are read from the answer log for now.
-- **Rebuilding schedules by replaying answers (Decision 1).**
-- **Lessons (not just reviews) fitted to time.**
-- **The look-alike index.**
+- **Due dates from part memories.** Item cards still schedule.
+- **A snapshot edge case.** If two phones trimmed at different times, the later snapshot wins. An answer older than it
+  that only the other phone held is then not replayed. This is rare; the server's full answer history would fix it.
 - **"In memory" from the model (Decision 6).**
 - **Settings fitted to Katekize's data (Decision 7).** This waits for enough answers with predictions.

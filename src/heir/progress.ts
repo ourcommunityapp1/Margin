@@ -4,7 +4,10 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
 import { clampDue } from './keep.ts';
-import { gradeRecall, MODEL_VERSION, speedBaseline } from './memory.ts';
+import { foldTrimmed, gradeRecall, mergeSnapshot, MODEL_VERSION, parseSnapshot, speedBaseline, type PartSnapshot } from './memory.ts';
+
+// How many answers the phone keeps (the account keeps them all).
+export const LOG_KEEP = 1500;
 import { mergeToday, parseToday, type Today } from './dayplan.ts';
 
 // Day-sized intervals: same-day repetition happens inside the lesson itself.
@@ -66,6 +69,8 @@ export interface MemberProgress {
   keep?: Record<string, Keep>;
   // Today's plan (the recommended lessons and reviews) and the sessions finished today. See dayplan.ts.
   today?: Today;
+  // Each part's memory as of the oldest answer still in `log`: answers the phone trimmed, folded in first. See memory.ts.
+  partSnap?: PartSnapshot;
 }
 
 // `good`/`miss`: last time any part was recalled right / not. `full`: last time every part of the item was recalled right in
@@ -176,6 +181,9 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   const at = o.now.toISOString();
   const day = localDay(o.now);
   const newId = o.newId ?? (() => crypto.randomUUID());
+  const log = [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day, ...(r.p !== undefined ? { mv: MODEL_VERSION } : {}) }))];
+  // Answers about to be trimmed are folded into the parts' snapshot first, so no part loses its history.
+  const partSnap = log.length > LOG_KEEP ? foldTrimmed(log.slice(0, log.length - LOG_KEEP), p.partSnap) : p.partSnap;
   return {
     // Everything not changed here (the night review, related verses, explanations, today's plan) is kept as it was.
     ...p,
@@ -187,7 +195,8 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     levels: p.levels,
     awards: p.awards,
     days: p.days.includes(day) ? p.days : [...p.days, day].slice(-400),
-    log: [...p.log, ...o.results.map((r) => ({ ...r, at, id: newId(), day, ...(r.p !== undefined ? { mv: MODEL_VERSION } : {}) }))].slice(-1500),
+    log: log.slice(-LOG_KEEP),
+    ...(partSnap ? { partSnap } : {}),
     keep,
   };
 }
@@ -313,6 +322,7 @@ export function parseProgress(raw: string | null): Progress {
           ? { keep: Object.fromEntries(Object.entries(m.keep).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [k, { ...(typeof v.good === 'string' ? { good: v.good } : {}), ...(typeof v.miss === 'string' ? { miss: v.miss } : {}), ...(typeof v.full === 'string' ? { full: v.full } : {}) }])) }
           : {}),
         ...(parseToday(m.today) ? { today: parseToday(m.today) } : {}),
+        ...(parseSnapshot(m.partSnap) ? { partSnap: parseSnapshot(m.partSnap) } : {}),
       };
     }
     return out;
@@ -364,6 +374,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
   const related = a.related || b.related ? mergeRecord(a.related ?? {}, b.related ?? {}, (x, y) => earliest(x, y)!) : undefined;
   const explained = a.explained || b.explained ? mergeRecord(a.explained ?? {}, b.explained ?? {}, (x, y) => earliest(x, y)!) : undefined;
   const today = mergeToday(a.today, b.today);
+  const partSnap = mergeSnapshot(a.partSnap, b.partSnap);
   const keep = a.keep || b.keep ? mergeRecord(a.keep ?? {}, b.keep ?? {}, (x, y) => ({ ...(latest(x.good, y.good) ? { good: latest(x.good, y.good) } : {}), ...(latest(x.miss, y.miss) ? { miss: latest(x.miss, y.miss) } : {}), ...(latest(x.full, y.full) ? { full: latest(x.full, y.full) } : {}) })) : undefined;
   return {
     units: union(a.units, b.units),
@@ -380,6 +391,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
     ...(explained ? { explained } : {}),
     ...(keep ? { keep } : {}),
     ...(today ? { today } : {}),
+    ...(partSnap ? { partSnap } : {}),
   };
 }
 
