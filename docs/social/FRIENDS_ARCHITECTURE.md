@@ -369,6 +369,23 @@ with server receive times makes faking hard and visible, not impossible; the app
 5. Stats route, `heir_stats`, history, queue, cron sweep; run them quietly and compare with the phone's own numbers
    for a week.
 
+### Gaps to close in Phase 0 (found on a second pass)
+
+1. **A logged recall doesn't say whether it was the whole verse or one part.** Lessons ask you to type or say each
+   part; reviews ask for the whole thing. The log stores both the same way, so "recalled it in full" can't be told
+   apart (stones already treat any part as full, which is a small existing inaccuracy). Each answer gets a `part`
+   field (`full` or the part's key). For keeping words, a recall counts when it's the whole item, or every part of it
+   right in the same session; "Nearly" is counted against that text.
+2. **Check that long gaps can happen at all.** Long-term, Enduring and Lifelong need 60, 182 and 365 days without
+   touching a verse. If lessons fill spare time by practicing old verses early, those gaps never occur. Verify the
+   planner before Phase 3; if needed, stop early practice of verses at Carnelian and above.
+3. **Rate limits need somewhere to count.** A small `heir_rate_limits (user_id, action, window_start, count)` table
+   used by the search, request and username-check functions.
+4. **Setup only the owner can do:** add the service key and a cron secret to Netlify's environment variables (never
+   `NEXT_PUBLIC`), and keep a recent database export while on the free plan.
+5. **Confirm the server copy really holds the full history** (the phone trims its copy, the server merges without
+   trimming). Check by counting answers per member before the backfill.
+
 **Phase 1, profiles and friends (labs):** profiles, usernames, search, requests, friends, block, report, invite
 links, Friends tab, friend profile, You page changes.
 
