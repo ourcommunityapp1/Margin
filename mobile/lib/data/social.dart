@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../engine/progress.dart';
+import 'board.dart';
 import '../engine/types.dart';
 import 'household.dart';
 
@@ -256,6 +257,11 @@ abstract interface class SocialApi {
 
   /// Becomes friends with whoever made the code; returns their name.
   Future<String> acceptFriendInvite(String code);
+
+  // ── The community board ──
+  Future<Board> getBoard(Period period);
+  Future<BoardStatus> getBoardStatus();
+  Future<void> markBoardSeen(Period period);
 }
 
 class SupabaseSocialApi implements SocialApi {
@@ -400,6 +406,17 @@ class SupabaseSocialApi implements SocialApi {
   Future<String> acceptFriendInvite(String code) async {
     final d = await _call<Object?>('heir_friend_invite_accept', {'p_code': code});
     return d is Map ? (d['name'] as String? ?? '') : '';
+  }
+
+  @override
+  Future<Board> getBoard(Period period) async => Board.fromJson(((await _call<Object?>('heir_board', {'p_period': period.name})) as Map).cast<String, dynamic>());
+
+  @override
+  Future<BoardStatus> getBoardStatus() async => BoardStatus.fromJson(((await _call<Object?>('heir_board_status')) as Map).cast<String, dynamic>());
+
+  @override
+  Future<void> markBoardSeen(Period period) async {
+    await _call<Object?>('heir_board_seen_mark', {'p_period': period.name});
   }
 }
 

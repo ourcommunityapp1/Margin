@@ -10,6 +10,7 @@ import 'package:katekize/state/household.dart';
 import 'package:katekize/state/sync.dart';
 import 'package:katekize/state/social.dart';
 import 'package:katekize/data/social.dart';
+import 'package:katekize/data/board.dart';
 import 'package:katekize/data/content_assets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -192,4 +193,22 @@ class FakeSocial implements SocialApi {
     accepted.add(code);
     return peek.name ?? '';
   }
+
+  // The board.
+  Board board = const Board(period: Period.all, total: 1, rows: []);
+  BoardStatus boardStatus = const BoardStatus();
+  final seenPeriods = <String>[];
+  Period? lastBoardPeriod;
+
+  @override
+  Future<Board> getBoard(Period period) async {
+    lastBoardPeriod = period;
+    return Board(period: period, total: board.total, myPlace: board.myPlace, rows: board.rows);
+  }
+
+  @override
+  Future<BoardStatus> getBoardStatus() async => boardStatus;
+
+  @override
+  Future<void> markBoardSeen(Period period) async => seenPeriods.add(period.name);
 }

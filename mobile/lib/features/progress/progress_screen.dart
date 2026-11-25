@@ -24,6 +24,7 @@ import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import '../lesson/step_frame.dart' show DashedBox;
 import '../window/glass_window.dart';
+import 'community_preview.dart';
 import '../window/light.dart';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
@@ -73,6 +74,7 @@ class ProgressScreen extends ConsumerWidget {
     return KPage(
       children: [
         const KTitle('Progress'),
+        const CommunityPreview(),
         _WeekCard(days: mine.days, today: today, now: now, kept: kept, best: best),
         // Words in your memory
         KCard.column(

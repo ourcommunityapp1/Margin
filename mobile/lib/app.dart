@@ -9,6 +9,7 @@ import 'package:material_ui/material_ui.dart';
 import 'features/about/about_screen.dart';
 import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
+import 'features/friends/community_screen.dart';
 import 'features/friends/friends_screen.dart';
 import 'features/friends/invite_screen.dart';
 import 'features/friends/person_screen.dart';
@@ -28,6 +29,7 @@ import 'features/you/profile_screen.dart';
 import 'features/today/today_screen.dart';
 import 'features/you/you_screen.dart';
 import 'state/auth.dart';
+import 'state/board.dart';
 import 'state/household.dart';
 import 'state/sync.dart';
 import 'ui/background.dart';
@@ -54,6 +56,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
     WidgetsBinding.instance.addObserver(this);
     // Start keeping the phone and the account together (a no-op without accounts or when signed out).
     ref.read(syncProvider);
+    ref.read(boardProvider);
   }
 
   @override
@@ -65,7 +68,10 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
   /// Back on the app (another phone may have saved a lesson): bring the account's progress in.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) ref.read(syncProvider.notifier).refresh();
+    if (state == AppLifecycleState.resumed) {
+      ref.read(syncProvider.notifier).refresh();
+      ref.read(boardProvider.notifier).check();
+    }
   }
 
   @override
@@ -91,7 +97,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -134,6 +140,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/friends/requests', pageBuilder: (_, s) => _fade(s, const RequestsScreen())),
       GoRoute(path: '/u/:username', pageBuilder: (_, s) => _fade(s, PersonScreen(username: s.pathParameters['username']!))),
       GoRoute(path: '/invite', pageBuilder: (_, s) => _fade(s, InviteScreen(code: s.uri.queryParameters['code'] ?? ''))),
+      GoRoute(path: '/community', pageBuilder: (_, s) => _fade(s, const CommunityScreen())),
       GoRoute(path: '/linked', pageBuilder: (_, s) => _fade(s, const LinkedScreen())),
       GoRoute(path: '/family', pageBuilder: (_, s) => _fade(s, const FamilyScreen())),
       GoRoute(path: '/how', pageBuilder: (_, s) => _fade(s, const HowScreen())),
@@ -212,6 +219,7 @@ class _TabShell extends ConsumerWidget {
             child: KTabBar(
               tabs: tabs,
               current: shell.currentIndex,
+              dots: {if (signedIn && (ref.watch(boardProvider)?.alert ?? false)) 2: 'Your place on the leaderboard changed'},
               onTap: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
             ),
           ),
