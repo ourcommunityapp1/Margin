@@ -57,7 +57,7 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 
 | What | How |
 |---|---|
-| Engine | `cd app && dart test test/engine`: every fixture in `fixtures/engine/` must pass. Regenerate fixtures with `npx tsx scripts/export-fixtures.ts` when the website's engine changes. |
+| Engine | `cd app && flutter test test/engine` (not `dart test`: the tests use `flutter_test`): every fixture in `fixtures/engine/` must pass. Regenerate fixtures with `npx tsx scripts/export-fixtures.ts` when the website's engine changes. |
 | Website engine still green | `npm run heir:test` |
 | Static checks | `cd app && flutter analyze` (no warnings) |
 | Screens | Widget tests; golden screenshots (`flutter test --update-goldens` only when a change is intended, and say so). You can also `flutter build web` and screenshot it with Playwright to look at a screen. |
