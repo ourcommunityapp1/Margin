@@ -59,3 +59,28 @@ const spokenCases = Array.from({ length: 160 }, () => {
   return { fn: 'gradeSpoken', args: [text, said.join(' ')], out: gradeSpoken(text, said.join(' ')) };
 });
 write('grade', [...wordCases, ...closeCases, ...letterCases, ...orderCases, ...spokenCases]);
+
+// ---- fsrs: runs of reviews at random gaps and grades, with and without fuzz, one card after each review
+import { createEmptyCard, fsrs, generatorParameters, type Card, type Grade } from 'ts-fsrs';
+const saved = (c: Card) => ({ ...c, due: c.due.toISOString(), last_review: c.last_review ? c.last_review.toISOString() : undefined });
+const fsrsRuns = Array.from({ length: 260 }, (_, n) => {
+  const fuzz = n % 2 === 0;
+  const f = fsrs(generatorParameters({ enable_fuzz: fuzz, enable_short_term: false }));
+  let at = new Date(Date.UTC(2026, 0, 1 + Math.floor(rng() * 300), Math.floor(rng() * 24), Math.floor(rng() * 60), Math.floor(rng() * 60), Math.floor(rng() * 1000)));
+  const start = at.toISOString();
+  let card = createEmptyCard(at);
+  const steps: { gapMs: number; grade: number }[] = [];
+  const out: unknown[] = [];
+  for (let i = 0; i < 14; i++) {
+    const gapDays = i === 0 ? 0 : [0.2, 0.5, 1, 1, 2, 3, 5, 8, 13, 21, 40, 90, 200][Math.floor(rng() * 13)];
+    const gapMs = Math.round(gapDays * 86_400_000 * (0.8 + rng() * 0.4));
+    at = new Date(at.getTime() + gapMs);
+    const r = rng();
+    const grade = (r < 0.12 ? 1 : r < 0.3 ? 2 : r < 0.92 ? 3 : 4) as Grade;
+    card = f.next(card, at, grade).card;
+    steps.push({ gapMs, grade });
+    out.push(saved(card));
+  }
+  return { fn: 'fsrsRun', fuzz, start, steps, out };
+});
+write('fsrs', fsrsRuns);
