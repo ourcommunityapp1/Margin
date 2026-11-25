@@ -199,3 +199,122 @@ for (const course of courses) {
   lessonCases.push({ fn: 'structure', course: course.id, groups: groups.map((g) => ({ key: g.key, items: g.items.map((i) => i.id) })), units: pool.map((i) => [L.unitsFor(i, 'adult'), L.unitsFor(i, 'child')]), learned: [...learned], next: act ? { kind: act.kind, group: act.group.key, unit: act.kind === 'learn' ? act.unit.key : null } : null, phrases: pool.map((i) => L.phrases(i.chunks.adult)), blanks: pool.map((i, k) => L.pickBlanks(i.text, 0.3, 4, L.seeded(k))), seq: Array.from({ length: 20 }, L.seeded(course.id.length)) });
 }
 write('lesson', lessonCases);
+
+// ---- journeys: simulated learners over months, run through the whole engine. Each step is an operation the Dart side
+// replays from empty progress; after each, what it should look like.
+import * as P from '../src/heir/progress.ts';
+import * as Lv from '../src/heir/levels.ts';
+import * as K from '../src/heir/keep.ts';
+import * as D from '../src/heir/dayplan.ts';
+import * as Pl from '../src/heir/planner.ts';
+import * as Ms from '../src/heir/measures.ts';
+import { relatedFor } from '../src/heir/related.ts';
+import { getCourse, allItems } from '../src/heir/content/index.ts';
+
+const snapshot = (p: P.MemberProgress) => ({ units: p.units, checkpoints: p.checkpoints, cards: p.cards, lessons: p.lessons, courseLessons: p.courseLessons, levels: p.levels, awards: p.awards, days: p.days, keep: p.keep, today: p.today, partSnap: p.partSnap, logLength: p.log.length });
+const iso = (d: Date) => d.toISOString();
+const journeys: unknown[] = [];
+const plans: [string, string, 'adult' | 'child', number, string | null][] = [
+  ['wsc', 'westminster-shorter', 'adult', 15, null], ['fv', 'first-verses', 'adult', 5, 'America/New_York'], ['xm', 'christmas', 'child', 25, 'America/Chicago'],
+  ['cr', 'creeds', 'adult', 15, 'Asia/Kolkata'], ['ps', 'psalm-23', 'child', 5, null], ['gs', 'gospel', 'adult', 25, 'Europe/London'],
+];
+for (const [tag, focus, track, goal, tz] of plans) {
+  const ops: unknown[] = [];
+  let p = P.emptyProgress();
+  let id = 0;
+  const newId = () => `${tag}-${id++}`;
+  let t = Date.UTC(2026, 0, 5, 13) + Math.floor(rng() * 86_400_000);
+  const grading = tag === 'fv' ? undefined : 'v2' as const;
+  const second = tag === 'wsc' ? 'creeds' : tag === 'xm' ? 'first-verses' : null;
+  let mid: P.MemberProgress | null = null;
+  for (let dayN = 0; dayN < 120; dayN++) {
+    if (dayN === 60) mid = p;
+    t += Math.round((rng() < 0.15 ? 2 + Math.floor(rng() * 4) : 1) * 86_400_000 + (rng() - 0.5) * 6 * 3_600_000);
+    const now = new Date(t);
+    const started = D.startedCourses(p, track, focus);
+    if (second && dayN === 20) started.push(getCourse(second)!);
+    const fix = Object.entries(p.keep ?? {}).filter(([, k]) => k.miss && (!k.good || k.miss > k.good)).map(([i]) => i).slice(0, 2);
+    const cards = D.planDay({ p, track, started, focus, goal, now, fix });
+    p = { ...p, today: D.withPlan(p.today, P.localDay(now), cards) };
+    ops.push({ op: 'plan', now: iso(now), started: started.map((c) => c.id), fix, out: cards, today: p.today });
+    for (const card of cards.slice(0, 1 + Math.floor(rng() * cards.length))) {
+      const course = getCourse(card.course)!;
+      const pool = courseItems(course);
+      const sessionNow = new Date(now.getTime() + Math.floor(rng() * 3_600_000));
+      const plan = Pl.planNext({ courseId: course.id, items: pool, track, p, now: sessionNow });
+      if (!plan) continue;
+      const byId = (i: string) => pool.find((x) => x.id === i)!;
+      let targets: { item: typeof pool[number]; units: L.Unit[]; review: boolean }[] = [];
+      let learned: L.Unit[] = [], checkpoint: string | null = null;
+      if (plan.kind === 'learn' || plan.kind === 'welcome') {
+        learned = plan.units;
+        targets = plan.units.map((u) => ({ item: byId(u.itemId), units: [u], review: false }));
+      } else if (plan.kind === 'checkpoint') {
+        checkpoint = plan.group.key;
+        targets = plan.group.items.map((i) => ({ item: i, units: L.unitsFor(i, track), review: true }));
+      } else targets = plan.picks.map((x) => ({ item: byId(x.itemId), units: L.unitsFor(byId(x.itemId), track), review: true }));
+      const skill = 0.6 + 0.35 * rng();
+      const results: P.StepResult[] = [];
+      for (const tg of targets) for (const u of tg.units) {
+        const words = L.unitText(tg.item, track, u).text.split(' ').length;
+        const kinds = tg.review ? ['letters', 'type', 'say'] : ['intro', 'order', 'blanks', 'letters', 'say', 'type'];
+        for (const kind of kinds) {
+          const ok = rng() < skill;
+          const r: P.StepResult = { itemId: tg.item.id, kind: kind as L.StepKind, correct: ok, hints: !ok && rng() < 0.3 ? 1 : 0, ms: 2000 + Math.floor(rng() * 30_000), review: tg.review, part: u.key, of: u.of };
+          if (kind === 'type' || kind === 'say') { r.words = words; r.misses = ok ? 0 : 1 + Math.floor(rng() * 3); }
+          const pc = M.predictedChance(p.cards[tg.item.id], sessionNow);
+          if (pc !== null && tg.review) r.p = pc;
+          results.push(r);
+        }
+      }
+      const keepRules = tag === 'wsc' || tag === 'cr' || tag === 'gs' ? { tz } : undefined;
+      p = P.finishSession(p, { results, learned, checkpoint, courseId: course.id, now: sessionNow, newId, keepRules, grading });
+      ops.push({ op: 'finish', now: iso(sessionNow), results, learned: learned.map((u) => u.key), checkpoint, courseId: course.id, keepRules: keepRules ?? null, grading: grading ?? null, out: snapshot(p) });
+      const st = Lv.settle(p, allItems(), track, sessionNow);
+      p = st.progress;
+      ops.push({ op: 'settle', now: iso(sessionNow), ups: st.ups, awards: st.awards, out: snapshot(p) });
+      const sess: D.DaySession = { id: newId(), at: iso(sessionNow), secs: 200 + Math.floor(rng() * 400), course: course.id, kind: plan.kind === 'learn' || plan.kind === 'welcome' ? 'lesson' : 'review', ...(rng() < 0.7 ? { card: card.id } : {}) };
+      p = { ...p, today: D.withSession(p.today, P.localDay(sessionNow), sess) };
+      ops.push({ op: 'session', session: sess, today: p.today, states: D.cardStates(p.today).map((s) => ({ id: s.card.id, done: s.done, secs: s.secs })), extras: D.extraSessions(p.today), minutes: D.minutesToday(p.today), events: D.dayEvents(p.today) });
+    }
+    if (dayN % 10 === 9) {
+      // A full look at everything the screens read, worked out from the same progress.
+      const items = allItems();
+      const ids = new Set(courseItems(getCourse(focus)!).map((i) => i.id));
+      const launch = new Date('2026-01-01T00:00:00Z');
+      const held = K.heldItems(items, p, track, now, { launch, tz });
+      const fixedHeld = K.heldItems(items, p, track, now, { launch: null, model: false });
+      const sum = K.summarize(held);
+      const st = (s: K.KeepState) => ({ state: s.state, at: 'deadline' in s ? (Number.isNaN(s.deadline.getTime()) ? null : iso(s.deadline)) : 'since' in s ? iso(s.since) : null });
+      ops.push({
+        op: 'look', now: iso(now),
+        held: held.map((h) => ({ id: h.item.id, level: h.level, words: h.words, ...st(h.state) })),
+        fixedHeld: fixedHeld.map((h) => ({ id: h.item.id, ...st(h.state) })),
+        summary: { wordsKept: sum.wordsKept, wordsOut: sum.wordsOut, tryAgain: sum.tryAgain.map((h) => h.item.id), review: sum.review.map((h) => h.item.id), out: sum.out.map((h) => h.item.id) },
+        levelsFromLog: items.filter((i) => p.log.some((e) => e.itemId === i.id)).map((i) => [i.id, Lv.levelFromLog(i, track, p.log, now), Lv.recited(i, track, p.log), Lv.understanding(i, p), Lv.nextStep(i, track, p, now), Lv.needsRefresh(p, i.id, now), K.strongUntilFor(i, p, track)?.toISOString() ?? null]),
+        daysKept: Lv.daysKept(p.days, P.localDay(now)), best: Lv.bestDaysKept(p.days), awardsMet: Lv.awardsMet(p, items, P.localDay(now)),
+        counts: Lv.countsFor(items, p), shelf: Lv.shelf(items, p), words: Ms.wordsIn(items, track, p), week: Ms.wordsRecitedThisWeek(items, track, p, now),
+        risk: Pl.riskOrder(p, ids, now), riskParts: Pl.riskOrder(p, ids, now, M.partMemories(p.log, p.partSnap)), acc: Pl.recentAccuracy(p, ids), done: Pl.lessonsDone(p, focus, ids),
+        next: (() => { const pl = Pl.planNext({ courseId: focus, items: courseItems(getCourse(focus)!), track, p, now }); return pl ? { kind: pl.kind, units: 'units' in pl ? pl.units.map((u) => u.key) : [], group: 'group' in pl ? pl.group.key : null, picks: 'picks' in pl ? pl.picks.map((x) => x.itemId) : [], why: 'why' in pl ? pl.why : null } : null; })(),
+        nextLine: D.nextLine(p, track, getCourse(focus)!, now),
+        project: (() => { const pr = Pl.project({ items: courseItems(getCourse(focus)!), track, p, minutes: goal, now }); return { ...pr, learnedBy: iso(pr.learnedBy), longTermBy: iso(pr.longTermBy) }; })(),
+        bedtime: Pl.bedtimePicks(p, ids, now), night: Pl.nightOffer(p, ids, new Date(now.getTime() + 8 * 3_600_000)), rise: Pl.riseOffer(p, now),
+        due: P.dueCards(p, now).map((c) => [c.itemId, iso(c.due), c.strength]), weakest: P.weakestCards(p).map((c) => c.itemId), seen: [...P.seenCounts(p)],
+        keepOf: K.keepOf(p), endOfNextDay: K.endOfNextDay(now, tz).toISOString(), missedWhen: K.missedWhen(K.endOfNextDay(now, tz), new Date(now.getTime() + 20 * 3_600_000), tz),
+        clamp: Object.keys(p.cards).slice(0, 5).map((i) => K.clampDue(new Date(p.cards[i].due), p.levels[i] ?? 1, (p.keep ?? {})[i], now, tz).toISOString()),
+        related: [...ids].slice(0, 6).map((i) => relatedFor(allItems().find((x) => x.id === i)!)),
+        parsed: P.parseProgress(JSON.stringify({ m: p })).m ? snapshot(P.parseProgress(JSON.stringify({ m: p })).m) : null,
+      });
+    }
+  }
+  // Two phones: a copy from halfway that went its own way (other answers, another plan for the day), merged back both ways.
+  let b = mid!;
+  const later = new Date(Date.parse(b.log[b.log.length - 1].at) + 2 * 86_400_000);
+  const reviewed = Object.keys(b.cards).slice(0, 3);
+  const rs: P.StepResult[] = reviewed.map((i, k) => ({ itemId: i, kind: 'type', correct: k !== 1, hints: 0, ms: 9000, review: true, words: 12, misses: k === 1 ? 4 : 0 }));
+  b = P.finishSession(b, { results: rs, now: later, newId: () => `other-${id++}`, grading });
+  b = { ...b, today: D.withPlan(b.today, P.localDay(later), [{ id: 'x', kind: 'review', course: focus, est: 3 }]), related: { 'John 3:16': later.toISOString() }, explained: { [reviewed[0]]: later.toISOString() } };
+  const merges = { a: p, b, ab: P.mergeProgress(p, b), ba: P.mergeProgress(b, p), same: P.sameProgress(p, p), differ: P.sameProgress(p, b) };
+  journeys.push({ tag, focus, track, goal, tz, ops, finalLog: p.log, merges });
+}
+write('journeys', journeys);
