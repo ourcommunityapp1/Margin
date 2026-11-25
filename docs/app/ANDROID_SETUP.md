@@ -1,8 +1,8 @@
 # Android setup
 
 State on Nov 25, 2026: the SDK and an emulator are installed on the Mac, and the debug app **builds and runs on the Android emulator**
-(welcome, name and course-choice screens checked). The rest of the app, sign-in, lessons, speech, reminders and the windows, is not yet
-checked on Android. Nothing below needs a paid account until step 5.
+(setup screens, Today with its stained-glass window, and the start of a lesson checked, no crashes; the release build too). Not yet checked on
+Android: sign-in against the server, finishing a lesson, Courses and Progress, speech, reminders, and the lit windows on a real phone. Nothing below needs a paid account until step 5.
 
 ## Already done in the code
 - Package `com.katekize.katekize`, app name "Katekize", the Katekize "K" icon at every size.
@@ -37,7 +37,7 @@ likeliest thing to look different), About. Expect to fix a few Android-only prob
 Build notes: Flutter 3.50 needs Gradle 9.5, Android Gradle Plugin 9.3.1, Kotlin 2.4.20 and Java 17 (set in `mobile/android/`), and a
 dependency needs `compileSdk = 37`. The first build downloads a lot and takes 5 to 7 minutes; later ones about 1. If Flutter is upgraded and the
 build complains about versions, generate a fresh template (`flutter create --platforms=android -e tmp`) and copy its Gradle versions.
-The emulator is slow on first boot and may show "System UI isn't responding": tap Wait.
+For a phone-sized emulator screen use `adb shell wm size 1080x2400` and `adb shell wm density 420` (undo with `reset`). The emulator is slow on first boot and may show "System UI isn't responding": tap Wait.
 
 ## 3. Make the upload key (once)
 ```bash

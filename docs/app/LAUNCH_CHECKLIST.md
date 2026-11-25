@@ -51,4 +51,4 @@ Raise the build number in `mobile/pubspec.yaml` (`version: 1.0.0+2`), rebuild, u
 ## Not done, on purpose or for later
 - Home Screen widgets (iPhone and Android), iPad layout, and checking speech and reminders on real phones. None blocks submission, but do try Say-it and a
   reminder on a real iPhone in TestFlight (step 7): Apple's reviewers will.
-- Android beyond the first screens (sign-in, lessons, windows) has not been walked through yet.
+- Android: setup, Today and the start of a lesson run without crashes (debug and release). Sign-in, finishing a lesson, Progress, speech and reminders are unchecked.
