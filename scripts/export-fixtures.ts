@@ -84,3 +84,78 @@ const fsrsRuns = Array.from({ length: 260 }, (_, n) => {
   return { fn: 'fsrsRun', fuzz, start, steps, out };
 });
 write('fsrs', fsrsRuns);
+
+// ---- memory: synthetic answer histories for a handful of people, and everything the memory model says about them
+import { unitsFor } from '../src/heir/lesson.ts';
+import { localDay, type LogEntry, type SavedCard, type StepResult } from '../src/heir/progress.ts';
+import * as M from '../src/heir/memory.ts';
+
+/** A made-up history: sessions over months, each answering some parts of a few items. Deterministic. */
+export function history(n: number, start = Date.UTC(2026, 2, 1, 14)): LogEntry[] {
+  const pool = items.filter((i) => i.chunks.adult.length > 0);
+  const mine = Array.from({ length: 3 + (n % 5) }, () => pickOf(pool));
+  const log: LogEntry[] = [];
+  let t = start + Math.floor(rng() * 86_400_000);
+  let k = 0;
+  for (let s = 0; s < 10 + (n % 20); s++) {
+    t += Math.round([0.05, 0.4, 1, 1, 1, 2, 3, 6, 12, 25][Math.floor(rng() * 10)] * 86_400_000 * (0.7 + rng() * 0.6));
+    const at = new Date(t).toISOString(), day = localDay(new Date(t));
+    for (const item of mine) {
+      if (rng() < 0.35) continue;
+      const units = unitsFor(item, 'adult');
+      for (const u of units) {
+        if (rng() < 0.3) continue;
+        const kind = (['type', 'say', 'letters', 'blanks', 'type', 'order', 'match'] as const)[Math.floor(rng() * 7)];
+        const words = item.chunks.adult.slice(u.start, u.end).join(' ').split(' ').length;
+        const r = rng();
+        const correct = r < 0.72, hints = r > 0.9 ? 1 : 0;
+        const misses = kind === 'type' || kind === 'say' ? (correct ? 0 : 1 + Math.floor(rng() * 4)) : undefined;
+        const e: LogEntry = { at, itemId: item.id, kind, correct, hints, ms: 1500 + Math.floor(rng() * 40_000), review: rng() < 0.6, id: `h${n}-${k++}`, part: u.key, of: u.of, day };
+        if (misses !== undefined) { e.misses = misses; e.words = words; }
+        if (rng() < 0.15) delete e.day;
+        if (rng() < 0.1) delete e.part;
+        log.push(e);
+      }
+    }
+  }
+  return log;
+}
+
+const cals: (null | { a: number; b: number })[] = [null, { a: 1.3, b: 0.4 }, { a: 0.8, b: -0.3 }];
+const memCases: unknown[] = [];
+for (let n = 0; n < 40; n++) {
+  const log = history(n);
+  const now = new Date(Date.parse(log[log.length - 1].at) + Math.floor(rng() * 40) * 86_400_000 + 3_600_000);
+  const pop = cals[n % 3], person = n % 4 === 0 ? cals[(n + 1) % 3] : null;
+  M.setPopulationCal(pop); M.setPersonCal(person);
+  const parts = M.replayParts(log);
+  const cut = Math.floor(log.length / 2);
+  const snap = M.foldTrimmed(log.slice(0, cut));
+  const fromSnap = M.partMemories(log.slice(cut), snap);
+  const ids = [...new Set(log.map((e) => e.itemId))];
+  const per = ids.map((id) => {
+    const item = items.find((i) => i.id === id)!;
+    const mems = M.itemParts(unitsFor(item, 'adult').map((u) => u.key), parts);
+    const chance = M.itemChance(id, parts, now);
+    return { id, chance, why: M.whyNow(id, log, chance, now), outAt: mems ? M.outAt(mems).toISOString() : null, strongUntil: mems ? M.strongUntil(mems).toISOString() : null };
+  });
+  const bySession = new Map<string, StepResult[]>();
+  for (const e of log) bySession.set(`${e.itemId}|${e.at}`, [...(bySession.get(`${e.itemId}|${e.at}`) ?? []), e]);
+  const speed = M.speedBaseline(log);
+  const grades = [...bySession.values()].slice(0, 30).map((rs, i) => ({ rs, card: i % 3 === 0 ? undefined : { state: i % 3, reps: i % 5 }, out: M.gradeRecall(rs, i % 3 === 0 ? undefined : { state: i % 3, reps: i % 5 } as never, speed) }));
+  const cards: SavedCard[] = Array.from({ length: 6 }, (_, i) => ({ due: new Date(now.getTime() - (i - 2) * 86_400_000 * 3).toISOString(), stability: [0.5, 2, 7.3, 30, 120, 400][i], difficulty: 5, scheduled_days: [1, 2, 7, 30, 120, 400][i], reps: i + 1, lapses: i % 2, learning_steps: 0, state: i === 0 ? 0 : 2, ...(i % 2 ? { last_review: new Date(now.getTime() - [1, 2, 7, 30, 120, 400][i] * 86_400_000).toISOString() } : {}) }) as SavedCard);
+  memCases.push({
+    pop, person, now: now.toISOString(), log,
+    parts, snap: snap ?? null, fromSnap,
+    weak: [...M.weakParts(log)], weakNow: [...M.weakPartsNow(log, parts, now)], stepSeconds: M.stepSeconds(log), speed,
+    recent: [...M.recalledRecently(log, now)], per, grades,
+    marks: log.map((e) => M.markOf(e)),
+    cards: cards.map((c) => ({ c, recall: M.recallChance(c, now), predicted: M.predictedChance(c, now), until80: M.daysUntil(c, 0.8, now) })),
+    toChance: [0.5, 0.7, 0.8, 0.9, 0.95].map((t) => [t, M.daysToChance(12.5, t), M.calibrate(t), M.rawFor(t)]),
+    merged: M.mergeSnapshot(snap, { asOf: now.toISOString(), mem: Object.fromEntries(Object.entries(parts).slice(0, 3)) }),
+  });
+}
+M.setPopulationCal(null); M.setPersonCal(null);
+const texts = items.slice(0, 60).map((i) => i.chunks.adult.join(' '));
+memCases.push({ overlap: texts.slice(0, 30).map((t, i) => [t, texts[i + 7], M.overlap(t, texts[i + 7])]), spread: M.spreadApart(texts.slice(0, 40), (x) => x) , texts: texts.slice(0, 40) });
+write('memory', memCases);

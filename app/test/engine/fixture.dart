@@ -35,3 +35,12 @@ void expectSame(Object? actual, Object? expected, String where) {
   }
   if (actual != expected) fail('$where: expected $expected, got $actual');
 }
+
+/// The fixtures are written with TZ=America/Chicago (local days matter); run the tests the same way:
+/// `TZ=America/Chicago flutter test test/engine`.
+void checkTimeZone() {
+  final jan = DateTime(2026, 1, 15).timeZoneOffset, jul = DateTime(2026, 7, 15).timeZoneOffset;
+  if (jan != const Duration(hours: -6) || jul != const Duration(hours: -5)) {
+    throw StateError('Run the engine tests with TZ=America/Chicago (the fixtures use its local days).');
+  }
+}
