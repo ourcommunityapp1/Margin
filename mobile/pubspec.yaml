@@ -66,6 +66,22 @@ flutter:
     - assets/content/content.json
     - assets/images/
     - assets/images/stones/
+    - assets/glass/chartres-m1/
+    - assets/glass/chartres-m2/
+    - assets/glass/easter/
+    - assets/glass/fear-peace/
+    - assets/glass/gospel/
+    - assets/glass/gsc-a/
+    - assets/glass/gsc-b/
+    - assets/glass/gsc-c/
+    - assets/glass/lords-prayer/
+    - assets/glass/psalm-23/
+    - assets/glass/rose-chartres/
+    - assets/glass/sh-children/
+    - assets/glass/sh-nativity/
+    - assets/glass/shema/
+    - assets/glass/ten-commandments/
+    - assets/glass/who-god-is/
 
   # Source Serif 4 for Scripture and headings, Inter for the interface (as on the website).
   # Variable fonts (SIL Open Font License, from github.com/google/fonts); weights are set with

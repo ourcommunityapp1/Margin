@@ -9,7 +9,8 @@ import '../../engine/content.dart';
 import '../../engine/dayplan.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
-import 'window_placeholder.dart';
+import '../window/glass_window.dart';
+import '../window/light.dart';
 
 // The rose card's own colours: it is dark and warm whatever the page is.
 const roseInk = Color(0xFFF4EFE6);
@@ -28,9 +29,10 @@ sealed class Slide {
 }
 
 class CardSlide extends Slide {
-  const CardSlide({required this.state, required this.course, required this.href, required this.tag, required this.button});
+  const CardSlide({required this.state, required this.course, required this.window, required this.href, required this.tag, required this.button});
   final CardState state;
   final Course course;
+  final PartWindow window;
   final String href;
   final String tag, button;
   @override
@@ -40,9 +42,10 @@ class CardSlide extends Slide {
 }
 
 class ExtraSlide extends Slide {
-  const ExtraSlide({required this.session, required this.course, required this.tag});
+  const ExtraSlide({required this.session, required this.course, required this.window, required this.tag});
   final DaySession session;
   final Course course;
+  final PartWindow window;
   final String tag;
   @override
   String get id => session.id;
@@ -51,9 +54,10 @@ class ExtraSlide extends Slide {
 }
 
 class DoneSlide extends Slide {
-  const DoneSlide({required this.minutes, required this.course, required this.extra});
+  const DoneSlide({required this.minutes, required this.course, required this.window, required this.extra});
   final int minutes;
   final Course course;
+  final PartWindow window;
   final bool extra;
   @override
   String get id => 'done';
@@ -268,7 +272,7 @@ class _SlideCard extends StatelessWidget {
             fill: true,
             children: [
               Semantics(header: true, child: Text('Done for today', style: serif(28, weight: FontWeight.w500, color: roseInk))),
-              const WindowPlaceholder(),
+              RoundWindow(base: s.window.base, lit: s.window.lit, dusty: s.window.dusty, share: s.window.share, label: '${s.course.title} window'),
               Text('${s.minutes} min', style: serif(32, color: roseInk, height: 1)),
               if (s.extra)
                 TextButton(
@@ -281,8 +285,8 @@ class _SlideCard extends StatelessWidget {
             ],
           ),
         ),
-      CardSlide() => _CardBody(course: s.course, tag: s.state.done ? _doneWord(s.state.card.kind) : s.tag, fix: s.state.card.kind == 'fix' && !s.state.done, done: s.state.done, secs: s.state.secs, button: s.button, href: s.href),
-      ExtraSlide() => _CardBody(course: s.course, tag: s.tag, fix: false, done: true, secs: s.session.secs, button: '', href: ''),
+      CardSlide() => _CardBody(course: s.course, window: s.window, tag: s.state.done ? _doneWord(s.state.card.kind) : s.tag, fix: s.state.card.kind == 'fix' && !s.state.done, done: s.state.done, secs: s.state.secs, button: s.button, href: s.href),
+      ExtraSlide() => _CardBody(course: s.course, window: s.window, tag: s.tag, fix: false, done: true, secs: s.session.secs, button: '', href: ''),
     };
   }
 
@@ -291,8 +295,9 @@ class _SlideCard extends StatelessWidget {
 }
 
 class _CardBody extends StatelessWidget {
-  const _CardBody({required this.course, required this.tag, required this.fix, required this.done, required this.secs, required this.button, required this.href});
+  const _CardBody({required this.course, required this.window, required this.tag, required this.fix, required this.done, required this.secs, required this.button, required this.href});
   final Course course;
+  final PartWindow window;
   final String tag, button, href;
   final bool fix, done;
   final num secs;
@@ -309,7 +314,10 @@ class _CardBody extends StatelessWidget {
           children: [
             _Tag(tag, fix: fix),
             Semantics(header: true, child: Text(course.title, textAlign: TextAlign.center, style: serif(26, weight: FontWeight.w500, color: roseInk, height: 1.12))),
-            Opacity(opacity: done ? 0.75 : 1, child: const WindowPlaceholder()),
+            Opacity(
+              opacity: done ? 0.75 : 1,
+              child: RoundWindow(base: window.base, lit: window.lit, dusty: window.dusty, share: window.share, label: '${course.title} window'),
+            ),
             if (done)
               Opacity(
                 opacity: 0.75,

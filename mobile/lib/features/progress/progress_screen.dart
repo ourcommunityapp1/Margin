@@ -23,6 +23,8 @@ import '../../ui/stone.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import '../lesson/step_frame.dart' show DashedBox;
+import '../window/glass_window.dart';
+import '../window/light.dart';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
 const _stageColors = [Color(0xFFC9A46A), Color(0xFF7B52B5), Color(0xFFD99A2B), Color(0xFFB0442A), Color(0xFF1E8657), Color(0xFF2F5DA8), Color(0xFFBFC6CC)];
@@ -151,9 +153,15 @@ class ProgressScreen extends ConsumerWidget {
         KCard.column(
           gap: 14,
           children: [
-            const KLabel('Your courses'),
+            const KLabel('Your windows'),
             if (yours.isEmpty) Text('Finish your first lesson and its window starts to light here.', style: sans(15, color: k.muted)),
-            for (final c in yours) _CourseLine(course: c, track: track, mine: mine),
+            LayoutBuilder(
+              builder: (context, c) => Wrap(
+                spacing: 12,
+                runSpacing: 18,
+                children: [for (final course in yours) SizedBox(width: (c.maxWidth - 12) / 2, child: _WallItem(course: course, track: track, mine: mine, now: now))],
+              ),
+            ),
           ],
         ),
         _MonthCard(days: mine.days, today: today, now: now, kept: kept, best: best),
@@ -282,40 +290,31 @@ class _StoneRow extends StatelessWidget {
   }
 }
 
-class _CourseLine extends StatelessWidget {
-  const _CourseLine({required this.course, required this.track, required this.mine});
+class _WallItem extends StatelessWidget {
+  const _WallItem({required this.course, required this.track, required this.mine, required this.now});
   final Course course;
   final Track track;
   final MemberProgress mine;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final s = courseStats(courseItems(course), track, mine);
+    final w = partWindow(course, track, mine, now);
     return Semantics(
       button: true,
+      label: 'See the ${course.title} window up close',
       child: InkWell(
         onTap: () => context.push('/courses/${course.id}'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(course.title, style: serif(16, weight: FontWeight.w600, color: k.ink, height: 1.2)),
-                    const SizedBox(height: 2),
-                    Text(s.learned >= s.total ? 'Finished' : '${s.learned} of ${s.total} learned', style: sans(13, color: k.muted)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(width: 90, child: _Bar(fraction: s.total == 0 ? 0 : s.learned / s.total, color: _stageColors[4])),
-              const SizedBox(width: 8),
-              KIcon('<path d="M9 6l6 6-6 6"/>', size: 16, color: k.muted, strokeWidth: 2.2),
-            ],
-          ),
+        child: Column(
+          children: [
+            MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 128, started: true, label: '${course.title} window'),
+            const SizedBox(height: 8),
+            Text(course.title, textAlign: TextAlign.center, style: serif(16, weight: FontWeight.w600, color: k.ink, height: 1.2)),
+            const SizedBox(height: 2),
+            Text(s.learned >= s.total ? 'Finished' : '${s.learned} of ${s.total} learned', style: sans(13, color: k.muted)),
+          ],
         ),
       ),
     );

@@ -22,6 +22,7 @@ import '../../ui/screen_parts.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import '../lesson/labels.dart';
+import '../window/light.dart';
 import 'keep_going.dart';
 import 'today_banners.dart';
 import 'today_cards.dart';
@@ -121,6 +122,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       return CardSlide(
         state: s,
         course: course,
+        window: windowFor(course, s.card.kind, track, mine, now),
         href: href,
         tag: s.card.kind == 'fix' ? 'Fix today' : 'Recommended',
         button: s.card.kind != 'lesson' ? 'Start review' : lockIn ? 'Lock it in' : lessonNo == 1 ? 'Begin' : 'Start lesson $lessonNo',
@@ -154,7 +156,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       // window that has not been earned.
       final most = [...states]..sort((a, b) => b.secs.compareTo(a.secs));
       final course = courseFor(most.firstOrNull?.card.course) ?? focusCourse;
-      if (course != null) slides.add(DoneSlide(minutes: minutes, course: course, extra: extra));
+      if (course != null) slides.add(DoneSlide(minutes: minutes, course: course, window: partWindow(course, track, mine, now), extra: extra));
     }
     for (final s in states.where((x) => x.done)) {
       final sl = cardSlide(s);
@@ -166,7 +168,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     if (sameDay) {
       for (final x in extraSessions(today)) {
         final course = courseFor(x.course);
-        if (course != null) slides.add(ExtraSlide(session: x, course: course, tag: extraTag(x.kind)));
+        if (course != null) slides.add(ExtraSlide(session: x, course: course, window: windowFor(course, 'extra', track, mine, now), tag: extraTag(x.kind)));
       }
     }
 

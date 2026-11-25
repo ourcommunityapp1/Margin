@@ -11,7 +11,8 @@ import '../../engine/types.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import 'today_cards.dart';
-import 'window_placeholder.dart';
+import '../window/glass_window.dart';
+import '../window/light.dart';
 
 class KeepGoing extends StatefulWidget {
   const KeepGoing({super.key, required this.started, required this.track, required this.mine, required this.now});
@@ -43,6 +44,16 @@ class _KeepGoingState extends State<KeepGoing> {
     );
   }
 
+  Widget _mini(Course c) {
+    final w = partWindow(c, widget.track, widget.mine, widget.now);
+    return MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 56, started: true, label: '${c.title} window');
+  }
+
+  Widget _round(Course c) {
+    final w = partWindow(c, widget.track, widget.mine, widget.now);
+    return RoundWindow(base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, size: 220, label: '${c.title} window');
+  }
+
   Widget _row(Course c) {
     final line = nextLine(widget.mine, widget.track, c, widget.now);
     return Semantics(
@@ -58,7 +69,7 @@ class _KeepGoingState extends State<KeepGoing> {
             padding: const EdgeInsets.fromLTRB(12, 12, 16, 12),
             child: Row(
               children: [
-                const WindowPlaceholder(size: 56),
+                _mini(c),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -87,7 +98,7 @@ class _KeepGoingState extends State<KeepGoing> {
           children: [
             const SizedBox(height: 14),
             Semantics(header: true, child: Text(c.title, textAlign: TextAlign.center, style: serif(26, weight: FontWeight.w500, color: roseInk, height: 1.12))),
-            const WindowPlaceholder(size: 220),
+            _round(c),
             if (!line.allLearned)
               GlassButton(line.text == 'Lock-in next' ? 'Lock it in' : 'Next lesson', onPressed: () => context.push('/lesson?mode=lesson&course=${c.id}')),
             GlassButton('Review', quiet: !line.allLearned, arrow: line.allLearned, onPressed: () => context.push('/lesson?mode=review&course=${c.id}')),

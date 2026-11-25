@@ -134,6 +134,17 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [ ] Answers and card events sent to the server.
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 
+### Phase 3: windows (first pass done Nov 25, 2026)
+
+- [x] Each course's window drawn pane by pane from the bundled 256-pixel copies (`mobile/assets/glass/`,
+  `features/window/`): lit as far as learned, dusty when due a refresh, dark at rest; the stone-ringed small window
+  and the round window with its gold arc and notch. Used on Today's cards, Keep going, Courses, a course's page and
+  Progress. Tests prove a window is never lit beyond what is earned (`test/window_test.dart`).
+- [ ] The moving light behind unstarted windows, the full 1024-pixel glass with glow and rays (ADR-0007 steps 2 and 3),
+  the window up close, and the done-lesson window. Check the look on a real iPhone.
+- [ ] **Credits.** Several windows are Creative Commons (attribution required; each `pieces.json` carries its credit).
+  The app needs an About / credits screen like the website's before it goes to a store.
+
 ### Phases 3 to 7
 
 See the plan's table. Each feature needs:
