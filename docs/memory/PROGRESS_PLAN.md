@@ -106,6 +106,22 @@ Progress, the Mastered wording on related verses) shows only to the accounts in 
 - [ ] Children's track: simpler questions, encouraging feedback.
 - [ ] Server route for the model (key kept server-side), rate limits, and a fallback when offline.
 
+## To do: explore Today by course, with the person choosing their focus course(s) (requested 2026-11-25)
+
+Mockups first, then decide. The aim: nobody ever chooses *which verse* to learn next; they choose only *which course(s)*, and
+Today shows where they are and what is left, today and tonight.
+
+- **Focus courses.** Today's plan has one focus course (`household.plan.course`): its lesson, plus reviews from the other started
+  courses. Explore letting a person pick one to three focus courses, each with its own recommended lesson (and review) card, and the
+  daily goal shared between them. Keep old app versions working: add an optional `plan.focus: string[]`, keep `plan.course`.
+- **A day in three beats:** morning recall (if any), today's cards, tonight's recall (shown in the plan, not only as an evening
+  banner), so "what do I have to do today, and tonight" is answered at a glance.
+- **Say what each card will do** in one short line (which lesson, which verses, about how long); no walls of text.
+- **The window as the scoreboard:** "7 of 12 verses · lesson 4 of 9", and what today's work added, using what the planner already
+  works out (`project`, `courseStats`, `daysKept`).
+- **How far along, in total:** days kept, lessons, words in memory, windows lit, a finish-line date at the person's pace.
+- Needs an engine change if focus courses are added (`planDay` and its fixtures, the Dart port, both Today screens).
+
 ## To do: everything you know, and how strong (requested 2026-11-24)
 
 Mockup first, then build.
