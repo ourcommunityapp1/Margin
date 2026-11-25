@@ -84,6 +84,8 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 ),
                 KLinkRow(title: 'Family', sub: others > 0 ? 'You and $others more on this phone' : 'Just you · add someone', onTap: () => context.push('/family')),
                 if (accounts && !signedIn) KLinkRow(title: 'Sign in', sub: 'Keep your progress on every phone', onTap: () => context.push('/signin?next=/you')),
+                if (signedIn) KLinkRow(title: 'Your profile', sub: 'Name, username, city, who can find you', onTap: () => context.push('/profile')),
+                if (signedIn) KLinkRow(title: 'Linked accounts', sub: 'See a family member’s progress, view only', onTap: () => context.push('/linked')),
                 KLinkRow(title: 'How it works', sub: 'Stones, grading and spaced review', onTap: () => context.push('/how')),
                 KLinkRow(title: 'About Katekize', sub: 'Sources and credits', onTap: () => context.push('/about')),
               ],

@@ -20,6 +20,8 @@ import 'features/you/plan_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/signin/signin_screen.dart';
+import 'features/you/linked_screen.dart';
+import 'features/you/profile_screen.dart';
 import 'features/today/today_screen.dart';
 import 'features/you/you_screen.dart';
 import 'state/auth.dart';
@@ -86,7 +88,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -123,6 +125,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, s) => _fade(s, WindowViewScreen(courseId: s.pathParameters['id']!, part: int.tryParse(s.uri.queryParameters['part'] ?? ''))),
       ),
       GoRoute(path: '/plan', pageBuilder: (_, s) => _fade(s, const PlanScreen())),
+      GoRoute(path: '/profile', pageBuilder: (_, s) => _fade(s, ProfileScreen(next: s.uri.queryParameters['next']))),
+      GoRoute(path: '/linked', pageBuilder: (_, s) => _fade(s, const LinkedScreen())),
       GoRoute(path: '/family', pageBuilder: (_, s) => _fade(s, const FamilyScreen())),
       GoRoute(path: '/how', pageBuilder: (_, s) => _fade(s, const HowScreen())),
       GoRoute(path: '/about', pageBuilder: (_, s) => _fade(s, const AboutScreen())),

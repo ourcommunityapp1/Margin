@@ -8,6 +8,8 @@ import 'package:katekize/data/store.dart';
 import 'package:katekize/state/clock.dart';
 import 'package:katekize/state/household.dart';
 import 'package:katekize/state/sync.dart';
+import 'package:katekize/state/social.dart';
+import 'package:katekize/data/social.dart';
 import 'package:katekize/data/content_assets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -49,7 +51,7 @@ class FakeAuth implements Auth {
 }
 
 /// The whole app at a fixed time (a Tuesday afternoon), on an iPhone-sized screen, with a fake sign-in.
-Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store}) async {
+Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social}) async {
   await tester.runAsync(loadBundledContent);
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
@@ -64,10 +66,68 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store}) async 
         storeProvider.overrideWithValue(store ?? MemoryStore()),
         // No real account database in these tests.
         accountApiProvider.overrideWithValue(null),
+        socialApiProvider.overrideWithValue(social),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
       ],
       child: KatekizeApp(now: DateTime(2026, 11, 24, 14)),
     ),
   );
   await tester.pumpAndSettle();
+}
+
+/// A people database in memory: one profile, some taken usernames, and linked accounts.
+class FakeSocial implements SocialApi {
+  FakeSocial({this.profile, this.taken = const {'katie'}, List<LinkedAccount>? linked}) : linked = linked ?? [];
+  MyProfile? profile;
+  final Set<String> taken;
+  final List<LinkedAccount> linked;
+  final saved = <ProfileEdit>[];
+  final unlinked = <String>[];
+  var invites = 0;
+  var deleted = false;
+
+  @override
+  Future<MyProfile?> getProfile() async => profile;
+
+  @override
+  Future<bool> usernameFree(String name) async => !taken.contains(name.toLowerCase());
+
+  @override
+  Future<MyProfile> saveProfile(ProfileEdit p) async {
+    if (taken.contains(p.username.toLowerCase())) throw const SocialFailure('That username is taken.');
+    saved.add(p);
+    return profile = MyProfile(
+      username: p.username,
+      firstName: p.first,
+      lastName: p.last,
+      city: p.city.isEmpty ? null : p.city,
+      region: p.region.isEmpty ? null : p.region,
+      discoverable: p.discoverable,
+      fofVisible: p.fof,
+    );
+  }
+
+  @override
+  Future<void> deleteProfile() async {
+    deleted = true;
+    profile = null;
+  }
+
+  @override
+  Future<String> createInvite() async {
+    invites++;
+    return 'abcdef0123456789abcdef0123456789';
+  }
+
+  @override
+  Future<void> acceptInvite(String code) async {}
+
+  @override
+  Future<void> unlink(String ownerId) async {
+    unlinked.add(ownerId);
+    linked.removeWhere((a) => a.ownerId == ownerId);
+  }
+
+  @override
+  Future<List<LinkedAccount>> loadLinked() async => [...linked];
 }
