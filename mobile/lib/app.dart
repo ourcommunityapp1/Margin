@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
 import 'features/friends/friends_screen.dart';
+import 'features/item/item_screen.dart';
 import 'features/onboarding/start_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/progress/progress_screen.dart';
@@ -82,7 +84,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state, shell) => _TabShell(shell: shell),
         branches: [
           StatefulShellBranch(routes: [GoRoute(path: '/today', builder: (_, _) => const TodayScreen())]),
-          StatefulShellBranch(routes: [GoRoute(path: '/courses', builder: (_, _) => const CoursesScreen())]),
+          // Courses, one course and one item share a branch, so the tab bar stays up on all three (as on the website).
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/courses',
+              builder: (_, _) => const CoursesScreen(),
+              routes: [GoRoute(path: ':id', builder: (_, s) => CourseScreen(id: s.pathParameters['id']!))],
+            ),
+            GoRoute(path: '/item/:id', builder: (_, s) => ItemScreen(id: s.pathParameters['id']!)),
+          ]),
           StatefulShellBranch(routes: [GoRoute(path: '/progress', builder: (_, _) => const ProgressScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/friends', builder: (_, _) => const FriendsScreen())]),
         ],

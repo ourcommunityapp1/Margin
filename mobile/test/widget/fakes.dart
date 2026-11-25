@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/app.dart';
 import 'package:katekize/state/auth.dart';
 import 'package:katekize/state/clock.dart';
+import 'package:katekize/data/content_assets.dart';
 import 'package:material_ui/material_ui.dart';
 
 /// A sign-in service that never touches the network. The right code is always 123456.
@@ -46,6 +47,7 @@ class FakeAuth implements Auth {
 
 /// The whole app at a fixed time (a Tuesday afternoon), on an iPhone-sized screen, with a fake sign-in.
 Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth}) async {
+  await tester.runAsync(loadBundledContent);
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);

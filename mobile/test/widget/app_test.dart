@@ -46,7 +46,8 @@ void main() {
 
     await tester.tap(find.text('Courses'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Every course will be listed here'), findsOneWidget);
+    expect(find.text('First Verses'), findsOneWidget);
+    expect(find.text('Westminster Shorter Catechism'), findsOneWidget);
 
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
@@ -109,5 +110,33 @@ void main() {
   testWidgets('without accounts there is no sign-in', (tester) async {
     await pumpApp(tester, auth: FakeAuth(accounts: false));
     expect(find.text('Already set up? Sign in'), findsNothing);
+  });
+
+  testWidgets('a course and an item show the text exactly as exported', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Ann');
+    await tester.pump();
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Courses'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Westminster Shorter Catechism'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Westminster Shorter Catechism'));
+    await tester.pumpAndSettle();
+    expect(find.text('Q1'), findsOneWidget);
+    expect(find.text('Courses'), findsWidgets, reason: 'the tab bar stays up on a course');
+
+    await tester.ensureVisible(find.text('Q1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Q1'));
+    await tester.pumpAndSettle();
+    expect(find.text('What is the chief end of man?'), findsOneWidget);
+    expect(find.text('Man’s chief end is to glorify God, and to enjoy him forever.'), findsOneWidget);
+    expect(find.text('What it means'), findsOneWidget);
+    expect(find.text('1 Corinthians 10:31'), findsOneWidget);
   });
 }

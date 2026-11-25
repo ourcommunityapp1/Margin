@@ -1,6 +1,8 @@
 // The shared pieces every screen is built from, each one a class in heir.css:
 // .hr-page, .hr-card, .hr-btn, .hr-row, .hr-label, .hr-tag, .hr-back, .hr-choice, .hr-seg, input[type=text], .hr-mark.
 
+import 'dart:math' as math;
+
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_ui/material_ui.dart';
@@ -27,7 +29,9 @@ class KPage extends StatelessWidget {
       KSize.pageSide + pad.left,
       KSize.pageTop + pad.top,
       KSize.pageSide + pad.right,
-      (bare ? KSize.pageTop : KSize.underTabs) + pad.bottom,
+      // The keyboard covers the safe area, so use whichever is taller. This lifts the page's last card above the
+      // keyboard (nothing else in the app resizes for it).
+      (bare ? KSize.pageTop : KSize.underTabs) + math.max(pad.bottom, MediaQuery.viewInsetsOf(context).bottom),
     );
     Widget column(double minHeight) => ConstrainedBox(
           constraints: BoxConstraints(minHeight: minHeight),
