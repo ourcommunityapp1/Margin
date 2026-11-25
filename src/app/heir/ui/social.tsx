@@ -9,7 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import {
-  answerRequest, blockPerson, createFriendInvite, cancelRequest, cloud, getProfile, listFriends, listRequests, reportPerson, saveProfile, searchPeople, sendRequest,
+  answerRequest, blockPerson, createFriendInvite, cancelRequest, cloud, ensureProfile, getProfile, listFriends, listRequests, reportPerson, saveProfile, searchPeople, sendRequest,
   deleteProfile, unfriend, usernameFree, viewPerson, type FriendRow, type MyProfile, type Person, type RequestRow,
 } from './cloud';
 import { courseFor } from '@/heir/content';
@@ -37,7 +37,14 @@ export function useProfile() {
   const reload = useCallback(() => {
     const db = cloud();
     if (!db) return;
-    getProfile(db).then((p) => setProfile(p ?? null)).catch(() => setProfile(null));
+    // A new account's profile is made for it; if it wasn't yet (the family hadn't reached the account), try now.
+    getProfile(db)
+      .then(async (p) => {
+        if (p) return setProfile(p);
+        const made = await ensureProfile(db).catch(() => false);
+        setProfile(made ? await getProfile(db).catch(() => null) : null);
+      })
+      .catch(() => setProfile(null));
   }, []);
   useEffect(() => { if (ready && accounts && email) reload(); }, [ready, accounts, email, reload]);
   return { ready, accounts, email, profile, reload, setProfile };

@@ -28,7 +28,7 @@ export default function Privacy() {
             <ul className="kz-list">
               <li><b>Your sign-in.</b> Your email address, used to send you a sign-in code.</li>
               <li><b>Your family and progress.</b> The names you give people in your family, what each has learned, their answers and schedule, days kept and stones. This is private to your account. A linked account (a spouse) can see it, view only.</li>
-              <li><b>Your profile, if you make one.</b> Your first and last name, a username, optionally a city and state, and your friends. A profile is optional and you choose whether people can find you.</li>
+              <li><b>Your profile.</b> Your first and last name, a username, optionally a city and state, and your friends. A new account gets a profile made for it from the first adult’s name, with “Let people find me” on. You can change both or delete the profile at any time.</li>
               <li><b>How you practice.</b> For each answer: which question and part, what kind of step it was, whether you were right, how many words were missed and where in the text (their positions, never what you typed), any hints, how long it took, and the chance of recall the app predicted before it. Also which of Today’s cards were shown, opened and finished, and for how long. It is used to schedule your reviews and to improve how well the app predicts what you remember. When that improvement is worked out across everyone, it uses the answers without names, and never shows anyone’s answers to anyone else.</li>
               <li><b>The numbers friends see.</b> Words in memory, streak, stone counts and course progress, worked out from your lessons.</li>
             </ul>
@@ -42,7 +42,7 @@ export default function Privacy() {
               <li><b>Nobody but you:</b> your answers, your mistakes, your family members and your email address.</li>
               <li><b>Children:</b> a profile is for an adult. Children in your family are never searchable and never shown to anyone outside it.</li>
             </ul>
-            <p>You can turn off “Let people find me” at any time, remove a friend, or block someone. Blocking hides you from each other everywhere. You must be 13 or older to make a profile.</p>
+            <p>You can turn off “Let people find me” at any time, remove a friend, or block someone. Blocking hides you from each other everywhere. You must be 13 or older to have an account; signing in confirms it.</p>
           </section>
 
           <section aria-labelledby="del-h">

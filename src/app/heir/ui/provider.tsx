@@ -14,7 +14,7 @@ import { memberProgress, mergeProgress, parseProgress, sameProgress, type Member
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
-import { cloud, getBoardStatus, loadCalibration, loadProgressRows, loadRemote, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
+import { cloud, ensureProfile, getBoardStatus, loadCalibration, loadProgressRows, loadRemote, refreshStatsOnServer, saveProgressRows, saveRemote, type Remote } from './cloud';
 import { setPersonCal, setPopulationCal } from '@/heir/memory';
 import { activeMember } from '@/heir/household';
 import { hasAlert, type BoardStatus } from '@/heir/board';
@@ -153,6 +153,8 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
         const pick = chooseOnSignIn(loadLocal(), found?.household ?? null);
         remote.current = found;
         if (pick.upload) remote.current = await saveRemote(db, pick.household, found);
+        // A new account gets a profile made for it (findable, friends on), so friends work from the first day.
+        if (remote.current) ensureProfile(db).catch(() => { /* the Friends screen tries again */ });
         if (!live) return;
         setHousehold(pick.household);
         saveLocal(pick.household);

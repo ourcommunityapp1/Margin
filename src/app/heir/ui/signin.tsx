@@ -3,6 +3,7 @@
 // Sign in with a code sent by email. A code (rather than a link) keeps sign-in inside the home-screen app
 // on an iPhone, where a tapped link would open Safari instead.
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useHeir } from './provider';
@@ -64,6 +65,7 @@ export function SignIn({ next }: { next: string }) {
           </form>
         )}
         {error && <p role="alert" style={{ margin: 0, fontSize: 15 }}>{error}</p>}
+        <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--muted)' }}>By signing in you confirm you’re 13 or older. Your account gets a profile so friends can find you; you can change that any time on Your profile. <Link href="/privacy" style={{ color: 'inherit' }}>How Katekize uses it</Link>.</p>
       </section>
     </main>
   );
