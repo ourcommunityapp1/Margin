@@ -15,11 +15,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/account.dart';
 import '../data/config.dart';
 import '../data/household.dart';
+import '../data/social.dart' show SocialApi;
 import '../data/sync_rules.dart';
 import '../engine/memory.dart' show setPersonCal, setPopulationCal;
 import '../engine/progress.dart';
 import 'auth.dart';
+import 'board.dart';
 import 'household.dart';
+import 'social.dart';
 
 enum SyncState { local, synced, saving, offline }
 
@@ -38,6 +41,9 @@ class SyncInfo {
 /// Whether writing to the account is on. Tests override this.
 final syncWritesProvider = Provider<bool>((ref) => Config.syncWrites);
 
+/// How long after progress settles to ask the server for friends' numbers. Tests shorten it.
+final statsDelayProvider = Provider<Duration>((ref) => const Duration(seconds: 4));
+
 /// The account database, or null without accounts. Tests override this with a fake.
 final accountApiProvider = Provider<AccountApi?>((ref) {
   if (!ref.watch(authProvider).accounts) return null;
@@ -46,7 +52,8 @@ final accountApiProvider = Provider<AccountApi?>((ref) {
 
 class SyncController extends Notifier<SyncInfo> {
   RemoteHousehold? _remote;
-  Timer? _householdTimer, _progressTimer;
+  Timer? _householdTimer, _progressTimer, _statsTimer;
+  String _statsSent = '';
   int _epoch = 0;
 
   AccountApi? get _api => ref.read(accountApiProvider);
@@ -58,6 +65,7 @@ class SyncController extends Notifier<SyncInfo> {
     ref.onDispose(() {
       _householdTimer?.cancel();
       _progressTimer?.cancel();
+      _statsTimer?.cancel();
     });
     ref.listen<AsyncValue<String?>>(emailProvider, (_, next) {
       if (next.hasValue) arrive(next.value);
@@ -105,6 +113,7 @@ class SyncController extends Notifier<SyncInfo> {
         setPersonCal(cal.person);
       }
       state = SyncInfo(SyncState.synced, summary: _summary());
+      _askForStats();
     } catch (e) {
       if (mine != _epoch) return;
       state = SyncInfo(SyncState.offline, note: 'Couldn’t reach your account. Changes are kept on this phone.', summary: e.runtimeType.toString());
@@ -196,9 +205,36 @@ class SyncController extends Notifier<SyncInfo> {
         }
         ref.read(progressProvider.notifier).replaceFromRemote(out);
         state = SyncInfo(SyncState.synced, summary: state.summary);
+        _askForStats();
       } catch (_) {
         state = const SyncInfo(SyncState.offline, note: 'Couldn’t reach your account. Changes are kept on this phone.');
       }
+    });
+  }
+
+  /// After progress settles, asks the server to work out the numbers friends see (words in memory, stones, streak,
+  /// courses). The server reads the full answer history itself; the phone only asks, and only when something changed. The
+  /// database ignores it until a profile exists, and the board is looked at again once the numbers are updated.
+  void _askForStats() {
+    final SocialApi? social;
+    try {
+      social = ref.read(socialApiProvider);
+    } catch (_) {
+      return; // no cloud connection to ask through
+    }
+    final adult = ref.read(householdProvider).members.where((m) => m.track.name == 'adult').firstOrNull;
+    final mine = adult == null ? null : ref.read(progressProvider)[adult.id];
+    if (social == null || mine == null || !_writes) return;
+    final ask = social;
+    final key = '${mine.lessons}|${mine.log.length}|${mine.days.length}|${mine.levels.length}';
+    if (key == _statsSent) return;
+    _statsTimer?.cancel();
+    _statsTimer = Timer(ref.read(statsDelayProvider), () async {
+      try {
+        await ask.refreshStats();
+        _statsSent = key;
+        await ref.read(boardProvider.notifier).check();
+      } catch (_) {/* asked again after the next change */}
     });
   }
 

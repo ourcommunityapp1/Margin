@@ -4,6 +4,7 @@
 
 import 'dart:convert';
 
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../engine/progress.dart';
@@ -262,6 +263,10 @@ abstract interface class SocialApi {
   Future<Board> getBoard(Period period);
   Future<BoardStatus> getBoardStatus();
   Future<void> markBoardSeen(Period period);
+
+  /// Asks the server to work out this person's numbers for friends (it reads their answers; nothing is sent from the
+  /// phone beyond the sign-in token). Quietly does nothing when the server isn't set up for it.
+  Future<void> refreshStats();
 }
 
 class SupabaseSocialApi implements SocialApi {
@@ -417,6 +422,15 @@ class SupabaseSocialApi implements SocialApi {
   @override
   Future<void> markBoardSeen(Period period) async {
     await _call<Object?>('heir_board_seen_mark', {'p_period': period.name});
+  }
+
+  @override
+  Future<void> refreshStats() async {
+    final token = _db.auth.currentSession?.accessToken;
+    if (token == null) return;
+    final res = await http.post(Uri.parse('$siteOrigin/api/heir/stats'), headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 30));
+    // 501 (server not set up) and 404 (no profile yet) are fine: asked again after the next change.
+    if (res.statusCode >= 500 && res.statusCode != 501) throw const SocialFailure('stats not updated');
   }
 }
 

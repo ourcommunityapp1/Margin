@@ -211,4 +211,9 @@ class FakeSocial implements SocialApi {
 
   @override
   Future<void> markBoardSeen(Period period) async => seenPeriods.add(period.name);
+
+  var statsAsked = 0;
+
+  @override
+  Future<void> refreshStats() async => statsAsked++;
 }

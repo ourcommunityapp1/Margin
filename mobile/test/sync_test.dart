@@ -13,9 +13,11 @@ import 'package:katekize/engine/progress.dart';
 import 'package:katekize/engine/types.dart';
 import 'package:katekize/state/auth.dart';
 import 'package:katekize/state/household.dart';
+import 'package:katekize/state/social.dart';
 import 'package:katekize/state/sync.dart';
 
 import 'engine/content_loader.dart';
+import 'widget/fakes.dart' show FakeSocial;
 import 'widget/fakes.dart' show FakeAuth;
 
 /// A fake account database that remembers every write, so tests can prove what was (and was not) written.
@@ -195,6 +197,39 @@ void main() {
     final merged = c.read(progressProvider)['m-1']!;
     expect(merged.log.length, mergeProgress(theirs, mine).log.length);
     expect(merged.days.toSet().containsAll({...theirs.days, ...mine.days}), isTrue, reason: 'both days are kept');
+  });
+
+  test('after progress settles the server is asked for friends’ numbers, once per change, and only when saving is on', () async {
+    ProviderContainer make(FakeSocial social, {required bool writes}) {
+      final api = FakeApi(remote: _account('Ann', 'm-1'), rows: {'m-1': _lesson(DateTime.utc(2026, 11, 2, 10))});
+      final c = ProviderContainer(overrides: [
+        storeProvider.overrideWithValue(MemoryStore()),
+        authProvider.overrideWithValue(FakeAuth(email: 'ann@example.com')),
+        accountApiProvider.overrideWithValue(api),
+        socialApiProvider.overrideWithValue(social),
+        syncWritesProvider.overrideWithValue(writes),
+        statsDelayProvider.overrideWithValue(const Duration(milliseconds: 10)),
+      ]);
+      addTearDown(c.dispose);
+      return c;
+    }
+
+    final social = FakeSocial();
+    final c = make(social, writes: true);
+    await c.read(syncProvider.notifier).arrive('ann@example.com');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(social.statsAsked, 1);
+    // Nothing changed: not asked again.
+    await c.read(syncProvider.notifier).refresh();
+    await c.read(syncProvider.notifier).arrive('ann@example.com');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(social.statsAsked, 1);
+    // A read-only build never asks.
+    final quiet = FakeSocial();
+    final r = make(quiet, writes: false);
+    await r.read(syncProvider.notifier).arrive('ann@example.com');
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+    expect(quiet.statsAsked, 0);
   });
 
   group('the rules', () {

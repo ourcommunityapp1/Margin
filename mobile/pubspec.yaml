@@ -39,6 +39,7 @@ dependencies:
   flutter_riverpod: ^3.5.0
   go_router: ^18.1.4
   supabase_flutter: ^2.18.3
+  http: ^1.6.0
   flutter_secure_storage: ^11.2.0
   material_ui: ^1.11.1
   flutter_svg: ^2.5.0
