@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/app.dart';
 import 'package:katekize/state/auth.dart';
@@ -8,6 +9,10 @@ import 'package:katekize/data/store.dart';
 import 'package:katekize/state/clock.dart';
 import 'package:katekize/state/household.dart';
 import 'package:katekize/state/sync.dart';
+import 'package:katekize/platform/share.dart';
+import 'package:katekize/platform/speech.dart';
+import 'package:katekize/platform/reminders.dart';
+import 'package:katekize/state/reminders.dart';
 import 'package:katekize/state/social.dart';
 import 'package:katekize/data/social.dart';
 import 'package:katekize/data/board.dart';
@@ -52,7 +57,7 @@ class FakeAuth implements Auth {
 }
 
 /// The whole app at a fixed time (a Tuesday afternoon), on an iPhone-sized screen, with a fake sign-in.
-Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social}) async {
+Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social, Sharer? sharer, ReminderScheduler? reminders, List<Override> overrides = const []}) async {
   await tester.runAsync(loadBundledContent);
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
@@ -68,7 +73,12 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialA
         // No real account database in these tests.
         accountApiProvider.overrideWithValue(null),
         socialApiProvider.overrideWithValue(social),
+        // No share sheet in tests: links are copied instead (tests that want one pass their own).
+        sharerProvider.overrideWithValue(sharer ?? const _NoShare()),
+        // Never touch the phone's real notifications in tests.
+        reminderSchedulerProvider.overrideWithValue(reminders ?? FakeScheduler()),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
+        ...overrides,
       ],
       child: KatekizeApp(now: DateTime(2026, 11, 24, 14)),
     ),
@@ -216,4 +226,67 @@ class FakeSocial implements SocialApi {
 
   @override
   Future<void> refreshStats() async => statsAsked++;
+}
+
+class _NoShare implements Sharer {
+  const _NoShare();
+
+  @override
+  Future<bool> share({required String title, required String text, required String url}) async => false;
+}
+
+/// A notification scheduler in memory: permission can be refused, and every schedule is kept.
+class FakeScheduler implements ReminderScheduler {
+  FakeScheduler({this.allow = true});
+  final bool allow;
+  var asked = 0;
+  final plans = <List<Reminder>>[];
+
+  List<Reminder> get current => plans.isEmpty ? const [] : plans.last;
+
+  @override
+  Future<bool> requestPermission() async {
+    asked++;
+    return allow;
+  }
+
+  @override
+  Future<void> replaceAll(List<Reminder> items) async => plans.add(items);
+}
+
+/// A microphone that hears what a test says. [allow] false is a refused permission.
+class FakeSpeech implements SpeechService {
+  FakeSpeech({this.allow = true});
+  final bool allow;
+  var starts = 0, cancels = 0;
+  void Function(String)? _onWords;
+  void Function()? _onEnded;
+
+  /// What the person says (grows, as the real thing does).
+  void say(String words) => _onWords?.call(words);
+
+  /// The recognizer stops by itself (a long pause).
+  void end() {
+    final f = _onEnded;
+    _onEnded = null;
+    f?.call();
+  }
+
+  @override
+  Future<bool> start({required void Function(String words) onWords, required void Function() onEnded}) async {
+    starts++;
+    if (!allow) return false;
+    _onWords = onWords;
+    _onEnded = onEnded;
+    return true;
+  }
+
+  @override
+  Future<void> stop() async => end();
+
+  @override
+  Future<void> cancel() async {
+    cancels++;
+    _onEnded = null;
+  }
 }

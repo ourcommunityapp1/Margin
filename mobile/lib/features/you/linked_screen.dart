@@ -1,12 +1,12 @@
 // Linked accounts (src/app/heir/ui/linked.tsx): see another account's family and progress (view only), link someone new,
 // or unlink. Wording matches the website.
 
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../data/social.dart';
+import '../../platform/share.dart';
 import '../../engine/content.dart';
 import '../../engine/levels.dart';
 import '../../engine/progress.dart';
@@ -68,9 +68,9 @@ class _LinkedScreenState extends ConsumerState<LinkedScreen> {
     if (mounted) setState(() => _busy = false);
   }
 
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: _link));
-    if (mounted) setState(() => _message = 'Link copied. Paste it in a message.');
+  Future<void> _send() async {
+    final note = await shareOrCopy(ref, title: 'Link our Katekize accounts', text: 'Link our Katekize accounts:', url: _link);
+    if (mounted) setState(() => _message = note ?? '');
   }
 
   Future<void> _unlink(String ownerId) async {
@@ -133,7 +133,7 @@ class _LinkedScreenState extends ConsumerState<LinkedScreen> {
               ),
               if (_link.isNotEmpty) ...[
                 SelectableText(_link, style: sans(13, color: k.muted)),
-                KButton('Copy the link', onPressed: _copy),
+                KButton('Send the link', onPressed: _send),
               ] else
                 WellButton(_busy ? 'Making a link…' : 'Make an invite link', onPressed: _busy ? null : _make),
               if (_message.isNotEmpty) Text(_message, style: sans(14, color: k.muted)),

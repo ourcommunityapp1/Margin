@@ -121,6 +121,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Signed in as ann@example.com'), findsOneWidget);
+    await tester.ensureVisible(find.text('Sign out'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
     // Signing out clears this phone's family, as on the website: back to Welcome.

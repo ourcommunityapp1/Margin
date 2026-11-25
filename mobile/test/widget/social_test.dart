@@ -149,8 +149,8 @@ void main() {
     await _tap(tester, 'Make an invite link');
     expect(social.invites, 1);
     expect(find.text('https://katekize.com/heir/join?code=abcdef0123456789abcdef0123456789'), findsOneWidget);
-    await _tap(tester, 'Copy the link');
-    expect(copied, ['https://katekize.com/heir/join?code=abcdef0123456789abcdef0123456789']);
+    await _tap(tester, 'Send the link');
+    expect(copied, ['Link our Katekize accounts: https://katekize.com/heir/join?code=abcdef0123456789abcdef0123456789']);
     expect(find.text('Link copied. Paste it in a message.'), findsOneWidget);
   });
 }

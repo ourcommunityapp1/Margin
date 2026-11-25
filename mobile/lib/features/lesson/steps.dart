@@ -7,12 +7,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
 import '../../engine/grade.dart';
 import '../../engine/lesson.dart' as lesson;
 import '../../engine/types.dart';
+import '../../platform/speech.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import 'outcome.dart';
@@ -944,41 +946,125 @@ class _TypeStepState extends State<TypeStep> {
   }
 }
 
-/// Say the whole answer from memory. For now: say it aloud, then say how you did (the website's mode when it
-/// can't listen). Real speech recognition comes with the native features.
-class SayStep extends StatefulWidget {
+/// Say the whole answer from memory (steps.tsx Say). With a microphone: tap, say it, tap again; what was heard is graded like
+/// typed words. Without one (permission refused, or no recognizer): say it aloud, then say how you did.
+class SayStep extends ConsumerStatefulWidget {
   const SayStep({super.key, required this.step, required this.onReport, required this.onCantSpeak});
   final lesson.Step step;
   final Report onReport;
   final VoidCallback onCantSpeak;
 
   @override
-  State<SayStep> createState() => _SayStepState();
+  ConsumerState<SayStep> createState() => _SayStepState();
 }
 
-class _SayStepState extends State<SayStep> {
-  bool _revealed = false;
+class _SayStepState extends ConsumerState<SayStep> {
+  bool _mic = true, _listening = false, _revealed = false, _done = false;
+  String _said = '', _note = '';
+  late final SpeechService _speech = ref.read(speechProvider);
+
+  @override
+  void dispose() {
+    _speech.cancel();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    if (_listening) {
+      await _speech.stop();
+      return;
+    }
+    setState(() {
+      _said = '';
+      _note = '';
+    });
+    final ok = await _speech.start(
+      onWords: (w) {
+        if (mounted) setState(() => _said = w);
+      },
+      onEnded: _ended,
+    );
+    if (!mounted) return;
+    if (!ok) {
+      setState(() {
+        _mic = false;
+        _note = 'This phone can’t listen right now. Check yourself instead, or allow the microphone in Settings.';
+      });
+      return;
+    }
+    setState(() => _listening = true);
+  }
+
+  void _ended() {
+    if (!mounted) return;
+    setState(() => _listening = false);
+    final text = _said.trim();
+    if (text.isEmpty) {
+      setState(() => _note = 'We didn’t hear anything. Tap and try again.');
+      return;
+    }
+    if (_done) return;
+    _done = true;
+    widget.onReport(scored(context, widget.step.text!, widget.step.lead ?? '', text, spokenPass, 'weren’t heard'));
+  }
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final step = widget.step;
+    final self = !_mic;
     return StepFrame(
       body: [
         Text('Say it from memory', style: sans(16, weight: FontWeight.w600, color: k.ink)),
         _ContinueFrom(step.lead ?? ''),
-        if (!_revealed)
+        if (_mic)
+          Column(
+            children: [
+              const SizedBox(height: 8),
+              Semantics(
+                button: true,
+                label: _listening ? 'Stop and check' : 'Start speaking',
+                child: Material(
+                  color: _listening ? k.miss : k.button,
+                  shape: const CircleBorder(),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: _toggle,
+                    child: SizedBox(
+                      width: 84,
+                      height: 84,
+                      child: Center(
+                        child: _listening
+                            ? Icon(Icons.stop_rounded, size: 34, color: k.card)
+                            : KIcon('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>', size: 36, color: k.buttonInk, strokeWidth: 2),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(_listening ? 'Listening. Tap again when you’re done.' : 'Tap, then say the answer.', textAlign: TextAlign.center, style: sans(15, color: k.muted)),
+              if (_said.isNotEmpty) ...[const SizedBox(height: 12), Text(_said, textAlign: TextAlign.center, style: sans(17, color: k.muted, height: 1.5))],
+            ],
+          )
+        else if (!_revealed)
           Text('Say it aloud without looking. Then check yourself.', style: sans(17, color: k.ink, height: 1.5))
         else
           Answer(lead: step.lead, text: step.text!),
-        KButton('Can’t speak now, type it', quiet: true, onPressed: widget.onCantSpeak),
+        if (_note.isNotEmpty) Text(_note, style: sans(15, color: self ? k.muted : k.miss, height: 1.45)),
+        KButton('Can’t speak now, type it', quiet: true, onPressed: () {
+          _speech.cancel();
+          widget.onCantSpeak();
+        }),
       ],
-      dock: !_revealed
-          ? KButton('Show the words', onPressed: () => setState(() => _revealed = true))
-          : Dock(children: [
-              WellButton('I missed some', onPressed: () => widget.onReport(const Outcome(ok: false))),
-              KButton('I said it all', onPressed: () => widget.onReport(const Outcome(ok: true))),
-            ]),
+      dock: _mic
+          ? null
+          : !_revealed
+              ? KButton('Show the words', onPressed: () => setState(() => _revealed = true))
+              : Dock(children: [
+                  WellButton('I missed some', onPressed: () => widget.onReport(const Outcome(ok: false))),
+                  KButton('I said it all', onPressed: () => widget.onReport(const Outcome(ok: true))),
+                ]),
     );
   }
 }

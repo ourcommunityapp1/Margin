@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart' show SystemChannels;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/data/content_assets.dart';
@@ -20,7 +21,9 @@ import 'package:katekize/state/sync.dart';
 import 'package:katekize/ui/theme.dart';
 import 'package:material_ui/material_ui.dart';
 
-import 'fakes.dart' show FakeAuth;
+import 'package:katekize/platform/speech.dart';
+
+import 'fakes.dart' show FakeAuth, FakeSpeech;
 
 /// A lesson on the first part of Westminster Shorter Catechism Q1, built by the engine (the same builders the app uses).
 Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) async {
@@ -42,7 +45,7 @@ Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) asyn
   return (session: session, unit: unit);
 }
 
-Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store store) async {
+Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store store, {SpeechService? speech}) async {
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -53,6 +56,7 @@ Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store stor
         accountApiProvider.overrideWithValue(null),
         authProvider.overrideWithValue(FakeAuth(accounts: false)),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
+        speechProvider.overrideWithValue(speech ?? FakeSpeech()),
       ],
       child: MaterialApp(theme: katekizeTheme(), home: LessonScreen(session: session, track: Track.adult)),
     ),
@@ -145,6 +149,26 @@ void main() {
     expect(find.text('Fill in the missing words'), findsOneWidget);
   });
 
+  testWidgets('the phone taps: lightly for a right answer, firmly for a wrong one, and at the end', (tester) async {
+    final taps = <String>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'HapticFeedback.vibrate') taps.add(call.arguments as String);
+      return null;
+    });
+    addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(SystemChannels.platform, null));
+    final s = await _session(tester);
+    final store = MemoryStore({householdKey: householdToJson(addMember(emptyHousehold(), 'Ann', Track.adult, 'me', DateTime(2026, 11, 20)))});
+    await _pump(tester, s.session, store);
+    await _tap(tester, 'Continue');
+    // Wrong first.
+    for (final t in s.session.steps[1].tiles!.reversed) {
+      await _tap(tester, t);
+    }
+    await _tap(tester, 'Check');
+    expect(taps.where((t) => t == 'HapticFeedbackType.heavyImpact'), hasLength(1));
+    expect(taps.where((t) => t == 'HapticFeedbackType.lightImpact'), isEmpty);
+  });
+
   testWidgets('the feedback sheet sits above the keyboard when it is still up', (tester) async {
     final s = await _session(tester);
     await _pump(tester, s.session, MemoryStore());
@@ -176,5 +200,92 @@ void main() {
     }
     await tester.pumpAndSettle();
     expect(find.text('Continue'), findsOneWidget, reason: 'the feedback sheet shows once the last word is typed');
+  });
+
+  group('say it from memory', () {
+    /// A session of one "say" step, made from the lesson's typing step.
+    Future<({Session session, lesson.Step step})> sayOnly(WidgetTester tester) async {
+      final s = await _session(tester);
+      final type = s.session.steps.last;
+      final say = type.copyWith(kind: 'say');
+      return (
+        session: Session(
+          label: s.session.label,
+          kind: s.session.kind,
+          steps: [say],
+          units: s.session.units,
+          group: null,
+          courseId: s.session.courseId,
+          memberId: s.session.memberId,
+          dayCourse: s.session.dayCourse,
+          before: s.session.before,
+        ),
+        step: say,
+      );
+    }
+
+    MemoryStore store() => MemoryStore({householdKey: householdToJson(addMember(emptyHousehold(), 'Ann', Track.adult, 'me', DateTime(2026, 11, 20)))});
+
+    testWidgets('tap, say it, tap again: what was heard is graded', (tester) async {
+      final s = await sayOnly(tester);
+      final mic = FakeSpeech();
+      await _pump(tester, s.session, store(), speech: mic);
+      expect(find.text('Tap, then say the answer.'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
+      await tester.pumpAndSettle();
+      expect(mic.starts, 1);
+      expect(find.text('Listening. Tap again when you’re done.'), findsOneWidget);
+      mic.say(s.step.text!);
+      await tester.pumpAndSettle();
+      expect(find.text(s.step.text!), findsOneWidget, reason: 'the words heard are shown as they come');
+      await tester.tap(find.bySemanticsLabel('Stop and check'));
+      await tester.pumpAndSettle();
+      expect(find.text('Correct.'), findsOneWidget);
+    });
+
+    testWidgets('words that were not said are marked', (tester) async {
+      final s = await sayOnly(tester);
+      final mic = FakeSpeech();
+      await _pump(tester, s.session, store(), speech: mic);
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
+      await tester.pumpAndSettle();
+      mic.say(s.step.text!.split(' ').take(2).join(' '));
+      mic.end(); // a long pause ends it
+      await tester.pumpAndSettle();
+      expect(find.textContaining('weren’t heard'), findsOneWidget);
+    });
+
+    testWidgets('hearing nothing asks to try again and does not count', (tester) async {
+      final s = await sayOnly(tester);
+      final mic = FakeSpeech();
+      await _pump(tester, s.session, store(), speech: mic);
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
+      await tester.pumpAndSettle();
+      mic.end();
+      await tester.pumpAndSettle();
+      expect(find.text('We didn’t hear anything. Tap and try again.'), findsOneWidget);
+      expect(find.bySemanticsLabel('Start speaking'), findsOneWidget);
+    });
+
+    testWidgets('with the microphone refused it falls back to checking yourself', (tester) async {
+      final s = await sayOnly(tester);
+      await _pump(tester, s.session, store(), speech: FakeSpeech(allow: false));
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('This phone can’t listen right now'), findsOneWidget);
+      expect(find.text('Say it aloud without looking. Then check yourself.'), findsOneWidget);
+      await _tap(tester, 'Show the words');
+      await _tap(tester, 'I said it all');
+      expect(find.text('Correct.'), findsOneWidget);
+    });
+
+    testWidgets('“Can’t speak now, type it” turns it into typing and stops listening', (tester) async {
+      final s = await sayOnly(tester);
+      final mic = FakeSpeech();
+      await _pump(tester, s.session, store(), speech: mic);
+      await _tap(tester, 'Can’t speak now, type it');
+      expect(find.text('Type it from memory'), findsOneWidget);
+      expect(mic.cancels, greaterThan(0));
+    });
   });
 }

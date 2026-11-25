@@ -6,7 +6,9 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
 import '../../state/auth.dart';
+import '../../platform/reminders.dart' show reminderSummary;
 import '../../state/household.dart';
+import '../../state/reminders.dart';
 import '../../state/sync.dart';
 import '../../ui/screen_parts.dart';
 import '../../ui/theme.dart';
@@ -86,6 +88,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 if (accounts && !signedIn) KLinkRow(title: 'Sign in', sub: 'Keep your progress on every phone', onTap: () => context.push('/signin?next=/you')),
                 if (signedIn) KLinkRow(title: 'Your profile', sub: 'Name, username, city, who can find you', onTap: () => context.push('/profile')),
                 if (signedIn) KLinkRow(title: 'Linked accounts', sub: 'See a family member’s progress, view only', onTap: () => context.push('/linked')),
+                KLinkRow(title: 'Reminders', sub: reminderSummary(ref.watch(remindersProvider)), onTap: () => context.push('/reminders')),
                 KLinkRow(title: 'How it works', sub: 'Stones, grading and spaced review', onTap: () => context.push('/how')),
                 KLinkRow(title: 'About Katekize', sub: 'Sources and credits', onTap: () => context.push('/about')),
               ],

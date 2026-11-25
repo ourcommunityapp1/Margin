@@ -26,10 +26,12 @@ import 'features/progress/progress_screen.dart';
 import 'features/signin/signin_screen.dart';
 import 'features/you/linked_screen.dart';
 import 'features/you/profile_screen.dart';
+import 'features/you/reminders_screen.dart';
 import 'features/today/today_screen.dart';
 import 'features/you/you_screen.dart';
 import 'state/auth.dart';
 import 'state/board.dart';
+import 'state/reminders.dart';
 import 'state/household.dart';
 import 'state/sync.dart';
 import 'ui/background.dart';
@@ -57,6 +59,8 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
     // Start keeping the phone and the account together (a no-op without accounts or when signed out).
     ref.read(syncProvider);
     ref.read(boardProvider);
+    // Keep reminders matching what is already done today.
+    ref.read(remindersProvider);
   }
 
   @override
@@ -71,6 +75,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
     if (state == AppLifecycleState.resumed) {
       ref.read(syncProvider.notifier).refresh();
       ref.read(boardProvider.notifier).check();
+      ref.read(remindersProvider.notifier).sync();
     }
   }
 
@@ -97,7 +102,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community', '/reminders'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -141,6 +146,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/u/:username', pageBuilder: (_, s) => _fade(s, PersonScreen(username: s.pathParameters['username']!))),
       GoRoute(path: '/invite', pageBuilder: (_, s) => _fade(s, InviteScreen(code: s.uri.queryParameters['code'] ?? ''))),
       GoRoute(path: '/community', pageBuilder: (_, s) => _fade(s, const CommunityScreen())),
+      GoRoute(path: '/reminders', pageBuilder: (_, s) => _fade(s, const RemindersScreen())),
       GoRoute(path: '/linked', pageBuilder: (_, s) => _fade(s, const LinkedScreen())),
       GoRoute(path: '/family', pageBuilder: (_, s) => _fade(s, const FamilyScreen())),
       GoRoute(path: '/how', pageBuilder: (_, s) => _fade(s, const HowScreen())),

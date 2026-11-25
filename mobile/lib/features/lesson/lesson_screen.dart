@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
+import '../../platform/haptics.dart';
 import '../../engine/dayplan.dart';
 import '../../engine/lesson.dart' as lesson;
 import '../../engine/levels.dart';
@@ -79,9 +80,11 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     final step = _queue[_pos];
     // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
     if (step.kind == 'quiz') {
+      o.ok ? Haptics.right() : Haptics.wrong();
       setState(() => _feedback = o);
       return;
     }
+    o.ok ? Haptics.right() : Haptics.wrong();
     final now = ref.read(clockProvider)();
     final key = _key(step);
     final mine = ref.read(myProgressProvider);
@@ -168,6 +171,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       ),
     );
     ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
+    Haptics.finished();
     final recall = recorded.where((r) => r.kind != 'intro').toList();
     setState(() {
       _feedback = null;

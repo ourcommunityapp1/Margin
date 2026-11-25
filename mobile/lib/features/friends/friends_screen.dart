@@ -3,12 +3,12 @@
 
 import 'dart:async';
 
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../data/social.dart';
+import '../../platform/share.dart';
 import '../../engine/util.dart' show localDay;
 import '../../state/clock.dart';
 import '../../state/social.dart';
@@ -118,11 +118,11 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
     });
     try {
       final url = _link.isNotEmpty ? _link : '$siteOrigin/heir/invite?code=${await api.createFriendInvite()}';
-      await Clipboard.setData(ClipboardData(text: url));
+      final note = await shareOrCopy(ref, title: 'Memorize with me on Katekize', text: 'Memorize with me on Katekize:', url: url);
       if (mounted) {
         setState(() {
           _link = url;
-          _inviteNote = 'Link copied. Paste it in a message.';
+          _inviteNote = note ?? '';
         });
       }
     } catch (e) {
@@ -173,7 +173,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
             children: [
               Text('Invite someone who isn’t on Katekize yet.', style: serif(22, color: k.ink, height: 1.2)),
               Text('They get a link that works once, for a week. When they make a profile and accept, you’re friends.', style: sans(15, color: k.muted, height: 1.5)),
-              KButton(_link.isNotEmpty ? 'Copy it again' : 'Send an invite', busy: _inviteBusy, busyLabel: 'Making your link…', onPressed: _makeInvite),
+              KButton(_link.isNotEmpty ? 'Send it again' : 'Send an invite', busy: _inviteBusy, busyLabel: 'Making your link…', onPressed: _makeInvite),
               if (_inviteNote.isNotEmpty) Text(_inviteNote, style: sans(15, color: k.muted)),
               if (_link.isNotEmpty) SelectableText(_link, style: sans(13, color: k.muted)),
             ],

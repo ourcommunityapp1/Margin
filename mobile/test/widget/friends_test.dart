@@ -171,7 +171,7 @@ void main() {
     await tester.pumpAndSettle();
     await _tap(tester, 'Send an invite');
     expect(social.friendInvites, 1);
-    expect(copied, ['https://katekize.com/heir/invite?code=f00dfeedf00dfeedf00dfeedf00dfeed']);
+    expect(copied, ['Memorize with me on Katekize: https://katekize.com/heir/invite?code=f00dfeedf00dfeedf00dfeedf00dfeed']);
     expect(find.text('Link copied. Paste it in a message.'), findsOneWidget);
   });
 

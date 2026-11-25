@@ -8,7 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/social.dart' show siteOrigin;
 import '../../engine/content.dart';
+import '../../platform/share.dart';
 import '../../engine/lesson.dart' show unitsFor;
 import '../../engine/path.dart';
 import '../../engine/types.dart';
@@ -47,9 +49,12 @@ class CourseScreen extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(top: 8),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: KBack(label: 'Courses', onPressed: () => context.canPop() ? context.pop() : context.go('/courses')),
+          child: Row(
+            children: [
+              KBack(label: 'Courses', onPressed: () => context.canPop() ? context.pop() : context.go('/courses')),
+              const Spacer(),
+              _ShareCourse(course),
+            ],
           ),
         ),
         KCard.column(
@@ -146,6 +151,56 @@ class _ItemRow extends StatelessWidget {
               const SizedBox(width: 12),
               KIcon('<path d="M9 6l6 6-6 6"/>', size: 16, color: k.muted, strokeWidth: 2.2),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A round share button beside Back (ui/share-course.tsx ShareCourseIcon): the share sheet with a link to the course, or the
+/// link copied (shown by a tick) where there is no share sheet.
+class _ShareCourse extends ConsumerStatefulWidget {
+  const _ShareCourse(this.course);
+  final Course course;
+
+  @override
+  ConsumerState<_ShareCourse> createState() => _ShareCourseState();
+}
+
+class _ShareCourseState extends ConsumerState<_ShareCourse> {
+  bool _copied = false;
+
+  Future<void> _share() async {
+    final c = widget.course;
+    final note = await shareOrCopy(ref, title: c.title, text: 'Learn ${c.title} with me on Katekize:', url: '$siteOrigin/heir/courses/${c.id}', copiedNote: 'Link copied');
+    if (mounted && note != null) setState(() => _copied = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      label: _copied ? 'Link copied' : 'Share ${widget.course.title}',
+      excludeSemantics: true,
+      child: Material(
+        color: k.card,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: _share,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Center(
+              child: KIcon(
+                _copied ? '<path d="M5 12.5l4.5 4.5L19 7.5"/>' : '<path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>',
+                size: 18,
+                color: k.ink,
+                strokeWidth: 2,
+              ),
+            ),
           ),
         ),
       ),
