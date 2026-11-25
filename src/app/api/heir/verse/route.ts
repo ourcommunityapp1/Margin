@@ -23,7 +23,9 @@ export async function GET(request: Request) {
   const verse = ref ? (isRelatedPassage(ref) ? { ref, text: '' } : undefined) : Object.hasOwn(VERSES, id) ? VERSES[id] : undefined;
   const usfm = verse && toUsfm(verse.ref);
   if (!verse || !usfm) return Response.json({ error: 'No verse for that item.' }, { status: 404 });
-  const cacheHeaders = { 'Cache-Control': 'public, max-age=3600, s-maxage=86400' };
+  // Not cached by the shared CDN: it ignored the ?id= / ?ref= part of the address and served one verse for every id.
+  // Each phone or browser keeps its own copy for an hour, and this server remembers each verse for a day (memo below).
+  const cacheHeaders = { 'Cache-Control': 'private, max-age=3600' };
   const key0 = ref || id;
   const hit = memo.get(key0);
   if (hit && Date.now() - hit.at < DAY) return Response.json({ ref: verse.ref, text: hit.text, version: VERSION }, { headers: cacheHeaders });
