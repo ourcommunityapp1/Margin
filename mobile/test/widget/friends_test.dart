@@ -55,6 +55,17 @@ void main() {
     expect(find.text('Your profile'), findsOneWidget);
   });
 
+  testWidgets('a new account has its profile made for it, so Friends opens ready to search', (tester) async {
+    final social = FakeSocial(autoProfile: true);
+    await _pump(tester, social);
+    await _openFriends(tester);
+    expect(social.autoCalls, greaterThan(0));
+    expect(find.text('Make my profile'), findsNothing);
+    expect(find.text('Search by name or username'), findsWidgets);
+    expect(social.profile?.discoverable, true);
+    expect(social.profile?.fofVisible, true);
+  });
+
   testWidgets('lists friends with streaks and words, and the request count', (tester) async {
     final social = FakeSocial(profile: _me)
       ..friends = [const FriendRow(username: 'cal', name: 'Cal Wright', wordsInMemory: 1234, streak: 5)]

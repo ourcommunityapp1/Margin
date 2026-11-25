@@ -95,7 +95,10 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialA
 
 /// A people database in memory: one profile, some taken usernames, and linked accounts.
 class FakeSocial implements SocialApi {
-  FakeSocial({this.profile, this.taken = const {'katie'}, List<LinkedAccount>? linked}) : linked = linked ?? [];
+  FakeSocial({this.profile, this.taken = const {'katie'}, this.autoProfile = false, List<LinkedAccount>? linked}) : linked = linked ?? [];
+  /// A new account: the database makes the profile when asked (heir_profile_auto).
+  final bool autoProfile;
+  var autoCalls = 0;
   MyProfile? profile;
   final Set<String> taken;
   final List<LinkedAccount> linked;
@@ -106,6 +109,14 @@ class FakeSocial implements SocialApi {
 
   @override
   Future<MyProfile?> getProfile() async => profile;
+
+  @override
+  Future<bool> ensureProfile() async {
+    autoCalls++;
+    if (!autoProfile || profile != null) return false;
+    profile = const MyProfile(username: 'anns', firstName: 'Ann', lastName: 'Smith');
+    return true;
+  }
 
   @override
   Future<bool> usernameFree(String name) async => !taken.contains(name.toLowerCase());

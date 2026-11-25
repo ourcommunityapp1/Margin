@@ -114,9 +114,27 @@ class SyncController extends Notifier<SyncInfo> {
       }
       state = SyncInfo(SyncState.synced, summary: _summary());
       _askForStats();
+      _makeProfile();
     } catch (e) {
       if (mine != _epoch) return;
       state = SyncInfo(SyncState.offline, note: 'Couldn’t reach your account. Changes are kept on this phone.', summary: e.runtimeType.toString());
+    }
+  }
+
+  /// A new account gets a profile made for it (findable, friends on) once its family is in the account, so friends work from
+  /// the first day. Nothing to do for an account that has one, an older account, or someone who deleted theirs.
+  void _makeProfile() {
+    if (!_writes) return;
+    try {
+      final social = ref.read(socialApiProvider);
+      if (social == null) return;
+      social.ensureProfile().then((made) {
+        if (made) ref.invalidate(myProfileProvider);
+      }).catchError((_) {
+        // The Friends screen tries again when it opens.
+      });
+    } catch (_) {
+      // Nothing to make it with (no people database yet); never let this disturb a sign-in.
     }
   }
 

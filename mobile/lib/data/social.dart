@@ -225,6 +225,8 @@ class SocialFailure implements Exception {
 abstract interface class SocialApi {
   // ── Your profile ──
   Future<MyProfile?> getProfile();
+  /// Makes this account's profile if it should have one (a new account's first adult; heir_profile_auto). True when it made one.
+  Future<bool> ensureProfile();
   Future<bool> usernameFree(String name);
   Future<MyProfile> saveProfile(ProfileEdit p);
   Future<void> deleteProfile();
@@ -292,6 +294,9 @@ class SupabaseSocialApi implements SocialApi {
     final data = await _call<Object?>('heir_profile_get');
     return data is Map ? MyProfile.fromJson(data.cast<String, dynamic>()) : null;
   }
+
+  @override
+  Future<bool> ensureProfile() async => (await _call<Object?>('heir_profile_auto')) == true;
 
   @override
   Future<bool> usernameFree(String name) async => (await _call<Object?>('heir_username_free', {'p_name': name})) == true;

@@ -3,6 +3,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../data/config.dart';
 import '../data/social.dart';
 import 'auth.dart';
 
@@ -17,5 +18,10 @@ final socialApiProvider = Provider<SocialApi?>((ref) {
 final myProfileProvider = FutureProvider.autoDispose<MyProfile?>((ref) async {
   final api = ref.watch(socialApiProvider);
   if (api == null) return null;
-  return api.getProfile();
+  final mine = await api.getProfile();
+  if (mine != null || !Config.syncWrites) return mine;
+  // A new account's profile is made for it (findable, friends on). If it wasn't yet (the family hadn't reached the account when
+  // the phone signed in), try now. Same as the website's useProfile.
+  final made = await api.ensureProfile().catchError((_) => false);
+  return made ? api.getProfile() : null;
 });
