@@ -10,6 +10,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../data/verses.dart';
 import '../../engine/content.dart';
 import '../../engine/grade.dart';
 import '../../engine/lesson.dart' as lesson;
@@ -101,22 +104,40 @@ class InfoStep extends StatelessWidget {
   }
 }
 
-/// The verse in the Bible text that ships with the app, with where it is from. (The website fetches the NASB from its
-/// server; until the app does too, the bundled KJV shows.)
+/// The verse: in the NASB when it has been fetched (the tag "NASB 2020" links to the Lockman Foundation, as the license requires),
+/// otherwise in the KJV that ships with the app.
 class VerseStep extends StatelessWidget {
-  const VerseStep({super.key, required this.step, required this.onNext});
+  const VerseStep({super.key, required this.step, required this.onNext, this.nasb});
   final lesson.Step step;
   final VoidCallback onNext;
+  final NasbVerse? nasb;
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final text = verses[step.itemId]?.text ?? step.text ?? '';
+    final n = nasb;
+    final text = n?.text ?? verses[step.itemId]?.text ?? step.text ?? '';
+    final tag = sans(15, weight: FontWeight.w600, color: k.muted);
     return StepFrame(
       body: [
         const SizedBox(height: 24),
         Text(text, style: serif(25, color: k.ink, height: 1.45)),
-        Text('${step.ref ?? ''} (KJV)', style: sans(15, weight: FontWeight.w600, color: k.muted)),
+        if (n == null)
+          Text('${step.ref ?? ''} (KJV)', style: tag)
+        else
+          Semantics(
+            link: true,
+            label: '${step.ref ?? ''}, NASB 2020, opens lockman.org',
+            excludeSemantics: true,
+            child: GestureDetector(
+              onTap: () async {
+                try {
+                  await launchUrl(Uri.parse('https://www.lockman.org'), mode: LaunchMode.externalApplication);
+                } catch (_) {/* no browser: the About screen shows the notice */}
+              },
+              child: Text('${step.ref ?? ''} (NASB 2020)', style: tag.copyWith(decoration: TextDecoration.underline)),
+            ),
+          ),
       ],
       dock: KButton('Continue', onPressed: onNext),
     );

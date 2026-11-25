@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/verses.dart';
 import '../../engine/content.dart';
 import '../../platform/haptics.dart';
 import '../../engine/dayplan.dart';
@@ -66,6 +67,20 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   Outcome? _feedback;
   _Finished? _finished;
   final Set<String> _retried = {};
+
+  /// The NASB text of this session's verses, fetched as the lesson starts so it is ready when the verse comes up.
+  final Map<String, NasbVerse> _nasb = {};
+
+  @override
+  void initState() {
+    super.initState();
+    final api = ref.read(verseApiProvider);
+    for (final step in widget.session.steps.where((s) => s.kind == 'verse')) {
+      api.nasb(step.itemId).then((v) {
+        if (v != null && mounted) setState(() => _nasb[step.itemId] = v);
+      });
+    }
+  }
 
   /// One result per step, the first time it was answered.
   final Map<String, StepResult> _results = {};
@@ -411,7 +426,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   Widget _stepWidget(lesson.Step step, Item item) => switch (step.kind) {
         'intro' => IntroStep(item: item, track: widget.track, step: step, onNext: _advance),
         'info' => InfoStep(step: step, onNext: _advance),
-        'verse' => VerseStep(step: step, onNext: _advance),
+        'verse' => VerseStep(step: step, onNext: _advance, nasb: _nasb[step.itemId]),
         'quiz' || 'meaning' => MeaningStep(step: step, onReport: _report),
         'next' => NextStep(step: step, onReport: _report),
         'match' => MatchStep(step: step, onReport: _report),

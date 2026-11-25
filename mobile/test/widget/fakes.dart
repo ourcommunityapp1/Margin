@@ -10,6 +10,7 @@ import 'package:katekize/state/clock.dart';
 import 'package:katekize/state/household.dart';
 import 'package:katekize/state/sync.dart';
 import 'package:katekize/platform/share.dart';
+import 'package:katekize/data/verses.dart';
 import 'package:katekize/platform/speech.dart';
 import 'package:katekize/platform/reminders.dart';
 import 'package:katekize/state/reminders.dart';
@@ -82,6 +83,7 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialA
         socialApiProvider.overrideWithValue(social),
         // No share sheet in tests: links are copied instead (tests that want one pass their own).
         sharerProvider.overrideWithValue(sharer ?? const _NoShare()),
+        verseApiProvider.overrideWithValue(FakeVerses()),
         // Never touch the phone's real notifications in tests.
         reminderSchedulerProvider.overrideWithValue(reminders ?? FakeScheduler()),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
@@ -317,5 +319,19 @@ class FakeSpeech implements SpeechService {
   Future<void> cancel() async {
     cancels++;
     _onEnded = null;
+  }
+}
+
+/// The NASB from a map of item id to text; anything not in it can't be fetched.
+class FakeVerses implements VerseApi {
+  FakeVerses([this.texts = const {}]);
+  final Map<String, String> texts;
+  final asked = <String>[];
+
+  @override
+  Future<NasbVerse?> nasb(String itemId) async {
+    asked.add(itemId);
+    final t = texts[itemId];
+    return t == null ? null : NasbVerse(t, 'NASB');
   }
 }

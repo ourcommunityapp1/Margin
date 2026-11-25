@@ -21,9 +21,10 @@ import 'package:katekize/state/sync.dart';
 import 'package:katekize/ui/theme.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'package:katekize/data/verses.dart';
 import 'package:katekize/platform/speech.dart';
 
-import 'fakes.dart' show FakeAuth, FakeSpeech;
+import 'fakes.dart' show FakeAuth, FakeSpeech, FakeVerses;
 
 /// A lesson on the first part of Westminster Shorter Catechism Q1, built by the engine (the same builders the app uses).
 Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) async {
@@ -45,7 +46,7 @@ Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) asyn
   return (session: session, unit: unit);
 }
 
-Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store store, {SpeechService? speech}) async {
+Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store store, {SpeechService? speech, VerseApi? verses}) async {
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -57,6 +58,7 @@ Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store stor
         authProvider.overrideWithValue(FakeAuth(accounts: false)),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
         speechProvider.overrideWithValue(speech ?? FakeSpeech()),
+        verseApiProvider.overrideWithValue(verses ?? FakeVerses()),
       ],
       child: MaterialApp(theme: katekizeTheme(), home: LessonScreen(session: session, track: Track.adult)),
     ),
@@ -286,6 +288,55 @@ void main() {
       await _tap(tester, 'Can’t speak now, type it');
       expect(find.text('Type it from memory'), findsOneWidget);
       expect(mic.cancels, greaterThan(0));
+    });
+  });
+
+  group('the verse', () {
+    /// A session of one verse step, for the first verse in the bundled content.
+    Future<({Session session, String itemId, String kjv, String ref})> verseOnly(WidgetTester tester) async {
+      final s = await _session(tester);
+      final itemId = verses.keys.first;
+      final v = verses[itemId]!;
+      final step = lesson.Step(id: 'v', itemId: itemId, kind: 'verse', review: false, ref: v.ref, text: v.text);
+      return (
+        session: Session(
+          label: s.session.label,
+          kind: s.session.kind,
+          steps: [step],
+          units: s.session.units,
+          group: null,
+          courseId: s.session.courseId,
+          memberId: s.session.memberId,
+          dayCourse: s.session.dayCourse,
+          before: s.session.before,
+        ),
+        itemId: itemId,
+        kjv: v.text,
+        ref: v.ref,
+      );
+    }
+
+    MemoryStore store() => MemoryStore({householdKey: householdToJson(addMember(emptyHousehold(), 'Ann', Track.adult, 'me', DateTime(2026, 11, 20)))});
+
+    testWidgets('shows the NASB once it is fetched, tagged “NASB 2020” and linking to the Lockman Foundation', (tester) async {
+      final s = await verseOnly(tester);
+      final api = FakeVerses({s.itemId: 'The NASB words of this verse.'});
+      await _pump(tester, s.session, store(), verses: api);
+      await tester.pumpAndSettle();
+      expect(api.asked, [s.itemId]);
+      expect(find.text('The NASB words of this verse.'), findsOneWidget);
+      expect(find.text('${s.ref} (NASB 2020)'), findsOneWidget);
+      expect(find.bySemanticsLabel('${s.ref}, NASB 2020, opens lockman.org'), findsOneWidget);
+      expect(find.text(s.kjv), findsNothing);
+    });
+
+    testWidgets('when it can’t be fetched the verse shows in the KJV that ships with the app', (tester) async {
+      final s = await verseOnly(tester);
+      await _pump(tester, s.session, store(), verses: FakeVerses());
+      await tester.pumpAndSettle();
+      expect(find.text(s.kjv), findsOneWidget);
+      expect(find.text('${s.ref} (KJV)'), findsOneWidget);
+      expect(find.textContaining('NASB'), findsNothing);
     });
   });
 }

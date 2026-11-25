@@ -63,6 +63,25 @@ themes, religious content = yes (Scripture). Not in the Kids Category. Expect 12
   with a window card, a lesson step, Progress with windows, Friends/Community, a course window up close. Android phone: 1080×1920 or larger.
 - **Category:** Education (primary), Lifestyle (secondary). **Price:** Free. **Copyright:** © 2026 Katekize.
 
-## Content rights
-The NASB is shown by permission through the YouVersion Platform and fetched from the website's server. The owner believes (Nov 25, 2026) the YouVersion agreement covers a phone app but has not re-read it, and the assistant has not seen the agreement. **YOU:** keep the agreement
-handy and re-check its terms before submitting. Credits stay on the About screen (windows, photos, stones, typefaces).
+## Content rights: the Lockman Foundation agreement (read Nov 25, 2026)
+The owner shared "The Lockman Foundation Free Distribution Permission Agreement" (Fast-Track Bible License v1) for the NASB 1995 / NASB 2020 /
+AMP. What it says that matters here:
+- **A phone app is covered.** Clause 2 allows the text to be reached "by REQUESTER's mobile application either by live data connection or
+  download to the user's device", in an app that uses the YouVersion Platform to access it. (The earlier "pretty sure" is now confirmed by the
+  text of the agreement.)
+- **Free, and no third-party ads.** Every way the text is shown must be completely free: no access charges or membership fees, and no
+  third-party advertising in the app or website. Katekize is free with no ads; keep it that way (no paid tier or ads while NASB is shown).
+- **Make bulk copying impractical.** The server only serves the verse chosen for each item (`/api/heir/verse`), one at a time. Keep it so.
+- **Attribution.** A clickable link to lockman.org and the copyright notice must be conspicuous. For selected verses the short tag **"NASB 2020"
+  after the verse, linking to lockman.org**, is allowed. The app now shows that tag (underlined, tappable) under every NASB verse, and About carries the
+  full notice and link. Use the 2020 notice: "Scripture quotations from the New American Standard Bible – NASB 2020, Copyright © 1960, 1971, 1977,
+  1995, 2020 by The Lockman Foundation. All rights reserved. Used by permission. https://www.Lockman.org".
+- **Owner duties:** (1) tell Lockman the website URLs where the text appears (katekize.com); (2) **send Lockman an annual report by the end of
+  February** of how many copies were distributed in the previous calendar year (app downloads plus site users); (3) the agreement cannot be
+  transferred or sub-licensed without Lockman's written consent; (4) either side can end it with 30 days' notice, and it ends automatically if
+  the conditions aren't met. California law applies.
+- **One thing to check with YouVersion:** the agreement says the app must use the YouVersion Platform SDK to access the text. Katekize's server
+  calls the YouVersion Platform API and the phone gets the verse from katekize.com. Confirm with YouVersion that this server-side route satisfies
+  their terms for an app (the website already works this way).
+- **Right now the phone app shows the KJV** (public domain) until the NASB is fetched; with the new change it shows the NASB when online and
+  falls back to the KJV offline.
