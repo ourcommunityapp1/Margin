@@ -130,4 +130,66 @@ class FakeSocial implements SocialApi {
 
   @override
   Future<List<LinkedAccount>> loadLinked() async => [...linked];
+
+  // Friends: a few people to find, who is a friend, and what was done.
+  List<Person> people = [];
+  List<FriendRow> friends = [];
+  List<RequestRow> incoming = [], outgoing = [];
+  final sent = <String>[], answered = <String>[], removed = <String>[], blocked = <String>[], reports = <String>[], accepted = <String>[];
+  InvitePeek peek = const InvitePeek('ok', name: 'Dan', username: 'dan');
+  var friendInvites = 0;
+
+  @override
+  Future<List<Person>> search(String q) async => [for (final p in people) if (p.name.toLowerCase().contains(q.toLowerCase()) || p.username.contains(q.toLowerCase())) p];
+
+  @override
+  Future<Person?> viewPerson(String username) async => people.where((p) => p.username == username).firstOrNull;
+
+  @override
+  Future<List<FriendRow>> listFriends() async => friends;
+
+  @override
+  Future<({List<RequestRow> incoming, List<RequestRow> outgoing})> listRequests() async => (incoming: incoming, outgoing: outgoing);
+
+  @override
+  Future<String> sendRequest(String username) async {
+    sent.add(username);
+    return 'requested';
+  }
+
+  @override
+  Future<void> answerRequest(String id, bool accept) async {
+    answered.add('$id:$accept');
+    incoming.removeWhere((r) => r.id == id);
+  }
+
+  @override
+  Future<void> cancelRequest(String id) async {
+    answered.add('cancel:$id');
+    outgoing.removeWhere((r) => r.id == id);
+  }
+
+  @override
+  Future<void> unfriend(String username) async => removed.add(username);
+
+  @override
+  Future<void> block(String username) async => blocked.add(username);
+
+  @override
+  Future<void> report(String username, String note) async => reports.add('$username:$note');
+
+  @override
+  Future<String> createFriendInvite() async {
+    friendInvites++;
+    return 'f00dfeedf00dfeedf00dfeedf00dfeed';
+  }
+
+  @override
+  Future<InvitePeek> peekFriendInvite(String code) async => peek;
+
+  @override
+  Future<String> acceptFriendInvite(String code) async {
+    accepted.add(code);
+    return peek.name ?? '';
+  }
 }

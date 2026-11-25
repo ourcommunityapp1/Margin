@@ -10,6 +10,9 @@ import 'features/about/about_screen.dart';
 import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
 import 'features/friends/friends_screen.dart';
+import 'features/friends/invite_screen.dart';
+import 'features/friends/person_screen.dart';
+import 'features/friends/requests_screen.dart';
 import 'features/item/item_screen.dart';
 import 'features/lesson/session_screen.dart';
 import 'features/onboarding/start_screen.dart';
@@ -88,7 +91,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -109,6 +112,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (someone && h.plan == null && path.startsWith('/today')) return '/start';
       if (someone && h.plan != null && path == '/start') return '/today';
       if (path.startsWith('/friends') && ref.read(emailProvider).value == null) return '/today';
+      // Someone's profile or a friend's invite: sign in first, then come back here.
+      if ((path.startsWith('/u/') || path == '/invite') && ref.read(emailProvider).value == null) return '/signin?next=${Uri.encodeComponent(state.uri.toString())}';
       return null;
     },
     routes: [
@@ -126,6 +131,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/plan', pageBuilder: (_, s) => _fade(s, const PlanScreen())),
       GoRoute(path: '/profile', pageBuilder: (_, s) => _fade(s, ProfileScreen(next: s.uri.queryParameters['next']))),
+      GoRoute(path: '/friends/requests', pageBuilder: (_, s) => _fade(s, const RequestsScreen())),
+      GoRoute(path: '/u/:username', pageBuilder: (_, s) => _fade(s, PersonScreen(username: s.pathParameters['username']!))),
+      GoRoute(path: '/invite', pageBuilder: (_, s) => _fade(s, InviteScreen(code: s.uri.queryParameters['code'] ?? ''))),
       GoRoute(path: '/linked', pageBuilder: (_, s) => _fade(s, const LinkedScreen())),
       GoRoute(path: '/family', pageBuilder: (_, s) => _fade(s, const FamilyScreen())),
       GoRoute(path: '/how', pageBuilder: (_, s) => _fade(s, const HowScreen())),

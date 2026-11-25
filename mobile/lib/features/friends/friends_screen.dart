@@ -1,18 +1,327 @@
-// Friends (src/app/heir/friends/page.tsx, ui/social.tsx). Only shown once signed in.
+// Friends (src/app/heir/ui/social.tsx FriendsScreen): search, requests, your friends, and an invite for someone who
+// isn't on Katekize yet. The database decides what each person may see; this only shows what it returns.
 
+import 'dart:async';
+
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/social.dart';
+import '../../engine/util.dart' show localDay;
+import '../../state/clock.dart';
+import '../../state/social.dart';
 import '../../ui/screen_parts.dart';
+import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import 'avatar.dart';
 
-class FriendsScreen extends StatelessWidget {
+class FriendsScreen extends ConsumerStatefulWidget {
   const FriendsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const KPage(
-        children: [
-          KTitle('Friends'),
-          KComingCard('Your friends, their streaks and the words they have in memory will show here.'),
+  ConsumerState<FriendsScreen> createState() => _FriendsScreenState();
+}
+
+class _FriendsScreenState extends ConsumerState<FriendsScreen> {
+  final _q = TextEditingController();
+  Timer? _timer;
+  List<Person>? _results;
+  List<FriendRow>? _friends;
+  int _incoming = 0;
+  String _error = '', _link = '', _inviteNote = '';
+  bool _busy = false, _invite = false, _inviteBusy = false, _loadedFor = false;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _q.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    final api = ref.read(socialApiProvider);
+    if (api == null) return;
+    try {
+      final f = await api.listFriends();
+      if (mounted) {
+        setState(() {
+          _friends = f;
+          _error = '';
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Couldn’t load your friends. Check your connection.');
+    }
+    try {
+      final r = await api.listRequests();
+      if (mounted) setState(() => _incoming = r.incoming.length);
+    } catch (_) {/* the count is a convenience */}
+  }
+
+  void _search(String text) {
+    _timer?.cancel();
+    final term = text.trim();
+    if (term.length < 2) {
+      setState(() => _results = null);
+      return;
+    }
+    _timer = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        final r = await ref.read(socialApiProvider)!.search(term);
+        if (mounted) {
+          setState(() {
+            _results = r;
+            _error = '';
+          });
+        }
+      } catch (e) {
+        if (mounted) setState(() => _error = e is SocialFailure ? e.message : 'Couldn’t search. Check your connection.');
+      }
+    });
+  }
+
+  Future<void> _act(Person p) async {
+    final api = ref.read(socialApiProvider);
+    if (api == null) return;
+    setState(() {
+      _busy = true;
+      _error = '';
+    });
+    try {
+      Relation next;
+      if (p.relation == Relation.incoming) {
+        final r = await api.listRequests();
+        final req = r.incoming.where((x) => x.username == p.username).firstOrNull;
+        if (req != null) await api.answerRequest(req.id, true);
+        next = Relation.friend;
+      } else {
+        next = (await api.sendRequest(p.username)) == 'friends' ? Relation.friend : Relation.requested;
+      }
+      if (mounted) {
+        setState(() => _results = _results?.map((x) => x.username == p.username ? x.withRelation(next) : x).toList());
+      }
+      if (next == Relation.friend) await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = e is SocialFailure ? e.message : 'Something went wrong. Try again.');
+    }
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _makeInvite() async {
+    final api = ref.read(socialApiProvider);
+    if (api == null) return;
+    setState(() {
+      _inviteBusy = true;
+      _inviteNote = '';
+    });
+    try {
+      final url = _link.isNotEmpty ? _link : '$siteOrigin/heir/invite?code=${await api.createFriendInvite()}';
+      await Clipboard.setData(ClipboardData(text: url));
+      if (mounted) {
+        setState(() {
+          _link = url;
+          _inviteNote = 'Link copied. Paste it in a message.';
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _inviteNote = e is SocialFailure && e.message.isNotEmpty ? e.message : 'Couldn’t make an invite. Try again.');
+    }
+    if (mounted) setState(() => _inviteBusy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final profile = ref.watch(myProfileProvider);
+    final today = localDay(ref.watch(clockProvider)());
+    final has = profile.value != null;
+    if (has && !_loadedFor) {
+      _loadedFor = true;
+      Future.microtask(_load);
+    }
+    if (!has) _loadedFor = false;
+
+    return KPage(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Row(
+            children: [
+              const Expanded(child: KTitle('Friends')),
+              if (has)
+                Semantics(
+                  button: true,
+                  label: 'Invite someone to Katekize',
+                  child: Material(
+                    color: k.button,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => setState(() => _invite = !_invite),
+                      child: SizedBox(width: 44, height: 44, child: Icon(_invite ? Icons.close : Icons.add, color: k.buttonInk, size: 22)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (has && _invite)
+          KCard.column(
+            gap: 12,
+            children: [
+              Text('Invite someone who isn’t on Katekize yet.', style: serif(22, color: k.ink, height: 1.2)),
+              Text('They get a link that works once, for a week. When they make a profile and accept, you’re friends.', style: sans(15, color: k.muted, height: 1.5)),
+              KButton(_link.isNotEmpty ? 'Copy it again' : 'Send an invite', busy: _inviteBusy, busyLabel: 'Making your link…', onPressed: _makeInvite),
+              if (_inviteNote.isNotEmpty) Text(_inviteNote, style: sans(15, color: k.muted)),
+              if (_link.isNotEmpty) SelectableText(_link, style: sans(13, color: k.muted)),
+            ],
+          ),
+        if (profile.isLoading && !profile.hasValue)
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text('Loading…', style: sans(16, color: k.muted)))
+        else if (profile.hasError)
+          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text('Couldn’t load. Check your connection.', style: sans(16, color: k.miss)))
+        else if (!has)
+          KCard.column(
+            gap: 14,
+            children: [
+              Text('Memorize with friends. Make a profile to find people and be found.', style: serif(24, color: k.ink, height: 1.2)),
+              Text('Friends see your streak, words in memory, stones and courses. Never your answers. Children are never shown.', style: sans(15, color: k.muted, height: 1.5)),
+              KButton('Make my profile', onPressed: () => context.push('/profile')),
+            ],
+          )
+        else ...[
+          KTextField(controller: _q, hint: 'Search by name or username', label: 'Search by name or username', onChanged: _search),
+          if (_error.isNotEmpty) Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text(_error, style: sans(15, color: k.miss))),
+          if (_results != null)
+            Semantics(
+              label: 'Search results',
+              child: KCard(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                child: _results!.isEmpty
+                    ? Padding(padding: const EdgeInsets.symmetric(vertical: 14), child: Text('No one found. They may not have turned on “Let people find me”.', style: sans(16, color: k.muted)))
+                    : Column(
+                        children: [
+                          for (final (i, p) in _results!.indexed)
+                            KRow(
+                              first: i == 0,
+                              onTap: () => context.push('/u/${Uri.encodeComponent(p.username)}'),
+                              trailing: _RelationButton(p, _busy, () => _act(p)),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                child: Row(
+                                  children: [
+                                    KAvatar(p.name),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(p.name, style: sans(16, weight: FontWeight.w700, color: k.ink)),
+                                          Text('@${p.username}${place(p.city, p.region).isEmpty ? '' : ' · ${place(p.city, p.region)}'}', style: sans(13, color: k.muted)),
+                                          Text('${friendsCount(p.friendsCount)}${p.mutual > 0 ? ' · ${p.mutual} in common' : ''}', style: sans(13, color: k.muted)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+              ),
+            )
+          else ...[
+            KCard(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+              child: KRow(
+                first: true,
+                onTap: () => context.push('/friends/requests'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_incoming > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(color: k.button, borderRadius: BorderRadius.circular(10)),
+                        child: Text('$_incoming', style: sans(13, weight: FontWeight.w600, color: k.buttonInk)),
+                      ),
+                    const SizedBox(width: 8),
+                    KIcon('<path d="M9 6l6 6-6 6"/>', size: 16, color: k.muted, strokeWidth: 2.2),
+                  ],
+                ),
+                child: Text('Friend requests', style: sans(16, weight: FontWeight.w700, color: k.ink)),
+              ),
+            ),
+            Semantics(
+              label: 'Your friends',
+              child: KCard.column(
+                gap: 4,
+                children: [
+                  KLabel(_friends == null ? 'Friends' : friendsCount(_friends!.length)),
+                  if (_friends != null && _friends!.isEmpty)
+                    Padding(padding: const EdgeInsets.only(top: 10, bottom: 4), child: Text('No friends yet. Search for someone above to send a request.', style: sans(16, color: k.muted, height: 1.5))),
+                  for (final (i, f) in (_friends ?? const <FriendRow>[]).indexed)
+                    KRow(
+                      first: i == 0,
+                      onTap: () => context.push('/u/${Uri.encodeComponent(f.username)}'),
+                      trailing: Text(_fmt(f.wordsInMemory), style: sans(16, weight: FontWeight.w700, color: k.ink)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            KAvatar(f.name, size: 36),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(f.name, style: sans(16, weight: FontWeight.w700, color: k.ink)),
+                                  Text(streakLine(f.streak, f.lastDay, today), style: sans(13, color: k.muted)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (_friends != null && _friends!.isNotEmpty) Align(alignment: Alignment.centerRight, child: Text('words in memory', style: sans(12, color: k.muted))),
+                ],
+              ),
+            ),
+          ],
         ],
-      );
+      ],
+    );
+  }
+}
+
+String _fmt(int n) => n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+
+class _RelationButton extends StatelessWidget {
+  const _RelationButton(this.p, this.busy, this.onTap);
+  final Person p;
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    if (p.relation == Relation.friend) return const KTag('Friends');
+    if (p.relation == Relation.requested) return const KTag('Sent');
+    if (p.relation == Relation.me) return const KTag('You');
+    return Material(
+      color: k.button,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: busy ? null : onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Text(p.relation == Relation.incoming ? 'Accept' : 'Add', style: sans(14, weight: FontWeight.w600, color: k.buttonInk)),
+        ),
+      ),
+    );
+  }
 }

@@ -144,6 +144,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ageOk: _ageOk,
       ));
       if (!mounted) return;
+      ref.invalidate(myProfileProvider);
       final wasCreating = _creating;
       setState(() {
         _profile = p;
@@ -167,6 +168,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (api == null) return;
     try {
       await api.deleteProfile();
+      ref.invalidate(myProfileProvider);
       if (mounted) context.go('/you');
     } catch (e) {
       if (mounted) {
