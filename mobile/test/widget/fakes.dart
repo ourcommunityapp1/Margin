@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/app.dart';
 import 'package:katekize/state/auth.dart';
+import 'package:katekize/data/store.dart';
 import 'package:katekize/state/clock.dart';
+import 'package:katekize/state/household.dart';
 import 'package:katekize/data/content_assets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -46,7 +48,7 @@ class FakeAuth implements Auth {
 }
 
 /// The whole app at a fixed time (a Tuesday afternoon), on an iPhone-sized screen, with a fake sign-in.
-Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth}) async {
+Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store}) async {
   await tester.runAsync(loadBundledContent);
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
@@ -55,6 +57,7 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth}) async {
     ProviderScope(
       overrides: [
         authProvider.overrideWithValue(auth ?? FakeAuth()),
+        storeProvider.overrideWithValue(store ?? MemoryStore()),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
       ],
       child: KatekizeApp(now: DateTime(2026, 11, 24, 14)),

@@ -58,7 +58,7 @@ const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
   final refresh = ValueNotifier(0);
-  ref.listen(meProvider, (_, _) => refresh.value++);
+  ref.listen(householdProvider, (_, _) => refresh.value++);
   ref.listen(emailProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
@@ -67,8 +67,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refresh,
     redirect: (context, state) {
       final path = state.uri.path;
-      final someone = ref.read(meProvider) != null;
+      final h = ref.read(householdProvider);
+      final someone = h.members.isNotEmpty;
       if (!someone && _needsSomeone.any(path.startsWith)) return '/welcome';
+      // Someone is added but has not chosen a course yet: finish setting up. Once set up, there is no going back to it.
+      if (someone && h.plan == null && path.startsWith('/today')) return '/start';
+      if (someone && h.plan != null && path == '/start') return '/today';
       if (path.startsWith('/friends') && ref.read(emailProvider).value == null) return '/today';
       return null;
     },

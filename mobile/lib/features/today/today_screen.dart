@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../engine/content.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../engine/season.dart' show greeting, timeOfDay;
@@ -19,6 +20,7 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final me = ref.watch(meProvider);
+    final plan = ref.watch(householdProvider).plan;
     final hello = greeting(timeOfDay(ref.watch(clockProvider)()));
     return KPage(
       children: [
@@ -43,6 +45,15 @@ class TodayScreen extends ConsumerWidget {
             ],
           ),
         ),
+        if (plan != null && courseFor(plan.course) != null)
+          KCard.column(
+            gap: 8,
+            children: [
+              const KLabel('Your course'),
+              Text(courseFor(plan.course)!.title, style: serif(22, weight: FontWeight.w500, color: context.k.ink, height: 1.15)),
+              Text('${plan.minutes ?? 15} minutes a day', style: sans(15, color: context.k.muted)),
+            ],
+          ),
         const KComingCard('Your lessons for today will show here: a card for each course, with its window.'),
       ],
     );

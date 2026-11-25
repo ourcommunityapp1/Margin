@@ -1,7 +1,28 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:katekize/data/store.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'fakes.dart';
+
+Future<void> _tapVisible(WidgetTester tester, String text) async {
+  await tester.ensureVisible(find.text(text));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(text));
+  await tester.pumpAndSettle();
+}
+
+/// Welcome → name → course → daily goal → Today.
+Future<void> setUpAccount(WidgetTester tester, {String name = 'Ann', String course = 'First Verses'}) async {
+  await tester.tap(find.text('Get started'));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byType(TextField), name);
+  await tester.pump();
+  await tester.tap(find.text('Continue'));
+  await tester.pumpAndSettle();
+  await _tapVisible(tester, course);
+  await _tapVisible(tester, 'Continue');
+  await _tapVisible(tester, 'Start');
+}
 
 void main() {
   testWidgets('a new person starts at Welcome, says their name, and lands on Today', (tester) async {
@@ -19,7 +40,22 @@ void main() {
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
 
+    // What to memorize, then how long each day.
+    expect(find.text('What would you like to memorize?'), findsOneWidget);
+    expect(find.text('Continue'), findsOneWidget);
+    await _tapVisible(tester, 'First Verses');
+    await _tapVisible(tester, 'Continue');
+    expect(find.text('How long each day?'), findsOneWidget);
+    expect(find.text('5 minutes a day'), findsOneWidget);
+    expect(find.text('15 minutes a day'), findsOneWidget);
+    expect(find.text('25 minutes a day'), findsOneWidget);
+    expect(find.textContaining('In long-term memory by'), findsWidgets);
+    await _tapVisible(tester, '25 minutes a day');
+    await _tapVisible(tester, 'Start');
+
     expect(find.text('Good afternoon, Landon'), findsOneWidget);
+    expect(find.text('First Verses'), findsOneWidget);
+    expect(find.text('25 minutes a day'), findsOneWidget);
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Courses'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);
@@ -37,12 +73,7 @@ void main() {
 
   testWidgets('the tabs switch screens', (tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Get started'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Ann');
-    await tester.pump();
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await setUpAccount(tester);
 
     await tester.tap(find.text('Courses'));
     await tester.pumpAndSettle();
@@ -57,12 +88,7 @@ void main() {
   testWidgets('sign in by emailed code, then the Friends tab appears', (tester) async {
     final auth = FakeAuth();
     await pumpApp(tester, auth: auth);
-    await tester.tap(find.text('Get started'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Ann');
-    await tester.pump();
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await setUpAccount(tester);
 
     await tester.tap(find.bySemanticsLabel(RegExp('^You: Ann')));
     await tester.pumpAndSettle();
@@ -114,12 +140,7 @@ void main() {
 
   testWidgets('a course and an item show the text exactly as exported', (tester) async {
     await pumpApp(tester);
-    await tester.tap(find.text('Get started'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Ann');
-    await tester.pump();
-    await tester.tap(find.text('Continue'));
-    await tester.pumpAndSettle();
+    await setUpAccount(tester);
 
     await tester.tap(find.text('Courses'));
     await tester.pumpAndSettle();
@@ -138,5 +159,20 @@ void main() {
     expect(find.text('Man’s chief end is to glorify God, and to enjoy him forever.'), findsOneWidget);
     expect(find.text('What it means'), findsOneWidget);
     expect(find.text('1 Corinthians 10:31'), findsOneWidget);
+  });
+
+  testWidgets('reopening the app remembers who you are and what you chose', (tester) async {
+    final store = MemoryStore();
+    await pumpApp(tester, store: store);
+    await setUpAccount(tester, name: 'Ann Lee', course: 'Psalm 23');
+    expect(find.text('Good afternoon, Ann'), findsOneWidget);
+
+    // A fresh start of the app, with the same storage: straight to Today, no Welcome.
+    await tester.pumpWidget(const SizedBox());
+    await pumpApp(tester, store: store);
+    expect(find.text('Get started'), findsNothing);
+    expect(find.text('Good afternoon, Ann'), findsOneWidget);
+    expect(find.text('Psalm 23'), findsOneWidget);
+    expect(find.text('15 minutes a day'), findsOneWidget);
   });
 }
