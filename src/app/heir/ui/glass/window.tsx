@@ -2,7 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { GlassEngine, loadGlass, type GlassMeta } from './engine';
-import { LIGHT, lightAt, lightOn, paneGain, type Motion } from './light-motion';
+import { LIGHT, lightAt, lightOn, paneGain, sweepOrder, type Motion } from './light-motion';
 
 // Timing for one piece of glass waking up (ms from its start):
 // 0-150 warm light catches the lead; 150-600 light rises past full; 600-1000 settles; glow fades by 900.
@@ -74,7 +74,7 @@ export const LivingWindow = forwardRef<WindowHandle, Props>(
     const flat = useRef<number[]>([]);
     const itemPieces = (n: number, i: number) => {
       const P = flat.current.length;
-      return flat.current.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n));
+      return sweepOrder(flat.current.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n)), meta.current?.centres);
     };
     const idsFor = (fractions: number[]) => fractions.flatMap((f, i) => {
       const ps = itemPieces(fractions.length, i);

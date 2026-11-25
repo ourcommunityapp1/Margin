@@ -54,3 +54,44 @@ export function lightOn(s: { x: number; y: number; k: number } | null, cx: numbe
   const d = Math.hypot(cx - s.x, cy - s.y) / LIGHT.r;
   return d < 2.2 ? s.k * gain * Math.exp(-d * d * FALLOFF) : 0;
 }
+
+const sweepCache = new WeakMap<object, Map<string, number[]>>();
+
+/**
+ * A question's panes in the order the light should reach them. The panes are listed by id, which jumps all over the
+ * glass, so lighting them in that order looked like random panes appearing. This order starts at the pane that comes
+ * first going clockwise round the window from the top (the way the gold arc on the frame runs) and then always moves to
+ * the nearest pane not yet lit, so the light spreads outward as one connected patch, and a part-way fraction is one
+ * patch, not a scatter. Shared by the full window and the small ones, so the same progress lights the same panes.
+ */
+export function sweepOrder(ids: number[], centres?: [number, number][]): number[] {
+  if (!centres || ids.length < 3) return ids;
+  const key = ids.join(',');
+  let byKey = sweepCache.get(centres);
+  if (!byKey) sweepCache.set(centres, (byKey = new Map()));
+  const hit = byKey.get(key);
+  if (hit) return hit;
+  const TAU = Math.PI * 2;
+  const at = (id: number) => centres[id - 1] ?? [0.5, 0.5];
+  const angle = (id: number) => (Math.atan2(at(id)[1] - 0.5, at(id)[0] - 0.5) + Math.PI / 2 + TAU) % TAU;
+  // The start: first clockwise after the widest gap between neighbouring angles (so a group straddling the top starts at its true start).
+  const byAngle = ids.map((id) => ({ id, a: angle(id) })).sort((x, y) => x.a - y.a || x.id - y.id);
+  let start = byAngle[0].id, widest = -1;
+  byAngle.forEach((p, i) => {
+    const next = byAngle[(i + 1) % byAngle.length];
+    const gap = (next.a - p.a + TAU) % TAU || TAU;
+    if (gap > widest) { widest = gap; start = next.id; }
+  });
+  const left = new Set(ids);
+  const out = [start];
+  left.delete(start);
+  let cur = start;
+  while (left.size) {
+    const [cx, cy] = at(cur);
+    let best = -1, bd = Infinity;
+    for (const id of left) { const [x, y] = at(id); const d = (x - cx) ** 2 + (y - cy) ** 2; if (d < bd || (d === bd && id < best)) { bd = d; best = id; } }
+    out.push(best); left.delete(best); cur = best;
+  }
+  byKey.set(key, out);
+  return out;
+}

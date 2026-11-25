@@ -10,12 +10,12 @@
 // tab, or with reduced motion.
 
 import { useEffect, useRef } from 'react';
-import { LIGHT, lightAt, lightOn, paneGain, type Motion } from './light-motion';
+import { LIGHT, lightAt, lightOn, paneGain, sweepOrder, type Motion } from './light-motion';
 
 export type { Motion };
 
 type Pane = { id: number; px: Int32Array; cx: number; cy: number; gain: number };
-type Decoded = { size: number; glass: Uint8ClampedArray; ids: Uint8ClampedArray; flat: number[]; count: number; panes: Pane[] };
+type Decoded = { size: number; glass: Uint8ClampedArray; ids: Uint8ClampedArray; flat: number[]; centres?: [number, number][]; count: number; panes: Pane[] };
 const cache = new Map<string, Promise<Decoded>>();
 
 async function pixels(url: string): Promise<ImageData> {
@@ -32,7 +32,7 @@ function load(base: string): Promise<Decoded> {
   let p = cache.get(base);
   if (!p) {
     p = Promise.all([
-      fetch(`${base}/pieces.json`).then((r) => r.json() as Promise<{ count: number; questions: number[][] }>),
+      fetch(`${base}/pieces.json`).then((r) => r.json() as Promise<{ count: number; questions: number[][]; centres?: [number, number][] }>),
       pixels(`${base}/glass-mini.webp`),
       pixels(`${base}/ids-mini.png`),
     ]).then(([meta, glass, ids]) => {
@@ -49,7 +49,7 @@ function load(base: string): Promise<Decoded> {
       }
       // A fixed small variation per pane, as real glass of different thickness would catch light differently.
       const panes = [...acc].map(([id, a]) => ({ id, px: Int32Array.from(a.px), cx: a.x / a.px.length / size, cy: a.y / a.px.length / size, gain: paneGain(id) }));
-      return { size, glass: glass.data, ids: ids.data, flat: meta.questions.flat(), count: meta.count, panes };
+      return { size, glass: glass.data, ids: ids.data, flat: meta.questions.flat(), centres: meta.centres, count: meta.count, panes };
     });
     p.catch(() => cache.delete(base));
     cache.set(base, p);
@@ -101,7 +101,7 @@ export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind
       const state = new Uint8Array(d.count + 1);
       const P = d.flat.length, n = lit.length;
       lit.forEach((f, i) => {
-        const own = d.flat.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n));
+        const own = sweepOrder(d.flat.slice(Math.floor((i * P) / n), Math.floor(((i + 1) * P) / n)), d.centres);
         const on = Math.round(Math.max(0, Math.min(1, f)) * own.length);
         for (let k = 0; k < on; k++) state[own[k]] = dusty?.[i] ? 2 : 1;
       });

@@ -476,20 +476,20 @@ function DoneWindow({ session }: { session: Session }) {
   const shareOf = (l: number[]) => l.reduce((a, b) => a + b, 0) / Math.max(1, l.length);
   const [dusty, setDusty] = useState(pick(before.dusty) as boolean[]);
   const [share, setShare] = useState(shareOf(beforeLit));
-  // Each new pane lights in its own moment, then the gold arc on the frame moves on.
-  const paneDelay = 150;
+  // The new glass lights round the window clockwise, a pane at a time, in about two and a half seconds however much
+  // is new (a few panes take a moment each); then the gold arc on the frame moves on.
   const ready = () => {
     setTimeout(() => win.current?.revealTo(afterLit), 700);
     setTimeout(() => setDusty(pick(after.dusty) as boolean[]), 900);
     const pieces = win.current?.meta()?.count ?? 500;
     const newPanes = Math.max(1, Math.round((shareOf(afterLit) - shareOf(beforeLit)) * pieces));
-    setTimeout(() => setShare(shareOf(afterLit)), 700 + Math.min(6000, newPanes * paneDelay) + 400);
+    setTimeout(() => setShare(shareOf(afterLit)), 700 + Math.min(2400, newPanes * 130) + 400);
   };
   const names = fresh.map((i) => itemLabel(i)).join(', ');
   return (
     <section className="hr-rose-card" style={{ paddingTop: 20 }}>
       <div className="hr-rose-wash" style={{ backgroundImage: `url(${windowBase(course.id, part)}/glass.webp)` }} aria-hidden="true" />
-      <RoundWindow ref={win} base={windowBase(course.id, part)} lit={beforeLit} dusty={dusty} share={share} onReady={ready} paneDelay={paneDelay} size={280}
+      <RoundWindow ref={win} base={windowBase(course.id, part)} lit={beforeLit} dusty={dusty} share={share} onReady={ready} size={280}
         label={names ? `Your window: new light for ${names}` : 'Your window'} />
       {names && <span className="serif" style={{ fontSize: 19, textAlign: 'center' }}>New light: {names}</span>}
     </section>
