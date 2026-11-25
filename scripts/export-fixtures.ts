@@ -159,3 +159,43 @@ M.setPopulationCal(null); M.setPersonCal(null);
 const texts = items.slice(0, 60).map((i) => i.chunks.adult.join(' '));
 memCases.push({ overlap: texts.slice(0, 30).map((t, i) => [t, texts[i + 7], M.overlap(t, texts[i + 7])]), spread: M.spreadApart(texts.slice(0, 40), (x) => x) , texts: texts.slice(0, 40) });
 write('memory', memCases);
+
+// ---- lessons: every kind of session, built with a seed, for many items, both tracks
+import * as L from '../src/heir/lesson.ts';
+import { courseItems, courses } from '../src/heir/content/index.ts';
+import { INTROS } from '../src/heir/content/intros.ts';
+const lessonCases: unknown[] = [];
+const tracks = ['adult', 'child'] as const;
+for (const course of courses) {
+  const pool = courseItems(course);
+  for (let n = 0; n < 8; n++) {
+    const track = tracks[n % 2];
+    const seed = 1000 + n * 37 + course.id.length;
+    const item = pool[n % pool.length];
+    const units = L.unitsFor(item, track);
+    const unit = units[n % units.length];
+    const mates = pool.slice(0, n % 4).filter((i) => i.id !== item.id).map((i, k) => ({ itemId: i.id, unitKeys: L.unitsFor(i, track).slice(0, 1 + (k % 2)).map((u) => u.key), seen: (n + k) % 6 }));
+    const due = pool.slice(-(n % 5)).filter((i) => i.id !== item.id).map((i, k) => ({ itemId: i.id, strength: [1, 4, 8, 30][k % 4], ...(k % 2 ? { chance: [0.6, 0.8, 0.95][k % 3] } : {}), ...(k % 3 === 0 ? { weak: [L.unitsFor(i, track).at(-1)!.key] } : {}) }));
+    const byId = (id: string) => pool.find((i) => i.id === id)!;
+    const toMate = (m: { itemId: string; unitKeys: string[]; seen: number }) => ({ item: byId(m.itemId), units: L.unitsFor(byId(m.itemId), track).filter((u) => m.unitKeys.includes(u.key)), seen: m.seen });
+    const toDue = (d: { itemId: string; strength: number; chance?: number; weak?: string[] }) => ({ ...d, item: byId(d.itemId) });
+    const maxSteps = n % 3 === 0 ? 10 : undefined;
+    const base = { course: course.id, track, seed, item: item.id, unit: unit.key };
+    lessonCases.push({ fn: 'buildLesson', ...base, mates, due, maxSteps, out: L.buildLesson({ unit, item, track, mates: mates.map(toMate), due: due.map(toDue), pool, rng: L.seeded(seed), maxSteps }) });
+    lessonCases.push({ fn: 'buildLite', ...base, out: L.buildLite({ unit, item, track, pool, rng: L.seeded(seed) }) });
+    if (INTROS[course.id] && n < 2) lessonCases.push({ fn: 'buildWelcome', ...base, out: L.buildWelcome({ intro: INTROS[course.id], unit, item, track, pool, rng: L.seeded(seed) }) });
+    lessonCases.push({ fn: 'buildReview', ...base, due, max: n % 2 ? 3 : undefined, out: L.buildReview({ due: due.map(toDue), track, pool, rng: L.seeded(seed), max: n % 2 ? 3 : undefined }) });
+    const some = pool.slice(n % 3, (n % 3) + 1 + (n % 4));
+    lessonCases.push({ fn: 'buildKeep', ...base, items: some.map((i) => i.id), out: L.buildKeep({ items: some, track, pool, rng: L.seeded(seed) }) });
+    lessonCases.push({ fn: 'buildNight', ...base, items: some.map((i) => i.id), out: L.buildNight({ items: some, track, pool, rng: L.seeded(seed) }) });
+    lessonCases.push({ fn: 'buildRise', ...base, items: some.map((i) => i.id), out: L.buildRise({ items: some, track, pool, rng: L.seeded(seed) }) });
+    const groups = L.groupsOf(pool);
+    const g = groups[n % groups.length];
+    lessonCases.push({ fn: 'buildCheckpoint', ...base, group: g.key, out: L.buildCheckpoint({ group: g, track, pool, rng: L.seeded(seed) }) });
+  }
+  const groups = L.groupsOf(pool);
+  const learned = new Set(pool.slice(0, 3).flatMap((i) => L.unitsFor(i, 'adult').map((u) => u.key)));
+  const act = L.nextActivity(pool, 'adult', learned, new Set([groups[0].key]));
+  lessonCases.push({ fn: 'structure', course: course.id, groups: groups.map((g) => ({ key: g.key, items: g.items.map((i) => i.id) })), units: pool.map((i) => [L.unitsFor(i, 'adult'), L.unitsFor(i, 'child')]), learned: [...learned], next: act ? { kind: act.kind, group: act.group.key, unit: act.kind === 'learn' ? act.unit.key : null } : null, phrases: pool.map((i) => L.phrases(i.chunks.adult)), blanks: pool.map((i, k) => L.pickBlanks(i.text, 0.3, 4, L.seeded(k))), seq: Array.from({ length: 20 }, L.seeded(course.id.length)) });
+}
+write('lesson', lessonCases);
