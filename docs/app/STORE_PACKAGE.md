@@ -30,7 +30,7 @@ The ordered to-do list is in `LAUNCH_CHECKLIST.md`.
 > community board (users can report and block others; reports are read within 24 hours at hello@katekize.com), reminders
 > (Settings → You → Reminders), speaking an answer aloud (microphone and speech recognition, used only while the microphone
 > button is active; nothing is recorded or kept), and Delete my account (You → Delete my account). Scripture text (NASB) is
-> shown by permission through the YouVersion Platform. Children appear only inside their own family and are never searchable.
+> shown by permission through the YouVersion Platform. New accounts automatically get a profile (name and username) with "Let people find me" on; people can turn that off or delete the profile in You → Profile, and signing in confirms they are 13 or older. Children appear only inside their own family and are never searchable.
 
 ## User-generated content process (Apple 1.2)
 Users create a username, name and city. Others can **report** (a person's page → Report) or **block** them. Reports arrive in the
@@ -47,6 +47,7 @@ Data **collected and linked to the user**, used for **App Functionality** (and *
 | Other user content | Answers to lessons, family names |
 | Product interaction | Cards shown/opened/finished, lessons done |
 | Coarse location? **No.** The profile's city and state are typed by the user: answer under **Other user content**. |  |
+**Name and username are shown to other users by default** (a profile is made for each new account with "Let people find me" on; the user can turn it off or delete it). Signing in confirms the person is 13 or older (the sign-in screen says so, with a link to the privacy page).
 **Tracking: No.** No data is sold, shared with advertisers or used for ads. Microphone/speech: processed on the device by the
 phone's own recognizer, **not collected**. Google Play "Data safety": same answers; data is encrypted in transit; users can request
 deletion (in-app, and the privacy page URL).

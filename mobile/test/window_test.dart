@@ -181,4 +181,31 @@ void main() {
       expect(identical(img, again), isTrue, reason: 'the finished picture is kept, not drawn twice');
     });
   });
+
+  test('the light spreads in the same order as on the website, for every window', () {
+    final fixture = jsonDecode(File('../fixtures/window/sweep.json').readAsStringSync()) as Map<String, dynamic>;
+    expect(fixture, isNotEmpty);
+    for (final e in fixture.entries) {
+      final m = pieces(e.key);
+      final flat = [for (final q in m['questions'] as List) ...(q as List).cast<int>()];
+      final centres = [for (final c in m['centres'] as List) [(c[0] as num).toDouble(), (c[1] as num).toDouble()]];
+      final want = (e.value as List).map((l) => (l as List).cast<int>()).toList();
+      final n = want.length, p = flat.length;
+      for (var i = 0; i < n; i++) {
+        final own = flat.sublist((i * p) ~/ n, ((i + 1) * p) ~/ n);
+        expect(sweepOrder(own, centres), want[i], reason: '${e.key} question $i');
+      }
+    }
+  });
+
+  test('a part-way question lights one connected patch, never more than earned', () {
+    final m = pieces('gospel');
+    final flat = [for (final q in m['questions'] as List) ...(q as List).cast<int>()];
+    final centres = [for (final c in m['centres'] as List) [(c[0] as num).toDouble(), (c[1] as num).toDouble()]];
+    final state = paneStates(count: m['count'] as int, flat: flat, lit: [0.5, 0, 0, 0, 0, 0], centres: centres);
+    final own = flat.sublist(0, flat.length ~/ 6);
+    final on = own.where((id) => state[id] == 1).length;
+    expect(on, (own.length * 0.5).round());
+    expect(state.where((s) => s != 0).length, on, reason: 'only that question lights');
+  });
 }

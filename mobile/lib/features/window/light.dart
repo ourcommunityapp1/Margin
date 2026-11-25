@@ -4,6 +4,8 @@
 //
 // A window is never lit more than has been earned: its lit share never exceeds the share of parts learned.
 
+import 'dart:math' as math;
+
 import '../../engine/content.dart';
 import '../../engine/lesson.dart' show unitsFor;
 import '../../engine/levels.dart' show needsRefresh;
@@ -112,13 +114,63 @@ PartWindow windowFor(Course course, String kind, Track track, MemberProgress p, 
   return partWindow(course, track, p, now);
 }
 
-/// Which panes light. Item i of n owns an even share of the window's panes, in reveal order ([flat]); a fraction f lights
-/// the first f of them. Result: per pane id, 0 dark, 1 lit, 2 dusty (lit but due for a refresh).
-List<int> paneStates({required int count, required List<int> flat, required List<double> lit, List<bool>? dusty}) {
+final _sweepCache = Expando<Map<String, List<int>>>('sweepOrder');
+
+/// A question's panes in the order the light should reach them (a port of `sweepOrder` in src/app/heir/ui/glass/light-motion.ts).
+/// Panes are listed by id, which jumps all over the glass, so lighting them in that order looks like random panes. This order starts
+/// at the pane that comes first going clockwise from the top (the way the gold arc runs), then always steps to the nearest pane not
+/// yet lit, so a part-way fraction is one connected patch. [centres] is `pieces.json`'s list of pane centres (0 to 1), by id - 1.
+List<int> sweepOrder(List<int> ids, List<List<double>>? centres) {
+  if (centres == null || ids.length < 3) return ids;
+  final key = ids.join(',');
+  final byKey = _sweepCache[centres] ??= {};
+  final hit = byKey[key];
+  if (hit != null) return hit;
+  const tau = math.pi * 2;
+  List<double> at(int id) => id - 1 >= 0 && id - 1 < centres.length ? centres[id - 1] : const [0.5, 0.5];
+  double angle(int id) => (math.atan2(at(id)[1] - 0.5, at(id)[0] - 0.5) + math.pi / 2 + tau) % tau;
+  // The start: first clockwise after the widest gap between neighbouring angles.
+  final byAngle = [for (final id in ids) (id: id, a: angle(id))]..sort((x, y) => x.a != y.a ? x.a.compareTo(y.a) : x.id.compareTo(y.id));
+  var start = byAngle.first.id;
+  var widest = -1.0;
+  for (var i = 0; i < byAngle.length; i++) {
+    final next = byAngle[(i + 1) % byAngle.length];
+    var gap = (next.a - byAngle[i].a + tau) % tau;
+    if (gap == 0) gap = tau;
+    if (gap > widest) {
+      widest = gap;
+      start = next.id;
+    }
+  }
+  final left = ids.toSet()..remove(start);
+  final out = [start];
+  var cur = start;
+  while (left.isNotEmpty) {
+    final c = at(cur);
+    var best = -1;
+    var bd = double.infinity;
+    for (final id in left) {
+      final p = at(id);
+      final d = (p[0] - c[0]) * (p[0] - c[0]) + (p[1] - c[1]) * (p[1] - c[1]);
+      if (d < bd || (d == bd && id < best)) {
+        bd = d;
+        best = id;
+      }
+    }
+    out.add(best);
+    left.remove(best);
+    cur = best;
+  }
+  return byKey[key] = out;
+}
+
+/// Which panes light. Item i of n owns an even share of the window's panes ([flat]); they are put in [sweepOrder] (when [centres]
+/// is given) and a fraction f lights the first f of them. Result: per pane id, 0 dark, 1 lit, 2 dusty (lit but due for a refresh).
+List<int> paneStates({required int count, required List<int> flat, required List<double> lit, List<bool>? dusty, List<List<double>>? centres}) {
   final state = List<int>.filled(count + 1, 0);
   final p = flat.length, n = lit.length;
   for (var i = 0; i < n; i++) {
-    final own = flat.sublist((i * p) ~/ n, ((i + 1) * p) ~/ n);
+    final own = sweepOrder(flat.sublist((i * p) ~/ n, ((i + 1) * p) ~/ n), centres);
     final on = (lit[i].clamp(0.0, 1.0) * own.length).round();
     for (var k = 0; k < on; k++) {
       state[own[k]] = (dusty != null && dusty[i]) ? 2 : 1;
