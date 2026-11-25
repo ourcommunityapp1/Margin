@@ -202,4 +202,32 @@ void main() {
     await openInvite(tester);
     expect(find.text('This invite was already used or has expired.'), findsOneWidget);
   });
+
+  testWidgets('a website link to an invite opens the app’s invite screen', (tester) async {
+    final social = FakeSocial(profile: _me);
+    await _pump(tester, social);
+    GoRouter.of(tester.element(find.byType(KPage).first)).go('/heir/invite?code=abc123');
+    await tester.pumpAndSettle();
+    expect(find.text('Dan invited you to be friends on Katekize.'), findsOneWidget);
+  });
+
+  testWidgets('a website link to a person opens their page', (tester) async {
+    final social = FakeSocial(profile: _me)..people = [_bea];
+    await _pump(tester, social);
+    GoRouter.of(tester.element(find.byType(KPage).first)).go('/heir/u?name=bea');
+    await tester.pumpAndSettle();
+    expect(find.text('Bea Jones'), findsOneWidget);
+  });
+
+  testWidgets('a link to join accounts links them and says so; a refused one says why', (tester) async {
+    final social = FakeSocial(profile: _me);
+    await _pump(tester, social);
+    GoRouter.of(tester.element(find.byType(KPage).first)).go('/heir/join?code=abc123');
+    await tester.pumpAndSettle();
+    expect(social.joined, ['abc123']);
+    expect(find.textContaining('You’re linked.'), findsOneWidget);
+    await _tap(tester, 'See Linked accounts');
+    expect(find.text('Linked account · view only'), findsNothing);
+    expect(find.text('Link a spouse’s account'), findsOneWidget);
+  });
 }
