@@ -1,19 +1,30 @@
-// Runs a list of steps one at a time (src/app/heir/ui/lesson.tsx LessonRunner): a progress bar, the step's card, a
-// feedback sheet after each answer, and a second try at the end for anything missed.
-//
-// So far this is a practice run: the steps come from the engine's lesson builders, but nothing is saved, graded
-// into the person's memory, or counted towards Today yet. That needs the household and progress storage
-// (finishSession, settle, Today's record), which come next. The done screen says so.
+// Runs a lesson (src/app/heir/ui/lesson.tsx LessonRunner): a progress bar, the step's card, a feedback sheet after each
+// answer, and a second try at the end for anything missed. Every answer is recorded; when the last one is done the
+// lesson is saved to the person's progress (finishSession, settle) and Today's record, and the done screen shows how
+// it went.
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
+import '../../engine/dayplan.dart';
 import '../../engine/lesson.dart' as lesson;
+import '../../engine/levels.dart';
+import '../../engine/measures.dart';
+import '../../engine/memory.dart';
+import '../../engine/models.dart';
+import '../../engine/planner.dart' as planner;
+import '../../engine/progress.dart';
 import '../../engine/types.dart';
+import '../../data/household.dart' show newId;
+import '../../state/clock.dart';
+import '../../state/household.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import 'labels.dart';
 import 'outcome.dart';
+import 'session.dart';
 import 'step_frame.dart';
 import 'steps.dart';
 
@@ -27,35 +38,69 @@ String contextBefore(Item item, Track track, String lead) {
   return at > 0 ? c.sublist(0, at).join(' ') : '';
 }
 
-class LessonScreen extends StatefulWidget {
-  const LessonScreen({super.key, required this.steps, required this.track, this.label});
-
-  final List<lesson.Step> steps;
-  final Track track;
-
-  /// A line under the progress bar ("Welcome", "Practice · Q1").
-  final String? label;
-
-  @override
-  State<LessonScreen> createState() => _LessonScreenState();
+/// How a lesson went, for the done screen.
+class _Finished {
+  const _Finished({required this.right, required this.total, required this.minutes, required this.ups, required this.awards, required this.kept});
+  final int right, total, minutes, kept;
+  final List<({String itemId, int from, int to})> ups;
+  final List<String> awards;
 }
 
-class _LessonScreenState extends State<LessonScreen> {
-  late List<lesson.Step> _queue = [...widget.steps];
+class LessonScreen extends ConsumerStatefulWidget {
+  const LessonScreen({super.key, required this.session, required this.track});
+
+  final Session session;
+  final Track track;
+
+  @override
+  ConsumerState<LessonScreen> createState() => _LessonScreenState();
+}
+
+class _LessonScreenState extends ConsumerState<LessonScreen> {
+  late List<lesson.Step> _queue = [...widget.session.steps];
   int _pos = 0;
   Outcome? _feedback;
-  bool _finished = false;
+  _Finished? _finished;
   final Set<String> _retried = {};
 
-  /// Whether each step was right the first time it was answered.
-  final Map<String, bool> _results = {};
+  /// One result per step, the first time it was answered.
+  final Map<String, StepResult> _results = {};
+  DateTime _stepStart = DateTime.now();
+  int _activeMs = 0;
 
   static String _key(lesson.Step s) => s.id.replaceAll(RegExp(r':typed$'), '');
 
+  Session get _session => widget.session;
+
   void _report(Outcome o) {
     final step = _queue[_pos];
+    // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
+    if (step.kind == 'quiz') {
+      setState(() => _feedback = o);
+      return;
+    }
+    final now = ref.read(clockProvider)();
     final key = _key(step);
-    _results.putIfAbsent(key, () => o.ok);
+    final mine = ref.read(myProgressProvider);
+    // The chance the model gave before this answer, kept beside it so we can check the model is right.
+    final chance = const ['type', 'say', 'letters'].contains(step.kind) ? predictedChance(mine.cards[step.itemId], now) : null;
+    _results.putIfAbsent(
+      key,
+      () => StepResult(
+        itemId: step.itemId,
+        kind: step.kind,
+        correct: o.ok,
+        hints: o.hints ?? 0,
+        ms: DateTime.now().difference(_stepStart).inMilliseconds,
+        review: step.review,
+        p: chance,
+        part: step.part,
+        of: step.partOf,
+        words: step.text != null && step.kind != 'verse' ? wordCount(step.text!) : null,
+        misses: o.misses,
+        missed: o.missedAt != null && o.missedAt!.isNotEmpty ? o.missedAt!.take(60).toList() : null,
+      ),
+    );
     setState(() {
       if (!o.ok && !_retried.contains(key)) {
         _retried.add(key);
@@ -66,13 +111,59 @@ class _LessonScreenState extends State<LessonScreen> {
   }
 
   void _advance() {
+    _activeMs += DateTime.now().difference(_stepStart).inMilliseconds.clamp(0, 120000);
+    _stepStart = DateTime.now();
+    final n = _pos + 1;
+    if (n < _queue.length) {
+      setState(() {
+        _feedback = null;
+        _pos = n;
+      });
+      return;
+    }
+    _finish();
+  }
+
+  /// Saves the lesson: the answers into the person's progress, the stones they have now earned, and Today's record.
+  void _finish() {
+    final now = ref.read(clockProvider)();
+    final session = _session;
+    final recorded = _results.values.toList();
+    final mine = memberProgress(ref.read(progressProvider), session.memberId);
+    final next = finishSession(
+      mine,
+      results: recorded,
+      learned: session.units,
+      courseId: session.courseId,
+      checkpoint: session.kind == 'checkpoint' ? session.group?.key : null,
+      now: now,
+      grading: 'v2',
+      keepRules: (tz: null),
+    );
+    final settled = settle(next, allItems(), widget.track, now);
+    final secs = (_activeMs / 1000).round().clamp(1, 1 << 30);
+    final planCourse = ref.read(householdProvider).plan?.course ?? '';
+    // A practice on one item counts as extra practice, not as a lesson of the course.
+    final kind = session.courseId.isEmpty ? 'extra' : session.kind == 'review' ? 'review' : 'lesson';
+    final saved = settled.progress.copyWith(
+      today: withSession(
+        settled.progress.today,
+        localDay(now),
+        DaySession(newId(), iso(now), secs, session.courseId.isEmpty ? planCourse : session.courseId, kind),
+      ),
+    );
+    ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
+    final recall = recorded.where((r) => r.kind != 'intro').toList();
     setState(() {
       _feedback = null;
-      if (_pos + 1 < _queue.length) {
-        _pos++;
-      } else {
-        _finished = true;
-      }
+      _finished = _Finished(
+        right: recall.where((r) => r.correct).length,
+        total: recall.length,
+        minutes: (_activeMs / 60000).round().clamp(1, 1 << 30),
+        ups: settled.ups,
+        awards: settled.awards,
+        kept: daysKept(settled.progress.days, localDay(now)),
+      );
     });
   }
 
@@ -89,21 +180,25 @@ class _LessonScreenState extends State<LessonScreen> {
 
   void _exit() => context.canPop() ? context.pop() : context.go('/today');
 
-  void _again() => setState(() {
-        _queue = [...widget.steps];
-        _pos = 0;
-        _feedback = null;
-        _finished = false;
-        _retried.clear();
-        _results.clear();
-      });
-
   @override
   Widget build(BuildContext context) {
     final k = context.k;
     final pad = MediaQuery.paddingOf(context);
     final keyboard = MediaQuery.viewInsetsOf(context).bottom;
-    if (_finished) return _Done(right: _results.values.where((r) => r).length, total: _results.length, onExit: _exit, onAgain: _again);
+
+    if (_queue.isEmpty) {
+      return KPage(bare: true, pushDown: true, children: [
+        const SizedBox(height: 40),
+        KCard.column(gap: 16, children: [
+          Text.rich(TextSpan(children: [
+            TextSpan(text: 'Nothing to review yet.', style: serif(26, weight: FontWeight.w600, color: k.ink, height: 1.25)),
+            TextSpan(text: ' Finish a lesson first, and it will come back here.', style: serif(26, color: k.muted, height: 1.25)),
+          ])),
+          KButton('Back to Today', onPressed: _exit),
+        ]),
+      ]);
+    }
+    if (_finished != null) return _Done(session: _session, finished: _finished!, onExit: _exit, track: widget.track);
 
     final step = _queue[_pos];
     final item = getItem(step.itemId)!;
@@ -174,8 +269,20 @@ class _LessonScreenState extends State<LessonScreen> {
                         ),
                       ],
                     ),
-                    if (widget.label != null)
-                      Padding(padding: const EdgeInsets.fromLTRB(4, 10, 4, 0), child: KLabel(widget.label!)),
+                    Padding(padding: const EdgeInsets.fromLTRB(4, 10, 4, 0), child: KLabel(_session.label)),
+                    if (_session.kind == 'checkpoint' && _pos == 0 && feedback == null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
+                        child: Text.rich(
+                          TextSpan(children: [
+                            TextSpan(text: 'Lock it in.', style: sans(15, weight: FontWeight.w700, color: k.ink, height: 1.45)),
+                            TextSpan(
+                              text: ' Each of ${_session.group != null ? groupLabel(_session.group!) : 'these'}, from memory. This is meant to be hard.',
+                            ),
+                          ]),
+                          style: sans(15, color: k.ink, height: 1.45),
+                        ),
+                      ),
                     const SizedBox(height: KSize.gap),
                     Expanded(
                       child: StepChrome(
@@ -239,12 +346,14 @@ class _LessonScreenState extends State<LessonScreen> {
 
   List<Widget> _header(lesson.Step step, Item item, bool retry) {
     final k = context.k;
-    final units = widget.steps.where((s) => s.unit != null).map((s) => s.unit!);
+    final units = _session.steps.where((s) => s.unit != null).map((s) => s.unit!);
     final u = units.where((x) => x.itemId == step.itemId).firstOrNull;
     final part = !step.review && u != null && u.of > 1 ? ' · Part ${u.part} of ${u.of}' : '';
     final title = '${itemLabel(item)}$part';
-    final tag = step.review ? 'Review' : null;
+    // A lock-in says so on every question; elsewhere, practice on earlier questions is marked Review.
+    final tag = _session.kind == 'checkpoint' ? 'Lock it in · ${(_pos + 1).clamp(1, _queue.length)} of ${_queue.length}' : step.review ? 'Review' : null;
     final second = retry ? ' · Second try' : '';
+    final why = step.review ? _session.why[step.itemId] : null;
 
     Widget tagged(String text) => Row(
           children: [
@@ -252,6 +361,7 @@ class _LessonScreenState extends State<LessonScreen> {
             Flexible(child: KLabel(text)),
           ],
         );
+    final whyLine = why == null ? null : Text(why, style: sans(13.5, color: k.muted));
 
     switch (step.kind) {
       case 'intro' || 'info' || 'verse':
@@ -259,7 +369,7 @@ class _LessonScreenState extends State<LessonScreen> {
       case 'quiz':
         return const [KLabel('Welcome')];
       case 'match' || 'meaning':
-        return [tagged('${step.kind == 'meaning' ? title : 'Match'}$second')];
+        return [tagged('${step.kind == 'meaning' ? title : 'Match'}$second'), ?whyLine];
       default:
         // A verse's prompt is its reference, already shown large below, so the label names the course instead.
         final label = isVerse(item) ? title.replaceFirst(item.prompt, getCollection(item.collection)?.title ?? '') : title;
@@ -272,6 +382,7 @@ class _LessonScreenState extends State<LessonScreen> {
               Text(item.prompt, style: serif(20, weight: FontWeight.w600, color: k.ink, height: 1.35)),
             ],
           ),
+          ?whyLine,
           if (step.lead != null) ContextBefore(contextBefore(item, widget.track, step.lead!)),
         ];
     }
@@ -294,14 +405,38 @@ class _LessonScreenState extends State<LessonScreen> {
       };
 }
 
-class _Done extends StatelessWidget {
-  const _Done({required this.right, required this.total, required this.onExit, required this.onAgain});
-  final int right, total;
-  final VoidCallback onExit, onAgain;
+/// The lesson is done and saved (lesson.tsx Done, without the window or the share).
+class _Done extends ConsumerWidget {
+  const _Done({required this.session, required this.finished, required this.onExit, required this.track});
+  final Session session;
+  final _Finished finished;
+  final VoidCallback onExit;
+  final Track track;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final k = context.k;
+    final mine = ref.watch(myProgressProvider);
+    final now = ref.read(clockProvider)();
+    final course = courseFor(session.courseId);
+    final items = course == null ? const <Item>[] : courseItems(course);
+    final upNext = course == null ? null : planner.planNext(courseId: course.id, items: items, track: track, p: mine, now: now);
+    final first = session.units.isEmpty ? null : session.units.first;
+    final partial = first != null && first.part < first.of;
+    final kind = session.label == 'Welcome' ? 'Welcome lesson complete' : '${session.label} complete';
+    final top = finished.ups.isEmpty ? null : finished.ups.first;
+    final topItem = top == null ? null : getItem(top.itemId);
+    final topLevel = top == null ? null : levelInfo(top.to);
+    final message = session.kind == 'checkpoint'
+        ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
+        : session.kind == 'review'
+            ? 'Each review waits until you’re close to forgetting, which is when recalling it helps most.'
+            : partial
+                ? 'Part ${first.part} of ${first.of} learned. The next lesson continues it.'
+                : '';
+    // Started from the course (not Today's cards): offer the next one straight away.
+    final cta = session.courseId.isEmpty || upNext == null ? null : upNext.kind == 'checkpoint' ? 'Lock them in now' : 'Next lesson';
+
     return KPage(
       bare: true,
       pushDown: true,
@@ -310,14 +445,29 @@ class _Done extends StatelessWidget {
         KCard.column(
           gap: 14,
           children: [
-            Semantics(header: true, child: Text('Practice complete', style: serif(28, weight: FontWeight.w600, color: k.ink, height: 1.2))),
-            if (total > 0) Text('$right of $total right the first time.', style: sans(18, color: k.ink, height: 1.5)),
+            Semantics(header: true, child: Text(kind, style: serif(28, weight: FontWeight.w600, color: k.ink, height: 1.2))),
+            if (finished.total > 0) Text('${finished.right} of ${finished.total} right the first time.', style: sans(18, color: k.ink, height: 1.5)),
             Text(
-              'This was a practice run, so nothing was saved yet. Saving what you learn and planning Today’s cards come next.',
-              style: sans(15, color: k.muted, height: 1.5),
+              '${finished.minutes} ${finished.minutes == 1 ? 'minute' : 'minutes'}'
+              '${finished.kept > 0 ? ' · ${finished.kept} ${finished.kept == 1 ? 'day' : 'days'} kept' : ''}',
+              style: sans(15, color: k.muted),
             ),
-            KButton('Done', onPressed: onExit),
-            KButton('Try again', quiet: true, onPressed: onAgain),
+            if (topItem != null && topLevel != null)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: k.well, borderRadius: BorderRadius.circular(16)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('${itemLabel(topItem)} · ${topLevel.name}', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                    const SizedBox(height: 2),
+                    Text(topLevel.means, style: sans(14, color: k.muted, height: 1.45)),
+                  ],
+                ),
+              ),
+            if (message.isNotEmpty) Text(message, style: sans(15, color: k.muted, height: 1.5)),
+            if (cta != null) KButton(cta, onPressed: () => context.pushReplacement('/lesson')),
+            KButton('Back to Today', quiet: cta != null, onPressed: onExit),
           ],
         ),
       ],

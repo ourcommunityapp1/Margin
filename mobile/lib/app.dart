@@ -10,7 +10,7 @@ import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
 import 'features/friends/friends_screen.dart';
 import 'features/item/item_screen.dart';
-import 'features/lesson/practice_screen.dart';
+import 'features/lesson/session_screen.dart';
 import 'features/onboarding/start_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/progress/progress_screen.dart';
@@ -87,7 +87,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/you', pageBuilder: (_, s) => _fade(s, const YouScreen())),
       GoRoute(
         path: '/lesson',
-        pageBuilder: (_, s) => _fade(s, PracticeScreen(itemId: s.uri.queryParameters['item'] ?? '')),
+        pageBuilder: (_, s) => _fade(s, SessionScreen(itemId: s.uri.queryParameters['item'])),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _TabShell(shell: shell),
