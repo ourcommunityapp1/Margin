@@ -121,9 +121,9 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [x] Account sync (`state/sync.dart`, `data/account.dart`, `data/sync_rules.dart`): on sign-in and when the app comes back,
   the account's family and progress are READ and merged into the phone's (progress is merged, never overwritten; if the
   account has a family it replaces the phone's, as on the website). Verified read-only against the owner's real account.
-  **Writing is OFF by default** (`Config.syncWrites`; run with `--dart-define=SYNC_WRITES=true`): it uploads the family,
-  saves progress, and sends answers and card events. Tests with a fake account prove nothing is written when it is off.
-  Turn it on only with the owner's say-so. **Tested once for real (Nov 25, 2026, with the owner's OK):** a two-step
+  **Writing is ON by default** (`Config.syncWrites`, decided with the owner on Nov 25, 2026); build with
+  `--dart-define=SYNC_WRITES=false` for a read-only run. It uploads the family, saves progress, and sends answers and card
+  events. Tests with a fake account prove nothing is written when it is off. **Tested once for real (Nov 25, 2026, with the owner's OK):** a two-step
   practice lesson on the simulator added exactly 2 answers (187 to 189) and a day (6 to 7) to the owner's account; nothing
   else changed and no answer was duplicated.
 - [x] First run: name, course, daily goal (with the planner's dates), saved; reopening goes straight to Today.

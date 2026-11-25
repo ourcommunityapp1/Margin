@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/data/account.dart';
+import 'package:katekize/data/config.dart';
 import 'package:katekize/data/household.dart';
 import 'package:katekize/data/store.dart';
 import 'package:katekize/data/sync_rules.dart';
@@ -87,6 +88,11 @@ Future<void> _settle() => Future<void>.delayed(const Duration(milliseconds: 1000
 
 void main() {
   loadTestContent();
+
+  test('saving to the account is on by default (and off only when a build says so)', () {
+    expect(Config.syncWrites, isTrue);
+    expect(ProviderContainer().read(syncWritesProvider), isTrue);
+  });
 
   group('read-only (the default): the account is read, never written', () {
     test('an account that already has a family replaces what is on the phone, and its progress is merged in', () async {

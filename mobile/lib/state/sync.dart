@@ -4,8 +4,8 @@
 //   - on sign-in (and when the app comes back to the front) the account's copy is READ and merged into the phone's:
 //     progress is merged, never overwritten, so a lesson done on another phone is kept;
 //   - after a change on this phone, the change is WRITTEN to the account (a moment later, so quick changes go together).
-// Reading is always on. Writing only happens when it is switched on (Config.syncWrites), because it changes the live data
-// the website uses too.
+// Reading is always on. Writing is on by default (Config.syncWrites) and can be switched off for a read-only build, because
+// it changes the live data the website uses too.
 
 import 'dart:async';
 

@@ -14,9 +14,10 @@ abstract final class Config {
       String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: 'sb_publishable_dyTP4v5FfpStHOzA_J_dCw_IZkp2wmI');
 
   /// Whether the app may WRITE to the account's database (uploading the family, saving progress, sending answers).
-  /// Off by default: reading is always safe, writing changes the live data the website also uses. Turn on for a run with
-  ///   flutter run --dart-define=SYNC_WRITES=true
-  static const syncWrites = bool.fromEnvironment('SYNC_WRITES');
+  /// On by default, as on the website (decided with the owner after a real test, Nov 25, 2026). To run a build that only
+  /// READS the account, e.g. when testing against someone's real data:
+  ///   flutter run --dart-define=SYNC_WRITES=false
+  static const syncWrites = bool.fromEnvironment('SYNC_WRITES', defaultValue: true);
 
   /// Accounts are on when both are set (as `heirCloudConfigured` on the website). With them off, the household
   /// stays on the phone and no sign-in is asked for.
