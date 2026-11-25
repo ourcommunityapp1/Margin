@@ -10,6 +10,7 @@ import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
 import 'features/friends/friends_screen.dart';
 import 'features/item/item_screen.dart';
+import 'features/lesson/practice_screen.dart';
 import 'features/onboarding/start_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/progress/progress_screen.dart';
@@ -52,7 +53,7 @@ class KatekizeApp extends ConsumerWidget {
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -80,6 +81,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, s) => _fade(s, SignInScreen(next: s.uri.queryParameters['next'] ?? '/today')),
       ),
       GoRoute(path: '/you', pageBuilder: (_, s) => _fade(s, const YouScreen())),
+      GoRoute(
+        path: '/lesson',
+        pageBuilder: (_, s) => _fade(s, PracticeScreen(itemId: s.uri.queryParameters['item'] ?? '')),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _TabShell(shell: shell),
         branches: [

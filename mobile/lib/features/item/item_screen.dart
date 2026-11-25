@@ -47,6 +47,11 @@ class ItemScreen extends StatelessWidget {
           children: [
             Text(item.prompt, style: serif(20, weight: FontWeight.w600, color: k.ink, height: 1.35)),
             Text(item.text, style: serif(24, color: k.ink, height: 1.45)),
+            // The website shows this once the item is learned; until progress is stored, it is always offered.
+            KButton(
+              'Practice this ${unit == 'Question' ? 'question' : unit == 'Verse' ? 'verse' : 'now'}',
+              onPressed: () => context.push('/lesson?item=${Uri.encodeQueryComponent(item.id)}'),
+            ),
           ],
         ),
         if (item.meaning.isNotEmpty)
