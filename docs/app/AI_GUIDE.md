@@ -115,8 +115,8 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 ### Phase 2: first slice (in progress, started Nov 25, 2026)
 
 - [x] Theme, fonts (Inter, Source Serif 4), the time-of-day background, the tab bar (`mobile/lib/ui/`).
-- [x] Sign-in (emailed code); the session in secure storage. Tested with a fake sign-in; **not yet tried against the
-  real Supabase project** (that sends a real email: do it with the owner).
+- [x] Sign-in (emailed code); the session in secure storage. Works against the real Supabase project (owner signed in on
+  the simulator, Nov 25, 2026).
 - [x] Household and progress kept on the phone under the website's keys (`mobile/lib/data/`, `mobile/lib/state/`).
 - [x] Account sync (`state/sync.dart`, `data/account.dart`, `data/sync_rules.dart`): on sign-in and when the app comes back,
   the account's family and progress are READ and merged into the phone's (progress is merged, never overwritten; if the
@@ -127,7 +127,7 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
   practice lesson on the simulator added exactly 2 answers (187 to 189) and a day (6 to 7) to the owner's account; nothing
   else changed and no answer was duplicated.
 - [x] First run: name, course, daily goal (with the planner's dates), saved; reopening goes straight to Today.
-- [x] Courses, a course, and an item to read, from the bundled content (no windows or "N learned" yet).
+- [x] Courses (with windows and "N of M learned"), a course, and an item to read, from the bundled content.
 - [x] The lesson runner with every step kind except real speech (say-aloud is "check yourself" for now); feedback sheet,
   second try, done screen. Built from saved progress by `features/lesson/session.dart` (modes lesson and item) and saved
   on finish (`finishSession`, `settle`, Today's record).
@@ -136,7 +136,9 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
   windows on the cards are plain placeholders until phase 3.
 - [x] Progress: the week and month of days kept, words in memory and milestones, the stones ladder (real gem images),
   your courses (a plain list: the windows wall waits for phase 3), awards. Not yet: the community preview.
-- [ ] Friends, Community, You (plan, family, linked accounts, profile).
+- [ ] You: change course or daily goal, family (add, edit, remove, bring back), linked accounts, profile, How it works,
+  About and credits. (Phase 4. Until it exists a person cannot change their course or goal in the app.)
+- [ ] Friends and Community (needs account sync, which is done).
 - [x] Answers and card events are sent when writing is on (`SupabaseAccountApi`).
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 
