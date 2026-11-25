@@ -4,7 +4,10 @@
 for. Plain words first; the technical detail the AI needs is in clearly marked places and in the linked decision records
 (ADRs).
 
-**Status.** Plan, 2026-11-25. Nothing in `mobile/` is built yet.
+**Status (2026-11-25).** The code for phases 1 to 6 is written and tested; see the checklists in [AI_GUIDE.md](AI_GUIDE.md).
+What is left needs the owner's Apple and Google accounts or a real phone: TestFlight builds, invite links, the reviewer
+account, store screenshots, the Home Screen widget, and Android (never built). The list is in [STORE_PACKAGE.md](STORE_PACKAGE.md)
+and [NATIVE_SETUP.md](NATIVE_SETUP.md). The phase table below is the original plan.
 
 ---
 

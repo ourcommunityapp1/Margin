@@ -2,6 +2,8 @@
 
 Everything the App Store and Google Play ask for, drafted. The owner approves each item. Items marked **YOU** need your accounts.
 
+The ordered to-do list is in `LAUNCH_CHECKLIST.md`.
+
 ## Built in the app
 - **Delete my account** (You → Delete my account, signed in only): lists what goes, asks for the word DELETE, calls
   `POST https://katekize.com/api/heir/account/delete`, then clears the phone. The route
@@ -59,7 +61,7 @@ themes, religious content = yes (Scripture). Not in the Kids Category. Expect 12
 - **Description:** Katekize helps your family memorize the Word and keep it for good. Each day it plans a short lesson and a review of what is about to fade, using spaced practice so what you learn stays. Choose a course (First Verses, Westminster Shorter Catechism, creeds, and more) and a daily goal from 5 to 30 minutes. Type, fill in blanks, put phrases in order, or say the answer aloud. Watch each course's stained-glass window light up pane by pane, earn stones, and keep your days. Add your children as their own learners (they're never shown outside your family), see your spouse's progress, and memorize alongside friends. Daily reminders are optional and stay on your phone. Free.
 - **Keywords (100):** scripture,memorize,bible,verses,catechism,creed,memory,devotion,Westminster,family,prayer,study
 - **Support URL:** https://katekize.com **Privacy URL:** https://katekize.com/privacy **Marketing URL:** https://katekize.com
-- **Screenshots (YOU, from a real build; I can capture them on the simulator):** iPhone 6.9" (1290×2796) and 6.5" (1284×2778): Today
+- **Screenshots (YOU, from a real build; I can capture them on the simulator):** iPhone 6.9" (1320×2868 on current iPhones; App Store Connect shows the accepted sizes. The first release is iPhone-only, no iPad): Today
   with a window card, a lesson step, Progress with windows, Friends/Community, a course window up close. Android phone: 1080×1920 or larger.
 - **Category:** Education (primary), Lifestyle (secondary). **Price:** Free. **Copyright:** © 2026 Katekize.
 
