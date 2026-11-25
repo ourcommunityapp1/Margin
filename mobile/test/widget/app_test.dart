@@ -85,7 +85,9 @@ void main() {
 
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Your week'), findsOneWidget);
+    expect(find.text('Progress'), findsWidgets);
+    expect(find.text('Words in your memory'), findsOneWidget);
+    expect(find.text('One lesson or review keeps the day.'), findsOneWidget);
   });
 
   testWidgets('sign in by emailed code, then the Friends tab appears', (tester) async {

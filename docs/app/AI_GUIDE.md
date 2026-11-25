@@ -128,7 +128,9 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [x] Today with real cards: `planDay`, the carousel, tags, "Done for today", the day line and warning, the evening and
   morning recall banner, Keep going; every card opens the right session (lesson, review, fix, night, rise, extra). The
   windows on the cards are plain placeholders until phase 3.
-- [ ] Progress (streak, week, stones), Friends, Community, You (plan, family, linked accounts, profile).
+- [x] Progress: the week and month of days kept, words in memory and milestones, the stones ladder (real gem images),
+  your courses (a plain list: the windows wall waits for phase 3), awards. Not yet: the community preview.
+- [ ] Friends, Community, You (plan, family, linked accounts, profile).
 - [ ] Answers and card events sent to the server.
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 

@@ -65,6 +65,7 @@ flutter:
   assets:
     - assets/content/content.json
     - assets/images/
+    - assets/images/stones/
 
   # Source Serif 4 for Scripture and headings, Inter for the interface (as on the website).
   # Variable fonts (SIL Open Font License, from github.com/google/fonts); weights are set with

@@ -61,8 +61,11 @@ class DoneSlide extends Slide {
 
 /// The dark card (`.hr-rose-card`).
 class RoseCard extends StatelessWidget {
-  const RoseCard({super.key, required this.children, this.padding = const EdgeInsets.fromLTRB(18, 22, 18, 20), this.gap = 16});
+  const RoseCard({super.key, required this.children, this.padding = const EdgeInsets.fromLTRB(18, 22, 18, 20), this.gap = 16, this.fill = false});
   final List<Widget> children;
+
+  /// Fill the height it is given, spreading the pieces (a carousel card); otherwise hug them.
+  final bool fill;
   final EdgeInsets padding;
   final double gap;
 
@@ -76,9 +79,10 @@ class RoseCard extends StatelessWidget {
         child: Padding(
           padding: padding,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
+            mainAxisAlignment: fill ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
-            children: [for (var i = 0; i < children.length; i++) ...[if (i > 0) SizedBox(height: gap), children[i]]],
+            children: [for (var i = 0; i < children.length; i++) ...[if (i > 0 && !fill) SizedBox(height: gap), children[i]]],
           ),
         ),
       );
@@ -202,7 +206,7 @@ class _TodayCarouselState extends State<TodayCarousel> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: 480,
+              height: 520,
               child: PageView(
                 controller: _controller,
                 clipBehavior: Clip.none,
@@ -261,6 +265,7 @@ class _SlideCard extends StatelessWidget {
       DoneSlide() => Semantics(
           label: 'Done for today',
           child: RoseCard(
+            fill: true,
             children: [
               Semantics(header: true, child: Text('Done for today', style: serif(28, weight: FontWeight.w500, color: roseInk))),
               const WindowPlaceholder(),
@@ -300,6 +305,7 @@ class _CardBody extends StatelessWidget {
       child: Opacity(
         opacity: 1,
         child: RoseCard(
+          fill: true,
           children: [
             _Tag(tag, fix: fix),
             Semantics(header: true, child: Text(course.title, textAlign: TextAlign.center, style: serif(26, weight: FontWeight.w500, color: roseInk, height: 1.12))),
