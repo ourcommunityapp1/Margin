@@ -138,8 +138,10 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
   your courses (a plain list: the windows wall waits for phase 3), awards. Not yet: the community preview.
 - [x] You: course and daily goal (with what the stones and grades mean), family (add, switch active, change track, remove,
   bring back or fold into someone), How it works, About and credits, sign in/out, Start over (`features/you/`).
-- [ ] You: Profile and Linked accounts (need the server's profile and link functions).
-- [ ] Friends and Community (needs account sync, which is done).
+- [x] You: Profile and Linked accounts (`features/you/`, `data/social.dart`).
+- [x] Friends (search, requests, a friend's page, remove/block/report, friend invites), Community (board, Progress preview, dot on
+  the Progress tab) (`features/friends/`, `features/progress/community_preview.dart`, `data/board.dart`). The phone asks the
+  server for friends' numbers after progress settles (`/api/heir/stats`).
 - [x] Answers and card events are sent when writing is on (`SupabaseAccountApi`).
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 
@@ -172,3 +174,15 @@ See the plan's table. Each feature needs:
 | Engine function | Fixtures | Last passed |
 |---|---|---|
 | (filled in during phase 1) | | |
+
+### Phase 5: native features (started Nov 25, 2026)
+
+- [x] Share sheet (`platform/share.dart`, share_plus) for friend invites, account links and courses; copies the link if there is no sheet.
+- [x] Haptics (`platform/haptics.dart`): light for right, firm for wrong, a double tap at the end of a lesson.
+- [x] Reminders (`platform/reminders.dart`, `state/reminders.dart`, `features/you/reminders_screen.dart`): a daily reminder and
+  evening/morning recalls, scheduled on the phone for ten days and put again as work is done; permission is asked only when one is turned on.
+- [x] Say it from memory listens (`platform/speech.dart`, speech_to_text), graded like typed words; falls back to check-yourself.
+- [ ] Invite links that open the app (needs the Apple account and the website's `apple-app-site-association` / `assetlinks.json`).
+- [ ] Home Screen widget (Swift/Kotlin code in the widget targets; needs an app group on the Apple account).
+- Not checked on a real phone: speech (the simulator has no real microphone path tried), the haptic feel, notifications arriving at their
+  time. Android settings are in the manifest and Gradle file but were never built (no Android SDK on this Mac).
