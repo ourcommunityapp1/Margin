@@ -65,7 +65,7 @@ class CourseChoices extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Text(st.learned > 0 ? '${st.learned} of ${st.total} learned' : 'Not started', style: sans(13, weight: FontWeight.w600, color: k.muted)),
+                        Flexible(flex: 2, child: Text(st.learned > 0 ? '${st.learned} of ${st.total} learned' : 'Not started', style: sans(13, weight: FontWeight.w600, color: k.muted))),
                       ],
                     ),
                   ],

@@ -107,7 +107,8 @@ class _TabButton extends StatelessWidget {
                   children: [
                     KIcon(tab.icon, color: color),
                     const SizedBox(height: 4),
-                    Text(tab.label, style: sans(12, weight: FontWeight.w600, color: color, height: 1)),
+                    // The bar is a fixed height, so its labels grow only a little with the phone's text size.
+                    Text(tab.label, textScaler: MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 1.2), style: sans(12, weight: FontWeight.w600, color: color, height: 1)),
                   ],
                 ),
                 // .hr-tabs .hr-dot: 9px gold, ringed in the page's ink, just right of the icon's centre.

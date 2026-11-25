@@ -363,18 +363,19 @@ class _WeekCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.end,
+            runSpacing: 4,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
                   Text('$kept', style: serif(34, weight: FontWeight.w600, color: k.ink, height: 1)),
                   const SizedBox(width: 8),
-                  Text(kept == 1 ? 'day kept' : 'days kept', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                  Flexible(child: Text(kept == 1 ? 'day kept' : 'days kept', style: sans(16, weight: FontWeight.w600, color: k.ink))),
                 ],
               ),
               if (best > 0) Text('Best: $best', style: sans(13, weight: FontWeight.w600, color: k.muted)),
@@ -477,21 +478,22 @@ class _MonthCard extends StatelessWidget {
     return KCard.column(
       gap: 14,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          runSpacing: 4,
           children: [
             Row(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text('$kept', style: serif(30, weight: FontWeight.w600, color: k.ink, height: 1)),
                 const SizedBox(width: 8),
-                Text(kept == 1 ? 'day kept' : 'days kept', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                Flexible(child: Text(kept == 1 ? 'day kept' : 'days kept', style: sans(16, weight: FontWeight.w600, color: k.ink))),
               ],
             ),
-            Flexible(child: Text('${_monthNames[l.month - 1]}${best > 0 ? ' · Best $best' : ''}', textAlign: TextAlign.right, style: sans(13, weight: FontWeight.w600, color: k.muted))),
+            Text('${_monthNames[l.month - 1]}${best > 0 ? ' · Best $best' : ''}', style: sans(13, weight: FontWeight.w600, color: k.muted)),
           ],
         ),
         LayoutBuilder(

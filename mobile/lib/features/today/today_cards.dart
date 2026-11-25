@@ -82,11 +82,26 @@ class RoseCard extends StatelessWidget {
         ),
         child: Padding(
           padding: padding,
-          child: Column(
-            mainAxisSize: fill ? MainAxisSize.max : MainAxisSize.min,
-            mainAxisAlignment: fill ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [for (var i = 0; i < children.length; i++) ...[if (i > 0 && !fill) SizedBox(height: gap), children[i]]],
+          child: fill ? LayoutBuilder(builder: (context, box) => _spread(box)) : _column(),
+        ),
+      );
+
+  Widget _column() => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [for (var i = 0; i < children.length; i++) ...[if (i > 0) SizedBox(height: gap), children[i]]],
+      );
+
+  // A card of a set height spreads its pieces; with very large text it scrolls instead of overflowing.
+  Widget _spread(BoxConstraints box) => SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: box.maxHeight),
+          child: IntrinsicHeight(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: children,
+            ),
           ),
         ),
       );

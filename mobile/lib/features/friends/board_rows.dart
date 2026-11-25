@@ -31,7 +31,7 @@ class BoardRowView extends StatelessWidget {
     final sub = r.isMe ? (note ?? '') : rowSub(r);
     final move = r.isMe ? movement(r) : 0;
     final body = Container(
-      height: height,
+      constraints: BoxConstraints(minHeight: height),
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: r.isMe ? _meBg : null,
