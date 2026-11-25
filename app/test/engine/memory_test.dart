@@ -7,7 +7,6 @@ import 'fixture.dart';
 Cal? _cal(Object? v) => v == null ? null : Cal(((v as Map)['a'] as num).toDouble(), (v['b'] as num).toDouble());
 Map<String, Object?> _mem(Map<String, PartMem> m) => m.map((k, v) => MapEntry(k, v.toJson()));
 List<LogEntry> _log(Object? v) => (v as List).map((e) => LogEntry.fromJson((e as Map).cast<String, dynamic>())).toList();
-PartSnapshot? _snap(Object? v) => parseSnapshot(v);
 
 void main() {
   checkTimeZone();
