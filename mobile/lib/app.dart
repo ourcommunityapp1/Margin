@@ -87,7 +87,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/you', pageBuilder: (_, s) => _fade(s, const YouScreen())),
       GoRoute(
         path: '/lesson',
-        pageBuilder: (_, s) => _fade(s, SessionScreen(itemId: s.uri.queryParameters['item'])),
+        pageBuilder: (_, s) {
+          final q = s.uri.queryParameters;
+          return _fade(
+            s,
+            SessionScreen(
+              mode: q['mode'] ?? (q['item'] != null ? 'item' : 'lesson'),
+              courseId: q['course'],
+              cardId: q['card'],
+              itemIds: (q['items'] ?? '').split(',').where((x) => x.isNotEmpty).toList(),
+              itemId: q['item'],
+            ),
+          );
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _TabShell(shell: shell),

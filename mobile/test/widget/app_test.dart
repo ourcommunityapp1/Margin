@@ -53,9 +53,12 @@ void main() {
     await _tapVisible(tester, '25 minutes a day');
     await _tapVisible(tester, 'Start');
 
+    // Today: the day's card for the course, ready to begin.
     expect(find.text('Good afternoon, Landon'), findsOneWidget);
-    expect(find.text('First Verses'), findsOneWidget);
-    expect(find.text('25 minutes a day'), findsOneWidget);
+    expect(find.text('First Verses'), findsWidgets);
+    expect(find.text('Recommended'.toUpperCase()), findsOneWidget);
+    expect(find.text('Begin'), findsOneWidget);
+    expect(find.textContaining('0 of 1 done'), findsOneWidget);
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Courses'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);
@@ -172,7 +175,16 @@ void main() {
     await pumpApp(tester, store: store);
     expect(find.text('Get started'), findsNothing);
     expect(find.text('Good afternoon, Ann'), findsOneWidget);
-    expect(find.text('Psalm 23'), findsOneWidget);
-    expect(find.text('15 minutes a day'), findsOneWidget);
+    expect(find.text('Psalm 23'), findsWidgets);
+    expect(find.text('Begin'), findsOneWidget);
+  });
+
+  testWidgets('beginning a card opens its lesson', (tester) async {
+    await pumpApp(tester);
+    await setUpAccount(tester);
+    await tester.tap(find.text('Begin'));
+    await tester.pumpAndSettle();
+    expect(find.text('Welcome'), findsWidgets);
+    expect(find.text('Why learn verses by heart?'), findsOneWidget);
   });
 }

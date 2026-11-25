@@ -125,8 +125,9 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [x] The lesson runner with every step kind except real speech (say-aloud is "check yourself" for now); feedback sheet,
   second try, done screen. Built from saved progress by `features/lesson/session.dart` (modes lesson and item) and saved
   on finish (`finishSession`, `settle`, Today's record).
-- [ ] Today with real cards: `planDay`, the carousel, tags, "Done for today", Keep going. (Today shows one card for the
-  next lesson until then.) The night and rise recalls, extra practice and the lock-in/keep trips come with it.
+- [x] Today with real cards: `planDay`, the carousel, tags, "Done for today", the day line and warning, the evening and
+  morning recall banner, Keep going; every card opens the right session (lesson, review, fix, night, rise, extra). The
+  windows on the cards are plain placeholders until phase 3.
 - [ ] Progress (streak, week, stones), Friends, Community, You (plan, family, linked accounts, profile).
 - [ ] Answers and card events sent to the server.
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).

@@ -2,17 +2,19 @@
 // A port of the session assembly in src/app/heir/ui/lesson.tsx (modes "lesson" and "item"), with the keeping rules on,
 // as they are for every account on the website. The step builders themselves are the engine's (lesson.dart).
 //
-// Not yet ported here: the night and rise recalls, the lock-in/keep trips chosen from Today's cards, and extra
-// practice. They need Today's day plan, which comes next.
+// Modes: lesson (the next lesson), review (a card's catch-up practice), keep (chosen verses and answers), night and rise
+// (the optional evening and morning recalls), extra (practice after the day's cards) and item (one question or verse).
 
 import 'dart:math' as math;
 
 import '../../engine/content.dart';
+import '../../engine/dayplan.dart' show startedCourses;
 import '../../engine/keep.dart';
 import '../../engine/lesson.dart' as lesson;
 import '../../engine/memory.dart';
 import '../../engine/models.dart' show PartMem;
 import '../../engine/planner.dart' as planner;
+import '../../engine/planner.dart' show riskOrder;
 import '../../engine/progress.dart';
 import '../../engine/types.dart';
 import '../../engine/util.dart' show jsRound;
@@ -28,6 +30,11 @@ class Session {
     required this.courseId,
     required this.memberId,
     this.why = const {},
+    this.mode = 'lesson',
+    this.dayCourse = '',
+    this.cardId,
+    this.night = false,
+    this.rise = false,
   });
 
   /// "Welcome", "Lesson 3", "Practice · Q1".
@@ -47,6 +54,16 @@ class Session {
 
   /// Why each review is here, by item id ("Missed last time", "Strong until…").
   final Map<String, String> why;
+
+  /// lesson, review, keep, night, rise, extra or item.
+  final String mode;
+
+  /// The course Today's record credits (a practice with no course of its own credits the person's chosen one).
+  final String dayCourse;
+
+  /// The Today card this session was opened from, if any.
+  final String? cardId;
+  final bool night, rise;
 }
 
 math.Random _random = math.Random();
@@ -59,6 +76,8 @@ Session buildLessonSession({
   required String memberId,
   required DateTime now,
   lesson.Rng? rng,
+  String mode = 'lesson',
+  String? cardId,
 }) {
   final r = rng ?? _random.nextDouble;
   final items = courseItems(course);
@@ -82,8 +101,21 @@ Session buildLessonSession({
   final seen = seenCounts(mine);
   final done = planner.lessonsDone(mine, course.id, ids);
   final due = dueCards(mine, now, ids);
-  final plan = planner.planNext(courseId: course.id, items: items, track: track, p: mine, now: now);
-  final baseLabel = done == 0 ? 'Welcome' : 'Lesson ${done + 1}';
+  final plan = mode == 'review'
+      ? () {
+          // A review fits its time: the card's minutes (or about four) at this person's own pace, two steps an item.
+          final est = mine.today?.cards?.where((c) => c.id == cardId).firstOrNull?.est ?? 4;
+          final fit = math.min(8, math.max(3, jsRound(est * 60 / (2 * stepSeconds(mine.log)))));
+          // Not something still waiting for its first night's sleep, or recalled in the last few hours: a review then
+          // measures short-term memory, not what's kept.
+          final recent = recalledRecently(mine.log, now);
+          final all = riskOrder(mine, ids, now, parts);
+          final fresh = all.where((x) => !waitingForSleep(mine, x.itemId, now) && !recent.contains(x.itemId)).toList();
+          final picks = fresh.isNotEmpty ? fresh : all.where((x) => !waitingForSleep(mine, x.itemId, now)).toList();
+          return picks.isEmpty ? null : planner.LessonPlan('practice', picks: picks.take(fit).toList(), why: 'catch-up');
+        }()
+      : planner.planNext(courseId: course.id, items: items, track: track, p: mine, now: now);
+  final baseLabel = mode == 'review' ? 'Review · ${course.title}' : done == 0 ? 'Welcome' : 'Lesson ${done + 1}';
 
   String label = baseLabel, kind = 'review';
   var steps = <lesson.Step>[];
@@ -166,12 +198,16 @@ Session buildLessonSession({
     courseId: course.id,
     memberId: memberId,
     why: _why(steps, mine, parts, now),
+    mode: mode,
+    dayCourse: course.id,
+    cardId: cardId,
   );
 }
 
 /// One question or verse, practised on its own from its page: a quick recall, then said or typed in full. Not numbered
 /// as a lesson of the course.
 Session buildItemSession({
+  required String dayCourse,
   required Item item,
   required Track track,
   required MemberProgress mine,
@@ -201,6 +237,8 @@ Session buildItemSession({
     courseId: '',
     memberId: memberId,
     why: _why(steps, mine, parts, now),
+    mode: 'item',
+    dayCourse: dayCourse,
   );
 }
 
@@ -216,4 +254,130 @@ Map<String, String> _why(List<lesson.Step> steps, MemberProgress mine, Map<Strin
     if (w != null) why[st.itemId] = w;
   }
   return why;
+}
+
+/// Keeping words in memory: the verses and answers chosen (a "fix" card's, or picked from Keep), each recalled whole.
+Session buildKeepSession({
+  required List<Item> items,
+  required Track track,
+  required MemberProgress mine,
+  required String memberId,
+  required String dayCourse,
+  required DateTime now,
+  String courseId = '',
+  String? cardId,
+  lesson.Rng? rng,
+}) {
+  final r = rng ?? _random.nextDouble;
+  final steps = lesson.buildKeep(items: items, track: track, pool: allItems(), rng: r);
+  final parts = partMemories(mine.log, mine.partSnap);
+  return Session(
+    label: items.length == 1 ? 'Review · ${itemLabel(items.first)}' : 'Review · ${items.length} to keep',
+    kind: 'review',
+    steps: steps,
+    units: const [],
+    group: null,
+    courseId: courseId,
+    memberId: memberId,
+    why: _why(steps, mine, parts, now),
+    mode: 'keep',
+    dayCourse: dayCourse,
+    cardId: cardId,
+  );
+}
+
+/// When you lie down: today's questions first, then a few on the edge, one quiet step each.
+Session buildNightSession({
+  required Course course,
+  required Track track,
+  required MemberProgress mine,
+  required String memberId,
+  required DateTime now,
+  lesson.Rng? rng,
+}) {
+  final r = rng ?? _random.nextDouble;
+  final ids = courseItems(course).map((i) => i.id).toSet();
+  final picked = [for (final id in planner.bedtimePicks(mine, ids, now)) ?getItem(id)];
+  final steps = lesson.buildNight(items: picked, track: track, pool: allItems(), rng: r);
+  return Session(
+    label: 'When you lie down',
+    kind: 'review',
+    steps: steps,
+    units: const [],
+    group: null,
+    courseId: course.id,
+    memberId: memberId,
+    mode: 'night',
+    dayCourse: course.id,
+    night: true,
+  );
+}
+
+/// When you rise: last night's questions, recalled in full from the question alone.
+Session buildRiseSession({
+  required Course course,
+  required Track track,
+  required MemberProgress mine,
+  required String memberId,
+  required DateTime now,
+  lesson.Rng? rng,
+}) {
+  final r = rng ?? _random.nextDouble;
+  final risen = [for (final id in mine.night?.items ?? const <String>[]) ?getItem(id)];
+  final steps = lesson.buildRise(items: risen, track: track, pool: allItems(), rng: r);
+  return Session(
+    label: 'When you rise',
+    kind: 'review',
+    steps: steps,
+    units: const [],
+    group: null,
+    courseId: course.id,
+    memberId: memberId,
+    mode: 'rise',
+    dayCourse: course.id,
+    rise: true,
+  );
+}
+
+/// Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
+Session buildExtraSession({
+  required String? focus,
+  required Track track,
+  required MemberProgress mine,
+  required String memberId,
+  required DateTime now,
+  lesson.Rng? rng,
+}) {
+  final r = rng ?? _random.nextDouble;
+  final parts = partMemories(mine.log, mine.partSnap);
+  final weak = weakPartsNow(mine.log, parts, now);
+  final started = startedCourses(mine, track, focus);
+  final allIds = {for (final c in started) ...courseItems(c).map((i) => i.id)};
+  final recent = recalledRecently(mine.log, now);
+  final picks = riskOrder(mine, allIds, now, parts).where((x) => !waitingForSleep(mine, x.itemId, now) && !recent.contains(x.itemId)).toList();
+  final slipping = picks.where((x) => x.recall < 0.85).toList();
+  final chosen = (slipping.isNotEmpty ? slipping : picks).take(5);
+  final due = [
+    for (final p in chosen)
+      if (getItem(p.itemId) case final item?)
+        () {
+          final card = mine.cards[p.itemId];
+          final byPart = itemChance(p.itemId, parts, now);
+          final chance = card != null ? math.min(recallChance(card, now), byPart ?? 1) : byPart;
+          return lesson.Due(item, p.strength, weak: [for (final k in weak) if (k.startsWith('${p.itemId}#')) k], chance: chance);
+        }(),
+  ];
+  final steps = lesson.buildReview(due: due, track: track, pool: allItems(), rng: r, max: 5);
+  return Session(
+    label: 'Extra practice',
+    kind: 'review',
+    steps: steps,
+    units: const [],
+    group: null,
+    courseId: '',
+    memberId: memberId,
+    why: _why(steps, mine, parts, now),
+    mode: 'extra',
+    dayCourse: focus ?? '',
+  );
 }

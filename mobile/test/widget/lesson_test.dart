@@ -29,6 +29,7 @@ Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) asyn
     group: null,
     courseId: 'westminster-shorter',
     memberId: 'me',
+    dayCourse: 'westminster-shorter',
   );
   return (session: session, unit: unit);
 }

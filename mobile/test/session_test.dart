@@ -21,7 +21,7 @@ void main() {
   });
 
   test('practising one item is not a lesson of the course', () {
-    final s = buildItemSession(item: getItem('wsc-1')!, track: Track.adult, mine: emptyProgress(), memberId: 'me', now: now);
+    final s = buildItemSession(dayCourse: 'westminster-shorter', item: getItem('wsc-1')!, track: Track.adult, mine: emptyProgress(), memberId: 'me', now: now);
     expect(s.label, 'Practice · Q1');
     expect(s.courseId, isEmpty);
     expect(s.units, isEmpty);

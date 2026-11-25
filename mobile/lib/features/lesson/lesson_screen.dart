@@ -141,15 +141,27 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       keepRules: (tz: null),
     );
     final settled = settle(next, allItems(), widget.track, now);
+    final marked = session.rise
+        ? markRisen(settled.progress)
+        : session.night
+            ? markNight(settled.progress, {for (final s in session.steps) s.itemId}.toList(), now)
+            : settled.progress;
     final secs = (_activeMs / 1000).round().clamp(1, 1 << 30);
-    final planCourse = ref.read(householdProvider).plan?.course ?? '';
-    // A practice on one item counts as extra practice, not as a lesson of the course.
-    final kind = session.courseId.isEmpty ? 'extra' : session.kind == 'review' ? 'review' : 'lesson';
-    final saved = settled.progress.copyWith(
+    // Today's record: what kind of session this was, so Today ticks off its card and adds up the minutes.
+    final kind = session.rise
+        ? 'rise'
+        : session.night
+            ? 'night'
+            : session.mode == 'extra' || session.mode == 'item' || (session.mode == 'keep' && session.cardId == null)
+                ? 'extra'
+                : session.kind == 'review'
+                    ? 'review'
+                    : 'lesson';
+    final saved = marked.copyWith(
       today: withSession(
-        settled.progress.today,
+        marked.today,
         localDay(now),
-        DaySession(newId(), iso(now), secs, session.courseId.isEmpty ? planCourse : session.courseId, kind),
+        DaySession(newId(), iso(now), secs, session.dayCourse, kind, session.cardId),
       ),
     );
     ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
@@ -435,7 +447,7 @@ class _Done extends ConsumerWidget {
                 ? 'Part ${first.part} of ${first.of} learned. The next lesson continues it.'
                 : '';
     // Started from the course (not Today's cards): offer the next one straight away.
-    final cta = session.courseId.isEmpty || upNext == null ? null : upNext.kind == 'checkpoint' ? 'Lock them in now' : 'Next lesson';
+    final cta = session.cardId != null || session.courseId.isEmpty || upNext == null ? null : upNext.kind == 'checkpoint' ? 'Lock them in now' : 'Next lesson';
 
     return KPage(
       bare: true,
