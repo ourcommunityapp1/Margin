@@ -19,19 +19,47 @@ import 'features/today/today_screen.dart';
 import 'features/you/you_screen.dart';
 import 'state/auth.dart';
 import 'state/household.dart';
+import 'state/sync.dart';
 import 'ui/background.dart';
 import 'ui/tab_bar.dart';
 import 'ui/theme.dart';
 import 'ui/widgets.dart';
 
-class KatekizeApp extends ConsumerWidget {
+class KatekizeApp extends ConsumerStatefulWidget {
   const KatekizeApp({super.key, this.now});
 
   /// A fixed time for the background and greeting, for tests and screenshots.
   final DateTime? now;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<KatekizeApp> createState() => _KatekizeAppState();
+}
+
+class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingObserver {
+  DateTime? get now => widget.now;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Start keeping the phone and the account together (a no-op without accounts or when signed out).
+    ref.read(syncProvider);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Back on the app (another phone may have saved a lesson): bring the account's progress in.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) ref.read(syncProvider.notifier).refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Katekize',
       debugShowCheckedModeBanner: false,

@@ -123,7 +123,8 @@ void main() {
     expect(find.text('Signed in as ann@example.com'), findsOneWidget);
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
-    expect(find.text('Adult track · not signed in'), findsOneWidget);
+    // Signing out clears this phone's family, as on the website: back to Welcome.
+    expect(find.text('Get started'), findsOneWidget);
   });
 
   testWidgets('a failed send says so', (tester) async {

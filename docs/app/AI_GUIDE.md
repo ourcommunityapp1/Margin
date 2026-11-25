@@ -118,8 +118,12 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [x] Sign-in (emailed code); the session in secure storage. Tested with a fake sign-in; **not yet tried against the
   real Supabase project** (that sends a real email: do it with the owner).
 - [x] Household and progress kept on the phone under the website's keys (`mobile/lib/data/`, `mobile/lib/state/`).
-- [ ] Merged with the account (`loadRemote`, `saveRemote`, `mergeProgress`, as in `ui/provider.tsx` and `ui/cloud.ts`).
-  Writes to the live database: build it against a test project, or with the owner watching.
+- [x] Account sync (`state/sync.dart`, `data/account.dart`, `data/sync_rules.dart`): on sign-in and when the app comes back,
+  the account's family and progress are READ and merged into the phone's (progress is merged, never overwritten; if the
+  account has a family it replaces the phone's, as on the website). Verified read-only against the owner's real account.
+  **Writing is OFF by default** (`Config.syncWrites`; run with `--dart-define=SYNC_WRITES=true`): it uploads the family,
+  saves progress, and sends answers and card events. Tests with a fake account prove nothing is written when it is off.
+  Turn it on only with the owner's say-so.
 - [x] First run: name, course, daily goal (with the planner's dates), saved; reopening goes straight to Today.
 - [x] Courses, a course, and an item to read, from the bundled content (no windows or "N learned" yet).
 - [x] The lesson runner with every step kind except real speech (say-aloud is "check yourself" for now); feedback sheet,
@@ -131,7 +135,7 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [x] Progress: the week and month of days kept, words in memory and milestones, the stones ladder (real gem images),
   your courses (a plain list: the windows wall waits for phase 3), awards. Not yet: the community preview.
 - [ ] Friends, Community, You (plan, family, linked accounts, profile).
-- [ ] Answers and card events sent to the server.
+- [x] Answers and card events are sent when writing is on (`SupabaseAccountApi`).
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 
 ### Phase 3: windows (first pass done Nov 25, 2026)

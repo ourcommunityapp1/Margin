@@ -7,6 +7,7 @@ import 'package:katekize/state/auth.dart';
 import 'package:katekize/data/store.dart';
 import 'package:katekize/state/clock.dart';
 import 'package:katekize/state/household.dart';
+import 'package:katekize/state/sync.dart';
 import 'package:katekize/data/content_assets.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -58,6 +59,8 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store}) async 
       overrides: [
         authProvider.overrideWithValue(auth ?? FakeAuth()),
         storeProvider.overrideWithValue(store ?? MemoryStore()),
+        // No real account database in these tests.
+        accountApiProvider.overrideWithValue(null),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
       ],
       child: KatekizeApp(now: DateTime(2026, 11, 24, 14)),

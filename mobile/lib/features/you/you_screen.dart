@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../state/auth.dart';
 import '../../state/household.dart';
+import '../../state/sync.dart';
 import '../../ui/screen_parts.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
@@ -20,6 +21,7 @@ class YouScreen extends ConsumerWidget {
     final me = ref.watch(meProvider);
     final accounts = ref.watch(accountsProvider);
     final email = ref.watch(emailProvider).value;
+    final sync = ref.watch(syncProvider);
 
     return KPage(
       bare: true,
@@ -69,12 +71,16 @@ class YouScreen extends ConsumerWidget {
           ),
         if (accounts && email != null) ...[
           Text(
-            'Signed in as $email',
+            'Signed in as $email${sync.state == SyncState.offline ? ' · couldn’t reach the server; changes are kept on this phone' : ''}',
             textAlign: TextAlign.center,
             style: sans(14, color: k.muted),
           ),
+          if (sync.note != null && sync.state != SyncState.offline)
+            Text(sync.note!, textAlign: TextAlign.center, style: sans(13, color: k.muted, height: 1.45)),
+          if (sync.summary != null && sync.state == SyncState.synced)
+            Text('Your account holds: ${sync.summary}', textAlign: TextAlign.center, style: sans(13, color: k.muted, height: 1.45)),
           KCard(
-            child: _WellButton('Sign out', onPressed: () => ref.read(authProvider).signOut()),
+            child: _WellButton('Sign out', onPressed: () => ref.read(syncProvider.notifier).signOut()),
           ),
         ],
       ],

@@ -12,6 +12,7 @@ import '../data/household.dart';
 import '../data/store.dart';
 import '../engine/progress.dart';
 import '../engine/types.dart';
+import 'sync.dart';
 
 const householdKey = 'heir-household-v1';
 const progressKey = 'heir-progress-v1';
@@ -27,6 +28,13 @@ class HouseholdNotifier extends Notifier<Household> {
     final next = change(state);
     state = next;
     ref.read(storeProvider).write(householdKey, householdToJson(next));
+    ref.read(syncProvider.notifier).householdChanged(next);
+  }
+
+  /// Sets the household from the account (kept on the phone, but not sent back).
+  void replaceFromRemote(Household h) {
+    state = h;
+    ref.read(storeProvider).write(householdKey, householdToJson(h));
   }
 }
 
@@ -40,6 +48,13 @@ class ProgressNotifier extends Notifier<Progress> {
     final next = change(state);
     state = next;
     ref.read(storeProvider).write(progressKey, jsonEncode({for (final e in next.entries) e.key: e.value.toJson()}));
+    ref.read(syncProvider.notifier).progressChanged();
+  }
+
+  /// Sets progress from the account (kept on the phone, but not sent back).
+  void replaceFromRemote(Progress p) {
+    state = p;
+    ref.read(storeProvider).write(progressKey, jsonEncode({for (final e in p.entries) e.key: e.value.toJson()}));
   }
 }
 

@@ -11,9 +11,13 @@ import 'package:katekize/features/lesson/lesson_screen.dart';
 import 'package:katekize/features/lesson/outcome.dart';
 import 'package:katekize/features/lesson/session.dart';
 import 'package:katekize/state/clock.dart';
+import 'package:katekize/state/auth.dart';
 import 'package:katekize/state/household.dart';
+import 'package:katekize/state/sync.dart';
 import 'package:katekize/ui/theme.dart';
 import 'package:material_ui/material_ui.dart';
+
+import 'fakes.dart' show FakeAuth;
 
 /// A lesson on the first part of Westminster Shorter Catechism Q1, built by the engine (the same builders the app uses).
 Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) async {
@@ -42,6 +46,8 @@ Future<ProviderContainer> _pump(WidgetTester tester, Session session, Store stor
     ProviderScope(
       overrides: [
         storeProvider.overrideWithValue(store),
+        accountApiProvider.overrideWithValue(null),
+        authProvider.overrideWithValue(FakeAuth(accounts: false)),
         clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
       ],
       child: MaterialApp(theme: katekizeTheme(), home: LessonScreen(session: session, track: Track.adult)),

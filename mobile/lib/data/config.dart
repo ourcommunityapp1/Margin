@@ -13,6 +13,11 @@ abstract final class Config {
   static const supabaseKey =
       String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY', defaultValue: 'sb_publishable_dyTP4v5FfpStHOzA_J_dCw_IZkp2wmI');
 
+  /// Whether the app may WRITE to the account's database (uploading the family, saving progress, sending answers).
+  /// Off by default: reading is always safe, writing changes the live data the website also uses. Turn on for a run with
+  ///   flutter run --dart-define=SYNC_WRITES=true
+  static const syncWrites = bool.fromEnvironment('SYNC_WRITES');
+
   /// Accounts are on when both are set (as `heirCloudConfigured` on the website). With them off, the household
   /// stays on the phone and no sign-in is asked for.
   static bool get accounts => supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
