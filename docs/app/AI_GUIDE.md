@@ -112,16 +112,24 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - Numbers are compared to 1e-9; dates as exact ISO text. JavaScript's `Math.round`, stable sorting and the seeded
   generators are copied exactly (`util.dart`, `lesson.dart`, `fsrs.dart`).
 
-### Phase 2: first slice
+### Phase 2: first slice (in progress, started Nov 25, 2026)
 
-- [ ] Theme, fonts, the tab bar.
-- [ ] Sign-in (emailed code); the session in secure storage.
-- [ ] Household and progress from on-phone storage, then merged with the account (`loadRemote`, `saveRemote`,
-  `mergeProgress`, as in `ui/provider.tsx` and `ui/cloud.ts`).
-- [ ] Today with real cards, using a placeholder window.
-- [ ] The lesson runner with every step kind; the done screen.
-- [ ] Saving offline, syncing online; answers and card events sent.
-- [ ] Codemagic builds it to TestFlight.
+- [x] Theme, fonts (Inter, Source Serif 4), the time-of-day background, the tab bar (`mobile/lib/ui/`).
+- [x] Sign-in (emailed code); the session in secure storage. Tested with a fake sign-in; **not yet tried against the
+  real Supabase project** (that sends a real email: do it with the owner).
+- [x] Household and progress kept on the phone under the website's keys (`mobile/lib/data/`, `mobile/lib/state/`).
+- [ ] Merged with the account (`loadRemote`, `saveRemote`, `mergeProgress`, as in `ui/provider.tsx` and `ui/cloud.ts`).
+  Writes to the live database: build it against a test project, or with the owner watching.
+- [x] First run: name, course, daily goal (with the planner's dates), saved; reopening goes straight to Today.
+- [x] Courses, a course, and an item to read, from the bundled content (no windows or "N learned" yet).
+- [x] The lesson runner with every step kind except real speech (say-aloud is "check yourself" for now); feedback sheet,
+  second try, done screen. Built from saved progress by `features/lesson/session.dart` (modes lesson and item) and saved
+  on finish (`finishSession`, `settle`, Today's record).
+- [ ] Today with real cards: `planDay`, the carousel, tags, "Done for today", Keep going. (Today shows one card for the
+  next lesson until then.) The night and rise recalls, extra practice and the lock-in/keep trips come with it.
+- [ ] Progress (streak, week, stones), Friends, Community, You (plan, family, linked accounts, profile).
+- [ ] Answers and card events sent to the server.
+- [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 
 ### Phases 3 to 7
 

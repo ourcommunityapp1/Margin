@@ -15,17 +15,21 @@ Read this first, then `AI_GUIDE.md` and `README.md` in this folder.
 - **Cloud session:** ports the engine in `mobile/lib/engine/` (pure Dart), proved identical to the website's TypeScript
   engine in `src/heir/` by shared test files in `fixtures/engine/`. Don't edit `mobile/lib/engine/`, `mobile/test/engine/`,
   `fixtures/` or `scripts/export-*.ts` from the Mac session, to avoid clashes.
-- **Mac session (you):** set up the Mac and get the app building and running in the iPhone simulator:
-  1. Install Flutter (`brew install --cask flutter`) and CocoaPods (`brew install cocoapods`) if missing.
-  2. `flutter doctor` and fix what it reports (Xcode command-line tools, license, simulator runtime).
-  3. `cd mobile && flutter pub get && flutter run` on an iPhone simulator. `mobile/lib/main.dart` was removed while the
-     engine is ported; add a minimal placeholder `main.dart` (a plain screen saying "Katekize") so it builds, and commit it.
-  4. Report back what works, in plain words.
+- **Mac session:** the screens and the app around the engine: `mobile/lib/ui/`, `features/`, `state/`, `data/`,
+  `app.dart`, `main.dart`, `mobile/test/widget/`, `mobile/test/session_test.dart`, `mobile/test/household_test.dart`,
+  and the iOS project. It reads the engine; it never edits it. If a screen needs an engine change, ask the cloud
+  session (or change both with a fixture).
+- The Mac has Flutter 3.50 (`brew install --cask flutter`), CocoaPods and Xcode 27; `flutter doctor` is green apart from
+  Android. The app runs in the iPhone 18 Pro simulator: `cd mobile && flutter build ios --simulator --debug`, then
+  install `build/ios/iphonesimulator/Runner.app` (`xcrun simctl install` / `launch com.katekize.katekize`).
 
 ## Status (Nov 25, 2026)
 - Phase 1 (engine) is done: the whole engine is in `mobile/lib/engine/` and matches the website on every shared case
   (see the parity table in AI_GUIDE.md). Phase 2 (first slice of screens) can use it. Load content first with
   `loadContent(jsonDecode(await rootBundle.loadString('assets/content/content.json')))`.
+- Phase 2 (screens) has started on the Mac: see the checklist in AI_GUIDE.md. What runs today: welcome, first-run setup,
+  sign-in (untried against the real server), Today (one card for the next lesson), Courses, a course, an item, the
+  lesson player with every step kind, saved progress, You. 37 tests pass (`TZ=America/Chicago flutter test`).
 - Content export: `node scripts/export-content.ts` → `mobile/assets/content/content.json`.
 - Fixtures: `TZ=America/Chicago node scripts/export-fixtures.ts` → `fixtures/engine/*.json`; Dart side:
   `cd mobile && TZ=America/Chicago flutter test test/engine`.
