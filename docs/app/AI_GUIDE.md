@@ -194,6 +194,7 @@ See the plan's table. Each feature needs:
 - [x] Reviewer sign-in: password field only for `Config.reviewerEmail`; the account itself is made by the owner (see `STORE_PACKAGE.md`).
 - [x] Privacy labels, review notes, content-moderation process, age rating answers and store listing text drafted in `STORE_PACKAGE.md`;
   the privacy page now describes account deletion; export-compliance flag set.
-- [ ] Owner: make the reviewer account, deploy the website, decide who reads reports, approve the text, confirm the YouVersion terms.
+- [x] Website deployed to production (Nov 25, 2026, upload deploy); the owner reads reports within 24 hours; the owner believes the YouVersion terms cover a phone app (not yet re-read).
+- [ ] Owner: make the reviewer account, approve the text, re-check the YouVersion terms.
 - [ ] Screenshots from a real build (needs TestFlight / a build on a real phone).
 

@@ -32,7 +32,7 @@ Everything the App Store and Google Play ask for, drafted. The owner approves ea
 
 ## User-generated content process (Apple 1.2)
 Users create a username, name and city. Others can **report** (a person's page → Report) or **block** them. Reports arrive in the
-`heir_reports` table; one named person (**YOU decide who, and confirm you can keep to 24 hours**) reads them **within 24 hours**, hides or removes accounts that break the rules, and replies to
+`heir_reports` table; the owner (Landon Whitlock, decided Nov 25, 2026) reads them **within 24 hours**, hides or removes accounts that break the rules, and replies to
 the reporter if asked. Reserved and offensive usernames are refused when made. Contact: hello@katekize.com.
 
 ## Privacy labels (App Store Connect → App Privacy) — must match katekize.com/privacy
@@ -64,5 +64,5 @@ themes, religious content = yes (Scripture). Not in the Kids Category. Expect 12
 - **Category:** Education (primary), Lifestyle (secondary). **Price:** Free. **Copyright:** © 2026 Katekize.
 
 ## Content rights
-The NASB is shown by permission through the YouVersion Platform and fetched from the website's server. **YOU:** keep the agreement
-handy and confirm its terms cover a phone app. Credits stay on the About screen (windows, photos, stones, typefaces).
+The NASB is shown by permission through the YouVersion Platform and fetched from the website's server. The owner believes (Nov 25, 2026) the YouVersion agreement covers a phone app but has not re-read it, and the assistant has not seen the agreement. **YOU:** keep the agreement
+handy and re-check its terms before submitting. Credits stay on the About screen (windows, photos, stones, typefaces).
