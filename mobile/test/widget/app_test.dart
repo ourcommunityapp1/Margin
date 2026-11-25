@@ -192,4 +192,28 @@ void main() {
     expect(find.text('Welcome'), findsWidgets);
     expect(find.text('Why learn verses by heart?'), findsOneWidget);
   });
+
+  testWidgets('only the reviewers’ address is offered a password', (tester) async {
+    final auth = FakeAuth();
+    await pumpApp(tester, auth: auth);
+    await tester.tap(find.text('Already set up? Sign in'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'ann@example.com');
+    await tester.pump();
+    expect(find.text('Password'), findsNothing);
+    await tester.enterText(find.byType(TextField), 'appreview@katekize.com');
+    await tester.pump();
+    expect(find.text('Password'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, 'wrong');
+    await tester.pump();
+    await tester.tap(find.text('Sign in with password'));
+    await tester.pumpAndSettle();
+    expect(find.text('That password didn’t work.'), findsOneWidget);
+    expect(auth.email, isNull);
+    await tester.enterText(find.byType(TextField).last, 'review-pass');
+    await tester.pump();
+    await tester.tap(find.text('Sign in with password'));
+    await tester.pumpAndSettle();
+    expect(auth.email, 'appreview@katekize.com');
+  });
 }

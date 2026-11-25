@@ -50,6 +50,13 @@ class FakeAuth implements Auth {
   }
 
   @override
+  Future<void> signInWithPassword(String email, String password) async {
+    if (email.trim() != 'appreview@katekize.com' || password != 'review-pass') throw const AuthFailure('bad password');
+    _email = email.trim();
+    _changes.add(_email);
+  }
+
+  @override
   Future<void> signOut() async {
     _email = null;
     _changes.add(null);
@@ -223,6 +230,15 @@ class FakeSocial implements SocialApi {
 
   @override
   Future<void> markBoardSeen(Period period) async => seenPeriods.add(period.name);
+
+  var deletes = 0;
+  String? deleteFails;
+
+  @override
+  Future<void> deleteAccount() async {
+    if (deleteFails != null) throw SocialFailure(deleteFails!);
+    deletes++;
+  }
 
   var statsAsked = 0;
 

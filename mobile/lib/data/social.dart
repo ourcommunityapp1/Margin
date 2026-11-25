@@ -267,6 +267,11 @@ abstract interface class SocialApi {
   /// Asks the server to work out this person's numbers for friends (it reads their answers; nothing is sent from the
   /// phone beyond the sign-in token). Quietly does nothing when the server isn't set up for it.
   Future<void> refreshStats();
+
+  // ── Deleting the whole account (the stores require this inside the app) ──
+  /// Deletes the signed-in account and everything in it on the server. Cannot be undone. Throws [SocialFailure] with a
+  /// message when it can't.
+  Future<void> deleteAccount();
 }
 
 class SupabaseSocialApi implements SocialApi {
@@ -431,6 +436,23 @@ class SupabaseSocialApi implements SocialApi {
     final res = await http.post(Uri.parse('$siteOrigin/api/heir/stats'), headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 30));
     // 501 (server not set up) and 404 (no profile yet) are fine: asked again after the next change.
     if (res.statusCode >= 500 && res.statusCode != 501) throw const SocialFailure('stats not updated');
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    final token = _db.auth.currentSession?.accessToken;
+    if (token == null) throw const SocialFailure('Sign in first.');
+    final http.Response res;
+    try {
+      res = await http
+          .post(Uri.parse('$siteOrigin/api/heir/account/delete'), headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'}, body: '{"confirm":"DELETE"}')
+          .timeout(const Duration(seconds: 30));
+    } catch (_) {
+      throw const SocialFailure('Couldn’t reach Katekize. Check your connection and try again.');
+    }
+    if (res.statusCode == 200) return;
+    if (res.statusCode == 501) throw const SocialFailure('Deleting accounts isn’t switched on yet. Please email us and we’ll delete it.');
+    throw const SocialFailure('Couldn’t delete the account right now. Try again.');
   }
 }
 

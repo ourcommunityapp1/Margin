@@ -186,3 +186,14 @@ See the plan's table. Each feature needs:
 - [ ] Home Screen widget (Swift/Kotlin code in the widget targets; needs an app group on the Apple account).
 - Not checked on a real phone: speech (the simulator has no real microphone path tried), the haptic feel, notifications arriving at their
   time. Android settings are in the manifest and Gradle file but were never built (no Android SDK on this Mac).
+
+### Phase 6: store needs (drafted Nov 25, 2026)
+
+- [x] Delete my account: app screen (`features/you/delete_account_screen.dart`) and server route
+  (`src/app/api/heir/account/delete/route.ts`, tested helper `src/heir/deleteaccount.ts`). **The route is not yet deployed or tried live.**
+- [x] Reviewer sign-in: password field only for `Config.reviewerEmail`; the account itself is made by the owner (see `STORE_PACKAGE.md`).
+- [x] Privacy labels, review notes, content-moderation process, age rating answers and store listing text drafted in `STORE_PACKAGE.md`;
+  the privacy page now describes account deletion; export-compliance flag set.
+- [ ] Owner: make the reviewer account, deploy the website, decide who reads reports, approve the text, confirm the YouVersion terms.
+- [ ] Screenshots from a real build (needs TestFlight / a build on a real phone).
+

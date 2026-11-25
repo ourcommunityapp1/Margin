@@ -48,6 +48,7 @@ export default function Privacy() {
           <section aria-labelledby="del-h">
             <h2 id="del-h">Deleting your profile</h2>
             <p>In the app, open You, then Your profile, then Delete my profile. That removes your profile, your friends’ numbers, your friendships and requests, and the blocks you made. Your lessons and progress stay with your account and are not touched.</p>
+            <p>To delete everything, open You, then Delete my account, and type DELETE. That permanently deletes your sign-in, your family and all their progress and answers, your profile, friendships, requests and blocks, and links to any linked accounts. It cannot be undone. You can also email <a href="mailto:hello@katekize.com">hello@katekize.com</a> from your sign-in address and we will delete it for you.</p>
             <p>Removing a person from your family keeps their progress for 30 days so you can bring them back, then deletes it.</p>
           </section>
 

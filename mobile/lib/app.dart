@@ -25,6 +25,7 @@ import 'features/you/plan_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/signin/signin_screen.dart';
+import 'features/you/delete_account_screen.dart';
 import 'features/you/linked_screen.dart';
 import 'features/you/profile_screen.dart';
 import 'features/you/reminders_screen.dart';
@@ -104,7 +105,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community', '/reminders', '/join'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community', '/reminders', '/join', '/delete-account'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -128,6 +129,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (someone && h.plan == null && path.startsWith('/today')) return '/start';
       if (someone && h.plan != null && path == '/start') return '/today';
       if (path.startsWith('/friends') && ref.read(emailProvider).value == null) return '/today';
+      if (path == '/delete-account' && ref.read(emailProvider).value == null) return '/you';
       // Someone's profile or a friend's invite: sign in first, then come back here.
       if ((path.startsWith('/u/') || path == '/invite' || path == '/join') && ref.read(emailProvider).value == null) return '/signin?next=${Uri.encodeComponent(state.uri.toString())}';
       return null;
@@ -152,6 +154,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/invite', pageBuilder: (_, s) => _fade(s, InviteScreen(code: s.uri.queryParameters['code'] ?? ''))),
       GoRoute(path: '/join', pageBuilder: (_, s) => _fade(s, JoinScreen(code: s.uri.queryParameters['code'] ?? ''))),
       GoRoute(path: '/community', pageBuilder: (_, s) => _fade(s, const CommunityScreen())),
+      GoRoute(path: '/delete-account', pageBuilder: (_, s) => _fade(s, const DeleteAccountScreen())),
       GoRoute(path: '/reminders', pageBuilder: (_, s) => _fade(s, const RemindersScreen())),
       GoRoute(path: '/linked', pageBuilder: (_, s) => _fade(s, const LinkedScreen())),
       GoRoute(path: '/family', pageBuilder: (_, s) => _fade(s, const FamilyScreen())),

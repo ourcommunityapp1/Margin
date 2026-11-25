@@ -22,4 +22,8 @@ abstract final class Config {
   /// Accounts are on when both are set (as `heirCloudConfigured` on the website). With them off, the household
   /// stays on the phone and no sign-in is asked for.
   static bool get accounts => supabaseUrl.isNotEmpty && supabaseKey.isNotEmpty;
+
+  /// The one account Apple's and Google's reviewers sign in with (they can't receive an emailed code). Only this address is
+  /// offered a password, and the password itself lives only in the store review notes and in Supabase, never in the app.
+  static const reviewerEmail = 'appreview@katekize.com';
 }

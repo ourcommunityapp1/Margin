@@ -336,7 +336,11 @@ class KTextField extends StatelessWidget {
     this.label,
     this.textInputAction,
     this.hint,
+    this.obscureText = false,
   });
+
+  /// Dots instead of letters (a password).
+  final bool obscureText;
 
   final TextEditingController? controller;
   final ValueChanged<String>? onChanged;
@@ -370,6 +374,8 @@ class KTextField extends StatelessWidget {
       textInputAction: textInputAction,
       autofocus: autofocus,
       autocorrect: false,
+      obscureText: obscureText,
+      enableSuggestions: !obscureText,
       maxLength: maxLength,
       style: sans(17, color: k.ink, spacing: letterSpacing),
       cursorColor: k.ink,

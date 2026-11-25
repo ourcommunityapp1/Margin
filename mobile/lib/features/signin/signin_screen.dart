@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/config.dart';
 import '../../state/auth.dart';
 import '../../state/household.dart';
 import '../../ui/theme.dart';
@@ -24,6 +25,7 @@ class SignInScreen extends ConsumerStatefulWidget {
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _email = TextEditingController();
   final _code = TextEditingController();
+  final _password = TextEditingController();
   bool _sent = false;
   bool _busy = false;
   String _error = '';
@@ -32,6 +34,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   void dispose() {
     _email.dispose();
     _code.dispose();
+    _password.dispose();
     super.dispose();
   }
 
@@ -48,6 +51,21 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       if (mounted) setState(() => _error = 'We couldn’t send a code. Check the address and try again.');
     } catch (_) {
       if (mounted) setState(() => _error = 'We couldn’t send a code. Check the address and try again.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _withPassword() async {
+    if (_busy || _password.text.isEmpty) return;
+    setState(() {
+      _busy = true;
+      _error = '';
+    });
+    try {
+      await ref.read(authProvider).signInWithPassword(_email.text, _password.text);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'That password didn’t work.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -124,6 +142,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                       busyLabel: 'Sending…',
                       onPressed: _looksLikeEmail.hasMatch(_email.text) ? _send : null,
                     ),
+                    // Only for the store reviewers' account, which can't receive an emailed code.
+                    if (_email.text.trim().toLowerCase() == Config.reviewerEmail) ...[
+                      const SizedBox(height: 18),
+                      const KLabel('Password'),
+                      const SizedBox(height: 12),
+                      KTextField(controller: _password, label: 'Password', obscureText: true, textInputAction: TextInputAction.go, onSubmitted: (_) => _withPassword()),
+                      const SizedBox(height: 12),
+                      KButton('Sign in with password', quiet: true, busy: _busy, busyLabel: 'Signing in…', onPressed: _withPassword),
+                    ],
                   ],
                 ),
               )

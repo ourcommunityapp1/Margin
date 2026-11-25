@@ -26,6 +26,10 @@ abstract interface class Auth {
   /// Signs in with the code. Throws [AuthFailure] when the code is wrong or stale.
   Future<void> verifyCode(String email, String code);
 
+  /// Signs in with a password. Only offered for the store reviewers' account (Config.reviewerEmail).
+  /// Throws [AuthFailure] when it is wrong.
+  Future<void> signInWithPassword(String email, String password);
+
   Future<void> signOut();
 }
 
@@ -67,6 +71,17 @@ class SupabaseAuth implements Auth {
     if (db == null) return;
     try {
       await db.auth.verifyOTP(email: email.trim(), token: code.trim(), type: sb.OtpType.email);
+    } on sb.AuthException catch (e) {
+      throw AuthFailure(e.message);
+    }
+  }
+
+  @override
+  Future<void> signInWithPassword(String email, String password) async {
+    final db = _db;
+    if (db == null) return;
+    try {
+      await db.auth.signInWithPassword(email: email.trim(), password: password);
     } on sb.AuthException catch (e) {
       throw AuthFailure(e.message);
     }

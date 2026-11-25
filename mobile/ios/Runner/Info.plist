@@ -70,5 +70,7 @@
 	<string>Katekize listens while you say a verse or answer from memory, so it can check what you said.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Katekize turns what you say into words on your phone to check it against the verse or answer. Nothing is kept.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

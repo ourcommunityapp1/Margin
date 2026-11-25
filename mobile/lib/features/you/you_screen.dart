@@ -91,6 +91,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 KLinkRow(title: 'Reminders', sub: reminderSummary(ref.watch(remindersProvider)), onTap: () => context.push('/reminders')),
                 KLinkRow(title: 'How it works', sub: 'Stones, grading and spaced review', onTap: () => context.push('/how')),
                 KLinkRow(title: 'About Katekize', sub: 'Sources and credits', onTap: () => context.push('/about')),
+                if (signedIn) KLinkRow(title: 'Delete my account', sub: 'Remove your account and everything in it', onTap: () => context.push('/delete-account')),
               ],
             ),
           ),
