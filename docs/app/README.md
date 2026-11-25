@@ -4,7 +4,7 @@
 for. Plain words first; the technical detail the AI needs is in clearly marked places and in the linked decision records
 (ADRs).
 
-**Status.** Plan, 2026-11-25. Nothing in `app/` is built yet.
+**Status.** Plan, 2026-11-25. Nothing in `mobile/` is built yet.
 
 ---
 
@@ -27,7 +27,7 @@ The website keeps running. The app adds things a website can't do well:
 
 | Stays the same | New for the app |
 |---|---|
-| **Supabase:** the database, sign-in by emailed code, every table and server function | The app itself, in a new `app/` folder of this same repository |
+| **Supabase:** the database, sign-in by emailed code, every table and server function | The app itself, in a new `mobile/` folder of this same repository |
 | **Server routes on katekize.com:** the verse text (NASB, licensed through the YouVersion Platform), friends' numbers, the daily job | **Native features:** speech, reminders, haptics, the share sheet, the widget, invite links that open the app |
 | **The progress data format** (so the website and app can share it) | **Store needs:** "Delete my account", a demo sign-in for Apple's reviewers, store listings |
 | **The memory engine's rules:** grading, scheduling, Today's plan, "in memory" | **A Dart copy of the engine,** checked against the website's engine with the same test cases so the two never differ |

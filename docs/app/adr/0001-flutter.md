@@ -15,7 +15,7 @@ Katekize is a Next.js web app (a PWA). The owner wants it in the App Store and G
 
 ## Decision
 
-**Flutter (Dart), one codebase for iPhone and Android.** The app lives in `app/` in this repository.
+**Flutter (Dart), one codebase for iPhone and Android.** The app lives in `mobile/` in this repository.
 
 ## Consequences
 

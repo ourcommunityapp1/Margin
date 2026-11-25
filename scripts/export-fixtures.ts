@@ -1,5 +1,5 @@
 // Runs the website's engine on a fixed set of inputs and writes inputs and outputs to fixtures/engine/*.json.
-// The Dart engine (app/lib/engine) must give the same outputs. Run: node scripts/export-fixtures.ts (ADR-0003).
+// The Dart engine (mobile/lib/engine) must give the same outputs. Run: node scripts/export-fixtures.ts (ADR-0003).
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { collections } from '../src/heir/content/index.ts';
 import { seeded } from '../src/heir/lesson.ts';

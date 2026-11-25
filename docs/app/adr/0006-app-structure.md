@@ -11,7 +11,7 @@
 
 **Folders:**
 ```
-app/
+mobile/
   lib/
     engine/         pure Dart: the ported engine (ADR-0003); no Flutter imports
     content/        loading content.json; Item, Course, Unit types

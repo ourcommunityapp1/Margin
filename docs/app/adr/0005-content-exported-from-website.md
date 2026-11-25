@@ -18,7 +18,7 @@ The NASB text is not stored. It is fetched per verse from `/api/heir/verse`.
 
 ## Decision
 
-- **One script, `scripts/export-content.ts`,** writes one JSON file, `app/assets/content/content.json`. It has a
+- **One script, `scripts/export-content.ts`,** writes one JSON file, `mobile/assets/content/content.json`. It has a
   version number and a checksum.
 - **The app never hand-edits content.** Change it on the website side, then run the export.
 - **The word of God is never altered.** The export copies text exactly. A test compares every exported item's text with

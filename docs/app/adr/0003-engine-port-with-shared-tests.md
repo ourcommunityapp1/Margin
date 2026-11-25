@@ -22,7 +22,7 @@ It uses `ts-fsrs` 6.0.0: FSRS-6, fuzz on, short-term off. The website's tests (1
 
 ## Decision
 
-1. **Port each file to Dart** in `app/lib/engine/`.
+1. **Port each file to Dart** in `mobile/lib/engine/`.
    - Same names, same rules, same comments.
    - No Flutter imports, so it stays pure and testable on any machine.
 2. **Shared test files.**

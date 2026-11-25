@@ -8,10 +8,10 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 |---|---|
 | How memory, grading, scheduling, Today's plan and "in memory" work | `src/heir/*.ts` (TypeScript). The Dart engine copies it; fixtures prove it (ADR-0003). |
 | Why the engine is the way it is | `docs/memory/ADR-001-review-engine.md`, `ADR-002-today-and-daily-plan.md`, `PROGRESS_PLAN.md` |
-| Course text | `src/heir/content/`, exported to `app/assets/content/content.json` (ADR-0005). Never hand-edit. |
+| Course text | `src/heir/content/`, exported to `mobile/assets/content/content.json` (ADR-0005). Never hand-edit. |
 | What each screen shows and says | The website's screen in `src/app/heir/` (table below). Match its copy and behaviour unless told otherwise. |
 | Database, RPCs, security | `supabase/migrations/` (applied in order). The app uses the same RPCs; it never holds a service key. |
-| Look | `src/app/heir/heir.css`, ported to `app/lib/ui/theme.dart` |
+| Look | `src/app/heir/heir.css`, ported to `mobile/lib/ui/theme.dart` |
 
 ## Rules that are not negotiable
 
@@ -57,9 +57,9 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 
 | What | How |
 |---|---|
-| Engine | `cd app && flutter test test/engine` (not `dart test`: the tests use `flutter_test`): every fixture in `fixtures/engine/` must pass. Regenerate fixtures with `npx tsx scripts/export-fixtures.ts` when the website's engine changes. |
+| Engine | `cd mobile && flutter test test/engine` (not `dart test`: the tests use `flutter_test`): every fixture in `fixtures/engine/` must pass. Regenerate fixtures with `npx tsx scripts/export-fixtures.ts` when the website's engine changes. |
 | Website engine still green | `npm run heir:test` |
-| Static checks | `cd app && flutter analyze` (no warnings) |
+| Static checks | `cd mobile && flutter analyze` (no warnings) |
 | Screens | Widget tests; golden screenshots (`flutter test --update-goldens` only when a change is intended, and say so). You can also `flutter build web` and screenshot it with Playwright to look at a screen. |
 | On a phone | The owner tries TestFlight builds; if the Mac is connected, run the simulator and take screenshots yourself |
 | Content | The export test: every item's text equals the source |
@@ -84,12 +84,12 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 
 ### Phase 1: engine (done Nov 25, 2026)
 
-- [x] `scripts/export-content.ts` writes `app/assets/content/content.json`; a test checks every item's words join exactly.
+- [x] `scripts/export-content.ts` writes `mobile/assets/content/content.json`; a test checks every item's words join exactly.
 - [x] `scripts/export-fixtures.ts` writes `fixtures/engine/*.json` (run it with `TZ=America/Chicago`, as the Dart tests are):
   grading, FSRS, memory, lessons, six simulated learners over 120 days each (every finish, settle, day plan and screen
   read checked after each step), two-phone merges, and the small files.
-- [x] Ported in dependency order into `app/lib/engine/` (pure Dart, no Flutter imports).
-- [x] All fixtures pass: `cd app && TZ=America/Chicago flutter test test/engine`.
+- [x] Ported in dependency order into `mobile/lib/engine/` (pure Dart, no Flutter imports).
+- [x] All fixtures pass: `cd mobile && TZ=America/Chicago flutter test test/engine`.
 - Not ported on purpose: `calibrate.ts` fitting (the server fits; the app only applies a fit with `setPopulationCal` /
   `setPersonCal`), `answers.ts`, `sync.ts`, `recover.ts`, `statsjob.ts`, `validate.ts` (server or website plumbing; the
   app's data layer comes in phase 2), and `usfm.ts`'s HTML clean-up (the server returns clean verse text).
