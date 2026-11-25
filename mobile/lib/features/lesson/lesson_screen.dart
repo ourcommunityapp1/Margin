@@ -312,9 +312,10 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 0,
+              // Above the keyboard if it is still up (nothing in the app resizes for it).
+              bottom: keyboard,
               child: Container(
-                padding: EdgeInsets.fromLTRB(KSize.pageSide + pad.left, 22, KSize.pageSide + pad.right, pad.bottom + 20),
+                padding: EdgeInsets.fromLTRB(KSize.pageSide + pad.left, 22, KSize.pageSide + pad.right, (keyboard > 0 ? 0 : pad.bottom) + 20),
                 decoration: BoxDecoration(
                   color: feedback.ok ? k.goodWash : k.missWash,
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),

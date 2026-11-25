@@ -667,6 +667,8 @@ class _LettersStepState extends State<LettersStep> with SingleTickerProviderStat
   final _input = TextEditingController();
   final _focus = FocusNode();
   late final AnimationController _shake = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+  // The blank for the next word, kept in view as you type (the card scrolls; the keyboard hides the lower lines).
+  final _nextKey = GlobalKey();
   int _shown = 0, _misses = 0, _hints = 0;
   final List<int> _slips = [];
   bool _reported = false;
@@ -710,8 +712,13 @@ class _LettersStepState extends State<LettersStep> with SingleTickerProviderStat
   void _advance(int m, int h) {
     final n = _shown + 1;
     setState(() => _shown = n);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _nextKey.currentContext;
+      if (ctx != null && ctx.mounted) Scrollable.ensureVisible(ctx, alignment: 0.6, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
+    });
     if (n >= _tokens.length) {
       _focus.unfocus();
+      FocusManager.instance.primaryFocus?.unfocus();
       _finish(m, h);
     }
   }
@@ -742,6 +749,7 @@ class _LettersStepState extends State<LettersStep> with SingleTickerProviderStat
             alignment: PlaceholderAlignment.baseline,
             baseline: TextBaseline.alphabetic,
             child: Container(
+              key: i == _shown ? _nextKey : null,
               width: math.max(2, splitToken(t).core.length) * 0.55 * 22,
               height: 20,
               decoration: BoxDecoration(

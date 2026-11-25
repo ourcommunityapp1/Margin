@@ -137,4 +137,37 @@ void main() {
     await _tap(tester, 'Continue');
     expect(find.text('Fill in the missing words'), findsOneWidget);
   });
+
+  testWidgets('the feedback sheet sits above the keyboard when it is still up', (tester) async {
+    final s = await _session(tester);
+    await _pump(tester, s.session, MemoryStore());
+    await _tap(tester, 'Continue');
+    for (final t in s.session.steps[1].tiles!) {
+      await _tap(tester, t);
+    }
+    // The keyboard comes up (the website's pages shrink for it; these do not, so the sheet must clear it).
+    tester.view.viewInsets = const FakeViewPadding(bottom: 800); // 800 physical pixels = 267 points
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Check'));
+    await tester.pumpAndSettle();
+    final screenHeight = tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final bottom = tester.getBottomLeft(find.text('Continue')).dy;
+    expect(bottom, lessThanOrEqualTo(screenHeight - 800 / tester.view.devicePixelRatio + 1), reason: 'the Continue button is not behind the keyboard');
+    addTearDown(tester.view.resetViewInsets);
+  });
+
+  testWidgets('first letters: typing every letter finishes the step and shows the feedback', (tester) async {
+    await tester.runAsync(loadBundledContent);
+    const text = 'The people who walk in darkness Will see a great';
+    final step = lesson.Step(id: 'letters-1', itemId: 'wsc-1', kind: 'letters', review: true, text: text, lead: '');
+    final session = Session(label: 'Practice', kind: 'review', steps: [step], units: const [], group: null, courseId: '', memberId: 'me', mode: 'item', dayCourse: 'westminster-shorter');
+    await _pump(tester, session, MemoryStore());
+    expect(find.text('Type the first letter of each word'), findsOneWidget);
+    for (final ch in 'tpwwidwsag'.split('')) {
+      await tester.enterText(find.byType(TextField), ch);
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('Continue'), findsOneWidget, reason: 'the feedback sheet shows once the last word is typed');
+  });
 }
