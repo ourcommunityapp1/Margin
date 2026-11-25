@@ -18,6 +18,8 @@ What is built and what still needs an account. Everything here is a one-time job
      {"/":"/heir/invite*"},{"/":"/heir/join*"},{"/":"/heir/u*"},{"/":"/heir/courses/*"}]}]}}
    ```
 
+## Android overall: see `ANDROID_SETUP.md` (tools, emulator, signing key, Play Console).
+
 ## For links to open the app (Android)
 1. Make a Google Play Console account ($25 once) and a release signing key; note the key's **SHA-256 fingerprint**.
 2. **The website already serves** `https://katekize.com/.well-known/assetlinks.json`. It stays a 404 until you set the Netlify environment
