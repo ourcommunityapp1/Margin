@@ -130,8 +130,10 @@ class FakeSocial implements SocialApi {
     return 'abcdef0123456789abcdef0123456789';
   }
 
+  final joined = <String>[];
+
   @override
-  Future<void> acceptInvite(String code) async {}
+  Future<void> acceptInvite(String code) async => joined.add(code);
 
   @override
   Future<void> unlink(String ownerId) async {

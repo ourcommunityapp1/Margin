@@ -12,6 +12,7 @@ import 'features/courses/courses_screen.dart';
 import 'features/friends/community_screen.dart';
 import 'features/friends/friends_screen.dart';
 import 'features/friends/invite_screen.dart';
+import 'features/friends/join_screen.dart';
 import 'features/friends/person_screen.dart';
 import 'features/friends/requests_screen.dart';
 import 'features/item/item_screen.dart';
@@ -29,6 +30,7 @@ import 'features/you/profile_screen.dart';
 import 'features/you/reminders_screen.dart';
 import 'features/today/today_screen.dart';
 import 'features/you/you_screen.dart';
+import 'platform/links.dart';
 import 'state/auth.dart';
 import 'state/board.dart';
 import 'state/reminders.dart';
@@ -102,7 +104,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community', '/reminders'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window', '/plan', '/family', '/how', '/profile', '/linked', '/u', '/invite', '/community', '/reminders', '/join'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -115,6 +117,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/today',
     refreshListenable: refresh,
     redirect: (context, state) {
+      // A link to the website's page (katekize.com/heir/...): open the matching screen in the app.
+      final site = appPathForWebsite(state.uri);
+      if (site != null) return site;
       final path = state.uri.path;
       final h = ref.read(householdProvider);
       final someone = h.members.isNotEmpty;
@@ -124,7 +129,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (someone && h.plan != null && path == '/start') return '/today';
       if (path.startsWith('/friends') && ref.read(emailProvider).value == null) return '/today';
       // Someone's profile or a friend's invite: sign in first, then come back here.
-      if ((path.startsWith('/u/') || path == '/invite') && ref.read(emailProvider).value == null) return '/signin?next=${Uri.encodeComponent(state.uri.toString())}';
+      if ((path.startsWith('/u/') || path == '/invite' || path == '/join') && ref.read(emailProvider).value == null) return '/signin?next=${Uri.encodeComponent(state.uri.toString())}';
       return null;
     },
     routes: [
@@ -145,6 +150,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/friends/requests', pageBuilder: (_, s) => _fade(s, const RequestsScreen())),
       GoRoute(path: '/u/:username', pageBuilder: (_, s) => _fade(s, PersonScreen(username: s.pathParameters['username']!))),
       GoRoute(path: '/invite', pageBuilder: (_, s) => _fade(s, InviteScreen(code: s.uri.queryParameters['code'] ?? ''))),
+      GoRoute(path: '/join', pageBuilder: (_, s) => _fade(s, JoinScreen(code: s.uri.queryParameters['code'] ?? ''))),
       GoRoute(path: '/community', pageBuilder: (_, s) => _fade(s, const CommunityScreen())),
       GoRoute(path: '/reminders', pageBuilder: (_, s) => _fade(s, const RemindersScreen())),
       GoRoute(path: '/linked', pageBuilder: (_, s) => _fade(s, const LinkedScreen())),
