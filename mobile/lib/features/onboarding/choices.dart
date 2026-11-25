@@ -23,9 +23,12 @@ String span(int days) => days < 14 ? '$days days' : days < 60 ? '${(days / 7).ro
 
 /// The courses a person can choose to memorize.
 class CourseChoices extends StatelessWidget {
-  const CourseChoices({super.key, required this.value, required this.onChanged});
+  const CourseChoices({super.key, required this.value, required this.onChanged, this.stats});
   final String? value;
   final ValueChanged<String> onChanged;
+
+  /// How far each course has got, to show under it (the plan screen does; first run does not).
+  final Map<String, ({int learned, int total})>? stats;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +49,26 @@ class CourseChoices extends StatelessWidget {
                   Text(c.title, style: sans(17, weight: FontWeight.w600, color: k.ink)),
                   const SizedBox(height: 4),
                   Text('${c.blurb} ${_count(c)}', style: sans(15, color: value == c.id ? k.ink : k.muted, height: 1.4)),
+                  if (stats?[c.id] case final st?) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(3),
+                            child: Container(
+                              height: 6,
+                              color: k.well,
+                              alignment: Alignment.centerLeft,
+                              child: FractionallySizedBox(widthFactor: st.total == 0 ? 0 : (st.learned / st.total).clamp(0, 1).toDouble(), child: Container(color: k.ink)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(st.learned > 0 ? '${st.learned} of ${st.total} learned' : 'Not started', style: sans(13, weight: FontWeight.w600, color: k.muted)),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

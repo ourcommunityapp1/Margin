@@ -136,8 +136,9 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
   windows on the cards are plain placeholders until phase 3.
 - [x] Progress: the week and month of days kept, words in memory and milestones, the stones ladder (real gem images),
   your courses (a plain list: the windows wall waits for phase 3), awards. Not yet: the community preview.
-- [ ] You: change course or daily goal, family (add, edit, remove, bring back), linked accounts, profile, How it works,
-  About and credits. (Phase 4, in progress. About and credits is done.)
+- [x] You: course and daily goal (with what the stones and grades mean), family (add, switch active, change track, remove,
+  bring back or fold into someone), How it works, About and credits, sign in/out, Start over (`features/you/`).
+- [ ] You: Profile and Linked accounts (need the server's profile and link functions).
 - [ ] Friends and Community (needs account sync, which is done).
 - [x] Answers and card events are sent when writing is on (`SupabaseAccountApi`).
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).

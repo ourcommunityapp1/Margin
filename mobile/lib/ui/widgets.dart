@@ -335,6 +335,7 @@ class KTextField extends StatelessWidget {
     this.letterSpacing,
     this.label,
     this.textInputAction,
+    this.hint,
   });
 
   final TextEditingController? controller;
@@ -350,6 +351,9 @@ class KTextField extends StatelessWidget {
 
   /// Read aloud by screen readers; the visible label is a [KLabel] above the field.
   final String? label;
+
+  /// Faint text shown while the field is empty (the website's placeholder).
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +377,8 @@ class KTextField extends StatelessWidget {
         semanticCounterText: '',
         counterText: '',
         labelText: null,
-        hintText: null,
+        hintText: hint,
+        hintStyle: sans(17, color: context.k.muted),
         isDense: true,
         filled: true,
         fillColor: k.card,

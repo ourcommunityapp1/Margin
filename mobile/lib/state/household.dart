@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/household.dart';
+import '../data/removed.dart';
 import '../data/store.dart';
 import '../engine/progress.dart';
 import '../engine/types.dart';
@@ -40,6 +41,13 @@ class HouseholdNotifier extends Notifier<Household> {
 
 final householdProvider = NotifierProvider<HouseholdNotifier, Household>(HouseholdNotifier.new);
 
+/// People removed from this phone's family (so they can be brought back). Kept only on this phone.
+final removedProvider = Provider<List<Gone>>((ref) {
+  // Re-read whenever the household changes (a removal is remembered just before it).
+  ref.watch(householdProvider);
+  return readRemoved(ref.read(storeProvider));
+});
+
 class ProgressNotifier extends Notifier<Progress> {
   @override
   Progress build() => parseProgress(ref.read(storeProvider).read(progressKey));
@@ -59,6 +67,17 @@ class ProgressNotifier extends Notifier<Progress> {
 }
 
 final progressProvider = NotifierProvider<ProgressNotifier, Progress>(ProgressNotifier.new);
+
+/// Folds a removed person's saved progress into someone already in the family.
+void mergeProgressInto(WidgetRef ref, String fromId, String toId) {
+  ref.read(progressProvider.notifier).update((all) {
+    final next = {...all};
+    final from = all[fromId];
+    if (from != null) next[toId] = mergeProgress(memberProgress(all, toId), from);
+    next.remove(fromId);
+    return next;
+  });
+}
 
 /// The person using the app.
 class Me {
