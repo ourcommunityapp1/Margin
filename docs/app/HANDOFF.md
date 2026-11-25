@@ -22,11 +22,12 @@ Read this first, then `AI_GUIDE.md` and `README.md` in this folder.
   4. Report back what works, in plain words.
 
 ## Status (Nov 25, 2026)
-- Phase 1 (engine) in progress. Done and passing every shared case: `words`, `grade` (1,700 cases), `fsrs` (260 runs).
-  `models.dart` (stored progress shapes) written. Next: `memory`, `lesson`, `progress`, `levels`, `keep`, `planner`,
-  `dayplan`, then the small files.
+- Phase 1 (engine) is done: the whole engine is in `app/lib/engine/` and matches the website on every shared case
+  (see the parity table in AI_GUIDE.md). Phase 2 (first slice of screens) can use it. Load content first with
+  `loadContent(jsonDecode(await rootBundle.loadString('assets/content/content.json')))`.
 - Content export: `node scripts/export-content.ts` → `app/assets/content/content.json`.
-- Fixtures: `node scripts/export-fixtures.ts` → `fixtures/engine/*.json`; Dart side: `cd app && flutter test test/engine`.
+- Fixtures: `TZ=America/Chicago node scripts/export-fixtures.ts` → `fixtures/engine/*.json`; Dart side:
+  `cd app && TZ=America/Chicago flutter test test/engine`.
 
 ## Rules that never bend
 - Never change the word of God (Scripture, catechism, creed text is copied exactly).

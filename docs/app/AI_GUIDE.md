@@ -82,30 +82,35 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 
 ## Phase checklists
 
-### Phase 1: engine
+### Phase 1: engine (done Nov 25, 2026)
 
-- [ ] Write `scripts/export-content.ts` and `content.json`, plus the content-equality test.
-- [ ] Write `scripts/export-fixtures.ts`. Cover:
-  - grading (`wordMatches`, `gradeSpoken`, `markOf`, `gradeRecall`);
-  - memory (`recallChance`, `replayParts`, `partMemories`, `outAt`, `strongUntil`, calibration);
-  - `finishSession` (both grading modes) and `mergeProgress`, `parseProgress`;
-  - `planNext`, `planDay`, `cardStates`, `extraSessions`;
-  - the lesson builders with `seeded()`;
-  - `keepState`, `heldItems`;
-  - `levelFromLog`, `earnedLevels`, `daysKept`.
-- [ ] Port in dependency order:
-  1. `types`, `words`, `grade`
-  2. `content`
-  3. `lesson`
-  4. FSRS
-  5. `memory`
-  6. `progress`
-  7. `levels`
-  8. `keep`
-  9. `planner`
-  10. `dayplan`
-  11. `measures`, `stats`, `path`, `social`, `board`, `related`, `season`
-- [ ] All fixtures pass. Keep a parity table in this file: one row per function, and the date it last passed.
+- [x] `scripts/export-content.ts` writes `app/assets/content/content.json`; a test checks every item's words join exactly.
+- [x] `scripts/export-fixtures.ts` writes `fixtures/engine/*.json` (run it with `TZ=America/Chicago`, as the Dart tests are):
+  grading, FSRS, memory, lessons, six simulated learners over 120 days each (every finish, settle, day plan and screen
+  read checked after each step), two-phone merges, and the small files.
+- [x] Ported in dependency order into `app/lib/engine/` (pure Dart, no Flutter imports).
+- [x] All fixtures pass: `cd app && TZ=America/Chicago flutter test test/engine`.
+- Not ported on purpose: `calibrate.ts` fitting (the server fits; the app only applies a fit with `setPopulationCal` /
+  `setPersonCal`), `answers.ts`, `sync.ts`, `recover.ts`, `statsjob.ts`, `validate.ts` (server or website plumbing; the
+  app's data layer comes in phase 2), and `usfm.ts`'s HTML clean-up (the server returns clean verse text).
+
+**Parity table** (TypeScript → Dart; every row passed its fixtures on Nov 25, 2026):
+
+| Website | App | Fixture |
+|---|---|---|
+| `words.ts`, `grade.ts` | `words.dart`, `grade.dart` | `words`, `grade` (1,793 cases) |
+| `ts-fsrs` 6.0.0 (FSRS-6, fuzz, long-term) | `fsrs.dart` | `fsrs` (260 runs × 14 reviews) |
+| `memory.ts` | `memory.dart`, `models.dart` | `memory` (40 histories, 3 calibrations) |
+| `content/index.ts` | `content.dart` | via `lesson`, `journeys` |
+| `lesson.ts` | `lesson.dart` | `lesson` (767 seeded sessions) |
+| `progress.ts`, `keep.ts`, `levels.ts`, `measures.ts`, `planner.ts`, `dayplan.ts`, `related.ts` | same names `.dart` | `journeys` (6 learners, every step), merges |
+| `stats.ts`, `path.ts`, `social.ts`, `board.ts`, `season.ts`, `time.ts`, `usfm.ts` (refs) | `stats`, `path`, `social`, `board`, `season.dart`, `usfm.dart` | `small` |
+
+**Notes for whoever changes the engine next:**
+- Change the TypeScript first, regenerate fixtures, then make Dart match. Never edit a fixture by hand.
+- Local days matter (stones, days kept, the day plan), so fixtures and tests both run in `America/Chicago`.
+- Numbers are compared to 1e-9; dates as exact ISO text. JavaScript's `Math.round`, stable sorting and the seeded
+  generators are copied exactly (`util.dart`, `lesson.dart`, `fsrs.dart`).
 
 ### Phase 2: first slice
 

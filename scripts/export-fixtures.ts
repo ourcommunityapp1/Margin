@@ -318,3 +318,37 @@ for (const [tag, focus, track, goal, tz] of plans) {
   journeys.push({ tag, focus, track, goal, tz, ops, finalLog: p.log, merges });
 }
 write('journeys', journeys);
+
+// ---- the small files: stats, path, social, board, season, time, usfm, related
+import * as St from '../src/heir/stats.ts';
+import * as Pa from '../src/heir/path.ts';
+import * as So from '../src/heir/social.ts';
+import * as B from '../src/heir/board.ts';
+import * as Se from '../src/heir/season.ts';
+import * as Ti from '../src/heir/time.ts';
+import { toUsfm, isOldTestament, tidyVerse } from '../src/heir/usfm.ts';
+import { passagesOf, verseCount, isRelatedPassage } from '../src/heir/related.ts';
+{
+  const progressOf = journeys.map((j) => (j as { merges: { ab: P.MemberProgress } }).merges.ab);
+  const at = new Date('2026-05-01T15:00:00Z');
+  const small: Record<string, unknown> = {};
+  small.stats = plans.map(([, focus, track], i) => St.statsFor([{ id: focus, items: courseItems(getCourse(focus)!) }], allItems(), track, progressOf[i], P.localDay(at), i % 2 ? { options: { launch: new Date('2026-01-01T00:00:00Z') }, now: at } : null));
+  small.path = plans.map(([, focus, track], i) => Pa.coursePath(courseItems(getCourse(focus)!), track, progressOf[i], at).map((u) => ({ number: u.number, group: u.group.key, lessons: u.lessons, learned: u.learned, mastered: u.mastered, status: u.status, lockWaiting: u.lockWaiting })));
+  small.courseStats = plans.map(([, focus, track], i) => Pa.courseStats(courseItems(getCourse(focus)!), track, progressOf[i]));
+  small.streak = progressOf.map((p) => [Pa.streak(p.days, p.days.at(-1)!), Pa.streak(p.days, '2026-12-25')]);
+  const names = ['ab', 'Abc', 'a_b_c', '1abc', 'admin', 'Katekize', 'x'.repeat(21), 'good_name9', ' padded ', 'Me'];
+  small.usernames = names.map((n) => [n, So.usernameProblem(n)]);
+  small.places = [[null, null], ['Franklin', 'TN'], [' Nashville ', ''], [null, 'TN']].map(([c, r]) => [c, r, So.place(c, r)]);
+  small.since = ['2026-03-04T10:00:00Z', '', 'nonsense', '2025-12-31T23:30:00Z'].map((s) => [s, So.sinceLabel(s)]);
+  small.streakLines = [[3, null, '2026-05-01'], [0, null, '2026-05-01'], [0, '2026-04-30', '2026-05-01'], [0, '2026-04-20', '2026-05-01']].map(([s, l, t]) => [s, l, t, So.streakLine(s as number, l as string | null, t as string)]);
+  small.friends = [0, 1, 2, 38].map((n) => So.friendsCount(n));
+  const rows: B.BoardRow[] = Array.from({ length: 12 }, (_, i) => ({ place: i + 1 + (i > 6 ? 3 : 0), prev_place: i % 3 === 0 ? null : i + 1 + ((i * 7) % 5) - 2, idx: i + 1 + (i > 6 ? 3 : 0), username: `u${i}`, relation: (i === 5 ? 'me' : i % 2 ? 'friend' : 'fof') as B.BoardRow['relation'], words: 500 - i * 20, name: `N${i}`, is_me: i === 5, friends_since: i % 4 === 1 ? '2026-02-10T00:00:00Z' : null, via: i % 4 === 2 ? 'Ann' : null }));
+  small.board = { rows, subs: rows.map(B.rowSub), moves: rows.map(B.movement), arrows: [-3, 0, 4].map(B.arrow), ordinals: [1, 2, 3, 4, 11, 12, 13, 21, 22, 101, 111, 112].map(B.ordinal), preview: B.previewRows({ period: 'all', total: 12, my_place: 6, my_prev_place: 5, my_idx: 6, rows }).map((r) => r.username), slots: B.slots(rows), gaps: [...B.gapsAfter(rows)] };
+  small.seasons = Array.from({ length: 70 }, (_, i) => { const d = new Date(Date.UTC(2025 + (i % 3), Math.floor(i / 6) % 12, 1 + ((i * 11) % 28), 18)); return [d.toISOString(), Se.seasonLabel('christmas', d), Se.seasonLabel('easter', d), Ti.timeOfDay(d), Ti.dayName(d)]; });
+  small.feasts = [2024, 2025, 2026, 2027, 2028, 2030, 2040].map((y) => [y, P.localDay(Se.adventSunday(y)), P.localDay(Se.easterSunday(y))]);
+  small.greetings = ['dawn', 'day', 'dusk', 'night'].map((t) => Ti.greeting(t as Ti.TimeOfDay));
+  const refs = [...new Set(allItems().flatMap((i) => i.connected))].slice(0, 300);
+  small.usfm = refs.map((r) => [r, toUsfm(r), isOldTestament(r), passagesOf(r), passagesOf(r).map(verseCount), passagesOf(r).map(isRelatedPassage)]);
+  small.tidy = ['  In the  beginning\nGod ', 'Hear,  O Israel'].map((t) => [t, tidyVerse(t)]);
+  write('small', [small]);
+}
