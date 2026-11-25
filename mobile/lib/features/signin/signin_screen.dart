@@ -1,8 +1,10 @@
 // Sign in with a code sent by email (src/app/heir/ui/signin.tsx). Copy matches the website.
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/config.dart';
 import '../../state/auth.dart';
@@ -193,9 +195,44 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ),
             if (_error.isNotEmpty)
               Semantics(liveRegion: true, child: Text(_error, style: sans(15, color: k.ink))),
+            const _AgeNote(),
           ],
         ),
       ],
+    );
+  }
+}
+
+/// What signing in means (the same line as the website's sign-in): confirms 13+, and a profile is made for the account.
+class _AgeNote extends StatefulWidget {
+  const _AgeNote();
+
+  @override
+  State<_AgeNote> createState() => _AgeNoteState();
+}
+
+class _AgeNoteState extends State<_AgeNote> {
+  late final TapGestureRecognizer _tap = TapGestureRecognizer()..onTap = () => launchUrl(Uri.parse('https://katekize.com/privacy'), mode: LaunchMode.externalApplication);
+
+  @override
+  void dispose() {
+    _tap.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final style = sans(13, color: k.muted, height: 1.5);
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          const TextSpan(text: 'By signing in you confirm you\u2019re 13 or older. Your account gets a profile so friends can find you; you can change that any time on Your profile. '),
+          TextSpan(text: 'How Katekize uses it', recognizer: _tap, style: style.copyWith(decoration: TextDecoration.underline)),
+          const TextSpan(text: '.'),
+        ],
+      ),
     );
   }
 }

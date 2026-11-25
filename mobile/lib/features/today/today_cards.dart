@@ -9,6 +9,7 @@ import '../../engine/content.dart';
 import '../../engine/dayplan.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import '../window/appear_window.dart';
 import '../window/glass_window.dart';
 import '../window/light.dart';
 
@@ -185,6 +186,9 @@ class _TodayCarouselState extends State<TodayCarousel> {
   int _at = 0;
   String _first = '';
 
+  /// The card at least 60% in view (its window lights up), or null while two share the screen.
+  final _front = ValueNotifier<int?>(0);
+
   @override
   void initState() {
     super.initState();
@@ -203,9 +207,18 @@ class _TodayCarouselState extends State<TodayCarousel> {
     }
   }
 
+  void _watch() {
+    final c = _controller;
+    if (c == null || !c.hasClients) return;
+    final p = c.page ?? _at.toDouble();
+    final r = p.round();
+    _front.value = (p - r).abs() < 0.4 ? r : null;
+  }
+
   @override
   void dispose() {
     _controller?.dispose();
+    _front.dispose();
     super.dispose();
   }
 
@@ -219,7 +232,8 @@ class _TodayCarouselState extends State<TodayCarousel> {
         if (_controller == null || _width != c.maxWidth) {
           _width = c.maxWidth;
           _controller?.dispose();
-          _controller = PageController(viewportFraction: (c.maxWidth + 10) / c.maxWidth, initialPage: _at.clamp(0, slides.length - 1));
+          _controller = PageController(viewportFraction: (c.maxWidth + 10) / c.maxWidth, initialPage: _at.clamp(0, slides.length - 1))..addListener(_watch);
+          _front.value = _at.clamp(0, slides.length - 1);
         }
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -231,7 +245,13 @@ class _TodayCarouselState extends State<TodayCarousel> {
                 clipBehavior: Clip.none,
                 padEnds: false,
                 onPageChanged: (i) => setState(() => _at = i),
-                children: [for (final s in slides) Padding(padding: const EdgeInsets.only(right: 10), child: _SlideCard(slide: s))],
+                children: [
+                  for (final (i, s) in slides.indexed)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: ValueListenableBuilder<int?>(valueListenable: _front, builder: (context, front, _) => _SlideCard(slide: s, active: front == i)),
+                    ),
+                ],
               ),
             ),
             if (slides.length > 1) ...[
@@ -274,8 +294,9 @@ class _TodayCarouselState extends State<TodayCarousel> {
 }
 
 class _SlideCard extends StatelessWidget {
-  const _SlideCard({required this.slide});
+  const _SlideCard({required this.slide, required this.active});
   final Slide slide;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +308,7 @@ class _SlideCard extends StatelessWidget {
             fill: true,
             children: [
               Semantics(header: true, child: Text('Done for today', style: serif(28, weight: FontWeight.w500, color: roseInk))),
-              RoundWindow(base: s.window.base, lit: s.window.lit, dusty: s.window.dusty, share: s.window.share, started: s.window.started, beam: const CircleMotion(), label: '${s.course.title} window'),
+              AppearWindow(active: active, base: s.window.base, lit: s.window.lit, dusty: s.window.dusty, share: s.window.share, started: s.window.started, beam: const CircleMotion(), label: '${s.course.title} window'),
               Text('${s.minutes} min', style: serif(32, color: roseInk, height: 1)),
               if (s.extra)
                 TextButton(
@@ -300,8 +321,8 @@ class _SlideCard extends StatelessWidget {
             ],
           ),
         ),
-      CardSlide() => _CardBody(course: s.course, window: s.window, tag: s.state.done ? _doneWord(s.state.card.kind) : s.tag, fix: s.state.card.kind == 'fix' && !s.state.done, done: s.state.done, secs: s.state.secs, button: s.button, href: s.href),
-      ExtraSlide() => _CardBody(course: s.course, window: s.window, tag: s.tag, fix: false, done: true, secs: s.session.secs, button: '', href: ''),
+      CardSlide() => _CardBody(active: active, course: s.course, window: s.window, tag: s.state.done ? _doneWord(s.state.card.kind) : s.tag, fix: s.state.card.kind == 'fix' && !s.state.done, done: s.state.done, secs: s.state.secs, button: s.button, href: s.href),
+      ExtraSlide() => _CardBody(active: active, course: s.course, window: s.window, tag: s.tag, fix: false, done: true, secs: s.session.secs, button: '', href: ''),
     };
   }
 
@@ -310,7 +331,8 @@ class _SlideCard extends StatelessWidget {
 }
 
 class _CardBody extends StatelessWidget {
-  const _CardBody({required this.course, required this.window, required this.tag, required this.fix, required this.done, required this.secs, required this.button, required this.href});
+  const _CardBody({required this.active, required this.course, required this.window, required this.tag, required this.fix, required this.done, required this.secs, required this.button, required this.href});
+  final bool active;
   final Course course;
   final PartWindow window;
   final String tag, button, href;
@@ -331,7 +353,7 @@ class _CardBody extends StatelessWidget {
             Semantics(header: true, child: Text(course.title, textAlign: TextAlign.center, style: serif(26, weight: FontWeight.w500, color: roseInk, height: 1.12))),
             Opacity(
               opacity: done ? 0.75 : 1,
-              child: RoundWindow(base: window.base, lit: window.lit, dusty: window.dusty, share: window.share, started: window.started, beam: const CircleMotion(), label: '${course.title} window'),
+              child: AppearWindow(active: active, base: window.base, lit: window.lit, dusty: window.dusty, share: window.share, started: window.started, beam: const CircleMotion(), label: '${course.title} window'),
             ),
             if (done)
               Opacity(

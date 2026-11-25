@@ -33,11 +33,14 @@ const _dusty = 0.5;
 enum GlassTier { small, full }
 
 class Glass {
-  Glass(this.size, this.glass, this.ids, this.flat, this.count, this.panes);
+  Glass(this.size, this.glass, this.ids, this.flat, this.count, this.panes, [this.centres]);
   final int size;
   final Uint8List glass, ids; // straight RGBA
   final List<int> flat;
   final int count;
+
+  /// Each pane's centre (0 to 1, by pane id - 1), for the order the light spreads in.
+  final List<List<double>>? centres;
 
   /// Each pane's pixels, by pane id.
   final Map<int, Int32List> panes;
@@ -102,6 +105,7 @@ Future<Glass> _load(String base, GlassTier tier) async {
     [for (final q in (meta['questions'] as List)) ...(q as List).cast<int>()],
     (meta['count'] as num).toInt(),
     panes,
+    meta['centres'] == null ? null : [for (final c in (meta['centres'] as List)) [(c[0] as num).toDouble(), (c[1] as num).toDouble()]],
   );
 }
 
@@ -148,7 +152,7 @@ Future<ui.Image> windowImage(
   if (_images.length > 40) _images.remove(_images.keys.first);
   return _images.putIfAbsent(key, () async {
     final d = await loadGlass(base, tier);
-    final state = paneStates(count: d.count, flat: d.flat, lit: lit, dusty: dusty);
+    final state = paneStates(count: d.count, flat: d.flat, lit: lit, dusty: dusty, centres: d.centres);
     final Uint8List bytes = tier == GlassTier.full
         ? await Isolate.run(() => _renderPixels(d.size, d.glass, d.ids, d.panes, state, rest, restMix))
         : renderPixels(d, state, rest: rest, restMix: restMix);
