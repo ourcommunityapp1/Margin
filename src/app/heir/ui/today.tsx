@@ -12,6 +12,7 @@ import { useHeir } from './provider';
 import { useCourse } from './course';
 import { useKeep } from './keep';
 import { RoundWindow } from './glass/round';
+import type { WindowHandle } from './glass/window';
 import { MiniWindow } from './glass/mini';
 import { partOf, partWindow, type PartWindow } from './glass/light';
 import { courseFor, courseItems, itemLabel, type Course } from '@/heir/content';
@@ -171,6 +172,55 @@ function LiveBanner({ live, done }: { live: Live; done: number | null }) {
   );
 }
 
+// A card's window lights up the way it did on the old Today: it starts dark and lights pane by pane up to where you are,
+// while the gold arc grows round with it. It happens when the card comes into view (so a card you swipe to lights then),
+// and again each time Today opens. Before a course has begun, a dim light moves behind the dark glass. The window never
+// shows more than you have earned: it only ever lights up to `light.lit`.
+function CardWindow({ light, hint, started, label }: { light: PartWindow; hint?: number; started: boolean; label: string }) {
+  const win = useRef<WindowHandle>(null);
+  const box = useRef<HTMLDivElement>(null);
+  // `light` is worked out afresh on every render, so what the effects use is kept in a ref and the window is keyed by what it shows.
+  const latest = useRef(light);
+  useEffect(() => { latest.current = light; });
+  const count = light.lit.length, sig = light.lit.map((f) => f.toFixed(3)).join(',');
+  const dark = useMemo(() => Array.from({ length: count }, () => 0), [count]);
+  const [share, setShare] = useState(0);
+  const [arcMs, setArcMs] = useState(900);
+  const [settled, setSettled] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [seen, setSeen] = useState(false);
+  const ran = useRef(false);
+  useEffect(() => {
+    const el = box.current;
+    if (!el || typeof IntersectionObserver === 'undefined') { Promise.resolve().then(() => setSeen(true)); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setSeen(true); io.disconnect(); } }, { threshold: 0.6 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!ready || !seen || ran.current) return;
+    ran.current = true;
+    const light = latest.current;
+    const pieces = win.current?.meta()?.count ?? 500;
+    const lit = Math.round(light.share * pieces);
+    // The engine spaces panes so the whole sweep takes about two and a half seconds at most.
+    const sweep = lit ? Math.min(2400, lit * 130) + 600 : 0;
+    const a = setTimeout(() => {
+      win.current?.revealTo(light.lit);
+      setArcMs(Math.max(600, sweep));
+      setShare(light.share);
+    }, 350);
+    const b = setTimeout(() => setSettled(true), 350 + sweep);
+    return () => { clearTimeout(a); clearTimeout(b); ran.current = false; };
+  }, [ready, seen, sig]);
+  return (
+    <div ref={box} style={{ display: 'flex' }}>
+      <RoundWindow ref={win} base={light.base} lit={dark} dusty={settled ? light.dusty : undefined} hint={settled ? hint : undefined}
+        share={share} arcMs={arcMs} size={240} onReady={() => setReady(true)} beam={started ? undefined : { kind: 'circle' }} label={label} />
+    </div>
+  );
+}
+
 function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track; mine: MemberProgress; now: Date }) {
   const ref = useRef<HTMLDivElement>(null);
   const [at, setAt] = useState(0);
@@ -197,7 +247,7 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
               <section key="done" role="listitem" className="hr-rose-card hr-slide" aria-label="Done for today">
                 <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
                 <h2 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500 }}>Done for today</h2>
-                <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={240} label={`${s.course.title} window`} />
+                <CardWindow key={w.base} light={w} started={w.share > 0} label={`${s.course.title} window`} />
                 <span className="serif" style={{ fontSize: 32, lineHeight: 1 }}>{s.minutes} min</span>
                 {s.extra && <Link href="/heir/lesson?mode=extra" className="hr-day-extra">Extra practice</Link>}
               </section>
@@ -214,7 +264,7 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
               <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
               <span className="hr-day-tag" data-fix={(s.type === 'card' && s.state.card.kind === 'fix' && !done) || undefined}>{word}</span>
               <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.12, textAlign: 'center' }}>{s.course.title}</h2>
-              <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={240} label={`${s.course.title} window`} />
+              <CardWindow key={w.base} light={w} started={w.share > 0} hint={!done && s.type === 'card' && s.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${s.course.title} window`} />
               {done || s.type !== 'card' ? (
                 <div className="hr-day-done"><span className="hr-day-tick">{check}</span>{Math.max(1, Math.round(secs / 60))} min</div>
               ) : (
