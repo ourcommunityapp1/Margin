@@ -3,6 +3,8 @@
 // The new Today (owner accounts first): the day's recommended lessons and reviews as a carousel of course windows,
 // one course each; when they're all done, a slim banner and a "Done for today" card; below, Keep going: every course
 // you've started, to choose for yourself. The plan is made once a day (src/heir/dayplan.ts). See ADR-002.
+// The evening and morning recalls are optional, so they are not cards: a night-blue (or dawn) banner above the carousel,
+// which can be put away for the evening (or morning).
 
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -25,7 +27,7 @@ const ids = (c: Course) => new Set(courseItems(c).map((i) => i.id));
 const weekday = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long' });
 
 // The window a card shows: for a review, the part holding most of what's due; otherwise the part you're working in.
-function windowFor(course: Course, kind: DayCard['kind'] | 'live', track: Track, p: MemberProgress, now: Date): PartWindow {
+function windowFor(course: Course, kind: DayCard['kind'] | 'extra', track: Track, p: MemberProgress, now: Date): PartWindow {
   if (kind === 'review' || kind === 'fix') {
     const counts = new Map<number, number>();
     for (const d of dueCards(p, now, ids(course))) { const at = partOf(course, d.itemId); counts.set(at, (counts.get(at) ?? 0) + 1); }
@@ -38,7 +40,6 @@ function windowFor(course: Course, kind: DayCard['kind'] | 'live', track: Track,
 type Slide =
   | { type: 'card'; state: CardState; course: Course; href: string; tag: string; button: string }
   | { type: 'extra'; session: DaySession; course: Course; tag: string }
-  | { type: 'live'; key: 'rise' | 'night'; course: Course; href: string; tag: string; title: string; button: string }
   | { type: 'done'; minutes: number; course: Course; extra: boolean };
 
 export function TodayCards() {
@@ -91,13 +92,13 @@ export function TodayCards() {
     const lockIn = s.card.kind === 'lesson' && nextLine(mine, track, course, now).text === 'Lock-in next';
     return { type: 'card', state: s, course, href, tag: s.card.kind === 'fix' ? 'Fix today' : 'Recommended', button: s.card.kind !== 'lesson' ? 'Start review' : lockIn ? 'Lock it in' : lessonNo === 1 ? 'Begin' : `Start lesson ${lessonNo}` };
   };
-  // "When you rise" leads in the morning; "When you lie down" follows the day's cards in the evening. Neither is needed for the day.
+  // "When you rise" in the morning and "When you lie down" in the evening: optional, never part of the day's cards.
   const focusIds = focusCourse ? ids(focusCourse) : new Set<string>();
   const rise = focusCourse ? riseOffer(mine, now) : null;
   const night = focusCourse && !rise ? nightOffer(mine, focusIds, now) : null;
-  if (rise && focusCourse) slides.push({ type: 'live', key: 'rise', course: focusCourse, href: '/heir/lesson?mode=rise', tag: 'This morning', title: 'When you rise', button: 'Recall last night’s' });
+  const live: Live | null = rise ? { key: 'rise', when: localDay(now), href: '/heir/lesson?mode=rise', title: 'When you rise', line: `Recall last night’s · ${recallMinutes(rise.length)} min` }
+    : night ? { key: 'night', when: localDay(new Date(now.getTime() - 3 * 3_600_000)), href: '/heir/lesson?mode=night', title: 'Before you sleep', line: `A quiet recall · ${recallMinutes(night.length)} min` } : null;
   for (const s of left) { const sl = cardSlide(s); if (sl) slides.push(sl); }
-  if (night && focusCourse) slides.push({ type: 'live', key: 'night', course: focusCourse, href: '/heir/lesson?mode=night', tag: 'Before sleep', title: 'When you lie down', button: 'Start' });
   if (allDone) {
     const allIds = new Set(started.flatMap((c) => [...ids(c)]));
     const recent = recalledRecently(mine.log, now);
@@ -124,14 +125,49 @@ export function TodayCards() {
   return (
     <>
       {allDone ? (
-        <div className="hr-day-banner" role="status"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{minutes} min</span></div>
+        live ? <LiveBanner live={live} done={minutes} /> : <div className="hr-day-banner" role="status"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{minutes} min</span></div>
       ) : states.length ? (
         <div className="hr-day-line"><span><b>Today</b> · {states.length - left.length} of {states.length} done</span><span>about {left.reduce((n, s) => n + s.card.est, 0)} min left</span></div>
       ) : null}
+      {live && !allDone && <LiveBanner live={live} done={null} />}
       {warning && <Link href="/heir/keep" className="hr-day-warn">{warning}</Link>}
       <Carousel slides={slides} track={track} mine={mine} now={now} />
       {started.length > 1 && <KeepGoing started={started} track={track} mine={mine} now={now} />}
     </>
+  );
+}
+
+interface Live { key: 'rise' | 'night'; when: string; href: string; title: string; line: string }
+
+// About half a minute a question, at least one minute.
+const recallMinutes = (n: number) => Math.max(1, Math.round(n * 0.5));
+
+const moon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>;
+const sun = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="13" r="4" /><path d="M12 3v3M4.9 6.9l2.1 2.1M19.1 6.9 17 9M2 17h20M5 21h14" /></svg>;
+const cross = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>;
+
+// The optional evening or morning recall, as a banner. Put away, it stays away for that evening (or morning) on this phone.
+// When the day's cards are done it also carries that news, so there is one banner, not two.
+function LiveBanner({ live, done }: { live: Live; done: number | null }) {
+  const key = `hr-live-away:${live.key}:${live.when}`;
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    let v = false;
+    try { v = localStorage.getItem(key) === '1'; } catch { /* storage blocked: show it */ }
+    Promise.resolve().then(() => setAway(v));
+  }, [key]);
+  const putAway = () => { setAway(true); try { localStorage.setItem(key, '1'); } catch { /* ignore */ } };
+  if (away) return done !== null ? <div className="hr-day-banner" role="status"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{done} min</span></div> : null;
+  return (
+    <div className="hr-live" data-key={live.key} role="region" aria-label={live.title}>
+      {done !== null && <div className="hr-live-done"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{done} min</span></div>}
+      <div className="hr-live-row">
+        <span className="hr-live-icon">{live.key === 'night' ? moon : sun}</span>
+        <Link href={live.href} className="hr-live-text"><b>{live.title}</b><span>{live.line}</span></Link>
+        <Link href={live.href} className="hr-live-go">Start</Link>
+        <button type="button" className="hr-live-x" aria-label={`Not tonight`} onClick={putAway}>{cross}</button>
+      </div>
+    </div>
   );
 }
 
@@ -167,19 +203,19 @@ function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track;
               </section>
             );
           }
-          const kind = s.type === 'card' ? s.state.card.kind : 'live';
+          const kind = s.type === 'card' ? s.state.card.kind : 'extra';
           const w = windowFor(s.course, kind, track, mine, now);
           const done = s.type === 'extra' || (s.type === 'card' && s.state.done);
           // A finished card says what it was in one word (Lesson, Fix, Review); an extra says Extra.
           const word = s.type === 'card' ? (s.state.done ? ({ lesson: 'Lesson', review: 'Review', fix: 'Fix' } as const)[s.state.card.kind] : s.tag) : s.tag;
           const secs = s.type === 'extra' ? s.session.secs : s.type === 'card' ? s.state.secs : 0;
           return (
-            <section key={s.type === 'card' ? s.state.card.id : s.type === 'extra' ? s.session.id : s.key} role="listitem" className="hr-rose-card hr-slide" data-done={done || undefined} aria-label={s.type === 'live' ? s.title : s.course.title}>
+            <section key={s.type === 'card' ? s.state.card.id : s.session.id} role="listitem" className="hr-rose-card hr-slide" data-done={done || undefined} aria-label={s.course.title}>
               <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
               <span className="hr-day-tag" data-fix={(s.type === 'card' && s.state.card.kind === 'fix' && !done) || undefined}>{word}</span>
-              <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.12, textAlign: 'center' }}>{s.type === 'live' ? s.title : s.course.title}</h2>
+              <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.12, textAlign: 'center' }}>{s.course.title}</h2>
               <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={240} label={`${s.course.title} window`} />
-              {done ? (
+              {done || s.type !== 'card' ? (
                 <div className="hr-day-done"><span className="hr-day-tick">{check}</span>{Math.max(1, Math.round(secs / 60))} min</div>
               ) : (
                 <Link className="hr-glass-btn" href={s.href}><span>{s.button}</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
