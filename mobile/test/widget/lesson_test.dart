@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/data/content_assets.dart';
+import 'package:katekize/data/household.dart';
 import 'package:katekize/data/store.dart';
 import 'package:katekize/engine/content.dart';
 import 'package:katekize/engine/lesson.dart' as lesson;
@@ -10,6 +11,8 @@ import 'package:katekize/engine/types.dart';
 import 'package:katekize/features/lesson/lesson_screen.dart';
 import 'package:katekize/features/lesson/outcome.dart';
 import 'package:katekize/features/lesson/session.dart';
+import 'package:katekize/features/window/light.dart';
+import 'package:katekize/engine/progress.dart' show emptyProgress;
 import 'package:katekize/state/clock.dart';
 import 'package:katekize/state/auth.dart';
 import 'package:katekize/state/household.dart';
@@ -34,6 +37,7 @@ Future<({Session session, lesson.Unit unit})> _session(WidgetTester tester) asyn
     courseId: 'westminster-shorter',
     memberId: 'me',
     dayCourse: 'westminster-shorter',
+    before: windowLight(courseItems(getCourse('westminster-shorter')!), Track.adult, emptyProgress(), DateTime(2026, 11, 24)),
   );
   return (session: session, unit: unit);
 }
@@ -71,7 +75,8 @@ void main() {
     expect(steps.map((x) => x.kind), ['intro', 'order', 'blanks', 'type']);
     final order = steps[1], blanks = steps[2], type = steps[3];
     expect(order.pieces, isTrue, reason: 'two phrases are put in order as phrases');
-    final store = MemoryStore();
+    // The person doing the lesson (the done screen reads their progress).
+    final store = MemoryStore({householdKey: householdToJson(addMember(emptyHousehold(), 'Ann', Track.adult, 'me', DateTime(2026, 11, 20)))});
     final container = await _pump(tester, s.session, store);
 
     // Read it.
@@ -110,6 +115,8 @@ void main() {
     // Done, and saved.
     expect(find.text('Lesson 1 complete'), findsOneWidget);
     expect(find.text('3 of 3 right the first time.'), findsOneWidget);
+    // The window shows the light this lesson earned.
+    expect(find.text('New light: Q1'), findsOneWidget);
     final mine = container.read(progressProvider)['me']!;
     expect(mine.units, [s.unit.key], reason: 'the part is now learned');
     expect(mine.log.where((e) => e.kind != 'intro').length, 3, reason: 'each answer is in the log');

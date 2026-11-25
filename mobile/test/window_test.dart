@@ -6,6 +6,7 @@ import 'package:katekize/engine/content.dart';
 import 'package:katekize/engine/lesson.dart' show unitsFor;
 import 'package:katekize/engine/progress.dart';
 import 'package:katekize/engine/types.dart';
+import 'package:katekize/features/window/glass_motion.dart';
 import 'package:katekize/features/window/glass_render.dart';
 import 'package:katekize/features/window/light.dart';
 
@@ -117,6 +118,67 @@ void main() {
       // Outside the round window stays clear.
       final px = renderPixels(d, List<int>.filled(d.count + 1, 1), rest: restStarted);
       expect(px[3], 0, reason: 'the corner is transparent');
+    });
+  });
+
+  group('the moving light behind unstarted windows', () {
+    test('circles the window, pauses, then circles back', () {
+      const m = CircleMotion();
+      final start = lightAt(m, 0)!;
+      expect(start.k, closeTo(0, 1e-9), reason: 'fades in');
+      expect(start.y, closeTo(0.2, 1e-9), reason: 'starts at the top of the circle');
+      final quarter = lightAt(m, LightLook.pass / 4)!;
+      expect(quarter.x, greaterThan(0.5), reason: 'clockwise: heads to the right first');
+      final mid = lightAt(m, LightLook.pass / 2)!;
+      expect(mid.k, closeTo(1, 1e-9));
+      expect(mid.y, closeTo(0.8, 1e-6), reason: 'half way round is the bottom');
+      expect(lightAt(m, LightLook.pass + 100), isNull, reason: 'away during the pause');
+      final back = lightAt(m, LightLook.pass + LightLook.gap + LightLook.pass / 4)!;
+      expect(back.x, lessThan(0.5), reason: 'then anticlockwise: heads left first');
+      for (var t = 0; t < 20000; t += 137) {
+        final s = lightAt(m, t);
+        if (s != null) {
+          expect(s.k, inInclusiveRange(0, 1));
+          expect(s.x, inInclusiveRange(0.2, 0.8));
+        }
+      }
+    });
+
+    test('in a list one light travels down every window in turn', () {
+      const count = 4;
+      for (var i = 0; i < count; i++) {
+        final m = ListMotion(index: i, count: count);
+        // The light is over window i when it has travelled i passes from the top.
+        final s = lightAt(m, i * LightLook.pass + LightLook.pass / 2);
+        expect(s, isNotNull, reason: 'window $i is lit by the light in its turn');
+        expect(s!.y, inInclusiveRange(0, 1));
+      }
+      final first = ListMotion(index: 0, count: count);
+      final last = ListMotion(index: count - 1, count: count);
+      expect(lightAt(last, LightLook.pass ~/ 2), isNull, reason: 'the light is not yet at the last window');
+      expect(lightAt(first, (count - 1) * LightLook.pass + LightLook.pass ~/ 2), isNull, reason: 'it has passed the first');
+    });
+
+    test('light fades with distance', () {
+      expect(lightReach(0), 1);
+      expect(lightReach(0.1), lessThan(lightReach(0.05)));
+      expect(lightReach(0.2), lessThan(lightReach(0.1)));
+      expect(lightReach(1), 0, reason: 'far away it does not reach');
+    });
+  });
+
+  testWidgets('the full-size glass is drawn off the main thread and is sharper than the small copy', (tester) async {
+    await tester.runAsync(() async {
+      final small = await loadGlass('gospel');
+      final full = await loadGlass('gospel', GlassTier.full);
+      expect(small.size, 256);
+      expect(full.size, 1024);
+      expect(full.count, small.count, reason: 'the same panes, just more pixels');
+      expect(full.panes.length, greaterThan(100));
+      final img = await windowImage('gospel', const [1, 0.5, 0, 0, 0, 0], null, rest: restStarted, tier: GlassTier.full);
+      expect(img.width, 1024);
+      final again = await windowImage('gospel', const [1, 0.5, 0, 0, 0, 0], null, rest: restStarted, tier: GlassTier.full);
+      expect(identical(img, again), isTrue, reason: 'the finished picture is kept, not drawn twice');
     });
   });
 }

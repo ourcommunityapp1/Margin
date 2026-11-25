@@ -44,6 +44,7 @@ dependencies:
   flutter_svg: ^2.5.0
   shared_preferences: ^2.5.6
   flutter_timezone: ^5.1.1
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:
@@ -69,6 +70,22 @@ flutter:
     - assets/images/stones/
     - assets/glass/chartres-m1/
     - assets/glass/chartres-m2/
+    - assets/glass_full/chartres-m1/
+    - assets/glass_full/chartres-m2/
+    - assets/glass_full/easter/
+    - assets/glass_full/fear-peace/
+    - assets/glass_full/gospel/
+    - assets/glass_full/gsc-a/
+    - assets/glass_full/gsc-b/
+    - assets/glass_full/gsc-c/
+    - assets/glass_full/lords-prayer/
+    - assets/glass_full/psalm-23/
+    - assets/glass_full/rose-chartres/
+    - assets/glass_full/sh-children/
+    - assets/glass_full/sh-nativity/
+    - assets/glass_full/shema/
+    - assets/glass_full/ten-commandments/
+    - assets/glass_full/who-god-is/
     - assets/glass/easter/
     - assets/glass/fear-peace/
     - assets/glass/gospel/

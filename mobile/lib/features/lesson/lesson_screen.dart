@@ -22,6 +22,9 @@ import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import '../today/today_cards.dart' show RoseCard;
+import '../window/light.dart';
+import '../window/reveal_window.dart';
 import 'labels.dart';
 import 'outcome.dart';
 import 'session.dart';
@@ -450,11 +453,40 @@ class _Done extends ConsumerWidget {
     // Started from the course (not Today's cards): offer the next one straight away.
     final cta = session.cardId != null || session.courseId.isEmpty || upNext == null ? null : upNext.kind == 'checkpoint' ? 'Lock them in now' : 'Next lesson';
 
+    // The window: as it was, then the new light arriving (a lesson that lit nothing still shows the window).
+    final before = session.before;
+    final dayCourse = courseFor(session.dayCourse);
+    Widget? window;
+    if (before != null && dayCourse != null) {
+      final all = courseItems(dayCourse);
+      final after = windowLight(all, track, mine, now);
+      final fresh = [for (final (i, it) in all.indexed) if (after.lit[i] > (i < before.lit.length ? before.lit[i] : 0) + 1e-6) it];
+      final part = fresh.isNotEmpty ? partOf(dayCourse, fresh.first.id) : partWindow(dayCourse, track, mine, now).index;
+      final at = {for (final (i, it) in all.indexed) it.id: i};
+      final partItems = courseParts(dayCourse)[part].items;
+      List<T> pick<T>(List<T> v, T zero) => [for (final it in partItems) (at[it.id] ?? 0) < v.length ? v[at[it.id] ?? 0] : zero];
+      final names = fresh.map(itemLabel).join(', ');
+      window = RoseCard(
+        padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+        children: [
+          RevealWindow(
+            base: windowBase(dayCourse.id, part),
+            before: pick(before.lit, 0.0),
+            after: pick(after.lit, 0.0),
+            dustyBefore: pick(before.dusty, false),
+            dustyAfter: pick(after.dusty, false),
+            label: names.isEmpty ? 'Your window' : 'Your window: new light for $names',
+          ),
+          if (names.isNotEmpty) Text('New light: $names', textAlign: TextAlign.center, style: serif(19, color: const Color(0xFFF4EFE6))),
+        ],
+      );
+    }
+
     return KPage(
       bare: true,
       pushDown: true,
       children: [
-        const SizedBox(height: 40),
+        window ?? const SizedBox(height: 40),
         KCard.column(
           gap: 14,
           children: [

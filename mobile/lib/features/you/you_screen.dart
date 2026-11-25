@@ -59,6 +59,10 @@ class YouScreen extends ConsumerWidget {
               ],
             ),
           ),
+        KCard(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          child: KLinkRow(first: true, title: 'About Katekize', sub: 'Sources and credits', onTap: () => context.push('/about')),
+        ),
         if (accounts && email == null)
           KCard(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),

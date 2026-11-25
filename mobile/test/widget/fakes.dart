@@ -54,6 +54,9 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store}) async 
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
+  // As if "reduce motion" is on: the light moving behind unstarted windows stands still, so the screen can settle.
+  tester.platformDispatcher.accessibilityFeaturesTestValue = const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [

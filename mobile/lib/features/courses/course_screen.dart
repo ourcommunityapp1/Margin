@@ -56,7 +56,7 @@ class CourseScreen extends ConsumerWidget {
           gap: 8,
           children: [
             if (parts.length <= 1) ...[
-              Center(child: RoundWindow(base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, size: 168, started: started, label: '${course.title} window, ${stats.learned} of ${stats.total} learned')),
+              Center(child: RoundWindow(base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, size: 168, started: started, beam: const CircleMotion(), label: '${course.title} window, ${stats.learned} of ${stats.total} learned')),
               const SizedBox(height: 8),
             ],
             Semantics(
@@ -84,7 +84,7 @@ class CourseScreen extends ConsumerWidget {
                       final done = pw.lit.where((f) => f >= 1).length;
                       return Column(
                         children: [
-                          MiniWindow(base: pw.base, lit: pw.lit, dusty: pw.dusty, size: 78, started: started, label: '${p.title} window, $done of ${pw.items.length} learned'),
+                          MiniWindow(base: pw.base, lit: pw.lit, dusty: pw.dusty, size: 78, started: started, motion: CircleMotion(delay: i * 0.35), label: '${p.title} window, $done of ${pw.items.length} learned'),
                           const SizedBox(height: 8),
                           Text(p.title, textAlign: TextAlign.center, style: sans(14, weight: FontWeight.w600, color: k.ink, height: 1.25)),
                           Text('$done of ${pw.items.length}', style: sans(12, color: k.muted)),

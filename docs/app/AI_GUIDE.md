@@ -137,21 +137,26 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 - [x] Progress: the week and month of days kept, words in memory and milestones, the stones ladder (real gem images),
   your courses (a plain list: the windows wall waits for phase 3), awards. Not yet: the community preview.
 - [ ] You: change course or daily goal, family (add, edit, remove, bring back), linked accounts, profile, How it works,
-  About and credits. (Phase 4. Until it exists a person cannot change their course or goal in the app.)
+  About and credits. (Phase 4, in progress. About and credits is done.)
 - [ ] Friends and Community (needs account sync, which is done).
 - [x] Answers and card events are sent when writing is on (`SupabaseAccountApi`).
 - [ ] Builds to TestFlight through Xcode on the Mac (not Codemagic; see HANDOFF.md).
 
-### Phase 3: windows (first pass done Nov 25, 2026)
+### Phase 3: windows (done Nov 25, 2026)
 
-- [x] Each course's window drawn pane by pane from the bundled 256-pixel copies (`mobile/assets/glass/`,
-  `features/window/`): lit as far as learned, dusty when due a refresh, dark at rest; the stone-ringed small window
-  and the round window with its gold arc and notch. Used on Today's cards, Keep going, Courses, a course's page and
-  Progress. Tests prove a window is never lit beyond what is earned (`test/window_test.dart`).
-- [ ] The moving light behind unstarted windows, the full 1024-pixel glass with glow and rays (ADR-0007 steps 2 and 3),
-  the window up close, and the done-lesson window. Check the look on a real iPhone.
-- [ ] **Credits.** Several windows are Creative Commons (attribution required; each `pieces.json` carries its credit).
-  The app needs an About / credits screen like the website's before it goes to a store.
+- [x] Each course's window drawn pane by pane (`mobile/assets/glass/` small copies, `assets/glass_full/` full-size;
+  `features/window/`): lit as far as learned, dusty when due a refresh, dark at rest; the stone-ringed small window and the
+  round window with its gold arc and notch. Used on Today's cards, Keep going, Courses, a course's page and Progress.
+  Tests prove a window is never lit beyond what is earned (`test/window_test.dart`).
+- [x] Sharp full-size glass (shaded off the main thread, the small copy shows first), glow on lit panes, and the moving
+  light behind windows of courses not yet started (circling on a card, travelling down a list), still when the person
+  has "reduce motion" on.
+- [x] The window up close (`/window/:id`, opened from Progress), and the lesson-done window: the new light arrives a few
+  panes at a time and the gold arc moves on.
+- [x] About and credits (`/about`, from You): the website's credits plus the typefaces. A test fails if a bundled window
+  is not credited.
+- Not ported on purpose: the WebGL light rays (the website turns them off for the round window too) and the sun-and-clouds
+  pass. Check the look on a real iPhone when TestFlight is possible.
 
 ### Phases 3 to 7
 

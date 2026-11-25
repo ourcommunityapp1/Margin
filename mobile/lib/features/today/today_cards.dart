@@ -272,7 +272,7 @@ class _SlideCard extends StatelessWidget {
             fill: true,
             children: [
               Semantics(header: true, child: Text('Done for today', style: serif(28, weight: FontWeight.w500, color: roseInk))),
-              RoundWindow(base: s.window.base, lit: s.window.lit, dusty: s.window.dusty, share: s.window.share, label: '${s.course.title} window'),
+              RoundWindow(base: s.window.base, lit: s.window.lit, dusty: s.window.dusty, share: s.window.share, started: s.window.started, beam: const CircleMotion(), label: '${s.course.title} window'),
               Text('${s.minutes} min', style: serif(32, color: roseInk, height: 1)),
               if (s.extra)
                 TextButton(
@@ -316,7 +316,7 @@ class _CardBody extends StatelessWidget {
             Semantics(header: true, child: Text(course.title, textAlign: TextAlign.center, style: serif(26, weight: FontWeight.w500, color: roseInk, height: 1.12))),
             Opacity(
               opacity: done ? 0.75 : 1,
-              child: RoundWindow(base: window.base, lit: window.lit, dusty: window.dusty, share: window.share, label: '${course.title} window'),
+              child: RoundWindow(base: window.base, lit: window.lit, dusty: window.dusty, share: window.share, started: window.started, beam: const CircleMotion(), label: '${course.title} window'),
             ),
             if (done)
               Opacity(

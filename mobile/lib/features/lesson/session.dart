@@ -18,6 +18,7 @@ import '../../engine/planner.dart' show riskOrder;
 import '../../engine/progress.dart';
 import '../../engine/types.dart';
 import '../../engine/util.dart' show jsRound;
+import '../window/light.dart' show Light;
 
 /// One run of steps, with what the finish needs to record it.
 class Session {
@@ -35,6 +36,7 @@ class Session {
     this.cardId,
     this.night = false,
     this.rise = false,
+    this.before,
   });
 
   /// "Welcome", "Lesson 3", "Practice · Q1".
@@ -64,6 +66,26 @@ class Session {
   /// The Today card this session was opened from, if any.
   final String? cardId;
   final bool night, rise;
+
+  /// How lit the course's window was before this session, so the done screen can show the new light arriving.
+  final Light? before;
+
+  Session withBefore(Light? light) => Session(
+        label: label,
+        kind: kind,
+        steps: steps,
+        units: units,
+        group: group,
+        courseId: courseId,
+        memberId: memberId,
+        why: why,
+        mode: mode,
+        dayCourse: dayCourse,
+        cardId: cardId,
+        night: night,
+        rise: rise,
+        before: light,
+      );
 }
 
 math.Random _random = math.Random();

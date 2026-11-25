@@ -306,7 +306,7 @@ class _WallItem extends StatelessWidget {
       button: true,
       label: 'See the ${course.title} window up close',
       child: InkWell(
-        onTap: () => context.push('/courses/${course.id}'),
+        onTap: () => context.push('/window/${course.id}'),
         child: Column(
           children: [
             MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 128, started: true, label: '${course.title} window'),

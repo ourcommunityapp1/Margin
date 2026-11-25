@@ -6,12 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'features/about/about_screen.dart';
 import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
 import 'features/friends/friends_screen.dart';
 import 'features/item/item_screen.dart';
 import 'features/lesson/session_screen.dart';
 import 'features/onboarding/start_screen.dart';
+import 'features/window/window_view_screen.dart';
 import 'features/onboarding/welcome_screen.dart';
 import 'features/progress/progress_screen.dart';
 import 'features/signin/signin_screen.dart';
@@ -81,7 +83,7 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
 }
 
 /// Screens that need a name first; without one the app goes to Welcome.
-const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item'];
+const _needsSomeone = ['/today', '/courses', '/progress', '/friends', '/you', '/lesson', '/item', '/window'];
 
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router asks again whenever the person or the sign-in changes.
@@ -113,6 +115,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         pageBuilder: (_, s) => _fade(s, SignInScreen(next: s.uri.queryParameters['next'] ?? '/today')),
       ),
       GoRoute(path: '/you', pageBuilder: (_, s) => _fade(s, const YouScreen())),
+      GoRoute(
+        path: '/window/:id',
+        pageBuilder: (_, s) => _fade(s, WindowViewScreen(courseId: s.pathParameters['id']!, part: int.tryParse(s.uri.queryParameters['part'] ?? ''))),
+      ),
+      GoRoute(path: '/about', pageBuilder: (_, s) => _fade(s, const AboutScreen())),
       GoRoute(
         path: '/lesson',
         pageBuilder: (_, s) {

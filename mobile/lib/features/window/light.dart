@@ -64,8 +64,11 @@ Light windowLight(List<Item> items, Track track, MemberProgress p, DateTime now)
 }
 
 class PartWindow {
-  const PartWindow({required this.index, required this.count, required this.title, required this.base, required this.items, required this.light});
+  const PartWindow({required this.index, required this.count, required this.title, required this.base, required this.items, required this.light, required this.started});
   final int index, count;
+
+  /// Any part of the course has been learned: its window holds still (nothing moves behind it).
+  final bool started;
   final String title, base;
   final List<Item> items;
   final Light light;
@@ -81,7 +84,9 @@ PartWindow partWindow(Course course, Track track, MemberProgress p, DateTime now
   final lights = [for (final part in parts) windowLight(part.items, track, p, now)];
   final open = lights.indexWhere((l) => l.lit.any((f) => f < 1));
   final at = (index ?? (open == -1 ? parts.length - 1 : open)).clamp(0, parts.length - 1);
-  return PartWindow(index: at, count: parts.length, title: parts[at].title, base: windowBase(course.id, at), items: parts[at].items, light: lights[at]);
+  final learned = p.units.toSet();
+  final started = courseItems(course).any((i) => unitsFor(i, track).any((u) => learned.contains(u.key)));
+  return PartWindow(index: at, count: parts.length, title: parts[at].title, base: windowBase(course.id, at), items: parts[at].items, light: lights[at], started: started);
 }
 
 /// Which part an item is in.

@@ -11,6 +11,7 @@ import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../ui/screen_parts.dart';
 import '../../ui/widgets.dart';
+import '../window/light.dart';
 import 'lesson_screen.dart';
 import 'session.dart';
 
@@ -62,6 +63,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       default:
         _session = buildLessonSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now, mode: widget.mode, cardId: widget.cardId);
     }
+    // The window as it is now, so the done screen can show the new light arriving.
+    _session = _session?.withBefore(windowLight(courseItems(course), me.track, mine, now));
     // Opening a card from Today is recorded (finished or not), to tell whether the recommendations are used.
     final card = widget.cardId;
     if (card != null) {

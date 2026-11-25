@@ -51,7 +51,7 @@ class _KeepGoingState extends State<KeepGoing> {
 
   Widget _round(Course c) {
     final w = partWindow(c, widget.track, widget.mine, widget.now);
-    return RoundWindow(base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, size: 220, label: '${c.title} window');
+    return RoundWindow(base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, started: w.started, beam: const CircleMotion(), size: 220, label: '${c.title} window');
   }
 
   Widget _row(Course c) {

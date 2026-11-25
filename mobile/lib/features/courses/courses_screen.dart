@@ -37,7 +37,8 @@ class CoursesScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
               child: Semantics(header: true, child: KLabel(title)),
             ),
-            for (final c in courses.where((c) => c.shelf == id)) _CourseCard(c, k, track, mine, now),
+            for (final (i, c) in courses.where((c) => c.shelf == id).indexed)
+              _CourseCard(c, k, track, mine, now, ListMotion(index: i, count: courses.where((x) => x.shelf == id).length, offset: shelves.indexWhere((x) => x.$1 == id) * 1700)),
           ],
       ],
     );
@@ -45,12 +46,13 @@ class CoursesScreen extends ConsumerWidget {
 }
 
 class _CourseCard extends StatelessWidget {
-  const _CourseCard(this.course, this.k, this.track, this.mine, this.now);
+  const _CourseCard(this.course, this.k, this.track, this.mine, this.now, this.motion);
   final Course course;
   final KColors k;
   final Track track;
   final MemberProgress mine;
   final DateTime now;
+  final GlassMotion motion;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +73,7 @@ class _CourseCard extends StatelessWidget {
             padding: const EdgeInsets.all(KSize.cardPadding),
             child: Row(
               children: [
-                MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 92, started: started, label: '${course.title} window'),
+                MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 92, started: started, motion: motion, inList: true, label: '${course.title} window'),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
