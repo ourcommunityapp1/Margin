@@ -6,7 +6,6 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useHeir } from '../ui/provider';
-import { CommunityPreview } from '../ui/community';
 import { useKeep } from '../ui/keep';
 import { Tabs } from '../ui/tabs';
 import { DaysKept } from '../ui/days-kept';
@@ -206,8 +205,6 @@ export default function Progress() {
             ))}
           </div>
         </section>
-
-        <CommunityPreview />
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Awards">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
