@@ -1,5 +1,7 @@
 import { Back } from '../ui/tabs';
 
+import { DAWN, DUSK } from '@/heir/photos';
+
 const PHOTOS = [
   { when: 'Dawn', who: 'Abrget47j', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Hommikune_udu_Kakerdaja_rabas.jpg' },
   { when: 'Day', who: 'Trougnouf (Benoit Brummer)', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Stuor_D%C3%A1ht%C3%A1_lake_along_the_Kungsleden_trail_during_golden_hour_in_Kvikkjokk-Kabla_fj%C3%A4llurskog_(DSCF2557).jpg' },
@@ -66,6 +68,20 @@ export default function About() {
           <a key={p.when} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
             <span><b>{p.when}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
           </a>
+        ))}
+      </section>
+      <section className="hr-card" style={{ padding: '6px 22px' }}>
+        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Sunrise and night photos on Today (square crops)</h2>
+        {[...DAWN, ...DUSK].map((p) => (
+          p.page ? (
+            <a key={p.file} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
+              <span><b>{p.alt}</b> · {p.who}, from Wikimedia Commons</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
+            </a>
+          ) : (
+            <div key={p.file} className="hr-row">
+              <span><b>{p.alt}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
+            </div>
+          )
         ))}
       </section>
       <section className="hr-card" style={{ padding: '6px 22px' }}>

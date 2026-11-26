@@ -1,8 +1,8 @@
 'use client';
 
-// The new Today (owner accounts first): the day's recommended lessons and reviews as a carousel of course windows,
-// one course each; when they're all done, a slim banner and a "Done for today" card; below, Keep going: every course
-// you've started, to choose for yourself. The plan is made once a day (src/heir/dayplan.ts). See ADR-002.
+// Today: one big thing at a time. The hero follows the time of day ("When you rise" at dawn, the next lesson or review by day,
+// "When you lie down" at night); the rest of the day's lessons and reviews are quiet rows, then "This evening", then "Done".
+// Below, Keep going: every course you've started, to choose for yourself. The plan is made once a day (src/heir/dayplan.ts). See ADR-002.
 // The evening and morning recalls are optional, so they are not cards: a night-blue (or dawn) banner above the carousel,
 // which can be put away for the evening (or morning).
 
@@ -21,6 +21,8 @@ import { dueCards, localDay, memberProgress, waitingForSleep, type MemberProgres
 import { recalledRecently } from '@/heir/memory';
 import { nightOffer, riseOffer, riskOrder } from '@/heir/planner';
 import type { Track } from '@/heir/types';
+import { DAWN, DUSK, photoFor } from '@/heir/photos';
+import { PhotoCircle } from './photo-circle';
 
 const arrow = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
 const check = <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>;
@@ -40,8 +42,7 @@ function windowFor(course: Course, kind: DayCard['kind'] | 'extra', track: Track
 
 type Slide =
   | { type: 'card'; state: CardState; course: Course; href: string; tag: string; button: string }
-  | { type: 'extra'; session: DaySession; course: Course; tag: string }
-  | { type: 'done'; minutes: number; course: Course; extra: boolean };
+  | { type: 'extra'; session: DaySession; course: Course; tag: string };
 
 export function TodayCards() {
   const { household, now, updateProgress } = useHeir();
@@ -97,18 +98,12 @@ export function TodayCards() {
   const focusIds = focusCourse ? ids(focusCourse) : new Set<string>();
   const rise = focusCourse ? riseOffer(mine, now) : null;
   const night = focusCourse && !rise ? nightOffer(mine, focusIds, now) : null;
-  const live: Live | null = rise ? { key: 'rise', when: localDay(now), href: '/heir/lesson?mode=rise', title: 'When you rise', line: `Recall last night’s · ${recallMinutes(rise.length)} min` }
-    : night ? { key: 'night', when: localDay(new Date(now.getTime() - 3 * 3_600_000)), href: '/heir/lesson?mode=night', title: 'When you lie down', line: `A quiet recall · ${recallMinutes(night.length)} min` } : null;
   for (const s of left) { const sl = cardSlide(s); if (sl) slides.push(sl); }
+  let extraOffer = false;
   if (allDone) {
     const allIds = new Set(started.flatMap((c) => [...ids(c)]));
     const recent = recalledRecently(mine.log, now);
-    const extra = riskOrder(mine, allIds, now).some((x) => x.recall < 0.85 && !waitingForSleep(mine, x.itemId, now) && !recent.has(x.itemId));
-    // The window shown is the course you spent longest on today, lit only as far as you've learned. Never a finished
-    // window that hasn't been earned.
-    const most = [...states].sort((a, b) => b.secs - a.secs)[0];
-    const course = courseFor(most?.card.course) ?? focusCourse;
-    if (course) slides.push({ type: 'done', minutes, course, extra });
+    extraOffer = riskOrder(mine, allIds, now).some((x) => x.recall < 0.85 && !waitingForSleep(mine, x.itemId, now) && !recent.has(x.itemId));
   }
   for (const s of states.filter((x) => x.done)) { const sl = cardSlide(s); if (sl) slides.push(sl); }
   // Sessions that finished no card (a review started from Keep going, extra practice, the evening or morning recall) show as
@@ -123,60 +118,103 @@ export function TodayCards() {
     : soon.length > 1 ? `${soon.length} need a review by ${weekday((soon[0].state as { deadline: Date }).deadline)} to stay in your count.` : null;
 
   if (!me) return null;
+  const todo = slides.filter((x): x is Extract<Slide, { type: 'card' }> => x.type === 'card' && !x.state.done);
+  const finished = slides.filter((x) => (x.type === 'card' && x.state.done) || x.type === 'extra');
+  // The hero follows the time of day: "When you rise" at dawn, the next lesson or review by day, "When you lie down" at night.
+  const first = rise ? null : todo[0] ?? null;
+  const heroKind: 'rise' | 'card' | 'night' | 'done' = rise ? 'rise' : first ? 'card' : night ? 'night' : 'done';
+  const later = first ? todo.slice(1) : todo;  // in the morning the rise hero comes first and every card is a row
+  const photoDay = localDay(now);
+  const dawn = photoFor(DAWN, photoDay), dusk = photoFor(DUSK, photoDay, 7);
+  const cardLine = (s: Extract<Slide, { type: 'card' }>) => {
+    const mins = Math.max(1, s.state.card.est);
+    return s.state.card.kind === 'lesson' ? `Lesson ${(mine.courseLessons[s.course.id] ?? 0) + 1} · about ${mins} min` : `${s.state.card.kind === 'fix' ? 'Fix' : 'Review'} · about ${mins} min`;
+  };
+  const rowFor = (s: Extract<Slide, { type: 'card' }>) => (
+    <Link key={s.state.card.id} href={s.href} className="hr-b4-row">
+      <MiniWindow base={windowFor(s.course, s.state.card.kind, track, mine, now).base} lit={windowFor(s.course, s.state.card.kind, track, mine, now).lit} size={52} started label={`${s.course.title} window`} />
+      <span className="hr-b4-t"><b>{s.course.title}</b><span>{cardLine(s)}</span></span>
+      <span className="hr-b4-go" aria-hidden="true">{arrow}</span>
+    </Link>
+  );
+  const nightRow = night && heroKind !== 'night' ? (
+    <Link href="/heir/lesson?mode=night" className="hr-b4-row">
+      <img className="hr-b4-thumb" src={dusk.file} alt="" width={52} height={52} />
+      <span className="hr-b4-t"><b>When you lie down</b><span>A quiet recall · {recallMinutes(night.length)} min</span></span>
+      <span className="hr-b4-go" aria-hidden="true">{arrow}</span>
+    </Link>
+  ) : null;
+  const doneMin = (secs: number) => `${Math.max(1, Math.round(secs / 60))} min`;
+  const heroPhoto = heroKind === 'rise' ? dawn : dusk;
   return (
     <>
-      {allDone ? (
-        live ? <LiveBanner live={live} done={minutes} /> : <div className="hr-day-banner" role="status"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{minutes} min</span></div>
-      ) : states.length ? (
-        <div className="hr-day-line"><span><b>Today</b> · {states.length - left.length} of {states.length} done</span><span>about {left.reduce((n, s) => n + s.card.est, 0)} min left</span></div>
-      ) : null}
-      {live && !allDone && <LiveBanner live={live} done={null} />}
       {warning && <Link href="/heir/keep" className="hr-day-warn">{warning}</Link>}
-      <Carousel slides={slides} track={track} mine={mine} now={now} />
+      <section className="hr-b4-hero" data-mood={heroKind === 'rise' ? 'dawn' : heroKind === 'night' ? 'night' : 'day'} aria-label="Next up">
+        {(heroKind === 'rise' || heroKind === 'night') && (
+          <>
+            <PhotoCircle photo={heroPhoto} />
+            <h2 className="serif hr-b4-title">{heroKind === 'rise' ? 'When you rise' : 'When you lie down'}</h2>
+            <p className="hr-b4-sub">{heroKind === 'rise' ? `Recall last night’s · ${recallMinutes(rise!.length)} min` : `A quiet recall · ${recallMinutes(night!.length)} min`}</p>
+            <Link className="hr-glass-btn" href={heroKind === 'rise' ? '/heir/lesson?mode=rise' : '/heir/lesson?mode=night'}><span>Start</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
+          </>
+        )}
+        {heroKind === 'card' && first && (() => {
+          const w = windowFor(first.course, first.state.card.kind, track, mine, now);
+          return (
+            <>
+              <CardWindow key={w.base} light={w} started={w.share > 0} size={220} hint={first.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${first.course.title} window`} />
+              <h2 className="serif hr-b4-title">{first.course.title}</h2>
+              <p className="hr-b4-sub">{cardLine(first)}</p>
+              <Link className="hr-glass-btn" href={first.href}><span>{first.button}</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
+            </>
+          );
+        })()}
+        {heroKind === 'done' && (
+          <>
+            <span className="hr-day-tick hr-b4-tick">{check}</span>
+            <h2 className="serif hr-b4-title">{states.length ? 'Done for today' : 'Today'}</h2>
+            {states.length > 0 && <p className="hr-b4-sub">{minutes} min</p>}
+            {allDone && extraOffer && <Link href="/heir/lesson?mode=extra" className="hr-day-extra">Extra practice</Link>}
+          </>
+        )}
+      </section>
+      {states.length > 0 && <div className="hr-day-line"><span><b>Today</b> · {states.length - left.length} of {states.length} done</span><span>{left.length ? `about ${left.reduce((n, x) => n + x.card.est, 0)} min left` : `${minutes} min`}</span></div>}
+      {later.length > 0 && <div className="hr-b4-list">{later.map(rowFor)}</div>}
+      {nightRow && <><div className="hr-b4-divider"><span>This evening</span></div><div className="hr-b4-list">{nightRow}</div></>}
+      {finished.length > 0 && (
+        <>
+          <div className="hr-b4-divider"><span>Done</span></div>
+          <div className="hr-b4-list" data-done="true">
+            {finished.map((x) => {
+              const w = windowFor(x.course, x.type === 'card' ? x.state.card.kind : 'extra', track, mine, now);
+              const secs = x.type === 'extra' ? x.session.secs : x.type === 'card' ? x.state.secs : 0;
+              const word = x.type === 'card' ? ({ lesson: 'Lesson', review: 'Review', fix: 'Fix' } as const)[x.state.card.kind] : x.tag;
+              const nightish = x.type === 'extra' && (x.session.kind === 'night' || x.session.kind === 'rise');
+              return (
+                <div key={x.type === 'card' ? x.state.card.id : x.session.id} className="hr-b4-row" data-done="true">
+                  {nightish ? <img className="hr-b4-thumb" src={(x.session.kind === 'night' ? dusk : dawn).file} alt="" width={52} height={52} />
+                    : <MiniWindow base={w.base} lit={w.lit} size={52} started label={`${x.course.title} window`} />}
+                  <span className="hr-b4-t"><b>{nightish ? x.tag : x.course.title}</b><span>{word} · {doneMin(secs)}</span></span>
+                  <span className="hr-day-tick hr-b4-ok">{check}</span>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
       {started.length > 1 && <KeepGoing started={started} track={track} mine={mine} now={now} />}
     </>
   );
 }
 
-interface Live { key: 'rise' | 'night'; when: string; href: string; title: string; line: string }
-
 // About half a minute a question, at least one minute.
 const recallMinutes = (n: number) => Math.max(1, Math.round(n * 0.5));
-
-const moon = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" /></svg>;
-const sun = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="13" r="4" /><path d="M12 3v3M4.9 6.9l2.1 2.1M19.1 6.9 17 9M2 17h20M5 21h14" /></svg>;
-const cross = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>;
-
-// The optional evening or morning recall, as a banner. Put away, it stays away for that evening (or morning) on this phone.
-// When the day's cards are done it also carries that news, so there is one banner, not two.
-function LiveBanner({ live, done }: { live: Live; done: number | null }) {
-  const key = `hr-live-away:${live.key}:${live.when}`;
-  const [away, setAway] = useState(false);
-  useEffect(() => {
-    let v = false;
-    try { v = localStorage.getItem(key) === '1'; } catch { /* storage blocked: show it */ }
-    Promise.resolve().then(() => setAway(v));
-  }, [key]);
-  const putAway = () => { setAway(true); try { localStorage.setItem(key, '1'); } catch { /* ignore */ } };
-  if (away) return done !== null ? <div className="hr-day-banner" role="status"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{done} min</span></div> : null;
-  return (
-    <div className="hr-live" data-key={live.key} role="region" aria-label={live.title}>
-      {done !== null && <div className="hr-live-done"><span className="hr-day-tick">{check}</span><span>Today’s lessons are done</span><span className="hr-day-mins">{done} min</span></div>}
-      <div className="hr-live-row">
-        <span className="hr-live-icon">{live.key === 'night' ? moon : sun}</span>
-        <Link href={live.href} className="hr-live-text"><b>{live.title}</b><span>{live.line}</span></Link>
-        <Link href={live.href} className="hr-live-go">Start</Link>
-        <button type="button" className="hr-live-x" aria-label={`Not tonight`} onClick={putAway}>{cross}</button>
-      </div>
-    </div>
-  );
-}
 
 // A card's window lights up the way it did on the old Today: it starts dark and lights pane by pane up to where you are,
 // while the gold arc grows round with it. It happens when the card comes into view (so a card you swipe to lights then),
 // and again each time Today opens. Before a course has begun, a dim light moves behind the dark glass. The window never
 // shows more than you have earned: it only ever lights up to `light.lit`.
-function CardWindow({ light, hint, started, label }: { light: PartWindow; hint?: number; started: boolean; label: string }) {
+function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWindow; hint?: number; started: boolean; label: string; size?: number }) {
   const win = useRef<WindowHandle>(null);
   const box = useRef<HTMLDivElement>(null);
   // `light` is worked out afresh on every render, so what the effects use is kept in a ref and the window is keyed by what it shows.
@@ -216,70 +254,8 @@ function CardWindow({ light, hint, started, label }: { light: PartWindow; hint?:
   return (
     <div ref={box} style={{ display: 'flex' }}>
       <RoundWindow ref={win} base={light.base} lit={dark} dusty={settled ? light.dusty : undefined} hint={settled ? hint : undefined}
-        share={share} arcMs={arcMs} size={240} onReady={() => setReady(true)} beam={started ? undefined : { kind: 'circle' }} label={label} />
+        share={share} arcMs={arcMs} size={size} onReady={() => setReady(true)} beam={started ? undefined : { kind: 'circle' }} label={label} />
     </div>
-  );
-}
-
-function Carousel({ slides, track, mine, now }: { slides: Slide[]; track: Track; mine: MemberProgress; now: Date }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [at, setAt] = useState(0);
-  const first = slides[0] ? (slides[0].type === 'card' ? slides[0].state.card.id : slides[0].type === 'extra' ? slides[0].session.id : slides[0].type) : '';
-  // When the front card changes (one was finished), go back to the front.
-  useEffect(() => { ref.current?.scrollTo({ left: 0 }); Promise.resolve().then(() => setAt(0)); }, [first]);
-  const onScroll = () => {
-    const el = ref.current;
-    if (!el) return;
-    const mid = el.scrollLeft + el.clientWidth / 2;
-    let best = 0, bd = Infinity;
-    Array.from(el.children).forEach((c, i) => { const h = c as HTMLElement; const d = Math.abs(h.offsetLeft + h.offsetWidth / 2 - mid); if (d < bd) { bd = d; best = i; } });
-    setAt(best);
-  };
-  const go = (i: number) => { const el = ref.current, c = el?.children[i] as HTMLElement | undefined; if (el && c) el.scrollTo({ left: c.offsetLeft - el.offsetLeft, behavior: 'smooth' }); };
-  if (!slides.length) return null;
-  return (
-    <>
-      <div ref={ref} className="hr-carousel" onScroll={onScroll} role="list" aria-label="Today’s lessons">
-        {slides.map((s) => {
-          if (s.type === 'done') {
-            const w = partWindow(s.course, track, mine, now);
-            return (
-              <section key="done" role="listitem" className="hr-rose-card hr-slide" aria-label="Done for today">
-                <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
-                <h2 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 500 }}>Done for today</h2>
-                <CardWindow key={w.base} light={w} started={w.share > 0} label={`${s.course.title} window`} />
-                <span className="serif" style={{ fontSize: 32, lineHeight: 1 }}>{s.minutes} min</span>
-                {s.extra && <Link href="/heir/lesson?mode=extra" className="hr-day-extra">Extra practice</Link>}
-              </section>
-            );
-          }
-          const kind = s.type === 'card' ? s.state.card.kind : 'extra';
-          const w = windowFor(s.course, kind, track, mine, now);
-          const done = s.type === 'extra' || (s.type === 'card' && s.state.done);
-          // A finished card says what it was in one word (Lesson, Fix, Review); an extra says Extra.
-          const word = s.type === 'card' ? (s.state.done ? ({ lesson: 'Lesson', review: 'Review', fix: 'Fix' } as const)[s.state.card.kind] : s.tag) : s.tag;
-          const secs = s.type === 'extra' ? s.session.secs : s.type === 'card' ? s.state.secs : 0;
-          return (
-            <section key={s.type === 'card' ? s.state.card.id : s.session.id} role="listitem" className="hr-rose-card hr-slide" data-done={done || undefined} aria-label={s.course.title}>
-              <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
-              <span className="hr-day-tag" data-fix={(s.type === 'card' && s.state.card.kind === 'fix' && !done) || undefined}>{word}</span>
-              <h2 className="serif" style={{ margin: 0, fontSize: 26, fontWeight: 500, lineHeight: 1.12, textAlign: 'center' }}>{s.course.title}</h2>
-              <CardWindow key={w.base} light={w} started={w.share > 0} hint={!done && s.type === 'card' && s.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${s.course.title} window`} />
-              {done || s.type !== 'card' ? (
-                <div className="hr-day-done"><span className="hr-day-tick">{check}</span>{Math.max(1, Math.round(secs / 60))} min</div>
-              ) : (
-                <Link className="hr-glass-btn" href={s.href}><span>{s.button}</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
-              )}
-            </section>
-          );
-        })}
-      </div>
-      {slides.length > 1 && (
-        <div className="hr-dots" role="group" aria-label="Cards">
-          {slides.map((s, i) => <button key={i} type="button" aria-label={`Card ${i + 1} of ${slides.length}`} aria-current={i === at || undefined} data-done={(s.type === 'extra' || (s.type === 'card' && s.state.done)) || undefined} onClick={() => go(i)} />)}
-        </div>
-      )}
-    </>
   );
 }
 
