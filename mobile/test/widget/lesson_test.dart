@@ -289,6 +289,44 @@ void main() {
       expect(find.text('Type it from memory'), findsOneWidget);
       expect(mic.cancels, greaterThan(0));
     });
+
+    testWidgets('after “Can’t speak now”, nothing else in that lesson asks to speak, not even a second try', (tester) async {
+      final s = await sayOnly(tester);
+      final first = s.step.copyWith(id: 'say-1');
+      final second = lesson.Step(id: 'say-2', itemId: 'wsc-2', kind: 'say', review: false, lead: 'What rule hath God given to direct us?', text: 'The word of God is the only rule');
+      final session = Session(
+        label: s.session.label,
+        kind: s.session.kind,
+        steps: [first, second],
+        units: s.session.units,
+        group: null,
+        courseId: s.session.courseId,
+        memberId: s.session.memberId,
+        dayCourse: s.session.dayCourse,
+        before: s.session.before,
+      );
+      final mic = FakeSpeech();
+      await _pump(tester, session, store(), speech: mic);
+      // The first: said, but only part of it, so it comes back at the end for a second try.
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
+      await tester.pumpAndSettle();
+      mic.say(first.text!.split(' ').take(2).join(' '));
+      mic.end();
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Continue');
+      // The second: can't speak now.
+      expect(find.bySemanticsLabel('Start speaking'), findsOneWidget);
+      await _tap(tester, 'Can’t speak now, type it');
+      expect(find.text('Type it from memory'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), second.text!);
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Check');
+      await _tap(tester, 'Continue');
+      // The second try of the first: typed, never the microphone again.
+      expect(find.text('Type it from memory'), findsOneWidget);
+      expect(find.bySemanticsLabel('Start speaking'), findsNothing);
+      expect(find.text('Can’t speak now, type it'), findsNothing);
+    });
   });
 
   group('the verse', () {
