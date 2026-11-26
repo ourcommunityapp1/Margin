@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
+import '../../data/photos.dart' as today;
 
 class _Credit {
   const _Credit(this.title, this.who, this.license, this.page, [this.place]);
@@ -22,6 +23,12 @@ const photos = [
   _Credit('Day', 'Trougnouf (Benoit Brummer)', 'CC BY 4.0', '${_wiki}Stuor_D%C3%A1ht%C3%A1_lake_along_the_Kungsleden_trail_during_golden_hour_in_Kvikkjokk-Kabla_fj%C3%A4llurskog_(DSCF2557).jpg'),
   _Credit('Dusk', 'Thomas Bresson', 'CC BY 3.0', '${_wiki}Vallee-brouillard.jpg'),
   _Credit('Night', 'Giles Laurent', 'CC BY-SA 4.0', '${_wiki}036_Milky_Way_during_Perseids_seen_from_Oeschinensee_with_water_reflections_Photo_by_Giles_Laurent.jpg'),
+];
+
+// The sunrises and night skies in Today's "When you rise" and "When you lie down" circles (data/photos.dart). The Unsplash
+// photographers' names are still to be added; those rows have no link yet.
+final todayPhotos = [
+  for (final p in [...today.dawnPhotos, ...today.duskPhotos]) _Credit(p.alt, p.who, p.license, p.page ?? ''),
 ];
 
 // The stained-glass windows, cut into panes for each course (round crops, shared under the same licenses).
@@ -113,6 +120,7 @@ class AboutScreen extends StatelessWidget {
         ),
         _Section('Stained-glass windows, from Wikimedia Commons', windows),
         _Section('Background photos (softened), from Wikimedia Commons', photos),
+        _Section('Sunrise and night photos on Today', todayPhotos),
         _Section('Stone photos (close-up crops, same licenses), from Wikimedia Commons', stones),
         _Section('Typefaces', fonts),
       ],
@@ -138,8 +146,8 @@ class _Section extends StatelessWidget {
             Semantics(
               link: true,
               child: InkWell(
-                onTap: () => _open(c.page),
-                onLongPress: () => Clipboard.setData(ClipboardData(text: c.page)),
+                onTap: c.page.isEmpty ? null : () => _open(c.page),
+                onLongPress: c.page.isEmpty ? null : () => Clipboard.setData(ClipboardData(text: c.page)),
                 child: Container(
                   constraints: const BoxConstraints(minHeight: KSize.rowHeight),
                   decoration: BoxDecoration(border: i == 0 ? null : Border(top: BorderSide(color: k.line))),

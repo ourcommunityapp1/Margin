@@ -65,7 +65,8 @@ class FakeAuth implements Auth {
 }
 
 /// The whole app at a fixed time (a Tuesday afternoon), on an iPhone-sized screen, with a fake sign-in.
-Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social, Sharer? sharer, ReminderScheduler? reminders, List<Override> overrides = const []}) async {
+Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social, Sharer? sharer, ReminderScheduler? reminders, List<Override> overrides = const [], DateTime? now}) async {
+  final at = now ?? DateTime(2026, 11, 24, 14);
   await tester.runAsync(loadBundledContent);
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
@@ -86,10 +87,10 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialA
         verseApiProvider.overrideWithValue(FakeVerses()),
         // Never touch the phone's real notifications in tests.
         reminderSchedulerProvider.overrideWithValue(reminders ?? FakeScheduler()),
-        clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
+        clockProvider.overrideWithValue(() => at),
         ...overrides,
       ],
-      child: KatekizeApp(now: DateTime(2026, 11, 24, 14)),
+      child: KatekizeApp(now: at),
     ),
   );
   await tester.pumpAndSettle();

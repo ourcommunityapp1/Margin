@@ -35,6 +35,7 @@ import 'platform/links.dart';
 import 'state/auth.dart';
 import 'state/board.dart';
 import 'state/reminders.dart';
+import 'state/clock.dart';
 import 'state/household.dart';
 import 'state/sync.dart';
 import 'ui/background.dart';
@@ -53,7 +54,7 @@ class KatekizeApp extends ConsumerStatefulWidget {
 }
 
 class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingObserver {
-  DateTime? get now => widget.now;
+  DateTime? get now => widget.now ?? simulatedStart;
 
   @override
   void initState() {
