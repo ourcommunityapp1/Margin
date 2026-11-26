@@ -116,6 +116,11 @@ Today shows where they are and what is left, today and tonight.
   daily goal shared between them. Keep old app versions working: add an optional `plan.focus: string[]`, keep `plan.course`.
 - **A day in three beats:** morning recall (if any), today's cards, tonight's recall (shown in the plan, not only as an evening
   banner), so "what do I have to do today, and tonight" is answered at a glance.
+- **Decided 2026-11-26: every lesson and every review is one course,** with that course's window. A lesson is one new verse or
+  question; a review holds several from that one course. Two courses due means two review rows. The memory engine decides how
+  many rows and how long each is. Direction: calm rows (window, course, one line), a quiet *This evening* divider, the review's
+  questions in a sheet on tap, and after a lesson that lights glass a pop-up of the window lighting with one sentence.
+  Mockups: https://claude.ai/artifact/KbS4qrgYEVKHdhnB3S8wFj
 - **Say what each card will do** in one short line (which lesson, which verses, about how long); no walls of text.
 - **The window as the scoreboard:** "7 of 12 verses · lesson 4 of 9", and what today's work added, using what the planner already
   works out (`project`, `courseStats`, `daysKept`).
