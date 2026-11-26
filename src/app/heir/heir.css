@@ -1235,3 +1235,28 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 @keyframes hr-pc-kb { from { transform: scale(1.02); } to { transform: scale(1.14) translate(-2.5%, -1.5%); } }
 @keyframes hr-pc-gl { from { opacity: 0.15; } to { opacity: 0.6; } }
 @media (prefers-reduced-motion: reduce) { .hr-pc-bg, .hr-pc-glow { animation: none; } }
+
+/* Strength on a course's list and a question's page: green when strong, amber when fading, red when weak. */
+.hr-strength { font-size: 13.5px; font-weight: 700; color: var(--muted); }
+.hr-strength[data-band='strong'] { color: #b9e3b0; }
+.hr-strength[data-band='fading'] { color: #f0c27a; }
+.hr-strength[data-band='weak'] { color: #f0a08a; }
+.hr-cstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hr-cstats div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px; border-radius: 18px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); text-align: center; }
+.hr-cstats b { font-size: 24px; font-weight: 500; line-height: 1.1; }
+.hr-cstats span { font-size: 12px; color: var(--muted); }
+.hr-ring { --v: 0; flex: none; width: 104px; height: 104px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;
+  background: conic-gradient(var(--ring, #F3D8B6) calc(var(--v) * 1%), rgba(255, 255, 255, 0.1) 0); }
+.hr-ring::before { content: ''; position: absolute; inset: 8px; border-radius: 50%; background: var(--card, #151b22); }
+.hr-ring > * { position: relative; }
+.hr-ring b { font-size: 26px; font-weight: 500; line-height: 1; }
+.hr-ring span { font-size: 11px; color: var(--muted); }
+.hr-ring[data-band='strong'] { --ring: #b9e3b0; }
+.hr-ring[data-band='fading'] { --ring: #f0c27a; }
+.hr-ring[data-band='weak'] { --ring: #f0a08a; }
+.hr-kv { display: flex; flex-direction: column; }
+.hr-kv div { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; padding: 9px 2px; border-bottom: 1px solid var(--line); }
+.hr-kv div:last-child { border-bottom: 0; }
+.hr-kv div span:first-child { color: var(--muted); }
+.hr-kv div span:last-child { text-align: right; }
+.hr-btn-note { font-size: 13px; color: var(--muted); text-align: center; margin-top: -4px; }

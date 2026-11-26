@@ -21,6 +21,10 @@ import { partWindow } from './glass/light';
 import { ShareCourseIcon } from './share-course';
 import { MiniWindow } from './glass/mini';
 import { Stone } from './stone';
+import { partMemories } from '@/heir/memory';
+import { KEEP_LAUNCH, heldItems } from '@/heir/keep';
+import { itemStrength, practisedToday, strengthBand } from '@/heir/item-stats';
+import { localTz } from './keep';
 
 export type Kind = 'scripture' | 'catechism' | 'creed';
 export const KINDS: [Kind, string][] = [['scripture', 'Verses'], ['catechism', 'Catechisms'], ['creed', 'Creeds']];
@@ -81,6 +85,14 @@ export function CourseScreen({ id }: { id: string }) {
   const shown = parts.length > 1 ? groups.filter((g) => partOf(g) === shownPart) : groups;
   const fold = groups.length > 3;
   const isOpen = (key: string) => !fold || (opened[key] ?? key === here?.key);
+  // Strength of each learned question or verse (not on a day it was practised), and the course's three numbers.
+  const mems = partMemories(mine.log, mine.partSnap);
+  const all = courseItems(course);
+  const learnedItems = all.filter((i) => unitsFor(i, track).every((u) => learnedUnits.has(u.key)));
+  const strengthOf = new Map(learnedItems.map((i) => [i.id, practisedToday(mine, i.id, now) ? 'today' as const : itemStrength(mine, i.id, now, mems)]));
+  const nums = [...strengthOf.values()].filter((v): v is number => typeof v === 'number');
+  const average = nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) : null;
+  const inMemory = heldItems(all, mine, track, now, { launch: KEEP_LAUNCH, tz: localTz(), mode: 'whole' }).filter((h) => h.state.state === 'kept' || h.state.state === 'review').length;
   const go = <span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>;
 
   return (
@@ -104,6 +116,14 @@ export function CourseScreen({ id }: { id: string }) {
             : <button type="button" className="hr-glass-btn" style={{ font: 'inherit', fontWeight: 600, fontSize: 17, cursor: 'pointer', textAlign: 'left' }} onClick={() => { update((h) => setPlan(h, { course: course.id, minutes: h.plan?.minutes })); router.push('/heir'); }}><span>{s.started ? 'Continue this course' : 'Start this course'}</span>{go}</button>}
           {!current && currentCourse && <p style={{ margin: 0, fontSize: 13, color: '#C9C1B3', textAlign: 'center' }}>Makes {course.title} your daily course. Your place in {currentCourse.title} is kept.</p>}
         </section>
+
+        {learnedItems.length > 0 && (
+          <section className="hr-cstats" aria-label="Where you are">
+            <div><b className="serif">{learnedItems.length}</b><span>learned of {all.length}</span></div>
+            <div><b className="serif">{inMemory}</b><span>in memory</span></div>
+            <div><b className="serif">{average === null ? '–' : `${average}%`}</b><span>average strength</span></div>
+          </section>
+        )}
 
         {parts.length > 1 && (
           <section className="hr-card" style={{ display: 'grid', gridTemplateColumns: `repeat(${parts.length}, minmax(0, 1fr))`, gap: 8, padding: '16px 10px' }} aria-label="Parts">
@@ -153,7 +173,16 @@ export function CourseScreen({ id }: { id: string }) {
                               <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{unit === 'Question' ? `Q${item.number} · ${item.prompt}` : unit === 'Verse' || unit === 'Commandment' ? item.prompt : `${item.number} · ${item.prompt}`}</span>
                               <span className="serif" style={{ fontSize: 16, lineHeight: 1.4, color: 'var(--muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.text}</span>
                             </span>
-                            {status && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)', paddingTop: 2 }}>{status}</span>}
+                            {(() => {
+                              const st = strengthOf.get(item.id);
+                              if (st === undefined) return status && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: 'var(--muted)', paddingTop: 2 }}>{status}</span>;
+                              return (
+                                <span style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, paddingTop: 2 }}>
+                                  {st === 'today' ? <span className="hr-strength">Today</span> : st === null ? null : <span className="hr-strength" data-band={strengthBand(st)}>{Math.round(st * 100)}%</span>}
+                                  {status && <span style={{ fontSize: 11.5, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)' }}>{status}</span>}
+                                </span>
+                              );
+                            })()}
                           </Link>
                         </li>
                       );
