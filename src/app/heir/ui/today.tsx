@@ -170,16 +170,16 @@ export function TodayCards() {
           <>
             <PhotoCircle photo={dawn} mood="dawn" />
             <h2 className="serif hr-b4-title">When you rise</h2>
-            <p className="hr-b4-sub">{heroRefs(rise.map(getItem).filter((i): i is Item => !!i))} from last night</p>
-            <Link className="hr-b4-go" href="/heir/lesson?mode=rise"><span>Start</span><span className="hr-b4-gomin">{mins(recallMinutes(rise.length))}</span></Link>
+            <p className="hr-b4-sub">{heroRefs(rise.map(getItem).filter((i): i is Item => !!i), undefined, true)}</p>
+            <Link className="hr-b4-go" href="/heir/lesson?mode=rise"><span>Start</span><span className="hr-b4-gomin"> · {mins(recallMinutes(rise.length))}</span></Link>
           </>
         )}
         {heroKind === 'night' && night && (
           <>
             <PhotoCircle photo={dusk} mood="night" />
             <h2 className="serif hr-b4-title">When you lie down</h2>
-            <p className="hr-b4-sub">{heroRefs(night.map(getItem).filter((i): i is Item => !!i))} from today</p>
-            <Link className="hr-b4-go" data-mood="night" href="/heir/lesson?mode=night"><span>Start</span><span className="hr-b4-gomin">{mins(recallMinutes(night.length))}</span></Link>
+            <p className="hr-b4-sub">{heroRefs(night.map(getItem).filter((i): i is Item => !!i), undefined, true)}</p>
+            <Link className="hr-b4-go" data-mood="night" href="/heir/lesson?mode=night"><span>Start</span><span className="hr-b4-gomin"> · {mins(recallMinutes(night.length))}</span></Link>
           </>
         )}
         {heroKind === 'card' && first && (() => {
@@ -190,7 +190,7 @@ export function TodayCards() {
               <CardWindow key={w.base} light={w} started={w.share > 0} size={190} hint={first.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${first.course.title} window`} />
               <h2 className="serif hr-b4-title">{first.course.title}</h2>
               {what && <p className="hr-b4-sub">{what}</p>}
-              <Link className="hr-b4-go" href={first.href}><span>{first.button}</span><span className="hr-b4-gomin">{mins(first.state.card.est)}</span></Link>
+              <Link className="hr-b4-go" href={first.href}><span>{first.button}</span><span className="hr-b4-gomin"> · {mins(first.state.card.est)}</span></Link>
             </>
           );
         })()}
@@ -236,7 +236,7 @@ function PhotoThumb({ photo, small }: { photo: Photo; small?: boolean }) {
 
 // What the big card is about, in words: "Questions 1–4", "Questions 1, 2 and 4", "Luke 2:11". Several verses on a review
 // shorten to "Christmas review".
-function heroRefs(items: Item[], reviewOf?: string): string {
+function heroRefs(items: Item[], reviewOf?: string, named = false): string {
   const seen = new Set<string>();
   const list = items.filter((i) => !seen.has(i.id) && seen.add(i.id));
   if (!list.length) return '';
@@ -255,7 +255,9 @@ function heroRefs(items: Item[], reviewOf?: string): string {
       i = j + 1;
     }
     const list2 = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
-    out.push(`${unit}${nums.length > 1 ? 's' : ''} ${list2}`);
+    const word = `${unit}${nums.length > 1 ? 's' : ''}`;
+    // With no course title above (the morning and evening recalls), say whose questions they are.
+    out.push(named ? `${getCollection(numbered[0].collection)?.title ?? ''} ${word.toLowerCase()} ${list2}`.trim() : `${word} ${list2}`);
   }
   return out.join(' · ');
 }
