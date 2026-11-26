@@ -23,6 +23,7 @@ import { bedtimePicks, EVENING_FROM, MORNING_FROM, morningPicks, nightOffer, pla
 import type { Item, Track } from '@/heir/types';
 import { DAWN, DUSK, photoFor, type Photo } from '@/heir/photos';
 import { PhotoCircle } from './photo-circle';
+import { markPlayed, playedRecently } from './glass/played';
 
 const check = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>;
 const ids = (c: Course) => new Set(courseItems(c).map((i) => i.id));
@@ -33,7 +34,8 @@ function windowFor(course: Course, kind: DayCard['kind'] | 'extra', track: Track
   if (kind === 'review' || kind === 'fix') {
     const counts = new Map<number, number>();
     for (const d of dueCards(p, now, ids(course))) { const at = partOf(course, d.itemId); counts.set(at, (counts.get(at) ?? 0) + 1); }
-    const best = [...counts].sort((a, b) => b[1] - a[1])[0];
+    // Most due first; a tie goes to the earlier part, so the window never flips between parts as the clock moves.
+    const best = [...counts].sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
     if (best) return partWindow(course, track, p, now, best[0]);
   }
   return partWindow(course, track, p, now);
@@ -333,7 +335,8 @@ function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWi
   const [ready, setReady] = useState(false);
   const [seen, setSeen] = useState(false);
   // Played once per window: later changes (the clock nudges the numbers) add any newly lit panes quietly, never starting over.
-  const played = useRef(false);
+  const playedKey = `${light.base}|${size}`;
+  const played = useRef(playedRecently(playedKey));
   useEffect(() => {
     const el = box.current;
     if (!el || typeof IntersectionObserver === 'undefined') { Promise.resolve().then(() => setSeen(true)); return; }
@@ -358,8 +361,9 @@ function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWi
       setArcMs(Math.max(600, sweep));
       setShare(light.share);
     }, 350);
-    const b = setTimeout(() => { played.current = true; setSettled(true); }, 350 + sweep);
+    const b = setTimeout(() => { played.current = true; markPlayed(playedKey); setSettled(true); }, 350 + sweep);
     return () => { clearTimeout(a); clearTimeout(b); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, seen, sig]);
   return (
     <div ref={box} style={{ display: 'flex' }}>

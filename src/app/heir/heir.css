@@ -999,6 +999,10 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-dock-in.row { flex-direction: row; }
 .hr-lesson-screen[data-feedback='true'] .hr-dock { display: none; }
 .hr-lesson-screen { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 100px); }
+/* Keyboard open: Check sits directly under the answer box, in the page, so it never covers what is typed; the page scrolls. */
+html[data-kb='open'] .hr-dock { position: static; left: auto; transform: none; bottom: auto; width: 100%; max-width: 480px; margin: 14px auto 0; }
+html[data-kb='open'] .hr-dock::before { display: none; }
+html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 24px); }
 /* The bar sits over the page's bottom edge: fade the page behind it so text never runs under the button. */
 .hr-dock::before { content: ''; position: absolute; left: -20px; right: -20px; bottom: -40px; height: calc(100% + 64px); z-index: -1;
   background: linear-gradient(rgba(17, 22, 28, 0), #11161c 45%); pointer-events: none; }

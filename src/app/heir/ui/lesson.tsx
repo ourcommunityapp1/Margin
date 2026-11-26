@@ -43,10 +43,16 @@ function useKeyboardLift() {
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    const set = () => document.documentElement.style.setProperty('--kb', `${Math.max(0, window.innerHeight - vv.height - vv.offsetTop)}px`);
+    const root = document.documentElement;
+    const set = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      root.style.setProperty('--kb', `${kb}px`);
+      // With the keyboard up there is little room: the button bar sits right under the answer box (in the page) instead of floating over it.
+      if (kb > 100) root.dataset.kb = 'open'; else delete root.dataset.kb;
+    };
     set();
     vv.addEventListener('resize', set); vv.addEventListener('scroll', set);
-    return () => { vv.removeEventListener('resize', set); vv.removeEventListener('scroll', set); document.documentElement.style.removeProperty('--kb'); };
+    return () => { vv.removeEventListener('resize', set); vv.removeEventListener('scroll', set); document.documentElement.style.removeProperty('--kb'); delete document.documentElement.dataset.kb; };
   }, []);
 }
 
