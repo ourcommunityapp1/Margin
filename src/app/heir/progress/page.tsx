@@ -94,7 +94,7 @@ export default function Progress() {
   const guide = inMemory === 0 ? 'Recall a verse or answer on a later day and it counts here.'
     : keep && keep.tryAgain.length > 0 ? `${keep.tryAgain.length} ${keep.tryAgain.length === 1 ? 'needs' : 'need'} another go today to stay in your count.`
     : keep && keep.review.length > 0 ? `Review ${keep.review.length} soon to keep ${keep.review.length === 1 ? 'it' : 'them'} in your count.`
-    : miles.next ? `${fmt(toNext)} more ${toNext === 1 ? 'word' : 'words'} to ${fmt(miles.next)}.` : 'Every word you’ve learned is holding.';
+    : miles.next ? `Next milestone: ${fmt(miles.next)} words. You’re ${fmt(toNext)} ${toNext === 1 ? 'word' : 'words'} away.` : 'Every word you’ve learned is holding.';
 
   return (
     <>
