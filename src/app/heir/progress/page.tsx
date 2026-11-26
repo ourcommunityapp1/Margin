@@ -1,10 +1,10 @@
 'use client';
 
-// Progress, as one scroll: the words in your memory and the next milestone, the stones ladder, the window of every
-// course you've begun (tap one to see it up close), the month's days kept, and awards.
+// Progress, as one scroll: a row of rings, the words in your memory (an arc over your window) and how they have grown,
+// the days kept, the stones, the window of every course you've begun (tap one to see it up close), and awards.
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useHeir } from '../ui/provider';
 import { CommunityPreview } from '../ui/community';
 import { useKeep } from '../ui/keep';
@@ -19,7 +19,8 @@ import { RoundWindow } from '../ui/glass/round';
 import type { PartWindow } from '../ui/glass/light';
 import { activeMember } from '@/heir/household';
 import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, recited, understanding } from '@/heir/levels';
-import { milestones, wordsIn } from '@/heir/measures';
+import { MILESTONES, milestones, wordsIn } from '@/heir/measures';
+import { wordsHistory, type WordsPoint } from '@/heir/memory-history';
 import { localDay, memberProgress } from '@/heir/progress';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
@@ -34,9 +35,13 @@ export default function Progress() {
   const [open, setOpen] = useState<string | null>(null);
   useEffect(() => { if (ready && !household.members.length) router.replace('/heir/welcome'); }, [ready, household.members.length, router]);
   const me = activeMember(household);
+  const mine0 = memberProgress(progress, me?.id);
+  const track0 = me?.track ?? 'adult';
+  const wordsNow = keep ? keep.wordsKept : null;
+  const history = useMemo(() => (me ? wordsHistory(allItems(), track0, mine0, now, wordsNow ?? wordsIn(allItems(), track0, mine0).inMemory) : []), [me, track0, mine0, now, wordsNow]);
   if (!ready || !me) return <main className="hr-page" aria-busy="true" />;
 
-  const mine = memberProgress(progress, me.id);
+  const mine = mine0;
   const items = allItems();
   const words = wordsIn(items, me.track, mine);
   // With the keeping rules on, words not recalled in time aren't counted.
@@ -81,42 +86,73 @@ export default function Progress() {
 
   const nextAward = AWARDS.find((a) => !mine.awards[a.id]);
   const viewing = yours.find((y) => y.c.id === open);
+  const wash = yours[0]?.s.window.base ?? null;
+  const learnedAll = yours.reduce((n, y) => n + y.s.learned, 0), totalAll = yours.reduce((n, y) => n + y.s.total, 0);
+  // One plain sentence for where you stand, and one line of what to do.
+  const toNext = miles.next ? miles.next - inMemory : 0;
+  const say = keep && keep.tryAgain.length > 0 ? 'A few to bring back' : keep && keep.review.length > 0 ? 'Keep them strong' : inMemory === 0 ? 'Your first words are coming' : miles.next ? 'Steady does it' : 'Every milestone reached';
+  const guide = inMemory === 0 ? 'Recall a verse or answer on a later day and it counts here.'
+    : keep && keep.tryAgain.length > 0 ? `${keep.tryAgain.length} ${keep.tryAgain.length === 1 ? 'needs' : 'need'} another go today to stay in your count.`
+    : keep && keep.review.length > 0 ? `Review ${keep.review.length} soon to keep ${keep.review.length === 1 ? 'it' : 'them'} in your count.`
+    : miles.next ? `${fmt(toNext)} more ${toNext === 1 ? 'word' : 'words'} to ${fmt(miles.next)}.` : 'Every word you’ve learned is holding.';
 
   return (
     <>
       <main className="hr-page">
         <h1 className="serif" style={{ margin: '20px 4px 4px', fontSize: 34, fontWeight: 500 }}>Progress</h1>
 
-        <CommunityPreview />
+        <div className="hr-pg-chips" role="list" aria-label="At a glance">
+          <RingChip frac={miles.next ? (inMemory - prevMile) / (miles.next - prevMile) : 1} value={fmt(inMemory)} label="Words" color="#F3D8B6" />
+          <RingChip frac={best ? Math.min(1, kept / best) : 0} value={String(kept)} label="Days kept" color="#9fb8e8" />
+          <RingChip frac={recitedCount ? holding[0] / recitedCount : 0} value={String(holding[0])} label="Stones" color="#b9a1e6" />
+          <RingChip frac={totalAll ? learnedAll / totalAll : 0} value={String(yours.length)} label="Windows" color="#e5b66a" />
+        </div>
 
-        {/* With the new Today, the week of days kept lives here. */}
+        <section className="hr-pg-hero" aria-label="Words in your memory">
+          {wash && <div className="hr-pg-wash" style={{ backgroundImage: `url(${wash}/glass.webp)` }} aria-hidden="true" />}
+          <Gauge frac={miles.next ? (inMemory - prevMile) / (miles.next - prevMile) : 1} left={miles.next ? fmt(prevMile) : undefined} right={miles.next ? fmt(miles.next) : undefined} />
+          <span className="serif hr-pg-num">{fmt(inMemory)}</span>
+          <span className="hr-pg-kicker">Words in your memory</span>
+          <span className="serif hr-pg-say">{say}</span>
+          <p className="hr-pg-line">{guide}</p>
+          {keep && keep.review.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Review {keep.review.length} soon</Link>
+            : keep && keep.out.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Bring {keep.out.length} back</Link> : null}
+        </section>
+
+        {history.length > 2 && (
+          <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label="Words over time">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span className="hr-label">Growing</span>
+              <span style={{ fontSize: 13, color: 'var(--muted)' }}>since {new Date((history.find((q) => q.words > 0) ?? history[0]).at).toLocaleDateString('en-US', { month: 'long' })}</span>
+            </div>
+            <StepChart pts={history} />
+          </section>
+        )}
+
+        <details className="hr-card hr-pg-how">
+          <summary>How a word gets into your memory</summary>
+          <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.5, color: 'var(--muted)' }}>{keep ? 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it, and stays there as long as you recall it again in time.' : 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.'}{words.recited > words.inMemory ? ` ${fmt(words.recited - words.inMemory)} more are recited, not yet recalled on a later day.` : ''}</p>
+        </details>
+
+        {keep && (keep.tryAgain.length > 0 || keep.review.length > 0 || keep.out.length > 0) && (
+          <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15 }} aria-label="Keeping your words">
+            {keep.tryAgain.length > 0 && <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>Try again today</span><b>{keep.tryAgain.length} {keep.tryAgain.length === 1 ? 'verse or answer' : 'verses and answers'}</b></span>}
+            {keep.review.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'inherit', textDecoration: 'none' }}><span>Review soon</span><b>{fmt(keep.review.reduce((n, h) => n + h.words, 0))} words ›</b></Link>}
+            {keep.out.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', textDecoration: 'none' }}><span>Out of memory · one recall brings back</span><b>{keep.out.length} ›</b></Link>}
+          </section>
+        )}
+
         <DaysKept days={mine.days} today={localDay(now)} now={now} dueCount={0} />
 
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Words in your memory">
-          <span className="hr-label">Words in your memory</span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <span className="serif" style={{ fontSize: 48, fontWeight: 600, lineHeight: 1 }}>{fmt(inMemory)}</span>
-            {words.recited > words.inMemory && <span style={{ fontSize: 14, color: 'var(--muted)', flex: '1 1 160px' }}>{fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day</span>}
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {miles.reached.length > 0 && <span className="hr-mile" data-reached="true" aria-label={`Milestone reached: ${fmt(prevMile)}`}>{fmt(prevMile)}</span>}
-            {miles.next ? (
-              <>
-                <span className="hr-ladder-bar" style={{ flex: 1 }} aria-hidden="true"><span style={{ width: `${((inMemory - prevMile) / (miles.next - prevMile)) * 100}%`, background: STAGE_COLORS[1] }} /></span>
-                <span className="hr-mile" aria-label={`Next milestone: ${fmt(miles.next)}`}>{fmt(miles.next)}</span>
-              </>
-            ) : <span style={{ fontSize: 14, color: 'var(--muted)' }}>Every milestone reached</span>}
+        <details className="hr-card hr-pg-how" aria-label="Days kept this month">
+          <summary>{MONTHS[now.getMonth()]}, day by day{best ? ` · best ${best}` : ''}</summary>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, textAlign: 'center', marginTop: 12 }}>
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)' }}>{d}</span>)}
+            {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
+            {cells.map((c) => <span key={c.key} className="hr-cal" data-state={c.state}>{c.n}</span>)}
           </div>
-          {miles.next && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{fmt(miles.next - inMemory)} more {miles.next - inMemory === 1 ? 'word' : 'words'} to {fmt(miles.next)}</span>}
-          {keep && (keep.tryAgain.length > 0 || keep.review.length > 0 || keep.out.length > 0) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, borderTop: '1px solid var(--line)', paddingTop: 10, fontSize: 14 }}>
-              {keep.tryAgain.length > 0 && <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>Try again today</span><b>{keep.tryAgain.length} {keep.tryAgain.length === 1 ? 'verse or answer' : 'verses and answers'}</b></span>}
-              {keep.review.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'inherit', textDecoration: 'none' }}><span>Review soon</span><b>{fmt(keep.review.reduce((n, h) => n + h.words, 0))} words ›</b></Link>}
-              {keep.out.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', textDecoration: 'none' }}><span>Out of memory · one recall brings back</span><b>{keep.out.length} ›</b></Link>}
-            </div>
-          )}
-          <p style={{ margin: 0, fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{keep ? 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it, and stays there as long as you recall it again in time.' : 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.'}</p>
-        </section>
+          <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest, and each week has one more free day: learning on them counts, and skipping one never breaks the run.</p>
+        </details>
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Stones">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -163,7 +199,7 @@ export default function Progress() {
           <div className="hr-wall">
             {yours.map(({ c, s }) => (
               <button key={c.id} type="button" className="hr-wall-item" onClick={() => setOpen(c.id)} aria-label={`See the ${c.title} window up close`}>
-                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={128} started label={`${c.title} window`} />
+                <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={128} started reveal label={`${c.title} window`} />
                 <span className="serif" style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.2 }}>{c.title}</span>
                 <span style={{ fontSize: 13, color: 'var(--muted)' }}>{s.learned >= s.total ? 'Finished' : `${s.learned} of ${s.total} learned`}</span>
               </button>
@@ -171,21 +207,7 @@ export default function Progress() {
           </div>
         </section>
 
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Days kept this month">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span className="serif" style={{ fontSize: 30, fontWeight: 600, lineHeight: 1 }}>{kept}</span>
-              <span style={{ fontWeight: 600 }}>{kept === 1 ? 'day kept' : 'days kept'}</span>
-            </span>
-            <span style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{MONTHS[now.getMonth()]}{best ? ` · Best ${best}` : ''}</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, textAlign: 'center' }}>
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)' }}>{d}</span>)}
-            {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
-            {cells.map((c) => <span key={c.key} className="hr-cal" data-state={c.state}>{c.n}</span>)}
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest, and each week has one more free day: learning on them counts, and skipping one never breaks the run.</p>
-        </section>
+        <CommunityPreview />
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Awards">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -217,6 +239,66 @@ export default function Progress() {
         learned={viewing.s.learned >= viewing.s.total ? 'Finished' : `${viewing.s.learned} of ${viewing.s.total} learned`}
         window={viewing.s.window} href={`/heir/courses/${viewing.c.id}`} onClose={() => setOpen(null)} /> : <Tabs />}
     </>
+  );
+}
+
+// A small ring with a number inside, for the row at the top.
+function RingChip({ frac, value, label, color }: { frac: number; value: string; label: string; color: string }) {
+  const r = 26, C = 2 * Math.PI * r, f = Math.max(0, Math.min(1, frac));
+  return (
+    <div className="hr-pg-chip" role="listitem">
+      <span className="hr-pg-chip-ring">
+        <svg viewBox="0 0 58 58" aria-hidden="true"><circle cx="29" cy="29" r={r} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="3" /><circle cx="29" cy="29" r={r} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeDasharray={`${C * f} ${C}`} transform="rotate(-90 29 29)" /></svg>
+        <b>{value}</b>
+      </span>
+      {label}
+    </div>
+  );
+}
+
+// The arc over the number: how far from the last milestone to the next, with a few quiet dots along it.
+function Gauge({ frac, left, right }: { frac: number; left?: string; right?: string }) {
+  const w = 320, cx = w / 2, cy = 184, r = 170, a0 = -50, a1 = 50, f = Math.max(0, Math.min(1, frac));
+  const pt = (rad: number, deg: number) => [cx + rad * Math.sin((deg * Math.PI) / 180), cy - rad * Math.cos((deg * Math.PI) / 180)] as const;
+  const path = (from: number, to: number) => { const [x0, y0] = pt(r, from), [x1, y1] = pt(r, to); return `M${x0.toFixed(2)},${y0.toFixed(2)}A${r},${r} 0 0 1 ${x1.toFixed(2)},${y1.toFixed(2)}`; };
+  const a = a0 + (a1 - a0) * f;
+  const [lx, ly] = pt(r, a0), [rx, ry] = pt(r, a1);
+  return (
+    <svg viewBox="0 0 320 100" className="hr-pg-gauge" aria-hidden="true">
+      <path d={path(a0, a1)} fill="none" stroke="rgba(255,255,255,.4)" strokeWidth="1.4" />
+      {f > 0 && <path d={path(a0, a)} fill="none" stroke="#F8EBD8" strokeWidth="5" strokeLinecap="round" />}
+      {[0.25, 0.5, 0.75].map((d) => { const [x, y] = pt(r + 14, a0 + (a1 - a0) * d); return <circle key={d} cx={x} cy={y} r="2.2" fill="rgba(255,255,255,.7)" />; })}
+      {left && <text x={lx - 6} y={ly + 16} textAnchor="middle">{left}</text>}
+      {right && <text x={rx + 6} y={ry + 16} textAnchor="middle">{right}</text>}
+    </svg>
+  );
+}
+
+// How the words have grown, week by week: a stepped climb ending at today's number, with the milestones as faint lines.
+function StepChart({ pts }: { pts: WordsPoint[] }) {
+  const w = 320, h = 170, L = 6, R = 46, T = 16, B = 30;
+  const last = pts[pts.length - 1].words;
+  const cand = MILESTONES.filter((m) => m <= last * 1.15 && m >= last / 8);
+  const top = Math.max(last, cand[cand.length - 1] ?? 0, 10) * 1.1;
+  const x = (i: number) => L + ((w - L - R) * i) / (pts.length - 1), y = (v: number) => T + (h - T - B) * (1 - v / top);
+  // Milestone lines from the top down, skipping any that would crowd the one above.
+  const lines: number[] = [];
+  for (const m of [...cand].reverse()) if (lines.length < 3 && (!lines.length || y(m) - y(lines[lines.length - 1]) >= 22)) lines.push(m);
+  const d = `M${x(0).toFixed(1)},${y(pts[0].words).toFixed(1)}` + pts.map((q, i) => (i ? `H${x(i).toFixed(1)}V${y(q.words).toFixed(1)}` : '')).join('');
+  const fill = `${d}H${x(pts.length - 1).toFixed(1)}V${y(0).toFixed(1)}H${x(0).toFixed(1)}Z`;
+  const lx = x(pts.length - 1), ly = y(last);
+  const first = new Date((pts.find((q) => q.words > 0) ?? pts[0]).at).toLocaleDateString('en-US', { month: 'short' });
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="hr-pg-step" role="img" aria-label={`Words in your memory over time, now ${last.toLocaleString('en-US')}`}>
+      <defs><linearGradient id="hr-pg-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#F3D8B6" stopOpacity=".6" /><stop offset="1" stopColor="#F3D8B6" stopOpacity=".04" /></linearGradient></defs>
+      {lines.map((m) => <g key={m}><line x1={L} x2={w - R} y1={y(m)} y2={y(m)} stroke="rgba(255,255,255,.14)" strokeDasharray="3 4" /><text x={w - R + 6} y={y(m) + 4}>{m.toLocaleString('en-US')}</text></g>)}
+      <path d={fill} fill="url(#hr-pg-fill)" />
+      <path d={d} fill="none" stroke="#F3D8B6" strokeWidth="2" />
+      <circle cx={lx} cy={ly} r="4.5" fill="#F3D8B6" stroke="var(--card, #1a2027)" strokeWidth="2" />
+      <text className="n" x={lx - 8} y={ly - 10} textAnchor="end">{last.toLocaleString('en-US')}</text>
+      <rect x={L} y={h - 22} width="38" height="20" rx="10" fill="rgba(255,255,255,.1)" /><text className="n" x={L + 19} y={h - 8} textAnchor="middle">{first}</text>
+      <rect x={w - R - 44} y={h - 22} width="44" height="20" rx="10" fill="rgba(255,255,255,.1)" /><text className="n" x={w - R - 22} y={h - 8} textAnchor="middle">Now</text>
+    </svg>
   );
 }
 

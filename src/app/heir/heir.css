@@ -1260,3 +1260,28 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-kv div span:first-child { color: var(--muted); }
 .hr-kv div span:last-child { text-align: right; }
 .hr-btn-note { font-size: 13px; color: var(--muted); text-align: center; margin-top: -4px; }
+
+/* Progress: a row of rings, the words in your memory as an arc over a window, and how they've grown. */
+.hr-pg-chips { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; text-align: center; margin: 6px 0 2px; }
+.hr-pg-chip { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+.hr-pg-chip-ring { position: relative; width: 58px; height: 58px; display: block; }
+.hr-pg-chip-ring svg { width: 58px; height: 58px; display: block; }
+.hr-pg-chip-ring b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 600 14.5px Inter, system-ui, sans-serif; color: var(--ink); }
+.hr-pg-hero { position: relative; overflow: hidden; border-radius: 28px; padding: 8px 16px 20px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; border: 1px solid rgba(255, 255, 255, 0.08); }
+.hr-pg-wash { position: absolute; inset: -10px; background-size: cover; background-position: 50% 20%; filter: blur(14px) saturate(1.2) brightness(0.5); transform: scale(1.15); }
+.hr-pg-hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(17, 22, 28, 0.05), rgba(17, 22, 28, 0.55) 70%, rgba(17, 22, 28, 0.9)); }
+.hr-pg-hero > *:not(.hr-pg-wash) { position: relative; z-index: 1; }
+.hr-pg-gauge { width: 100%; height: auto; display: block; }
+.hr-pg-gauge text { font: 11px Inter, system-ui, sans-serif; fill: #F4EFE6; opacity: 0.8; }
+.hr-pg-num { font-size: 62px; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+.hr-pg-kicker { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: var(--ink); }
+.hr-pg-say { font-size: 24px; font-weight: 500; line-height: 1.15; margin-top: 6px; }
+.hr-pg-line { margin: 0; font-size: 14px; opacity: 0.85; max-width: 30ch; line-height: 1.4; }
+.hr-pg-btn { margin-top: 8px; padding: 11px 26px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.18); font-weight: 600; font-size: 14px; color: var(--ink); text-decoration: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.hr-pg-step { width: 100%; height: auto; display: block; overflow: visible; }
+.hr-pg-step text { font: 11px Inter, system-ui, sans-serif; fill: #C9C1B3; }
+.hr-pg-step text.n { fill: #F4EFE6; font-weight: 600; }
+.hr-pg-how > summary { cursor: pointer; font-size: 14px; font-weight: 600; list-style: none; }
+.hr-pg-how > summary::-webkit-details-marker { display: none; }
+.hr-pg-how > summary::after { content: ' ›'; color: var(--muted); }
+.hr-pg-how[open] > summary::after { content: ' ˅'; }
