@@ -110,9 +110,9 @@ Progress, the Mastered wording on related verses) shows only to the accounts in 
 
 Today's "When you rise" and "When you lie down" circles will show real photographs, not emoji (mockup: https://claude.ai/artifact/LVxYQkiMggQhZTBUxRfYKS).
 
-- **The nine photos the owner liked** (bright sunrises and colourful night scenes) came without a source. **Do not ship them until their
-  source and licence are known.** Find the photographer and licence for each (a reverse image search, or the site they came from).
-- **Or replace them** with photos we can credit: Unsplash, Pexels or Wikimedia Commons, free to use. Keep a list of photographer, link and
+- **The nine photos the owner liked** (bright sunrises and colourful night scenes) are from Unsplash, so they can ship (Unsplash's licence
+  allows free use without credit; credit is polite). Record each photographer and link when known, and add them to the About page.
+- **Plus** photos we can credit: Unsplash, Pexels or Wikimedia Commons, free to use. Keep a list of photographer, link and
   licence for each, and put the credits on the About page next to the stained-glass window credits (a test already fails if a window is not credited).
 - **Wanted:** clear sunrises (the sun visible, warm colour) and night or dusk scenes (stars, northern lights, a lit town at dusk). Reformation
   churches (Grossmünster, St Giles', Geneva's St Pierre) are nice but not required. A short looping clip would be a bonus.
