@@ -24,7 +24,7 @@ import type { Item, Track } from '@/heir/types';
 import { DAWN, DUSK, photoFor, type Photo } from '@/heir/photos';
 import { PhotoCircle } from './photo-circle';
 
-const arrow = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
+const check = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>;
 const ids = (c: Course) => new Set(courseItems(c).map((i) => i.id));
 const weekday = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long' });
 
@@ -126,79 +126,75 @@ export function TodayCards() {
   const later = first ? todo.slice(1) : todo; // in the morning the rise hero comes first and every card is a row
   const photoDay = localDay(now);
   const dawn = photoFor(DAWN, photoDay), dusk = photoFor(DUSK, photoDay, 7);
-  // What a card is about, in a few words: "Psalm 23:4", "Q23", "Review · 5 questions".
-  const cardWhat = (s: Extract<Slide, { type: 'card' }>) => {
-    if (s.state.card.kind === 'lesson') return lessonWhat(s.course, mine, track, now);
-    const due = dueCards(mine, now, ids(s.course)).map((d) => getItem(d.itemId)).filter((i): i is Item => !!i);
-    const word = s.state.card.kind === 'fix' ? 'Fix' : 'Review';
-    return due.length ? `${word} · ${countOf(due)}` : word;
+  const kindWord = (k: CardState['card']['kind']) => (k === 'lesson' ? 'Lesson' : k === 'fix' ? 'Fix' : 'Review');
+  // Which questions or verses a card is about: "Q4, Q9", "Luke 2:11", always the references.
+  const cardItems = (s: Extract<Slide, { type: 'card' }>): Item[] => {
+    const course = ids(s.course);
+    if (s.state.card.kind === 'lesson') return lessonItems(s.course, mine, track, now);
+    if (s.state.card.kind === 'fix') return (keep?.tryAgain ?? []).filter((h) => course.has(h.item.id)).map((h) => h.item);
+    return dueCards(mine, now, course).map((d) => getItem(d.itemId)).filter((i): i is Item => !!i);
   };
-  const tick = (on: boolean) => <span className="hr-b4-ok" data-on={on || undefined} aria-hidden="true" />;
-  const rowFor = (s: Extract<Slide, { type: 'card' }>) => {
+  const refs = (items: Item[]) => refList(items) || null;
+  const recallRefs = (list: string[]) => refList(list.map(getItem).filter((i): i is Item => !!i));
+  const mins = (n: number) => `${Math.max(1, Math.round(n))} min`;
+  const doneTick = <span className="hr-b4-tick" aria-label="Done">{check}</span>;
+  // The rows after the hero, in order: what's next, then what follows, then the evening.
+  const upcoming: { key: string; label: string; ev?: boolean; left: React.ReactNode; title: string; right: string }[] = [];
+  later.forEach((s, i) => {
     const w = windowFor(s.course, s.state.card.kind, track, mine, now);
-    return (
-      <Link key={s.state.card.id} href={s.href} className="hr-b4-row">
-        <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={52} started={w.share > 0} reveal label={`${s.course.title} window`} />
-        <span className="hr-b4-t"><b>{s.course.title}</b><span>{cardWhat(s)}</span></span>
-        {tick(false)}
-      </Link>
-    );
-  };
-  const photoThumb = (ph: Photo) => <span className="hr-b4-thumb" style={{ backgroundImage: `url(${ph.file})` }} aria-hidden="true" />;
-  const recallLine = (items: string[], whose: string) => `Recall ${whose} ${countOf(items.map(getItem).filter((i): i is Item => !!i))} · ${minutesWord(recallMinutes(items.length))}`;
+    const r = refs(cardItems(s));
+    upcoming.push({ key: s.state.card.id, label: `${i === 0 ? 'Up next' : 'Then'} · ${kindWord(s.state.card.kind)}`,
+      left: <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={48} started={w.share > 0} reveal label={`${s.course.title} window`} />,
+      title: r ? `${s.course.title} · ${r}` : s.course.title, right: mins(s.state.card.est) });
+  });
+  if (night && heroKind !== 'night') upcoming.push({ key: 'night', label: 'This evening', ev: true, left: <PhotoThumb photo={dusk} />, title: `When you lie down · ${recallRefs(night)}`, right: mins(recallMinutes(night.length)) });
+  // Finished today, at the bottom: small and dim, with a tick where the minutes were.
   const doneRows = finished.map((x) => {
     const secs = x.type === 'extra' ? x.session.secs : x.state.secs;
-    const mins = `${Math.max(1, Math.round(secs / 60))} min`;
+    const at = x.type === 'extra' ? x.session : (today?.sessions ?? []).find((y) => y.card === x.state.card.id);
+    const items = at ? sessionItems(mine, at, x.course) : [];
+    const r = refList(items);
     if (x.type === 'extra' && (x.session.kind === 'night' || x.session.kind === 'rise')) {
-      return (
-        <div key={x.session.id} className="hr-b4-row" data-done="true">
-          {photoThumb(x.session.kind === 'night' ? dusk : dawn)}
-          <span className="hr-b4-t"><b>{x.session.kind === 'night' ? 'When you lie down' : 'When you rise'}</b><span>{minutesWord(Math.max(1, Math.round(secs / 60)))}</span></span>
-          {tick(true)}
-        </div>
-      );
+      return { key: x.session.id, left: <PhotoThumb photo={x.session.kind === 'night' ? dusk : dawn} small />, title: `${x.session.kind === 'night' ? 'When you lie down' : 'When you rise'}${r ? ` · ${r}` : ''}`, secs };
     }
     const w = windowFor(x.course, x.type === 'card' ? x.state.card.kind : 'extra', track, mine, now);
-    const word = x.type === 'card' ? (x.state.card.kind === 'lesson' ? null : x.state.card.kind === 'fix' ? 'Fix' : 'Review') : x.session.kind === 'lesson' ? null : x.tag;
-    return (
-      <div key={x.type === 'card' ? x.state.card.id : x.session.id} className="hr-b4-row" data-done="true">
-        <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={52} started={w.share > 0} reveal label={`${x.course.title} window`} />
-        <span className="hr-b4-t"><b>{x.course.title}</b><span>{word ? `${word} · ${mins}` : `Lesson · ${mins}`}</span></span>
-        {tick(true)}
-      </div>
-    );
+    const word = x.type === 'card' ? (x.state.card.kind === 'fix' ? 'fix ' : x.state.card.kind === 'review' ? 'review ' : '') : x.session.kind === 'fix' ? 'fix ' : x.session.kind === 'lesson' ? '' : 'review ';
+    return { key: x.type === 'card' ? x.state.card.id : x.session.id, left: <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={36} started={w.share > 0} reveal label={`${x.course.title} window`} />, title: `${x.course.title}${r ? ` · ${word}${r}` : ''}`, secs };
   });
   const mood = heroKind === 'rise' ? 'dawn' : heroKind === 'night' ? 'night' : 'day';
   return (
     <>
       <div className="hr-b4-sky" data-mood={mood} aria-hidden="true" />
       {warning && <Link href="/heir/keep" className="hr-day-warn">{warning}</Link>}
-      <section className="hr-b4-hero" aria-label="Next up">
+      <section className="hr-b4-hero" aria-label="Now">
         {heroKind === 'rise' && rise && (
           <>
             <PhotoCircle photo={dawn} mood="dawn" />
+            <span className="hr-b4-now">Now</span>
             <h2 className="serif hr-b4-title">When you rise</h2>
-            <p className="hr-b4-sub">{recallLine(rise, 'last night’s')}</p>
+            <p className="hr-b4-sub">{recallRefs(rise)} from last night · {minutesWord(recallMinutes(rise.length))}</p>
             <Link className="hr-b4-go" href="/heir/lesson?mode=rise">Start</Link>
           </>
         )}
         {heroKind === 'night' && night && (
           <>
             <PhotoCircle photo={dusk} mood="night" />
+            <span className="hr-b4-now" data-mood="night">Now</span>
             <h2 className="serif hr-b4-title">When you lie down</h2>
-            <p className="hr-b4-sub">{recallLine(night, 'today’s')}</p>
+            <p className="hr-b4-sub">{recallRefs(night)} from today · {minutesWord(recallMinutes(night.length))}</p>
             <Link className="hr-b4-go" data-mood="night" href="/heir/lesson?mode=night">Start</Link>
           </>
         )}
         {heroKind === 'card' && first && (() => {
           const w = windowFor(first.course, first.state.card.kind, track, mine, now);
-          const what = cardWhat(first);
+          const r = refs(cardItems(first));
           return (
             <>
               <CardWindow key={w.base} light={w} started={w.share > 0} size={190} hint={first.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${first.course.title} window`} />
+              <span className="hr-b4-now">Now · {kindWord(first.state.card.kind)}</span>
               <h2 className="serif hr-b4-title">{first.course.title}</h2>
-              <p className="hr-b4-sub">{what} · about {minutesWord(Math.max(1, first.state.card.est))}</p>
-              <Link className="hr-b4-go" href={first.href}>Start</Link>
+              <p className="hr-b4-sub">{r ? `${r} · ` : ''}about {minutesWord(Math.max(1, first.state.card.est))}</p>
+              <Link className="hr-b4-go" href={first.href}>{first.button}</Link>
             </>
           );
         })()}
@@ -215,46 +211,67 @@ export function TodayCards() {
           </>
         )}
       </section>
-      <div className="hr-b4-list">
-        {later.map(rowFor)}
-        {night && heroKind !== 'night' && (
-          <>
-            <div className="hr-b4-divider">This evening</div>
-            <Link href="/heir/lesson?mode=night" className="hr-b4-row">
-              {photoThumb(dusk)}
-              <span className="hr-b4-t"><b>When you lie down</b><span>A quiet recall</span></span>
-              {tick(false)}
-            </Link>
-          </>
-        )}
-        {doneRows.length > 0 && <><div className="hr-b4-divider" data-done="true">Done</div>{doneRows}</>}
-      </div>
-      {started.length > 1 && <KeepGoing started={started} track={track} mine={mine} now={now} />}
+      {(upcoming.length > 0 || doneRows.length > 0) && (
+        <div className="hr-b4-list">
+          {upcoming.map((u) => (
+            <div key={u.key} className="hr-b4-row">
+              {u.left}
+              <span className="hr-b4-t"><span className="hr-b4-lb" data-ev={u.ev || undefined}>{u.label}</span><b>{u.title}</b></span>
+              <span className="hr-b4-min">{u.right}</span>
+            </div>
+          ))}
+          {doneRows.length > 0 && <div className="hr-b4-divider" data-done="true">Done</div>}
+          {doneRows.map((d) => (
+            <div key={d.key} className="hr-b4-row" data-done="true">
+              {d.left}
+              <span className="hr-b4-t"><b>{d.title}</b></span>
+              {doneTick}
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }
 
+function PhotoThumb({ photo, small }: { photo: Photo; small?: boolean }) {
+  return <span className="hr-b4-thumb" data-small={small || undefined} style={{ backgroundImage: `url(${photo.file})` }} aria-hidden="true" />;
+}
+
 const minutesWord = (n: number) => `${n} minute${n === 1 ? '' : 's'}`;
 
-// "2 verses", "5 questions", "1 part": what a list of items is, counted.
-function countOf(items: Item[]): string {
-  const n = items.length;
-  const noun = items.every(isVerse) ? 'verse' : items.every((i) => getCollection(i.collection)?.unit === 'Question') ? 'question' : 'part';
-  return `${n} ${noun}${n === 1 ? '' : 's'}`;
+// The references, short: "Q4, Q9", "Luke 2:11", "Q1, Q2, Q3 +2". In course order.
+function refList(items: Item[]): string {
+  const seen = new Set<string>();
+  const list = items.filter((i) => !seen.has(i.id) && seen.add(i.id)).sort((a, b) => (a.collection === b.collection ? a.number - b.number : 0));
+  const shown = list.slice(0, 3).map(shortLabel).join(', ');
+  return list.length > 3 ? `${shown} +${list.length - 3}` : shown;
 }
 
-// What the next lesson teaches: "Psalm 23:4", "Q23", "Q23 and Q24", or "Lock it in" / "Practice".
-function lessonWhat(course: Course, p: MemberProgress, track: Track, now: Date): string {
+// What the next lesson will teach (or lock in, or practise), as items.
+function lessonItems(course: Course, p: MemberProgress, track: Track, now: Date): Item[] {
   const plan = planNext({ courseId: course.id, items: courseItems(course), track, p, now });
-  if (!plan) return 'Practice';
-  if (plan.kind === 'checkpoint') return 'Lock it in';
-  if (plan.kind === 'learn' || plan.kind === 'welcome') {
-    const seen = new Set<string>(); const labels: string[] = [];
-    for (const u of plan.units) if (!seen.has(u.itemId)) { seen.add(u.itemId); const i = getItem(u.itemId); if (i) labels.push(shortLabel(i)); }
-    return plan.kind === 'welcome' && !labels.length ? 'Welcome' : labels.slice(0, 2).join(' and ') || 'Lesson';
-  }
-  return 'Practice';
+  if (!plan) return [];
+  if (plan.kind === 'learn' || plan.kind === 'welcome') return plan.units.map((u) => getItem(u.itemId)).filter((i): i is Item => !!i);
+  if (plan.kind === 'checkpoint') return plan.group.items;
+  return plan.picks.map((x) => getItem(x.itemId)).filter((i): i is Item => !!i);
 }
+
+// The questions or verses answered in a finished session: the answers logged in its time, from its course.
+function sessionItems(p: MemberProgress, s: DaySession, course: Course): Item[] {
+  const end = new Date(s.at).getTime(), start = end - s.secs * 1000 - 120_000;
+  const mine = ids(course);
+  const out: Item[] = [];
+  for (const e of p.log) {
+    const t = new Date(e.at).getTime();
+    if (t < start || t > end + 10_000) continue;
+    if (s.kind !== 'night' && s.kind !== 'rise' && !mine.has(e.itemId)) continue;
+    const i = getItem(e.itemId);
+    if (i) out.push(i);
+  }
+  return out;
+}
+
 const shortLabel = (i: Item) => (isVerse(i) ? i.prompt : getCollection(i.collection)?.unit === 'Question' ? `Q${i.number}` : `Part ${i.number}`);
 
 // About half a minute a question, at least one minute.
@@ -306,40 +323,5 @@ function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWi
       <RoundWindow ref={win} base={light.base} lit={dark} dusty={settled ? light.dusty : undefined} hint={settled ? hint : undefined}
         share={share} arcMs={arcMs} size={size} onReady={() => setReady(true)} beam={started ? undefined : { kind: 'circle' }} label={label} />
     </div>
-  );
-}
-
-function KeepGoing({ started, track, mine, now }: { started: Course[]; track: Track; mine: MemberProgress; now: Date }) {
-  const [open, setOpen] = useState<string | null>(null);
-  return (
-    <section className="hr-keepgoing" aria-label="Keep going">
-      <span className="hr-label" style={{ padding: '6px 6px 0' }}>Keep going</span>
-      {started.map((c) => {
-        const w = partWindow(c, track, mine, now);
-        const line = nextLine(mine, track, c, now);
-        if (open !== c.id) return (
-          <button key={c.id} type="button" className="hr-keeprow" onClick={() => setOpen(c.id)} aria-expanded="false">
-            <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={56} started label={`${c.title} window`} />
-            <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0, textAlign: 'left' }}>
-              <b style={{ fontSize: 16 }}>{c.title}</b>
-              <span style={{ fontSize: 14, color: '#C9C1B3' }}>{line.text}</span>
-            </span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: '#C9C1B3', flex: 'none' }}><path d="M9 6l6 6-6 6" /></svg>
-          </button>
-        );
-        return (
-          <section key={c.id} className="hr-rose-card" aria-label={c.title}>
-            <div className="hr-rose-wash" style={{ backgroundImage: `url(${w.base}/glass.webp)` }} aria-hidden="true" />
-            <button type="button" className="hr-keepclose" onClick={() => setOpen(null)} aria-label={`Close ${c.title}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-            </button>
-            <h2 className="serif" style={{ margin: '14px 0 0', fontSize: 26, fontWeight: 500, lineHeight: 1.12, textAlign: 'center' }}>{c.title}</h2>
-            <RoundWindow base={w.base} lit={w.lit} dusty={w.dusty} share={w.share} size={220} label={`${c.title} window`} />
-            {!line.allLearned && <Link className="hr-glass-btn" href={`/heir/lesson?mode=lesson&course=${c.id}`}><span>{line.text === 'Lock-in next' ? 'Lock it in' : 'Next lesson'}</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>}
-            <Link className={line.allLearned ? 'hr-glass-btn' : 'hr-glass-btn hr-glass-btn-quiet'} href={`/heir/lesson?mode=review&course=${c.id}`}><span>Review</span>{line.allLearned && <span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span>}</Link>
-          </section>
-        );
-      })}
-    </section>
   );
 }
