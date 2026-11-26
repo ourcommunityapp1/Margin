@@ -121,6 +121,24 @@ test('lie down: offered in the evening, once a night, with today’s questions f
   assert.equal(riseOffer(after, new Date(2026, 10, 20, 23)), null, 'not the same night');
 });
 
+test('when you rise: every morning, last night’s questions if any, else the ones most worth recalling', async () => {
+  const { finishSession, markNight } = await import('../progress.ts');
+  const { morningPicks } = await import('../planner.ts');
+  const ids = new Set(wsc.map((i) => i.id));
+  const intro = (itemId: string) => ({ itemId, kind: 'intro' as const, correct: true, hints: 0, ms: 1, review: false });
+  let p = finishSession(emptyProgress(), { results: [intro('wsc-1'), intro('wsc-2')], learned: [...unitsFor(getItem('wsc-1')!, 'adult'), ...unitsFor(getItem('wsc-2')!, 'adult')], now: new Date(2026, 10, 15, 12) });
+  // No night: the learned ones, never empty once something is learned.
+  const plain = morningPicks(p, ids, new Date(2026, 10, 18, 6));
+  assert.ok(plain.length > 0 && plain.every((id) => ['wsc-1', 'wsc-2'].includes(id)));
+  // After a night: last night's questions, until risen.
+  p = markNight(p, ['wsc-2'], new Date(2026, 10, 18, 21));
+  assert.deepEqual(morningPicks(p, ids, new Date(2026, 10, 19, 6)), ['wsc-2']);
+  // A night two evenings ago doesn't count.
+  assert.ok(morningPicks(p, ids, new Date(2026, 10, 21, 6)).length > 0);
+  // Nothing learned at all: nothing to recall.
+  assert.deepEqual(morningPicks(emptyProgress(), ids, new Date(2026, 10, 19, 6)), []);
+});
+
 test('every verse is short, and whole (exactly as the KJV has it, ending as the verse ends)', async () => {
   const { VERSES } = await import('../content/verses.ts');
   const { courses, courseItems, getCollection } = await import('../content/index.ts');

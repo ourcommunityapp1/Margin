@@ -19,7 +19,7 @@ import { courseFor, courseItems, getCollection, getItem, isVerse, itemLabel, typ
 import { cardStates, extraSessions, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, type CardState, type DayCard, type DaySession } from '@/heir/dayplan';
 import { dueCards, localDay, memberProgress, waitingForSleep, type MemberProgress } from '@/heir/progress';
 import { recalledRecently } from '@/heir/memory';
-import { nightOffer, planNext, riseOffer, riskOrder } from '@/heir/planner';
+import { bedtimePicks, EVENING_FROM, MORNING_FROM, morningPicks, nightOffer, planNext, riskOrder } from '@/heir/planner';
 import type { Item, Track } from '@/heir/types';
 import { DAWN, DUSK, photoFor, type Photo } from '@/heir/photos';
 import { PhotoCircle } from './photo-circle';
@@ -93,10 +93,21 @@ export function TodayCards() {
     const lockIn = s.card.kind === 'lesson' && nextLine(mine, track, course, now).text === 'Lock-in next';
     return { type: 'card', state: s, course, href, tag: s.card.kind === 'fix' ? 'Fix today' : 'Recommended', button: s.card.kind !== 'lesson' ? 'Start review' : lockIn ? 'Lock it in' : lessonNo === 1 ? 'Begin' : `Start lesson ${lessonNo}` };
   };
-  // "When you rise" in the morning and "When you lie down" in the evening: optional, never part of the day's cards.
+  // "When you rise" and "When you lie down" are on Today every day from 5 am (once something is learned): the morning
+  // recall until it's done or the evening comes, and the evening one shown all day, startable from 7 pm.
   const focusIds = focusCourse ? ids(focusCourse) : new Set<string>();
-  const rise = focusCourse ? riseOffer(mine, now) : null;
-  const night = focusCourse && !rise ? nightOffer(mine, focusIds, now) : null;
+  const hour = now.getHours();
+  const doneToday = (k: 'rise' | 'night') => (today?.day === day ? today.sessions : []).some((x) => x.kind === k);
+  const riseItems = focusCourse && hour >= MORNING_FROM && hour < EVENING_FROM && !doneToday('rise') ? morningPicks(mine, focusIds, now) : [];
+  const rise = riseItems.length ? riseItems : null;
+  const nightOpen = hour >= EVENING_FROM || hour < 3;
+  const nightPreview = focusCourse && !nightOpen && hour >= MORNING_FROM && !doneToday('night') ? bedtimePicks(mine, focusIds, now) : [];
+  const evening = (d: Date) => localDay(new Date(d.getTime() - 3 * 3_600_000));
+  const nightDone = !!mine.night && evening(new Date(mine.night.at)) === evening(now);
+  // With nothing new today and nothing on the edge, the evening recall still comes: the ones most worth recalling.
+  const nightFallback = () => { const m = morningPicks(mine, focusIds, now); return m.length ? m : null; };
+  const night = !focusCourse ? null : nightOpen ? (nightDone ? null : nightOffer(mine, focusIds, now) ?? nightFallback())
+    : nightPreview.length ? nightPreview : hour >= MORNING_FROM && !doneToday('night') ? nightFallback() : null;
   for (const s of left) { const sl = cardSlide(s); if (sl) slides.push(sl); }
   let extraOffer = false;
   const doneCourse = courseFor([...states].sort((a, b) => b.secs - a.secs)[0]?.card.course) ?? focusCourse;
@@ -120,9 +131,11 @@ export function TodayCards() {
   if (!me) return null;
   const todo = slides.filter((x): x is Extract<Slide, { type: 'card' }> => x.type === 'card' && !x.state.done);
   const finished = slides.filter((x) => (x.type === 'card' && x.state.done) || x.type === 'extra');
-  // The hero follows the time of day: "When you rise" at dawn, the next lesson or review by day, "When you lie down" at night.
-  const first = rise ? null : todo[0] ?? null;
-  const heroKind: 'rise' | 'card' | 'night' | 'done' = rise ? 'rise' : first ? 'card' : night ? 'night' : 'done';
+  // The hero follows the time of day: "When you rise" in the morning, the next lesson or review by day (with a morning
+  // recall not yet done after them), "When you lie down" from 7 pm.
+  const riseFirst = !!rise && hour < 12;
+  const heroKind: 'rise' | 'card' | 'night' | 'done' = riseFirst ? 'rise' : todo.length ? 'card' : rise ? 'rise' : night && nightOpen ? 'night' : 'done';
+  const first = heroKind === 'card' ? todo[0] : null;
   const later = first ? todo.slice(1) : todo; // in the morning the rise hero comes first and every card is a row
   const photoDay = localDay(now);
   const dawn = photoFor(DAWN, photoDay), dusk = photoFor(DUSK, photoDay, 7);
@@ -146,6 +159,7 @@ export function TodayCards() {
       left: <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={48} started={w.share > 0} reveal label={`${s.course.title} window`} />,
       title: r ? `${s.course.title} · ${r}` : s.course.title, right: mins(s.state.card.est) });
   });
+  if (rise && heroKind !== 'rise') upcoming.push({ key: 'rise', label: upcoming.length ? 'Then' : 'Up next', left: <PhotoThumb photo={dawn} />, title: `When you rise · ${recallRefs(rise)}`, right: mins(recallMinutes(rise.length)) });
   if (night && heroKind !== 'night') upcoming.push({ key: 'night', label: 'This evening', ev: true, left: <PhotoThumb photo={dusk} />, title: `When you lie down · ${recallRefs(night)}`, right: mins(recallMinutes(night.length)) });
   // Finished today, at the bottom: small and dim, with a tick where the minutes were.
   const doneRows = finished.map((x) => {

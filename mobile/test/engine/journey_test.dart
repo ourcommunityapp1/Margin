@@ -149,6 +149,7 @@ void main() {
             expectSame(bedtimePicks(p, ids, now), op['bedtime'], '$w bedtimePicks');
             expectSame(nightOffer(p, ids, DateTime.fromMillisecondsSinceEpoch(now.millisecondsSinceEpoch + 8 * 3600000, isUtc: true)), op['night'], '$w nightOffer');
             expectSame(riseOffer(p, now), op['rise'], '$w riseOffer');
+            if (op.containsKey('morning')) expectSame(morningPicks(p, ids, now), op['morning'], '$w morningPicks');
             expectSame(dueCards(p, now).map((x) => [x.itemId, iso(x.due), x.strength]).toList(), op['due'], '$w dueCards');
             expectSame(weakestCards(p).map((x) => x.itemId).toList(), op['weakest'], '$w weakestCards');
             expectSame(seenCounts(p).entries.map((e) => [e.key, e.value]).toList(), op['seen'], '$w seenCounts');

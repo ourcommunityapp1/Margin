@@ -170,3 +170,15 @@ export function riseOffer(p: MemberProgress, now: Date): string[] | null {
   if (h < 4 || h >= 12) return null;
   return eveningOf(new Date(n.at)) !== eveningOf(now) ? n.items : null;
 }
+
+// Every day, from 5 am, Today offers both recalls. "When you rise": last night's questions when "When you lie down"
+// came the evening before (within 30 hours) and hasn't been risen from; otherwise up to five learned ones most worth
+// recalling now (on the edge of being forgotten first, else simply the most at risk), never one learned today.
+export const MORNING_FROM = 5;
+export function morningPicks(p: MemberProgress, itemIds: Set<string>, now: Date): string[] {
+  const n = p.night;
+  if (n && !n.risen && n.items.length && eveningOf(new Date(n.at)) !== eveningOf(now) && now.getTime() - new Date(n.at).getTime() < 30 * 3_600_000) return n.items;
+  const order = riskOrder(p, itemIds, now).filter((x) => !waitingForSleep(p, x.itemId, now));
+  const edge = order.filter((x) => x.recall >= 0.55 && x.recall <= 0.92);
+  return (edge.length ? edge : order).slice(0, 5).map((x) => x.itemId);
+}

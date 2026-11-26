@@ -14,7 +14,7 @@ import { buildCheckpoint, buildKeep, buildLesson, buildLite, buildNight, buildRe
 import { wordCount } from '@/heir/measures';
 import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, waitingForSleep, type StepResult } from '@/heir/progress';
-import { bedtimePicks, lessonsDone, planNext, riskOrder } from '@/heir/planner';
+import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
 import { Stone } from './stone';
@@ -143,11 +143,12 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       next = { ...base, courseId: '', label: chosen.length === 1 ? `Review · ${itemLabel(chosen[0])}` : `Review · ${chosen.length} to keep`, kind: 'review', steps: buildKeep({ items: chosen, track, pool, rng: Math.random }), units: [], group: null };
     } else if (mode === 'night') {
       // When you lie down: today's questions first, then a few on the edge, one quiet step each.
-      const picked = bedtimePicks(mine, ids, new Date()).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
+      const tonight = bedtimePicks(mine, ids, new Date());
+      const picked = (tonight.length ? tonight : morningPicks(mine, ids, new Date())).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
       next = { ...base, label: 'When you lie down', kind: 'review', steps: buildNight({ items: picked, track, pool, rng: Math.random }), units: [], group: null, night: true };
     } else if (mode === 'rise') {
-      // When you rise: last night's questions, recalled in full from the question alone.
-      const risen = (mine.night?.items ?? []).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
+      // When you rise: last night's questions (or, with no night, the ones most worth recalling), in full from the question alone.
+      const risen = morningPicks(mine, ids, new Date()).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
       next = { ...base, label: 'When you rise', kind: 'review', steps: buildRise({ items: risen, track, pool, rng: Math.random }), units: [], group: null, rise: true };
     } else if (plan?.kind === 'welcome') {
       const unit = plan.units[0];

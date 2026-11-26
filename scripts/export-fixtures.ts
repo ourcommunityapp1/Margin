@@ -298,7 +298,7 @@ for (const [tag, focus, track, goal, tz] of plans) {
         next: (() => { const pl = Pl.planNext({ courseId: focus, items: courseItems(getCourse(focus)!), track, p, now }); return pl ? { kind: pl.kind, units: 'units' in pl ? pl.units.map((u) => u.key) : [], group: 'group' in pl ? pl.group.key : null, picks: 'picks' in pl ? pl.picks.map((x) => x.itemId) : [], why: 'why' in pl ? pl.why : null } : null; })(),
         nextLine: D.nextLine(p, track, getCourse(focus)!, now),
         project: (() => { const pr = Pl.project({ items: courseItems(getCourse(focus)!), track, p, minutes: goal, now }); return { ...pr, learnedBy: iso(pr.learnedBy), longTermBy: iso(pr.longTermBy) }; })(),
-        bedtime: Pl.bedtimePicks(p, ids, now), night: Pl.nightOffer(p, ids, new Date(now.getTime() + 8 * 3_600_000)), rise: Pl.riseOffer(p, now),
+        bedtime: Pl.bedtimePicks(p, ids, now), night: Pl.nightOffer(p, ids, new Date(now.getTime() + 8 * 3_600_000)), rise: Pl.riseOffer(p, now), morning: Pl.morningPicks(p, ids, now),
         due: P.dueCards(p, now).map((c) => [c.itemId, iso(c.due), c.strength]), weakest: P.weakestCards(p).map((c) => c.itemId), seen: [...P.seenCounts(p)],
         keepOf: K.keepOf(p), endOfNextDay: K.endOfNextDay(now, tz).toISOString(), missedWhen: K.missedWhen(K.endOfNextDay(now, tz), new Date(now.getTime() + 20 * 3_600_000), tz),
         clamp: Object.keys(p.cards).slice(0, 5).map((i) => K.clampDue(new Date(p.cards[i].due), p.levels[i] ?? 1, (p.keep ?? {})[i], now, tz).toISOString()),
