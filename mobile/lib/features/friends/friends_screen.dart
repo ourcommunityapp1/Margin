@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../progress/community_preview.dart';
+
 import '../../data/social.dart';
 import '../../platform/share.dart';
 import '../../engine/util.dart' show localDay;
@@ -233,6 +235,8 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ),
             )
           else ...[
+            // The leaderboard preview sits at the top of Friends (moved from Progress on Nov 26); not while searching.
+            const CommunityPreview(),
             KCard(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               child: KRow(

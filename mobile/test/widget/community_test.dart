@@ -30,8 +30,8 @@ FakeSocial _social() => FakeSocial(profile: _me)
 
 Future<void> _pump(WidgetTester tester, FakeSocial social) => pumpApp(tester, store: _phone(), auth: FakeAuth(email: 'ann@example.com'), social: social);
 
-Future<void> _openProgress(WidgetTester tester) async {
-  await tester.tap(find.bySemanticsLabel(RegExp('^Progress')));
+Future<void> _openFriends(WidgetTester tester) async {
+  await tester.tap(find.bySemanticsLabel(RegExp('^Friends')));
   await tester.pumpAndSettle();
 }
 
@@ -43,20 +43,20 @@ Future<void> _tap(WidgetTester tester, String text) async {
 }
 
 void main() {
-  testWidgets('the Progress tab shows a dot when your place moved', (tester) async {
+  testWidgets('the Friends tab shows a dot when your place moved', (tester) async {
     await _pump(tester, _social());
-    expect(find.bySemanticsLabel('Progress. Your place on the leaderboard changed'), findsOneWidget);
+    expect(find.bySemanticsLabel('Friends. Your place on the leaderboard changed'), findsOneWidget);
   });
 
   testWidgets('no dot when nothing moved', (tester) async {
     final s = _social()..boardStatus = const BoardStatus(place: 5, total: 6);
     await _pump(tester, s);
-    expect(find.bySemanticsLabel('Progress. Your place on the leaderboard changed'), findsNothing);
+    expect(find.bySemanticsLabel('Friends. Your place on the leaderboard changed'), findsNothing);
   });
 
-  testWidgets('the preview on Progress: top three, a gap, then you, with your move', (tester) async {
+  testWidgets('the preview on Friends: top three, a gap, then you, with your move', (tester) async {
     await _pump(tester, _social());
-    await _openProgress(tester);
+    await _openFriends(tester);
     expect(find.text('Community'), findsOneWidget);
     expect(find.text('Bea'), findsOneWidget);
     expect(find.text('Cal'), findsOneWidget);
@@ -72,16 +72,18 @@ void main() {
   testWidgets('just you so far: the preview asks to find friends', (tester) async {
     final s = FakeSocial(profile: _me)..board = Board(period: Period.all, total: 1, rows: [_r(1, 'ann', me: true)]);
     await _pump(tester, s);
-    await _openProgress(tester);
+    await _openFriends(tester);
     expect(find.text('Just you so far'), findsOneWidget);
     await _tap(tester, 'Find friends');
     expect(find.text('Friend requests'), findsOneWidget);
   });
 
-  testWidgets('with no profile, the preview and the board ask to make one', (tester) async {
+  testWidgets('with no profile, Friends and the board ask to make one', (tester) async {
     await _pump(tester, FakeSocial());
-    await _openProgress(tester);
-    expect(find.text('Memorize alongside friends. Make a profile to see how you compare.'), findsOneWidget);
+    await _openFriends(tester);
+    // Friends asks for a profile itself, so the preview stays away (as on the website).
+    expect(find.text('Make my profile'), findsOneWidget);
+    expect(find.text('Memorize alongside friends. Make a profile to see how you compare.'), findsNothing);
     GoRouter.of(tester.element(find.byType(KPage).first)).go('/community');
     await tester.pumpAndSettle();
     expect(find.text('Make a profile to join your community’s board.'), findsOneWidget);
@@ -90,13 +92,13 @@ void main() {
   testWidgets('the full board: rows, marks it seen, switches to this month, explains', (tester) async {
     final s = _social();
     await _pump(tester, s);
-    await _openProgress(tester);
+    await _openFriends(tester);
     await _tap(tester, 'View leaderboard');
     expect(find.text('Community'), findsWidgets);
     expect(find.text('Words in memory · 6 people in your community · '), findsOneWidget);
     expect(s.seenPeriods, ['all']);
     // Seen: the dot is gone.
-    expect(find.bySemanticsLabel('Progress. Your place on the leaderboard changed'), findsNothing);
+    expect(find.bySemanticsLabel('Friends. Your place on the leaderboard changed'), findsNothing);
     await _tap(tester, 'This month');
     expect(s.lastBoardPeriod, Period.month);
     expect(s.seenPeriods, ['all', 'month']);
@@ -109,7 +111,7 @@ void main() {
   testWidgets('tapping a friend on the board opens their page', (tester) async {
     final s = _social()..people = [const Person(username: 'bea', name: 'Bea Jones')];
     await _pump(tester, s);
-    await _openProgress(tester);
+    await _openFriends(tester);
     await _tap(tester, 'View leaderboard');
     await tester.tap(find.text('Bea').first);
     await tester.pumpAndSettle();

@@ -52,7 +52,7 @@ end of `src/app/heir/heir.css`. Your current `mobile/lib/features/progress/progr
 5. A fold "How a word gets into your memory" (closed; explains the rule, plus how many more are recited but not yet recalled).
 6. The keeping rows (try again today / review soon / out of memory), as today, in their own card.
 7. Days kept: the existing week card as it is, then a fold "<Month>, day by day · best N" holding the month grid and the rest-day sentence.
-8. Stones (unchanged content), Understanding (labs accounts only), Your windows (every window lights up when seen, tap to open), community preview, Awards.
+8. Stones (unchanged content), Understanding (labs accounts only), Your windows (every window lights up when seen, tap to open), Awards. **No community card on Progress any more** (see below).
 
 ## The stepped chart ("Growing")
 viewBox 320 × 170, margins left 6, right 46, top 16, bottom 30. Weekly points; x spreads them evenly; the line steps horizontally then
@@ -77,3 +77,7 @@ and with a few weeks of answers; note it in the "App port notes" part of `docs/a
 ## Two small things to leave as they are
 - The website shows no "Keep going" on Today any more, and the app already matches; do not add it back.
 - If the website and the app disagree on any screen or rule, the website is the reference: copy its behaviour, then tell the owner what you changed.
+
+## Also: the community card moves to Friends
+Remove `CommunityPreview` from `features/progress/progress_screen.dart` and show it at the top of the Friends screen, above "Friend requests" (hidden while a search is showing).
+The small dot on the tab bar that says "your place on the leaderboard changed" moves from the Progress tab to the Friends tab. Nothing else about the card changes.

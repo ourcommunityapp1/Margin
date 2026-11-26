@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
+import { CommunityPreview } from './community';
 import {
   answerRequest, blockPerson, createFriendInvite, cancelRequest, cloud, ensureProfile, getProfile, listFriends, listRequests, reportPerson, saveProfile, searchPeople, sendRequest,
   deleteProfile, unfriend, usernameFree, viewPerson, type FriendRow, type MyProfile, type Person, type RequestRow,
@@ -312,6 +313,7 @@ export function FriendsScreen() {
               </section>
             ) : (
               <>
+                <CommunityPreview />
                 <Link href="/heir/friends/requests" className="hr-card hr-row" style={{ minHeight: 56, padding: '10px 20px', gap: 12 }}>
                   <b style={{ flex: 1 }}>Friend requests</b>
                   {incoming > 0 && <span className="hr-tag" style={{ background: 'var(--button)', color: 'var(--button-ink)' }}>{incoming}</span>}

@@ -1,6 +1,7 @@
 // Progress, as one scroll (src/app/heir/progress/page.tsx, Nov 26 layout): a row of rings, the words in your memory (an arc over
 // the blurred glass of your first course) and how they have grown, the keeping rows, the days kept with the month in a fold,
-// the stones, the window of every course you've begun (each lights up when seen), the community preview, and awards.
+// the stones, the window of every course you've begun (each lights up when seen), and awards. The community preview
+// is on Friends.
 // Wording matches the website. The Understanding ladder is shown only to a few accounts on the website, so not here.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,6 @@ import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import '../lesson/step_frame.dart' show DashedBox;
 import '../window/appear_window.dart';
-import 'community_preview.dart';
 import '../window/light.dart';
 import 'progress_parts.dart';
 
@@ -225,7 +225,6 @@ class ProgressScreen extends ConsumerWidget {
             ),
           ],
         ),
-        const CommunityPreview(),
         // Awards
         KCard.column(
           gap: 14,
