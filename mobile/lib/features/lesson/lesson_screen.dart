@@ -92,6 +92,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
   Session get _session => widget.session;
 
   void _report(Outcome o) {
+    // Checking an answer puts the keyboard away, so the feedback has the room.
+    FocusManager.instance.primaryFocus?.unfocus();
     final step = _queue[_pos];
     // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
     if (step.kind == 'quiz') {

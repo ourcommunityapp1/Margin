@@ -229,6 +229,12 @@ void main() {
     final field = tester.getRect(find.byType(TextField));
     final check = tester.getRect(find.text('Check'));
     expect(field.bottom, lessThanOrEqualTo(check.top), reason: 'the field’s bottom edge is above Check, not cut off');
+    // Checking puts the keyboard away.
+    expect(tester.testTextInput.isVisible, isTrue);
+    await tester.tap(find.text('Check'));
+    await tester.pumpAndSettle();
+    expect(tester.testTextInput.isVisible, isFalse);
+    expect(FocusManager.instance.primaryFocus?.context?.widget, isNot(isA<EditableText>()));
   });
 
   group('say it from memory', () {
