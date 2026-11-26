@@ -81,18 +81,19 @@ class _CourseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(KSize.cardRadius),
           onTap: () => context.push('/courses/${course.id}'),
           child: Padding(
-            padding: const EdgeInsets.all(KSize.cardPadding),
+            // Less padding than other cards, and no arrow (the whole card is tappable): the words get the room.
+            padding: const EdgeInsets.fromLTRB(16, 18, 18, 18),
             child: Row(
               children: [
                 MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 92, started: started, motion: motion, inList: true, label: '${course.title} window'),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(course.title, style: serif(22, weight: FontWeight.w500, color: k.ink, height: 1.15)),
-                      const SizedBox(height: 6),
-                      Text(course.short, style: sans(14, color: k.muted, height: 1.4)),
+                      KBalancedText(course.title, style: serif(20, weight: FontWeight.w500, color: k.ink, height: 1.15)),
+                      const SizedBox(height: 5),
+                      KBalancedText(course.short, style: sans(13.5, color: k.muted, height: 1.4)),
                       if (status.isNotEmpty) ...[
                         const SizedBox(height: 6),
                         Text(status, style: sans(13, weight: FontWeight.w600, color: k.ink)),
@@ -100,8 +101,6 @@ class _CourseCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                KIcon('<path d="M9 5l7 7-7 7"/>', size: 18, color: k.muted, strokeWidth: 2),
               ],
             ),
           ),

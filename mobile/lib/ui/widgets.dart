@@ -457,3 +457,51 @@ class KIcon extends StatelessWidget {
     );
   }
 }
+
+/// Text whose lines come out even (CSS `text-wrap: balance`): it takes the narrowest width that still needs the same number
+/// of lines, so a title breaks as "Westminster Shorter / Catechism" and a sentence never ends with one word alone on a line.
+class KBalancedText extends StatelessWidget {
+  const KBalancedText(this.text, {super.key, required this.style, this.maxLines, this.textAlign = TextAlign.start});
+  final String text;
+  final TextStyle style;
+  final int? maxLines;
+  final TextAlign textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    return LayoutBuilder(
+      builder: (context, c) {
+        final max = c.maxWidth;
+        if (!max.isFinite) return Text(text, style: style, maxLines: maxLines, textAlign: textAlign);
+        int linesAt(double w) {
+          final tp = TextPainter(text: TextSpan(text: text, style: style), textDirection: direction, textScaler: scaler, maxLines: maxLines)..layout(maxWidth: w);
+          final n = tp.computeLineMetrics().length;
+          tp.dispose();
+          return n;
+        }
+
+        final lines = linesAt(max);
+        var width = max;
+        if (lines > 1) {
+          // The narrowest width that still fits in [lines] lines: search between half the width and the full width.
+          var lo = max / 2, hi = max;
+          for (var i = 0; i < 12; i++) {
+            final mid = (lo + hi) / 2;
+            if (linesAt(mid) > lines) {
+              lo = mid;
+            } else {
+              hi = mid;
+            }
+          }
+          width = hi;
+        }
+        return Align(
+          alignment: textAlign == TextAlign.center ? Alignment.topCenter : AlignmentDirectional.topStart,
+          child: SizedBox(width: width, child: Text(text, style: style, maxLines: maxLines, textAlign: textAlign, overflow: maxLines == null ? null : TextOverflow.ellipsis)),
+        );
+      },
+    );
+  }
+}
