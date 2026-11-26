@@ -101,11 +101,14 @@ class KCard extends StatelessWidget {
 
 /// The main button (`.hr-btn`): full width, 56 tall, pill shaped. [quiet] is the plain text button under it.
 class KButton extends StatelessWidget {
-  const KButton(this.label, {super.key, required this.onPressed, this.quiet = false, this.busyLabel, this.busy = false});
+  const KButton(this.label, {super.key, required this.onPressed, this.quiet = false, this.busyLabel, this.busy = false, this.color, this.ink});
 
   final String label;
   final VoidCallback? onPressed;
   final bool quiet;
+
+  /// A fill and text colour other than the usual (Continue turns green after a right answer).
+  final Color? color, ink;
 
   /// Shown instead of [label] while [busy] ("Sending…").
   final String? busyLabel;
@@ -115,8 +118,8 @@ class KButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final enabled = onPressed != null && !busy;
-    final bg = quiet ? Colors.transparent : k.button;
-    final fg = quiet ? k.ink : k.buttonInk;
+    final bg = color ?? (quiet ? Colors.transparent : k.button);
+    final fg = ink ?? (quiet ? k.ink : k.buttonInk);
     return Semantics(
       button: true,
       enabled: enabled,
