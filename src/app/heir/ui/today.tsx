@@ -25,7 +25,6 @@ import { DAWN, DUSK, photoFor, type Photo } from '@/heir/photos';
 import { PhotoCircle } from './photo-circle';
 
 const arrow = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
-const check = <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12l5 5 9-10" /></svg>;
 const ids = (c: Course) => new Set(courseItems(c).map((i) => i.id));
 const weekday = (d: Date) => d.toLocaleDateString('en-US', { weekday: 'long' });
 
@@ -100,6 +99,7 @@ export function TodayCards() {
   const night = focusCourse && !rise ? nightOffer(mine, focusIds, now) : null;
   for (const s of left) { const sl = cardSlide(s); if (sl) slides.push(sl); }
   let extraOffer = false;
+  const doneCourse = courseFor([...states].sort((a, b) => b.secs - a.secs)[0]?.card.course) ?? focusCourse;
   if (allDone) {
     const allIds = new Set(started.flatMap((c) => [...ids(c)]));
     const recent = recalledRecently(mine.log, now);
@@ -138,7 +138,7 @@ export function TodayCards() {
     const w = windowFor(s.course, s.state.card.kind, track, mine, now);
     return (
       <Link key={s.state.card.id} href={s.href} className="hr-b4-row">
-        <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={52} started label={`${s.course.title} window`} />
+        <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={52} started={w.share > 0} reveal label={`${s.course.title} window`} />
         <span className="hr-b4-t"><b>{s.course.title}</b><span>{cardWhat(s)}</span></span>
         {tick(false)}
       </Link>
@@ -162,7 +162,7 @@ export function TodayCards() {
     const word = x.type === 'card' ? (x.state.card.kind === 'lesson' ? null : x.state.card.kind === 'fix' ? 'Fix' : 'Review') : x.session.kind === 'lesson' ? null : x.tag;
     return (
       <div key={x.type === 'card' ? x.state.card.id : x.session.id} className="hr-b4-row" data-done="true">
-        <MiniWindow base={w.base} lit={w.lit} size={52} started label={`${x.course.title} window`} />
+        <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={52} started={w.share > 0} reveal label={`${x.course.title} window`} />
         <span className="hr-b4-t"><b>{x.course.title}</b><span>{word ? `${word} · ${mins}` : `Lesson · ${mins}`}</span></span>
         {tick(true)}
       </div>
@@ -204,7 +204,11 @@ export function TodayCards() {
         })()}
         {heroKind === 'done' && (
           <>
-            <span className="hr-b4-donetick" aria-hidden="true">{check}</span>
+            {doneCourse && (() => {
+              // The course you spent longest on today, lit only as far as you've learned: never a finished window that hasn't been earned.
+              const w = partWindow(doneCourse, track, mine, now);
+              return <CardWindow key={w.base} light={w} started={w.share > 0} size={190} label={`${doneCourse.title} window`} />;
+            })()}
             <h2 className="serif hr-b4-title">{states.length ? 'Done for today' : 'Today'}</h2>
             {states.length > 0 && <p className="hr-b4-sub">{minutesWord(minutes)}</p>}
             {extraOffer && <Link href="/heir/lesson?mode=extra" className="hr-b4-go">Extra practice</Link>}

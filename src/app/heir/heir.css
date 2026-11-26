@@ -1201,7 +1201,6 @@ button.hr-glass-cta { width: 100%; font: inherit; text-align: left; cursor: poin
 .hr-b4-sub { margin: 0; font-size: 13px; color: #C9C1B3; }
 .hr-b4-go { margin-top: 4px; padding: 12px 28px; border-radius: 999px; background: #F3D8B6; color: #15181B; font-weight: 700; font-size: 15px; text-decoration: none; }
 .hr-b4-go[data-mood='night'] { background: #c9d7f6; }
-.hr-b4-donetick { width: 64px; height: 64px; border-radius: 50%; background: #F3D8B6; color: #15181B; display: inline-flex; align-items: center; justify-content: center; }
 .hr-b4-list { display: flex; flex-direction: column; margin-top: 14px; }
 .hr-b4-row { display: flex; align-items: center; gap: 14px; padding: 12px 4px; border-bottom: 1px solid rgba(255, 255, 255, 0.07); color: inherit; text-decoration: none; }
 .hr-b4-row:last-child, .hr-b4-row:has(+ .hr-b4-divider) { border-bottom: 0; }
