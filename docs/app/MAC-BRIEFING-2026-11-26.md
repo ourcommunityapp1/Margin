@@ -87,3 +87,5 @@ At 18:04 UTC today something saved the owner's progress with `today.day = 2026-1
 Because `mergeToday` keeps the later day, every website save merged that future plan back in, Today planned again, saved again, and so on about once a second; the big window was rebuilt each time (a black blink).
 **Website fix:** `provider.tsx` drops a saved `today` whose day is after this device's local day before merging (`withoutFutureToday`), so this device's plan wins and is saved over the bad one.
 **App:** do the same wherever saved progress is merged in (sync), and **never run the simulator with a fake `NOW` while signed in to a real account** (sign out, or use a test account).
+
+**Order update (Nov 26, evening):** "When you rise" is now the big card whenever it is not done, at any hour until 7 pm (before: only until noon, then a row after the day's cards). Today is in time order: rise, then the lessons and reviews, then "This evening". Port the same rule.

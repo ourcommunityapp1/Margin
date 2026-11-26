@@ -133,9 +133,10 @@ export function TodayCards() {
   if (!me) return null;
   const todo = slides.filter((x): x is Extract<Slide, { type: 'card' }> => x.type === 'card' && !x.state.done);
   const finished = slides.filter((x) => (x.type === 'card' && x.state.done) || x.type === 'extra');
-  // The hero follows the time of day: "When you rise" in the morning, the next lesson or review by day (with a morning
-  // recall not yet done after them), "When you lie down" from 7 pm.
-  const riseFirst = !!rise && hour < 12;
+  // The hero follows the time of day: "When you rise" first while it is not done, then the next lesson or review by day,
+  // "When you lie down" from 7 pm.
+  // "When you rise" comes first whenever it isn't done yet (until the evening takes over at 7 pm): the screen is in time order.
+  const riseFirst = !!rise;
   const heroKind: 'rise' | 'card' | 'night' | 'done' = riseFirst ? 'rise' : todo.length ? 'card' : rise ? 'rise' : night && nightOpen ? 'night' : 'done';
   const first = heroKind === 'card' ? todo[0] : null;
   const later = first ? todo.slice(1) : todo; // in the morning the rise hero comes first and every card is a row
