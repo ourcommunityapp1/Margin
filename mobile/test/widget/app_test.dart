@@ -86,7 +86,7 @@ void main() {
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
     expect(find.text('Progress'), findsWidgets);
-    expect(find.text('Words in your memory'), findsOneWidget);
+    expect(find.text('WORDS IN YOUR MEMORY'), findsOneWidget);
     expect(find.text('One lesson or review keeps the day.'), findsOneWidget);
   });
 

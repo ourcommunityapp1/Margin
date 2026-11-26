@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:katekize/ui/widgets.dart' show KRow;
 import 'package:go_router/go_router.dart';
 import 'package:katekize/ui/widgets.dart' show KPage;
 import 'package:katekize/data/household.dart';
@@ -76,7 +77,9 @@ void main() {
     expect(find.text('Cal Wright'), findsOneWidget);
     expect(find.text('5-day streak'), findsOneWidget);
     expect(find.text('1,234'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget); // one request waiting
+    // One request waiting: the count sits in the Friend requests row (the leaderboard card above has its own numbers).
+    final requests = find.ancestor(of: find.text('Friend requests'), matching: find.byType(KRow));
+    expect(find.descendant(of: requests, matching: find.text('1')), findsOneWidget);
   });
 
   testWidgets('search finds someone and Add sends a request', (tester) async {

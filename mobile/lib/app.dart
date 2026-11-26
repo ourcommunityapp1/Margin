@@ -239,7 +239,8 @@ class _TabShell extends ConsumerWidget {
             child: KTabBar(
               tabs: tabs,
               current: shell.currentIndex,
-              dots: {if (signedIn && (ref.watch(boardProvider)?.alert ?? false)) 2: 'Your place on the leaderboard changed'},
+              // The "your place changed" dot is on Friends, where the leaderboard preview is.
+              dots: {if (signedIn && (ref.watch(boardProvider)?.alert ?? false)) 3: 'Your place on the leaderboard changed'},
               onTap: (i) {
                 Haptics.select();
                 shell.goBranch(i, initialLocation: i == shell.currentIndex);

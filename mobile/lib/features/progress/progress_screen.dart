@@ -1,8 +1,8 @@
-// Progress, as one scroll (src/app/heir/progress/page.tsx): the week of days kept, the words in your memory and the next
-// milestone, the stones ladder, the courses you have begun, the month's days kept, and awards. Wording matches the website.
-//
-// Not here yet: the community preview (needs the server), the stained-glass windows wall (phase 3, so the courses show as
-// a plain list), and the Understanding ladder (the website shows it only to a few accounts).
+// Progress, as one scroll (src/app/heir/progress/page.tsx, Nov 26 layout): a row of rings, the words in your memory (an arc over
+// the blurred glass of your first course) and how they have grown, the keeping rows, the days kept with the month in a fold,
+// the stones, the window of every course you've begun (each lights up when seen), and awards. The community preview
+// is on Friends.
+// Wording matches the website. The Understanding ladder is shown only to a few accounts on the website, so not here.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,20 +18,21 @@ import '../../engine/types.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../state/keep.dart';
+import '../../state/memory_history.dart';
 import '../../ui/screen_parts.dart';
 import '../../ui/stone.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import '../lesson/step_frame.dart' show DashedBox;
-import '../window/glass_window.dart';
-import 'community_preview.dart';
+import '../window/appear_window.dart';
 import '../window/light.dart';
+import 'progress_parts.dart';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
 const _stageColors = [Color(0xFFC9A46A), Color(0xFF7B52B5), Color(0xFFD99A2B), Color(0xFFB0442A), Color(0xFF1E8657), Color(0xFF2F5DA8), Color(0xFFBFC6CC)];
 const _monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-String _fmt(int n) => n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+String _fmt(int n) => fmtWords(n);
 
 class ProgressScreen extends ConsumerWidget {
   const ProgressScreen({super.key});
@@ -64,64 +65,118 @@ class ProgressScreen extends ConsumerWidget {
       for (final c in courses)
         if (courseItems(c).any((i) => unitsFor(i, track).any((u) => mine.units.contains(u.key)))) c,
     ]..sort((a, b) => (b.id == plan?.course ? 1 : 0) - (a.id == plan?.course ? 1 : 0));
+    final stats = {for (final c in yours) c.id: courseStats(courseItems(c), track, mine)};
+    final learnedAll = stats.values.fold(0, (n, s) => n + s.learned), totalAll = stats.values.fold(0, (n, s) => n + s.total);
     final hints = [
       for (final i in (items.where((i) => levelAt(i.id) > 0 && !needsRefresh(mine, i.id, now)).toList()..sort((a, b) => levelAt(a.id) - levelAt(b.id))).take(2))
         if (nextStep(i, track, mine, now) case final step?) '${itemLabel(i)}: $step',
     ];
     final earned = awardList.where((a) => mine.awards.containsKey(a.id)).length;
     final nextAward = awardList.where((a) => !mine.awards.containsKey(a.id)).firstOrNull;
+    final history = wordsHistory(items, track, mine, now, inMemory);
+    final wash = yours.isEmpty ? null : partWindow(yours.first, track, mine, now).base;
+
+    // One plain sentence for where you stand, and one line of what to do.
+    final toNext = miles.next == null ? 0 : miles.next! - inMemory;
+    final tryAgain = keep?.tryAgain.length ?? 0, review = keep?.review.length ?? 0, out = keep?.out.length ?? 0;
+    final say = tryAgain > 0
+        ? 'A few to bring back'
+        : review > 0
+            ? 'Keep them strong'
+            : inMemory == 0
+                ? 'Your first words are coming'
+                : miles.next != null
+                    ? 'Steady does it'
+                    : 'Every milestone reached';
+    final guide = inMemory == 0
+        ? 'Recall a verse or answer on a later day and it counts here.'
+        : tryAgain > 0
+            ? '$tryAgain ${tryAgain == 1 ? 'needs' : 'need'} another go today to stay in your count.'
+            : review > 0
+                ? 'Review $review soon to keep ${review == 1 ? 'it' : 'them'} in your count.'
+                : miles.next != null
+                    ? 'Next milestone: ${_fmt(miles.next!)} words. You’re ${_fmt(toNext)} ${toNext == 1 ? 'word' : 'words'} away.'
+                    : 'Every word you’ve learned is holding.';
+    final wordsFrac = miles.next != null ? (inMemory - prevMile) / (miles.next! - prevMile) : 1.0;
+    final firstWords = history.where((q) => q.words > 0).firstOrNull ?? history.firstOrNull;
 
     return KPage(
       children: [
         const KTitle('Progress'),
-        const CommunityPreview(),
-        _WeekCard(days: mine.days, today: today, now: now, kept: kept, best: best),
-        // Words in your memory
-        KCard.column(
-          gap: 12,
-          children: [
-            const KLabel('Words in your memory'),
-            Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
-              spacing: 14,
-              runSpacing: 4,
+        Semantics(
+          container: true,
+          label: 'At a glance',
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: RingChip(frac: wordsFrac, value: _fmt(inMemory), label: 'Words', color: const Color(0xFFF3D8B6))),
+              Expanded(child: RingChip(frac: best > 0 ? (kept / best).clamp(0, 1).toDouble() : 0, value: '$kept', label: 'Days kept', color: const Color(0xFF9FB8E8))),
+              Expanded(child: RingChip(frac: recitedCount > 0 ? holding[0] / recitedCount : 0, value: '${holding[0]}', label: 'Stones', color: const Color(0xFFB9A1E6))),
+              Expanded(child: RingChip(frac: totalAll > 0 ? learnedAll / totalAll : 0, value: '${yours.length}', label: 'Windows', color: const Color(0xFFE5B66A))),
+            ],
+          ),
+        ),
+        ProgressHero(
+          wash: wash,
+          frac: wordsFrac,
+          left: miles.next != null ? _fmt(prevMile) : null,
+          right: miles.next != null ? _fmt(miles.next!) : null,
+          number: _fmt(inMemory),
+          say: say,
+          line: guide,
+          button: review > 0 ? 'Review $review soon' : out > 0 ? 'Bring $out back' : null,
+          onButton: review > 0 || out > 0
+              ? () => context.push('/lesson?mode=keep&items=${[for (final h in review > 0 ? keep!.review : keep!.out) h.item.id].join(',')}')
+              : null,
+        ),
+        if (history.length > 2)
+          Semantics(
+            container: true,
+            label: 'Words over time',
+            child: KCard.column(
+              gap: 10,
               children: [
-                Text(_fmt(inMemory), style: serif(48, weight: FontWeight.w600, color: k.ink, height: 1)),
-                if (words.recited > words.inMemory)
-                  Text('${_fmt(words.recited - words.inMemory)} more recited, not yet recalled on a later day', style: sans(14, color: k.muted)),
-              ],
-            ),
-            Row(
-              children: [
-                if (miles.reached.isNotEmpty) ...[_Mile(_fmt(prevMile), reached: true), const SizedBox(width: 10)],
-                if (miles.next != null) ...[
-                  Expanded(child: _Bar(fraction: (inMemory - prevMile) / (miles.next! - prevMile), color: _stageColors[1])),
-                  const SizedBox(width: 10),
-                  _Mile(_fmt(miles.next!)),
-                ] else
-                  Text('Every milestone reached', style: sans(14, color: k.muted)),
-              ],
-            ),
-            if (miles.next != null)
-              Text('${_fmt(miles.next! - inMemory)} more ${miles.next! - inMemory == 1 ? 'word' : 'words'} to ${_fmt(miles.next!)}', style: sans(14, color: k.muted)),
-            if (keep != null && (keep.tryAgain.isNotEmpty || keep.review.isNotEmpty || keep.out.isNotEmpty))
-              Container(
-                padding: const EdgeInsets.only(top: 10),
-                decoration: BoxDecoration(border: Border(top: BorderSide(color: k.line))),
-                child: Column(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
                   children: [
-                    if (keep.tryAgain.isNotEmpty)
-                      _KeepRow('Try again today', '${keep.tryAgain.length} ${keep.tryAgain.length == 1 ? 'verse or answer' : 'verses and answers'}', k.ink),
-                    if (keep.review.isNotEmpty) _KeepRow('Review soon', '${_fmt(keep.review.fold(0, (n, h) => n + h.words))} words', k.ink),
-                    if (keep.out.isNotEmpty) _KeepRow('Out of memory · one recall brings back', '${keep.out.length}', k.muted),
+                    const KLabel('Growing'),
+                    Text('since ${_monthNames[DateTime.fromMillisecondsSinceEpoch(firstWords!.at).month - 1]}', style: sans(13, color: k.muted)),
                   ],
                 ),
-              ),
+                StepChart(pts: history),
+              ],
+            ),
+          ),
+        Fold(
+          title: 'How a word gets into your memory',
+          children: [
             Text(
-              'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it, and stays there as long as you recall it again in time.',
-              style: sans(13, color: k.muted, height: 1.45),
+              'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it, and stays there as long as you recall it again in time.'
+              '${words.recited > words.inMemory ? ' ${_fmt(words.recited - words.inMemory)} more are recited, not yet recalled on a later day.' : ''}',
+              style: sans(14, color: k.muted, height: 1.5),
             ),
           ],
+        ),
+        if (keep != null && (keep.tryAgain.isNotEmpty || keep.review.isNotEmpty || keep.out.isNotEmpty))
+          Semantics(
+            container: true,
+            label: 'Keeping your words',
+            child: KCard.column(
+              gap: 0,
+              children: [
+                if (keep.tryAgain.isNotEmpty)
+                  _KeepRow('Try again today', '${keep.tryAgain.length} ${keep.tryAgain.length == 1 ? 'verse or answer' : 'verses and answers'}', k.ink),
+                if (keep.review.isNotEmpty) _KeepRow('Review soon', '${_fmt(keep.review.fold(0, (n, h) => n + h.words))} words', k.ink),
+                if (keep.out.isNotEmpty) _KeepRow('Out of memory · one recall brings back', '${keep.out.length}', k.muted),
+              ],
+            ),
+          ),
+        _WeekCard(days: mine.days, today: today, now: now, kept: kept, best: best),
+        Fold(
+          title: '${_monthNames[now.toLocal().month - 1]}, day by day${best > 0 ? ' · best $best' : ''}',
+          children: [_MonthGrid(days: mine.days, today: today, now: now)],
         ),
         // Stones
         KCard.column(
@@ -149,9 +204,13 @@ class ProgressScreen extends ConsumerWidget {
                   style: sans(14, color: k.ink, height: 1.45),
                 ),
               ),
+            InkWell(
+              onTap: () => context.push('/how'),
+              child: Text('How to earn each stone', style: sans(14, weight: FontWeight.w600, color: k.ink).copyWith(decoration: TextDecoration.underline)),
+            ),
           ],
         ),
-        // Your courses (the website shows each as a stained-glass window)
+        // Your windows: each lights up when seen; tap one to see it up close.
         KCard.column(
           gap: 14,
           children: [
@@ -166,7 +225,6 @@ class ProgressScreen extends ConsumerWidget {
             ),
           ],
         ),
-        _MonthCard(days: mine.days, today: today, now: now, kept: kept, best: best),
         // Awards
         KCard.column(
           gap: 14,
@@ -202,8 +260,6 @@ class ProgressScreen extends ConsumerWidget {
   }
 }
 
-// ── Pieces ──
-
 class _Bar extends StatelessWidget {
   const _Bar({required this.fraction, required this.color});
   final double fraction;
@@ -219,25 +275,6 @@ class _Bar extends StatelessWidget {
           child: FractionallySizedBox(widthFactor: fraction.isNaN ? 0 : fraction.clamp(0, 1), child: Container(color: color)),
         ),
       );
-}
-
-class _Mile extends StatelessWidget {
-  const _Mile(this.text, {this.reached = false});
-  final String text;
-  final bool reached;
-
-  @override
-  Widget build(BuildContext context) {
-    final k = context.k;
-    final box = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: reached
-          ? BoxDecoration(borderRadius: BorderRadius.circular(999), border: Border.all(color: const Color(0xFFE8B867), width: 1.5), color: const Color(0x24E8B867))
-          : null,
-      child: Text(text, style: sans(14, weight: FontWeight.w700, color: reached ? const Color(0xFFF4EFE6) : k.muted)),
-    );
-    return Semantics(label: reached ? 'Milestone reached: $text' : 'Next milestone: $text', excludeSemantics: true, child: reached ? box : DashedBox(radius: 999, child: box));
-  }
 }
 
 class _KeepRow extends StatelessWidget {
@@ -311,7 +348,7 @@ class _WallItem extends StatelessWidget {
         onTap: () => context.push('/window/${course.id}'),
         child: Column(
           children: [
-            MiniWindow(base: w.base, lit: w.lit, dusty: w.dusty, size: 128, started: true, label: '${course.title} window'),
+            AppearWindow(mini: true, base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, size: 128, started: true, label: '${course.title} window'),
             const SizedBox(height: 8),
             Text(course.title, textAlign: TextAlign.center, style: serif(16, weight: FontWeight.w600, color: k.ink, height: 1.2)),
             const SizedBox(height: 2),
@@ -450,13 +487,12 @@ class _DashedCircle extends CustomPainter {
   bool shouldRepaint(_DashedCircle old) => old.color != color;
 }
 
-/// This month, Monday first.
-class _MonthCard extends StatelessWidget {
-  const _MonthCard({required this.days, required this.today, required this.now, required this.kept, required this.best});
+/// This month, Monday first, and what keeps a day (inside the "Month, day by day" fold).
+class _MonthGrid extends StatelessWidget {
+  const _MonthGrid({required this.days, required this.today, required this.now});
   final List<String> days;
   final String today;
   final DateTime now;
-  final int kept, best;
 
   @override
   Widget build(BuildContext context) {
@@ -475,27 +511,9 @@ class _MonthCard extends StatelessWidget {
           return (n: i + 1, state: state);
         }(),
     ];
-    return KCard.column(
-      gap: 14,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.end,
-          runSpacing: 4,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text('$kept', style: serif(30, weight: FontWeight.w600, color: k.ink, height: 1)),
-                const SizedBox(width: 8),
-                Flexible(child: Text(kept == 1 ? 'day kept' : 'days kept', style: sans(16, weight: FontWeight.w600, color: k.ink))),
-              ],
-            ),
-            Text('${_monthNames[l.month - 1]}${best > 0 ? ' · Best $best' : ''}', style: sans(13, weight: FontWeight.w600, color: k.muted)),
-          ],
-        ),
         LayoutBuilder(
           builder: (context, c) {
             final cell = (c.maxWidth - 6 * 6) / 7;
@@ -510,6 +528,7 @@ class _MonthCard extends StatelessWidget {
             );
           },
         ),
+        const SizedBox(height: 12),
         Text(
           'A day is kept by finishing a lesson or review. Sundays are days of rest, and each week has one more free day: learning on them counts, and skipping one never breaks the run.',
           style: sans(13, color: k.muted, height: 1.45),

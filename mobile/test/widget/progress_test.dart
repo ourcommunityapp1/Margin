@@ -37,7 +37,16 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Today is kept.'), findsOneWidget);
     expect(find.text('day kept'), findsWidgets);
-    expect(find.text('Words in your memory'), findsOneWidget);
+    expect(find.text('WORDS IN YOUR MEMORY'), findsOneWidget);
+    // The new layout: the four rings, the hero's sentence, and the folds (closed until tapped).
+    for (final label in ['Words', 'Days kept', 'Stones', 'Windows']) {
+      expect(find.text(label), findsWidgets, reason: 'the $label ring');
+    }
+    expect(find.text('Your first words are coming'), findsOneWidget, reason: 'nothing recalled on a later day yet');
+    expect(find.text('Recall a verse or answer on a later day and it counts here.'), findsOneWidget);
+    expect(find.textContaining('How a word gets into your memory'), findsOneWidget);
+    expect(find.textContaining('day by day'), findsOneWidget);
+    expect(find.text('Growing'), findsNothing, reason: 'no chart before any words count');
     // The course she began is listed with how far she has got.
     await tester.ensureVisible(find.text('Westminster Shorter Catechism'));
     await tester.pumpAndSettle();
