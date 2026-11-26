@@ -1,3 +1,4 @@
+import 'package:katekize/platform/haptics.dart';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -11,7 +12,7 @@ import 'package:katekize/engine/models.dart' show StepResult;
 import 'package:katekize/engine/progress.dart';
 import 'package:katekize/engine/types.dart';
 import 'package:katekize/state/household.dart';
-import 'package:material_ui/material_ui.dart' show TextField;
+import 'package:material_ui/material_ui.dart' show Scrollable, Switch, TextField;
 
 import 'fakes.dart';
 
@@ -171,5 +172,18 @@ void main() {
     }
     await tester.ensureVisible(find.text('Spaced review'));
     expect(find.text('Spaced review'), findsOneWidget);
+  });
+
+  testWidgets('Vibration can be turned off on You, and stays off', (tester) async {
+    final store = await _phone(tester);
+    await pumpApp(tester, store: store);
+    await _openYou(tester);
+    await tester.scrollUntilVisible(find.text('Vibration'), 200, scrollable: find.byType(Scrollable).first);
+    expect(Haptics.enabled, isTrue);
+    await tester.tap(find.byType(Switch).last);
+    await tester.pumpAndSettle();
+    expect(Haptics.enabled, isFalse);
+    expect(store.read('hr-haptics'), 'off');
+    Haptics.enabled = true;
   });
 }

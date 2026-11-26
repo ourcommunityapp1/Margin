@@ -10,6 +10,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../platform/haptics.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/verses.dart';
@@ -453,7 +455,10 @@ class _OrderStepState extends State<OrderStep> {
 
     final placed = [
       for (final (at, i) in _picked.indexed)
-        tile(step.bank![i], placed: true, semantics: '${step.bank![i]} (tap to take back)', onTap: () => setState(() => _picked.removeAt(at))),
+        tile(step.bank![i], placed: true, semantics: '${step.bank![i]} (tap to take back)', onTap: () {
+          Haptics.select();
+          setState(() => _picked.removeAt(at));
+        }),
     ];
     final slots = showSlots
         ? [
@@ -491,7 +496,10 @@ class _OrderStepState extends State<OrderStep> {
     final bank = pieces
         ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             for (final (i, t) in step.bank!.indexed)
-              Padding(padding: const EdgeInsets.only(bottom: 8), child: tile(t, used: _picked.contains(i), onTap: () => setState(() => _picked.add(i)))),
+              Padding(padding: const EdgeInsets.only(bottom: 8), child: tile(t, used: _picked.contains(i), onTap: () {
+                    Haptics.select();
+                    setState(() => _picked.add(i));
+                  })),
           ])
         : Semantics(
             label: 'Word bank',
@@ -500,7 +508,10 @@ class _OrderStepState extends State<OrderStep> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final (i, t) in step.bank!.indexed) tile(t, used: _picked.contains(i), onTap: () => setState(() => _picked.add(i))),
+                for (final (i, t) in step.bank!.indexed) tile(t, used: _picked.contains(i), onTap: () {
+                    Haptics.select();
+                    setState(() => _picked.add(i));
+                  }),
               ],
             ),
           );
@@ -991,6 +1002,7 @@ class _SayStepState extends ConsumerState<SayStep> {
   }
 
   Future<void> _toggle() async {
+    Haptics.select();
     if (_listening) {
       await _speech.stop();
       return;
@@ -1018,6 +1030,7 @@ class _SayStepState extends ConsumerState<SayStep> {
 
   void _ended() {
     if (!mounted) return;
+    Haptics.select();
     setState(() => _listening = false);
     final text = _said.trim();
     if (text.isEmpty) {

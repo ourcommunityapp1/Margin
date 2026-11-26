@@ -8,6 +8,7 @@ import '../../engine/content.dart';
 import '../../state/auth.dart';
 import '../../platform/reminders.dart' show reminderSummary;
 import '../../state/household.dart';
+import '../../state/haptics.dart';
 import '../../state/reminders.dart';
 import '../../state/sync.dart';
 import '../../ui/screen_parts.dart';
@@ -89,6 +90,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 if (signedIn) KLinkRow(title: 'Your profile', sub: 'Name, username, city, who can find you', onTap: () => context.push('/profile')),
                 if (signedIn) KLinkRow(title: 'Linked accounts', sub: 'See a family member’s progress, view only', onTap: () => context.push('/linked')),
                 KLinkRow(title: 'Reminders', sub: reminderSummary(ref.watch(remindersProvider)), onTap: () => context.push('/reminders')),
+                const _VibrationRow(),
                 KLinkRow(title: 'How it works', sub: 'Stones, grading and spaced review', onTap: () => context.push('/how')),
                 KLinkRow(title: 'About Katekize', sub: 'Sources and credits', onTap: () => context.push('/about')),
                 if (signedIn) KLinkRow(title: 'Delete my account', sub: 'Remove your account and everything in it', onTap: () => context.push('/delete-account')),
@@ -147,4 +149,38 @@ class _Danger extends StatelessWidget {
           child: SizedBox(height: KSize.buttonHeight, child: Center(child: Text(label, style: sans(16, weight: FontWeight.w600, color: k.card, height: 1)))),
         ),
       );
+}
+
+/// Vibration on or off: the small taps for answers, windows lighting up, stones and choices.
+class _VibrationRow extends ConsumerWidget {
+  const _VibrationRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final k = context.k;
+    final on = ref.watch(hapticsOnProvider);
+    return MergeSemantics(
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 64),
+        decoration: BoxDecoration(border: Border(top: BorderSide(color: k.line))),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Vibration', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                  const SizedBox(height: 2),
+                  Text('Small taps as you answer and as your window lights up', style: sans(14, color: k.muted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Switch(value: on, onChanged: (v) => ref.read(hapticsOnProvider.notifier).set(v), activeThumbColor: k.card, activeTrackColor: k.good),
+          ],
+        ),
+      ),
+    );
+  }
 }

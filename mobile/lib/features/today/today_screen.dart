@@ -26,6 +26,7 @@ import '../window/appear_window.dart';
 import '../window/glass_window.dart';
 import '../window/light.dart';
 import 'photo_circle.dart';
+import '../../platform/haptics.dart';
 import 'today_banners.dart' show KeepWarning;
 
 const _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -335,6 +336,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           share: first.window.share,
           started: first.window.share > 0,
           size: 190,
+            feel: true,
           beam: const CircleMotion(),
           label: '${first.course.title} window',
         ),
@@ -358,6 +360,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   share: w.share,
                   started: w.share > 0,
                   size: 190,
+            feel: true,
                   beam: const CircleMotion(),
                   label: '${doneCourse!.title} window',
                 ),
@@ -368,6 +371,15 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         );
       }(),
     };
+
+    // "Done for today": felt once, the first time Today shows it that day.
+    if (hero == _Hero.done && states.isNotEmpty) {
+      final store = ref.read(storeProvider);
+      if (store.read('hr-done-felt') != day) {
+        store.write('hr-done-felt', day);
+        WidgetsBinding.instance.addPostFrameCallback((_) => Haptics.doneForToday());
+      }
+    }
 
     final hello = greeting(timeOfDay(now));
     return Stack(

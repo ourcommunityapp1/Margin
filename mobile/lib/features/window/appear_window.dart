@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:material_ui/material_ui.dart';
 
 import 'glass_render.dart';
+import '../../platform/haptics.dart';
 import 'glass_window.dart';
 import 'sweep.dart';
 
@@ -26,6 +27,7 @@ class AppearWindow extends StatefulWidget {
     this.label,
     this.beam,
     this.mini = false,
+    this.feel = false,
   });
 
   final String base;
@@ -41,6 +43,10 @@ class AppearWindow extends StatefulWidget {
 
   /// The small window of a row (a stone ring, no arc) rather than the big round one.
   final bool mini;
+
+  /// Tick the phone for every pane as it comes on, and settle when it stops (the big windows; small row windows stay quiet,
+  /// so several lighting at once don't buzz together).
+  final bool feel;
 
   @override
   State<AppearWindow> createState() => _AppearWindowState();
@@ -169,8 +175,10 @@ class _AppearWindowState extends State<AppearWindow> with TickerProviderStateMix
       _arcMs = sweep.length < 600 ? 600 : sweep.length;
       _share = widget.share;
     });
+    if (widget.feel) sweep.onPane = (_) => Haptics.pane();
     sweep.start(this);
     await sweep.done;
+    if (widget.feel && mounted && run == _run) Haptics.settled();
     if (!mounted || run != _run) return;
     // Settle: the still window takes over once its picture is ready, so nothing flickers back to dark.
     setState(() {

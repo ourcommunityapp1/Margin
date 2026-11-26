@@ -20,23 +20,36 @@ import 'light.dart';
 const _fade = 400; // ms each pane takes to come up
 
 /// The panes [lit] lights, in the order the light reaches them: question by question, each in its sweep order.
-List<int> sweepIds(Glass d, List<double> lit) {
+List<int> sweepIds(Glass d, List<double> lit) => _sweep(d, lit, null).ids;
+
+/// The panes lit by [lit] but not by [from], in sweep order, and where each question's new panes end (indexes into ids).
+({List<int> ids, Set<int> ends}) _sweep(Glass d, List<double> lit, List<double>? from) {
   final p = d.flat.length, n = lit.length;
-  final out = <int>[];
+  final ids = <int>[];
+  final ends = <int>{};
   for (var i = 0; i < n; i++) {
     final own = sweepOrder(d.flat.sublist((i * p) ~/ n, ((i + 1) * p) ~/ n), d.centres);
-    out.addAll(own.take((lit[i].clamp(0.0, 1.0) * own.length).round()));
+    final had = from == null || i >= from.length ? 0 : (from[i].clamp(0.0, 1.0) * own.length).round();
+    final on = (lit[i].clamp(0.0, 1.0) * own.length).round();
+    if (on <= had) continue;
+    ids.addAll(own.sublist(had, on));
+    // A question whose glass is now whole: its last pane gets a firmer tap.
+    if (on == own.length) ends.add(ids.length - 1);
   }
-  return out;
+  return (ids: ids, ends: ends);
 }
 
 /// Runs one sweep and publishes each new picture in [image]. [done] completes when every pane is up.
 class GlassSweep {
-  GlassSweep._(this._d, this._dark, this._lit, this._ids, this._frameMs) : _out = Uint8List.fromList(_dark), _alpha = Float64List(_ids.length);
+  GlassSweep._(this._d, this._dark, this._lit, this._ids, this._ends, this._frameMs) : _out = Uint8List.fromList(_dark), _alpha = Float64List(_ids.length);
 
   final Glass _d;
   final Uint8List _dark, _lit, _out;
   final List<int> _ids;
+  final Set<int> _ends;
+
+  /// Called as each pane starts to come on ([last] when it completes a question's glass).
+  void Function(bool last)? onPane;
   final Float64List _alpha;
   final int _frameMs;
   final image = ValueNotifier<ui.Image?>(null);
@@ -51,20 +64,23 @@ class GlassSweep {
   int get length => _ids.isEmpty ? 0 : (_ids.length - 1) * stagger + _fade;
   int get stagger => _ids.isEmpty ? 0 : math.max(6, math.min(130, 2400 ~/ _ids.length));
 
-  /// Prepares a sweep for a window lit to [lit], at the [tier] the window is drawn in. Null if nothing would light.
-  static Future<GlassSweep?> prepare(String base, List<double> lit, {required double rest, GlassTier tier = GlassTier.small}) async {
+  /// Prepares a sweep for a window lit to [lit] (from dark, or from [from] already lit), at the [tier] the window is drawn in.
+  /// [fromDusty] is the dust on the glass already lit. Null if nothing new would light.
+  static Future<GlassSweep?> prepare(String base, List<double> lit, {required double rest, GlassTier tier = GlassTier.small, List<double>? from, List<bool>? fromDusty}) async {
     final d = await loadGlass(base, tier);
-    final ids = sweepIds(d, lit);
+    final sw = _sweep(d, lit, from);
+    final ids = sw.ids;
     if (ids.isEmpty) return null;
-    final on = List.filled(d.count + 1, 0);
+    final before = from == null ? List.filled(d.count + 1, 0) : paneStates(count: d.count, flat: d.flat, lit: from, dusty: fromDusty, centres: d.centres);
+    final on = [...before];
     for (final id in ids) {
       on[id] = 1;
     }
     final off = tier == GlassTier.full;
-    final dark = off ? await renderPixelsOff(d, List.filled(d.count + 1, 0), rest: rest) : renderPixels(d, List.filled(d.count + 1, 0), rest: rest);
+    final dark = off ? await renderPixelsOff(d, before, rest: rest) : renderPixels(d, before, rest: rest);
     final litPx = off ? await renderPixelsOff(d, on, rest: rest) : renderPixels(d, on, rest: rest);
     // The full-size picture is four megabytes: about twenty pictures a second is plenty for it.
-    return GlassSweep._(d, dark, litPx, ids, tier == GlassTier.full ? 50 : 30);
+    return GlassSweep._(d, dark, litPx, ids, sw.ends, tier == GlassTier.full ? 50 : 30);
   }
 
   /// Starts the sweep. [vsync] drives it.
@@ -81,6 +97,7 @@ class GlassSweep {
       final a = ((t - k * step) / _fade).clamp(0.0, 1.0);
       if (a < 1) all = false;
       if (a == _alpha[k]) continue;
+      if (_alpha[k] == 0) onPane?.call(_ends.contains(k));
       _alpha[k] = a;
       _blend(_ids[k], a);
       changed = true;

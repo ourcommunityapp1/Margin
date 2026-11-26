@@ -187,6 +187,12 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     );
     ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
     Haptics.finished();
+    // A stone earned: felt once the window's new light has arrived (about three and a half seconds in).
+    if (settled.ups.isNotEmpty) {
+      Future<void>.delayed(const Duration(milliseconds: 3600), () {
+        if (mounted) Haptics.stone();
+      });
+    }
     final recall = recorded.where((r) => r.kind != 'intro').toList();
     setState(() {
       _feedback = null;

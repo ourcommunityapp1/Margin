@@ -84,6 +84,7 @@ class CourseScreen extends ConsumerWidget {
                   dusty: w.dusty,
                   share: w.share,
                   size: 168,
+                  feel: true,
                   started: started,
                   beam: const CircleMotion(),
                   label: '${course.title} window, ${stats.learned} of ${stats.total} learned',
