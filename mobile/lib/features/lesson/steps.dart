@@ -20,6 +20,7 @@ import '../../engine/grade.dart';
 import '../../engine/lesson.dart' as lesson;
 import '../../engine/types.dart';
 import '../../platform/speech.dart';
+import 'speech_hints.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 import 'outcome.dart';
@@ -991,7 +992,7 @@ class SayStep extends ConsumerStatefulWidget {
 }
 
 class _SayStepState extends ConsumerState<SayStep> {
-  bool _mic = true, _listening = false, _revealed = false, _done = false;
+  bool _mic = true, _listening = false, _checking = false, _revealed = false, _done = false;
   String _said = '', _note = '';
   late final SpeechService _speech = ref.read(speechProvider);
 
@@ -1004,9 +1005,12 @@ class _SayStepState extends ConsumerState<SayStep> {
   Future<void> _toggle() async {
     Haptics.select();
     if (_listening) {
+      // ElevenLabs hears the whole answer once it is sent: say so while it is checked.
+      if (!_speech.live) setState(() => _checking = true);
       await _speech.stop();
       return;
     }
+    if (_checking) return;
     setState(() {
       _said = '';
       _note = '';
@@ -1016,6 +1020,7 @@ class _SayStepState extends ConsumerState<SayStep> {
         if (mounted) setState(() => _said = w);
       },
       onEnded: _ended,
+      hints: speechHints(widget.step.text ?? ''),
     );
     if (!mounted) return;
     if (!ok) {
@@ -1031,10 +1036,13 @@ class _SayStepState extends ConsumerState<SayStep> {
   void _ended() {
     if (!mounted) return;
     Haptics.select();
-    setState(() => _listening = false);
+    setState(() {
+      _listening = false;
+      _checking = false;
+    });
     final text = _said.trim();
     if (text.isEmpty) {
-      setState(() => _note = 'We didn’t hear anything. Tap and try again.');
+      setState(() => _note = _speech.problem ?? 'We didn’t hear anything. Tap and try again.');
       return;
     }
     if (_done) return;
@@ -1077,7 +1085,15 @@ class _SayStepState extends ConsumerState<SayStep> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(_listening ? 'Listening. Tap again when you’re done.' : 'Tap, then say the answer.', textAlign: TextAlign.center, style: sans(15, color: k.muted)),
+              Text(
+                _checking
+                    ? 'Checking what you said…'
+                    : _listening
+                        ? 'Listening. Tap again when you’re done.'
+                        : 'Tap, then say the answer.',
+                textAlign: TextAlign.center,
+                style: sans(15, color: k.muted),
+              ),
               if (_said.isNotEmpty) ...[const SizedBox(height: 12), Text(_said, textAlign: TextAlign.center, style: sans(17, color: k.muted, height: 1.5))],
             ],
           )

@@ -4,7 +4,7 @@ import { Crumbs, JsonLd, SITE, SiteFooter, SiteHeader, breadcrumbLd } from '../s
 
 const TITLE = 'Privacy: What Katekize Keeps and Who Can See It';
 const DESCRIPTION = 'What Katekize stores about you, what friends and other people can see, how to delete your profile, and which services run the app.';
-const UPDATED = 'November 25, 2026';
+const UPDATED = 'November 26, 2026';
 export const metadata: Metadata = {
   title: { absolute: TITLE }, description: DESCRIPTION, alternates: { canonical: `${SITE}/privacy` },
   openGraph: { type: 'website', url: `${SITE}/privacy`, siteName: 'Katekize', title: TITLE, description: DESCRIPTION },
@@ -54,7 +54,12 @@ export default function Privacy() {
 
           <section aria-labelledby="who-h">
             <h2 id="who-h">Services that run Katekize</h2>
-            <p>Katekize stores its data with Supabase, is hosted on Netlify, and sends sign-in codes by email through Resend. These services handle your data only to run Katekize for you.</p>
+            <p>Katekize stores its data with Supabase, is hosted on Netlify, sends sign-in codes by email through Resend, and turns spoken answers into words with ElevenLabs. These services handle your data only to run Katekize for you.</p>
+          </section>
+
+          <section aria-labelledby="mic-h">
+            <h2 id="mic-h">Saying an answer aloud</h2>
+            <p>When you tap the microphone to say an answer from memory, the app records only until you tap again. If you are signed in, the recording is sent through Katekize to ElevenLabs, which turns it into words so your answer can be checked; then the recording is deleted from your phone, and Katekize does not keep it. Children in your family, and anyone not signed in, use the phone’s own speech recognition instead, so their voices stay on the phone. You can always choose “Can’t speak now, type it”.</p>
           </section>
 
           <section aria-labelledby="ask-h">

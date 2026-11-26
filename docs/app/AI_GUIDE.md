@@ -182,6 +182,10 @@ See the plan's table. Each feature needs:
 - [x] Reminders (`platform/reminders.dart`, `state/reminders.dart`, `features/you/reminders_screen.dart`): a daily reminder and
   evening/morning recalls, scheduled on the phone for ten days and put again as work is done; permission is asked only when one is turned on.
 - [x] Say it from memory listens (`platform/speech.dart`, speech_to_text), graded like typed words; falls back to check-yourself.
+- [x] Speech to text through ElevenLabs Scribe (Nov 26): `platform/cloud_speech.dart` records the answer and sends it to
+  `/api/heir/transcribe` (sign-in token, the answer's rare words as `keyterms`, `features/lesson/speech_hints.dart`); signed-in adults
+  only, children and signed-out stay on the phone's recognizer, which also takes over when ElevenLabs can't be reached. **The website
+  route must be deployed** for it to work; until then the first try fails once and the phone's recognizer is used.
 - [ ] Invite links that open the app (needs the Apple account and the website's `apple-app-site-association` / `assetlinks.json`).
 - [ ] Home Screen widget (Swift/Kotlin code in the widget targets; needs an app group on the Apple account).
 - Not checked on a real phone: speech (the simulator has no real microphone path tried), the haptic feel, notifications arriving at their

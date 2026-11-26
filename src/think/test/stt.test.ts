@@ -35,3 +35,16 @@ test('transcribe posts the recording and returns the words verbatim', async () =
   assert.equal(t.text, 'I keep telling people');
   assert.deepEqual(t.words.map((w) => w.text), ['I', 'keep', 'telling', 'people']);
 });
+
+test('transcribe sends each keyterm as its own part', async () => {
+  let form: FormData | undefined;
+  const fake = (async (_url: string | URL | Request, init?: RequestInit) => {
+    form = init!.body as FormData;
+    return Response.json({ text: 'hath', words: [] });
+  }) as typeof fetch;
+  const api = elevenLabs({ apiKey: 'k', base: 'https://stt.test', fetch: fake });
+  await api.transcribe(new Blob(['audio']), { modelId: 'scribe_v2', keyterms: ['Melchizedek', 'hath'] });
+  assert.deepEqual(form!.getAll('keyterms'), ['Melchizedek', 'hath']);
+  await api.transcribe(new Blob(['audio']), { modelId: 'scribe_v2' });
+  assert.deepEqual(form!.getAll('keyterms'), []);
+});

@@ -236,6 +236,7 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Start speaking'));
       await tester.pumpAndSettle();
       expect(mic.starts, 1);
+      expect(mic.hints, isNotEmpty, reason: 'the answer’s rare words go with it, for ElevenLabs');
       expect(find.text('Listening. Tap again when you’re done.'), findsOneWidget);
       mic.say(s.step.text!);
       await tester.pumpAndSettle();

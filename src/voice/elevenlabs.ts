@@ -24,7 +24,7 @@ export class ElevenLabsError extends Error {
 // One heard word. `logprob` is how sure the model was (0 is certain; more negative is less sure).
 export interface HeardWord { text: string; start?: number; end?: number; logprob?: number }
 export interface Transcript { text: string; language?: string; words: HeardWord[] }
-export interface TranscribeOptions { modelId: string; filename?: string; language?: string; signal?: AbortSignal }
+export interface TranscribeOptions { modelId: string; filename?: string; language?: string; signal?: AbortSignal; keyterms?: string[] }
 
 export interface ElevenLabs {
   models(): Promise<ModelInfo[]>;
@@ -86,6 +86,8 @@ export function elevenLabs(opts: { apiKey: string; base?: string; fetch?: typeof
       form.append('tag_audio_events', 'false');
       form.append('timestamps_granularity', 'word');
       if (o.language) form.append('language_code', o.language);
+      // Words to listen out for (rare names, old words): one part per term. Scribe v2 and later only; 20% dearer.
+      for (const k of o.keyterms ?? []) form.append('keyterms', k);
       // No content-type header: fetch sets the multipart boundary itself.
       const body = (await (await call('/v1/speech-to-text', { method: 'POST', body: form, signal: o.signal })).json()) as {
         text?: string; language_code?: string;
