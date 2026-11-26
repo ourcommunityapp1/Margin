@@ -81,3 +81,9 @@ and with a few weeks of answers; note it in the "App port notes" part of `docs/a
 ## Also: the community card moves to Friends
 Remove `CommunityPreview` from `features/progress/progress_screen.dart` and show it at the top of the Friends screen, above "Friend requests" (hidden while a search is showing).
 The small dot on the tab bar that says "your place on the leaderboard changed" moves from the Progress tab to the Friends tab. Nothing else about the card changes.
+
+## Nov 26 (evening) · A day plan from the future made Today rebuild every second ❌ for the apps
+At 18:04 UTC today something saved the owner's progress with `today.day = 2026-11-27` (most likely a simulator run with `--dart-define=NOW=…` signed in to the real account).
+Because `mergeToday` keeps the later day, every website save merged that future plan back in, Today planned again, saved again, and so on about once a second; the big window was rebuilt each time (a black blink).
+**Website fix:** `provider.tsx` drops a saved `today` whose day is after this device's local day before merging (`withoutFutureToday`), so this device's plan wins and is saved over the bad one.
+**App:** do the same wherever saved progress is merged in (sync), and **never run the simulator with a fake `NOW` while signed in to a real account** (sign out, or use a test account).

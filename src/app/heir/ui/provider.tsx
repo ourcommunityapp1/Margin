@@ -10,7 +10,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import type { Household, Track } from '@/heir/types';
 import { addMember, emptyHousehold, parseHousehold } from '@/heir/household';
 import { chooseOnSignIn } from '@/heir/sync';
-import { memberProgress, mergeProgress, parseProgress, sameProgress, type MemberProgress, type Progress } from '@/heir/progress';
+import { localDay, memberProgress, mergeProgress, parseProgress, sameProgress, type MemberProgress, type Progress } from '@/heir/progress';
 import { settle } from '@/heir/levels';
 import { allItems } from '@/heir/content';
 import { timeOfDay, type TimeOfDay } from '@/heir/time';
@@ -79,13 +79,23 @@ function saveProgressLocal(p: Progress) {
 
 // The account's progress for these members, merged with this phone's; the merged copy is kept on the phone, and
 // sent back to the account wherever the phone had something the account didn't.
+// A day plan dated after this phone's today can't be right (a test phone with its clock set ahead saved it). Left in, it
+// would win every merge (the later day wins), so Today would keep making today's plan and losing it: drop it, and this
+// phone's plan is saved over it.
+function withoutFutureToday(p: MemberProgress): MemberProgress {
+  if (!p.today || p.today.day <= localDay(new Date())) return p;
+  const { today: _future, ...rest } = p;
+  void _future;
+  return rest as MemberProgress;
+}
+
 async function pullProgress(db: NonNullable<ReturnType<typeof cloud>>, householdId: string, memberIds: string[]): Promise<Progress> {
   const local = loadProgress();
   const theirs = await loadProgressRows(db, householdId);
   const merged: Progress = { ...local };
   const send: Record<string, MemberProgress> = {};
   for (const id of memberIds) {
-    const a = local[id], b = theirs[id];
+    const a = local[id] && withoutFutureToday(local[id]), b = theirs[id] && withoutFutureToday(theirs[id]);
     merged[id] = a && b ? mergeProgress(b, a) : (a ?? b);
     if (merged[id] && (!b || !sameProgress(b, merged[id]))) send[id] = merged[id];
     if (!merged[id]) delete merged[id];
@@ -225,7 +235,7 @@ export function HeirProvider({ children }: { children: React.ReactNode }) {
               // Bring in anything another phone added, without undoing changes made while this was saving.
               setProgress((cur) => {
                 const out = { ...cur };
-                for (const [id, s] of Object.entries(saved)) out[id] = out[id] ? mergeProgress(out[id], s) : s;
+                for (const [id, raw] of Object.entries(saved)) { const s = withoutFutureToday(raw); out[id] = out[id] ? mergeProgress(out[id], s) : s; }
                 saveProgressLocal(out);
                 progressRef.current = out;
                 return out;
