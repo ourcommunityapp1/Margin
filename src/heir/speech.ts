@@ -13,3 +13,27 @@ export function cleanTerms(raw: string[]): string[] {
   }
   return out;
 }
+
+// The words to listen out for when an answer is said aloud (sent to Scribe as keyterms): names, the old words of the
+// catechisms and the KJV, and long words a recognizer is likely to get wrong. Never the whole answer, so a word the person
+// did not say is not "heard" for them. The same rules as the phone app's `speechHints`.
+const OLD = new Set([
+  'hath', 'hast', 'doth', 'dost', 'thee', 'thou', 'thy', 'thine', 'ye', 'unto', 'art', 'shalt', 'wilt', 'saith', 'spake', 'shew',
+  'begotten', 'wherefore', 'whereby', 'wherein', 'whereof', 'therein', 'thereof', 'thereby', 'lo', 'behold', 'yea', 'nay',
+  'verily', 'hallowed', 'trespasses', 'amen', 'selah', 'cometh', 'goeth', 'giveth', 'maketh', 'leadeth', 'restoreth',
+]);
+const EDGES = /^[^\p{L}\p{N}']+|[^\p{L}\p{N}']+$/gu;
+
+export function speechHints(text: string, max = MAX_TERMS): string[] {
+  const out: string[] = [];
+  const raw = text.split(/\s+/);
+  for (let i = 0; i < raw.length && out.length < max; i++) {
+    const w = raw[i].replace(EDGES, '');
+    if (!w) continue;
+    const lower = w.toLowerCase();
+    const startsSentence = i === 0 || /[.!?;:]$/.test(raw[i - 1]);
+    const name = w[0] !== w[0].toLowerCase() && !startsSentence && w !== 'I';
+    if ((OLD.has(lower) || name || w.length >= 9) && !out.some((x) => x.toLowerCase() === lower)) out.push(w);
+  }
+  return out;
+}

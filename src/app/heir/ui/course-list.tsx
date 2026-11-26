@@ -105,7 +105,7 @@ export function CourseScreen({ id }: { id: string }) {
         {/* Like the window card on Today: the window's own colours, blurred, behind a frosted button. */}
         <section className="hr-rose-card">
           <div className="hr-rose-wash" style={{ backgroundImage: `url(${s.window.base}/glass.webp)` }} aria-hidden="true" />
-          {parts.length <= 1 && <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={168} started={s.started} label={`${course.title} window, ${s.learned} of ${s.total} learned`} />}
+          {parts.length <= 1 && <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={168} started={s.started} reveal label={`${course.title} window, ${s.learned} of ${s.total} learned`} />}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
             <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500, lineHeight: 1.15 }}>{course.title}</h1>
             <p style={{ margin: 0, fontSize: 16, color: '#D9D1C4', lineHeight: 1.45 }}>{course.blurb}</p>
@@ -132,7 +132,7 @@ export function CourseScreen({ id }: { id: string }) {
               const done = w.lit.filter((f) => f >= 1).length;
               return (
                 <button key={p.title} type="button" className="hr-part" aria-pressed={shownPart === i} onClick={() => setPart(i)}>
-                  <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={78} started={s.started} motion={{ kind: 'circle', delay: i * 0.35 }} label={`${p.title} window, ${done} of ${w.items.length} learned`} />
+                  <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={78} started={s.started} reveal motion={{ kind: 'circle', delay: i * 0.35 }} label={`${p.title} window, ${done} of ${w.items.length} learned`} />
                   <span style={{ fontSize: 14, fontWeight: 600, lineHeight: 1.25 }}>{p.title}</span>
                   <span style={{ fontSize: 12, color: 'var(--muted)' }}>{done} of {w.items.length}</span>
                 </button>

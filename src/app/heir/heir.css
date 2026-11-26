@@ -311,7 +311,7 @@ body:has(.hr) {
 .hr-cue {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 }
 .hr-say-text {
   font-family: var(--font-source-serif), Georgia, serif;
@@ -428,37 +428,16 @@ body:has(.hr) {
 .hr-heard { color: var(--ink); }
 .hr-missed { color: var(--miss); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
 
-.hr-sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
-  background: var(--good-wash);
-  border-radius: 28px 28px 0 0;
-  box-shadow: 0 -8px 28px rgba(20, 24, 28, 0.12);
-  padding: 22px max(20px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px) max(20px, env(safe-area-inset-left, 0px));
-}
-.hr-sheet[data-ok='false'] {
-  background: var(--miss-wash);
-}
-.hr-sheet > div {
-  max-width: 480px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  color: var(--ink);
-}
-.hr-sheet h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--good);
-}
-.hr-sheet[data-ok='false'] h2 {
-  color: var(--miss);
-}
+.hr-instruction { margin: 0; font-size: 14px; font-weight: 600; color: var(--muted); }
+/* A step sits straight on the page, not in a card; the page scrolls. */
+.hr-card.hr-open { background: transparent; border: 0; box-shadow: none; padding: 0; border-radius: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+/* Feedback: in the page flow, no coloured sheet. The note, the reveal, then a small callout above a Continue that takes its colour. */
+.hr-fb { max-width: 480px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; align-items: stretch; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); }
+.hr-fb-details { display: flex; flex-direction: column; gap: 12px; max-height: 40vh; overflow-y: auto; }
+.hr-fb-pill { align-self: center; display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; font-size: 15px; font-weight: 700; background: var(--miss-wash); color: var(--miss); }
+.hr-fb-pill[data-ok='true'] { background: var(--good-wash); color: var(--good); }
+.hr-btn.hr-fb-go { background: var(--miss); color: #15181B; }
+.hr-btn.hr-fb-go[data-ok='true'] { background: var(--good); }
 
 @media (prefers-reduced-motion: reduce) {
   .hr-shake, .hr-mic[data-on='true'] { animation: none; }
@@ -493,7 +472,7 @@ body:has(.hr) {
 .hr-typed {
   width: 100%;
   box-sizing: border-box;
-  min-height: 120px;
+  min-height: 96px;
   border-radius: 16px;
   border: 1px solid var(--line);
   background: var(--card);
@@ -502,6 +481,8 @@ body:has(.hr) {
   font: 400 18px/1.5 var(--font-source-serif), Georgia, serif;
   resize: vertical;
 }
+.hr-typed:focus { outline: none; border-color: var(--ink); }
+.hr-typed::placeholder { color: var(--muted); }
 
 .hr-word {
   border: 0;

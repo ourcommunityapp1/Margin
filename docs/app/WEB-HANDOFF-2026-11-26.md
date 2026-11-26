@@ -171,10 +171,23 @@ Not yet handled on either: when the microphone permission is refused, each later
 
 ## Checklist
 
-- [ ] 1 · Steps on the open page, no session label, 25 px question, quiet instructions, new input field
-- [ ] 2 · Callout pill + green/coral Continue, no sheet; "Correct!" / "Almost" / "Not quite"
-- [ ] 3 · Say step records and uses `/api/heir/transcribe` for signed-in adults, with `speechHints` (+ test)
-- [ ] 4 · Blur the input on Check
-- [ ] 5 · `reveal` on the course page windows
-- [ ] 6 · My courses first on Courses, not repeated on the shelves (+ test)
-- [ ] `npm run heir:test`, typecheck and lint, then deploy
+- [x] 1 · Steps on the open page, no session label, 25 px question, quiet instructions, new input field
+- [x] 2 · Callout pill + green/coral Continue, no sheet; "Correct!" / "Almost" / "Not quite"
+- [x] 3 · Say step records and uses `/api/heir/transcribe` for signed-in adults, with `speechHints` (+ test)
+- [x] 4 · Blur the input on Check
+- [x] 5 · `reveal` on the course page windows
+- [x] 6 · My courses first on Courses, not repeated on the shelves (+ test)
+- [x] `npm run heir:test`, typecheck and lint, then deploy
+
+## Done on the website (Nov 26, cloud session)
+Items 1 to 6 are built and deployed. Notes for anyone comparing with the app:
+- **1:** the step is `hr-card hr-open` (the card look is removed in CSS), no session label while a lesson runs (kept on the done screen), question 25 px serif 500,
+  instructions 14 px 600 muted (`.hr-instruction`), the typing box serif 18 px, 3 rows to start, placeholder "Your answer", ink border when focused.
+- **2:** `.hr-sheet` is gone; the feedback is in the page flow (`.hr-fb`): note, reveal, "You'll get another try at the end.", the pill, then a Continue that is green for a
+  right answer and coral otherwise. "Correct!" / "Almost" / "Not quite". The details scroll on their own past 40% of the screen height.
+- **3:** a signed-in adult with a browser that can record uses `/api/heir/transcribe` (`src/app/heir/ui/cloud-speech.ts`; hints from `speechHints` in `src/heir/speech.ts`, with a test
+  matching the app's). While it uploads the text says "Checking what you said…". A failed upload says "Couldn't check that. Tap and say it again." and the browser's recognizer is used for the rest of the visit.
+  Children, signed-out use and browsers that can't record keep the browser recognizer.
+- **9:** a refused or missing microphone (either recognizer) now calls "Can't speak now", so every later speaking step this session becomes typing.
+- **4:** checking blurs the focused field. **5:** `reveal` on the course page windows. **6:** "My courses" first on Courses; the shelves leave those courses out; the old "Continue" card is gone (its place is the first My courses card).
+- The three tests that fail under `TZ=America/Chicago` fail on the untouched branch too (they are time-zone sensitive in a UTC container); the default run passes (160).

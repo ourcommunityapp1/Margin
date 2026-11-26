@@ -9,6 +9,10 @@ import type { Item, Track } from '@/heir/types';
 import type { Step } from '@/heir/lesson';
 import { unitText } from '@/heir/lesson';
 import { getCollection, getItem, isVerse, itemLabel, itemNoun } from '@/heir/content';
+import { useHeir } from './provider';
+import { activeMember } from '@/heir/household';
+import { speechHints } from '@/heir/speech';
+import { canRecord, cloudSpeechBroken, markCloudSpeechBroken, startRecording, transcribe, type Recording } from './cloud-speech';
 import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
 // `slip`: right, but not cleanly (a spelling slip, a missed word), so the praise should be quieter.
@@ -52,7 +56,7 @@ export function Cue({ item, step, title, tag }: { item: Item; step: Step; title:
         {tag !== undefined ? tag && <span className="hr-tag">{tag}</span> : step.review && <span className="hr-tag">Review</span>}
         {label}
       </span>
-      <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>
+      <p className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.3, fontWeight: 500 }}>{item.prompt}</p>
     </div>
   );
 }
@@ -108,7 +112,7 @@ export function Order({ step, onReport }: { step: Extract<Step, { kind: 'order' 
   }, [step.pieces, step.bank]);
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>{step.pieces ? 'Put the phrases in order' : 'Put the words in order'}</p>
+      <p className="hr-instruction">{step.pieces ? 'Put the phrases in order' : 'Put the words in order'}</p>
       <div className={`hr-answer${step.pieces ? ' pieces' : ''}`} aria-label="Your answer" style={answerHeight ? { minHeight: answerHeight } : undefined}>
         {step.lead && <span className="hr-lead" style={{ alignSelf: step.pieces ? 'flex-start' : 'center' }}>{step.lead}</span>}
         {picked.map((i, at) => (
@@ -164,7 +168,7 @@ export function Meaning({ step, onReport }: { step: Extract<Step, { kind: 'meani
 export function Next({ step, onReport }: { step: Extract<Step, { kind: 'next' }>; onReport: Report }) {
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>What comes next?</p>
+      <p className="hr-instruction">What comes next?</p>
       <p className="hr-passage"><Lead text={step.lead} /><span className="hr-hidden-word next" style={{ width: '3em' }} /></p>
       <Choices serif options={step.options} answer={step.answer} onPick={(o) => onReport({ ok: o === step.answer, reveal: <Answer lead={step.lead} text={step.answer} /> })} />
     </>
@@ -190,7 +194,7 @@ export function Spot({ step, onReport }: { step: Extract<Step, { kind: 'spot' }>
   const reveal = <p className="hr-say-text" style={{ fontSize: 19 }}>{step.correctText.split(' ').map((t, i) => <span key={i}>{i === step.wrongIndex ? <strong>{t}</strong> : t}{' '}</span>)}</p>;
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>One word is wrong. Tap it.</p>
+      <p className="hr-instruction">One word is wrong. Tap it.</p>
       <p className="hr-passage">
         {tokens.map((t, i) => (
           <span key={i}>
@@ -234,7 +238,7 @@ export function Blanks({ step, onReport }: { step: Extract<Step, { kind: 'blanks
   };
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>Fill in the missing words</p>
+      <p className="hr-instruction">Fill in the missing words</p>
       <p className="hr-passage">
         <Lead text={step.lead} />
         {tokens.map((t, i) => {
@@ -299,7 +303,7 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
   };
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>Type the first letter of each word</p>
+      <p className="hr-instruction">Type the first letter of each word</p>
       <div style={{ position: 'relative' }} onClick={() => input.current?.focus()}>
         <p key={shake} className={`hr-passage${shake ? ' hr-shake' : ''}`} aria-live="polite">
           <Lead text={step.lead} />
@@ -354,9 +358,9 @@ export function Type({ step, onReport }: { step: Extract<Step, { kind: 'type' }>
   useEffect(() => { area.current?.focus({ preventScroll: true }); }, []);
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>Type it from memory</p>
+      <p className="hr-instruction">Type it from memory</p>
       <ContinueFrom lead={step.lead} />
-      <textarea ref={area} className="hr-typed" name="heir-typed" rows={4} autoCapitalize="sentences" autoCorrect="off" autoComplete="off" spellCheck={false}
+      <textarea ref={area} className="hr-typed" name="heir-typed" rows={3} placeholder="Your answer" autoCapitalize="sentences" autoCorrect="off" autoComplete="off" spellCheck={false}
         aria-label="Your answer" value={value} onChange={(e) => setValue(e.target.value)} />
       <Dock><button type="button" className="hr-btn" disabled={!value.trim()} onClick={() => onReport(scored(step.text, step.lead, value, TYPED_PASS, 'missing or misspelled'))}>Check</button></Dock>
     </>
@@ -377,14 +381,22 @@ const recognizer = (): (new () => Recognition) | undefined => {
 };
 
 export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kind: 'say' }>; onReport: Report; onCantSpeak(): void }) {
-  const [mode, setMode] = useState<'mic' | 'self'>(() => (recognizer() ? 'mic' : 'self'));
+  // A signed-in adult is heard by ElevenLabs Scribe (rare words as hints). Children, signed-out use, browsers that can't
+  // record and any failed upload use the browser's own recognizer; a child's voice never leaves the device.
+  const { household, accounts, email } = useHeir();
+  const adult = activeMember(household)?.track === 'adult';
+  const [useCloud, setUseCloud] = useState(() => !!(accounts && email) && adult && canRecord() && !cloudSpeechBroken());
+  const [checking, setChecking] = useState(false);
+  const [notice, setNotice] = useState('');
+  const recording = useRef<Recording | null>(null);
+  const [mode, setMode] = useState<'mic' | 'self'>(() => (recognizer() || (!!(accounts && email) && adult && canRecord() && !cloudSpeechBroken()) ? 'mic' : 'self'));
   const [listening, setListening] = useState(false);
   const [said, setSaid] = useState('');
   const [revealed, setRevealed] = useState(false);
   const rec = useRef<Recognition | null>(null);
   const finals = useRef('');
   const done = useRef(false);
-  useEffect(() => () => rec.current?.abort(), []);
+  useEffect(() => () => { rec.current?.abort(); recording.current?.cancel(); }, []);
 
   const grade = () => {
     if (done.current) return;
@@ -393,7 +405,7 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
     done.current = true;
     onReport(scored(step.text, step.lead, text, SPOKEN_PASS, 'weren’t heard'));
   };
-  const start = () => {
+  const startBrowser = () => {
     const Ctor = recognizer();
     if (!Ctor) { setMode('self'); return; }
     const r = new Ctor();
@@ -408,25 +420,53 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
       finals.current = `${fin}${live}`;
       setSaid(`${fin}${live}`);
     };
-    r.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') setMode('self'); };
+    // A refused (or missing) microphone is the same as "Can't speak now": every later speaking step this session becomes typing.
+    r.onerror = (e) => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed' || e.error === 'audio-capture') onCantSpeak(); };
     r.onend = () => { setListening(false); grade(); };
     rec.current = r;
     try { r.start(); setListening(true); } catch { setMode('self'); }
   };
-  const stop = () => rec.current?.stop();
+  const stopCloud = async () => {
+    const r = recording.current;
+    if (!r) return;
+    recording.current = null;
+    setListening(false); setChecking(true);
+    const audio = await r.stop();
+    const text = await transcribe(audio, speechHints(step.text));
+    setChecking(false);
+    if (text === null) {
+      // Couldn't check it: try the browser's recognizer from here on.
+      markCloudSpeechBroken(); setUseCloud(false);
+      setNotice('Couldn’t check that. Tap and say it again.');
+      if (!recognizer()) setMode('self');
+      return;
+    }
+    if (!text.trim()) { setNotice('I didn’t catch anything. Tap and say it again.'); return; }
+    finals.current = text; setSaid(text); grade();
+  };
+  const startCloud = async () => {
+    setNotice(''); setSaid('');
+    try { recording.current = await startRecording(() => { void stopCloud(); }); setListening(true); }
+    catch (e) {
+      if (e instanceof DOMException && ['NotAllowedError', 'SecurityError', 'NotFoundError'].includes(e.name)) { onCantSpeak(); return; }
+      setUseCloud(false); if (recognizer()) startBrowser(); else setMode('self');
+    }
+  };
+  const start = () => (useCloud ? void startCloud() : startBrowser());
+  const stop = () => (useCloud ? void stopCloud() : rec.current?.stop());
 
   return (
     <>
-      <p style={{ margin: 0, fontWeight: 600 }}>Say it from memory</p>
+      <p className="hr-instruction">Say it from memory</p>
       <ContinueFrom lead={step.lead} />
       {mode === 'mic' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'center', textAlign: 'center' }}>
-          <button type="button" className="hr-mic" data-on={listening} aria-label={listening ? 'Stop and check' : 'Start speaking'} onClick={listening ? stop : start}>
+          <button type="button" className="hr-mic" data-on={listening} disabled={checking} aria-label={listening ? 'Stop and check' : 'Start speaking'} onClick={listening ? stop : start}>
             {listening
               ? <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
               : <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>}
           </button>
-          <span style={{ fontSize: 15, color: 'var(--muted)' }}>{listening ? 'Listening. Tap again when you’re done.' : 'Tap, then say the answer.'}</span>
+          <span style={{ fontSize: 15, color: 'var(--muted)' }}>{checking ? 'Checking what you said…' : listening ? 'Listening. Tap again when you’re done.' : notice || 'Tap, then say the answer.'}</span>
           {said && <p style={{ margin: 0, fontSize: 17, lineHeight: 1.5, color: 'var(--muted)' }}>{said}</p>}
         </div>
       ) : !revealed ? (
@@ -443,7 +483,7 @@ export function Say({ step, onReport, onCantSpeak }: { step: Extract<Step, { kin
           </Dock>
         </>
       )}
-      <button type="button" className="hr-btn quiet" style={{ marginTop: 'auto' }} onClick={() => { rec.current?.abort(); onCantSpeak(); }}>Can’t speak now, type it</button>
+      <button type="button" className="hr-btn quiet" style={{ marginTop: 'auto' }} onClick={() => { rec.current?.abort(); recording.current?.cancel(); onCantSpeak(); }}>Can’t speak now, type it</button>
     </>
   );
 }
