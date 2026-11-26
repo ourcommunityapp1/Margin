@@ -33,7 +33,6 @@ import 'session.dart';
 import 'step_frame.dart';
 import 'steps.dart';
 
-const _praise = ['Correct.', 'That’s right.', 'Well done.'];
 
 /// The text before a part's lead-in: the verse or answer up to where the part being practised starts.
 String contextBefore(Item item, Track track, String lead) {
@@ -249,10 +248,10 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     final heading = feedback == null
         ? ''
         : feedback.ok
-            ? (feedback.slip ? 'Good.' : _praise[_pos % _praise.length])
+            ? 'Correct!'
             : feedback.close
-                ? 'Almost.'
-                : 'Not quite.';
+                ? 'Almost'
+                : 'Not quite';
 
     return Material(
       type: MaterialType.transparency,
@@ -263,7 +262,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               KSize.pageSide + pad.left,
               KSize.pageTop + pad.top,
               KSize.pageSide + pad.right,
-              feedback != null ? 300 : KSize.pageTop + (keyboard > pad.bottom ? keyboard : pad.bottom),
+              KSize.pageTop + (keyboard > pad.bottom ? keyboard : pad.bottom),
             ),
             child: Center(
               child: ConstrainedBox(
@@ -332,53 +331,12 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                         child: KeyedSubtree(key: ValueKey('${step.id}-$_pos'), child: _stepWidget(step, item)),
                       ),
                     ),
+                    if (feedback != null) ...[const SizedBox(height: 10), _Feedback(feedback: feedback, heading: heading, retryLater: !feedback.ok && !retry && step.kind != 'quiz', onContinue: _advance)],
                   ],
                 ),
               ),
             ),
           ),
-          if (feedback != null)
-            Positioned(
-              left: 0,
-              right: 0,
-              // Above the keyboard if it is still up (nothing in the app resizes for it).
-              bottom: keyboard,
-              child: Container(
-                padding: EdgeInsets.fromLTRB(KSize.pageSide + pad.left, 22, KSize.pageSide + pad.right, (keyboard > 0 ? 0 : pad.bottom) + 20),
-                decoration: BoxDecoration(
-                  color: feedback.ok ? k.goodWash : k.missWash,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  boxShadow: const [BoxShadow(color: Color(0x1F14181C), blurRadius: 28, offset: Offset(0, -8))],
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 480, maxHeight: MediaQuery.sizeOf(context).height * 0.6),
-                    child: SingleChildScrollView(
-                      child: Semantics(
-                        liveRegion: true,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(heading, style: sans(20, weight: FontWeight.w700, color: feedback.ok ? k.good : k.miss)),
-                            if (feedback.note != null) ...[
-                              const SizedBox(height: 14),
-                              Text(feedback.note!, style: sans(16, weight: FontWeight.w500, color: k.ink, height: 1.45)),
-                            ],
-                            if (feedback.reveal != null) ...[const SizedBox(height: 14), feedback.reveal!],
-                            if (!feedback.ok && !retry && step.kind != 'quiz') ...[
-                              const SizedBox(height: 14),
-                              Text('You’ll get another try at the end.', style: sans(14, color: k.muted)),
-                            ],
-                            const SizedBox(height: 14),
-                            KButton('Continue', onPressed: _advance),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -542,6 +500,64 @@ class _Done extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// What the check found: any correction, then a small callout ("Correct!", "Almost", "Not quite") right above Continue,
+/// which turns green for a right answer and coral otherwise. No coloured panel: it sits on the page under the step.
+class _Feedback extends StatelessWidget {
+  const _Feedback({required this.feedback, required this.heading, required this.retryLater, required this.onContinue});
+  final Outcome feedback;
+  final String heading;
+  final bool retryLater;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    final ok = feedback.ok;
+    final tone = ok ? k.good : k.miss;
+    final details = [
+      if (feedback.note != null) Text(feedback.note!, style: sans(16, weight: FontWeight.w500, color: k.ink, height: 1.45)),
+      ?feedback.reveal,
+      if (retryLater) Text('You’ll get another try at the end.', style: sans(14, color: k.muted)),
+    ];
+    return Semantics(
+      liveRegion: true,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (details.isNotEmpty)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.4),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [for (final (i, d) in details.indexed) ...[if (i > 0) const SizedBox(height: 12), d]],
+                ),
+              ),
+            ),
+          if (details.isNotEmpty) const SizedBox(height: 16),
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(color: ok ? k.goodWash : k.missWash, borderRadius: BorderRadius.circular(999)),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  KIcon(ok ? '<path d="M5 12l5 5 9-10"/>' : '<path d="M12 7v6M12 17h.01"/>', size: 16, color: tone, strokeWidth: 2.6),
+                  const SizedBox(width: 6),
+                  Text(heading, style: sans(15, weight: FontWeight.w700, color: tone)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          KButton('Continue', onPressed: onContinue, color: tone, ink: const Color(0xFF15181B)),
+        ],
+      ),
     );
   }
 }
