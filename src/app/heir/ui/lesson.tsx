@@ -44,8 +44,13 @@ function useKeyboardLift() {
     const vv = window.visualViewport;
     if (!vv) return;
     const root = document.documentElement;
+    let last = -1;
     const set = () => {
-      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      // The phone nudges the visible area a few pixels as you type; only a real change (the keyboard opening, closing or
+      // growing) moves anything, so the page never shakes while typing.
+      const kb = Math.max(0, window.innerHeight - vv.height);
+      if (last >= 0 && Math.abs(kb - last) < 40) return;
+      last = kb;
       root.style.setProperty('--kb', `${kb}px`);
       // With the keyboard up there is little room: the button bar sits right under the answer box (in the page) instead of floating over it.
       if (kb > 100) root.dataset.kb = 'open'; else delete root.dataset.kb;

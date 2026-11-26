@@ -361,7 +361,7 @@ export function Type({ step, onReport }: { step: Extract<Step, { kind: 'type' }>
       <p className="hr-instruction">Type it from memory</p>
       <ContinueFrom lead={step.lead} />
       <textarea ref={area} className="hr-typed" name="heir-typed" rows={3} placeholder="Your answer" autoCapitalize="sentences" autoCorrect="off" autoComplete="off" spellCheck={false}
-        aria-label="Your answer" value={value} onChange={(e) => { setValue(e.target.value); document.getElementById('hr-dock')?.scrollIntoView({ block: 'nearest' }); }} />
+        aria-label="Your answer" value={value} onChange={(e) => setValue(e.target.value)} />
       <Dock><button type="button" className="hr-btn" disabled={!value.trim()} onClick={() => onReport(scored(step.text, step.lead, value, TYPED_PASS, 'missing or misspelled'))}>Check</button></Dock>
     </>
   );
