@@ -85,7 +85,7 @@ List<Reminder> planReminders(ReminderSettings s, DateTime now, {required bool ke
     if (s.recalls) {
       final e = at(eveningRecallAt.hour, eveningRecallAt.minute);
       if (e.isAfter(now) && !(d == 0 && eveningDone)) {
-        out.add(Reminder(200 + d, e, 'Before you sleep', 'A short recall tonight helps what you learned settle.'));
+        out.add(Reminder(200 + d, e, 'When you lie down', 'A short recall tonight helps what you learned settle.'));
       }
       final m = at(morningRecallAt.hour, morningRecallAt.minute);
       if (m.isAfter(now) && d > 0) {

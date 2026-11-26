@@ -184,7 +184,7 @@ class KLabel extends StatelessWidget {
   Widget build(BuildContext context) => Text(text, style: sans(14, weight: FontWeight.w600, color: context.k.muted));
 }
 
-/// A tag (`.hr-tag`): "Recommended", "Fix today", "This morning", "Before sleep".
+/// A tag (`.hr-tag`): "Recommended", "Fix today", "This morning", "When you lie down".
 class KTag extends StatelessWidget {
   const KTag(this.text, {super.key});
   final String text;

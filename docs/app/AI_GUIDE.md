@@ -28,7 +28,7 @@ Read this before writing app code. The plan is [README.md](README.md); the decis
 **Today:**
 - A carousel of the day's recommended cards, one course each. Each card shows a tag, the course name, its window and one
   button.
-- Tags: "Recommended", "Fix today", "This morning", "Before sleep".
+- Tags: "Recommended", "Fix today", "This morning", "When you lie down".
 - A finished card shows one word for what it was ("Lesson", "Fix", "Review") with a tick and its minutes.
 - A session that finished no card gets its own done card.
 - When all are done: a slim banner ("Today's lessons are done · N min") and a "Done for today" card. That card shows

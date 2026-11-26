@@ -50,7 +50,7 @@ Two Claude sessions work on this branch (see section 7); if a push is rejected, 
   lesson, Fix today, reviews. A brake stops new lessons when reviews already fill most of the goal. Done cards say Lesson / Fix / Review.
   Window lights up pane by pane when a card comes into view; the panes light as one spreading patch, clockwise from the top
   (`sweepOrder` in `src/app/heir/ui/glass/light-motion.ts`, used by full and small windows).
-- The evening ("Before you sleep") and morning ("When you rise") recalls are an **optional banner above the carousel**, not cards; ×
+- The evening ("When you lie down", Deuteronomy 6:7) and morning ("When you rise") recalls are an **optional banner above the carousel**, not cards; ×
   hides it for that evening or morning (per phone).
 - Reviews follow a ladder by chance: under 75% blanks then first letters; 75 to 90% first letters then whole; 90%+ whole once. Never pick
   something learned today or recalled in the last 16 hours. Extra whole-answer checks come only from the lesson's own course.

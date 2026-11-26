@@ -140,7 +140,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 key: 'night',
                 when: localDay(now.subtract(const Duration(hours: 3))),
                 mode: 'night',
-                title: 'Before you sleep',
+                title: 'When you lie down',
                 line: 'A quiet recall · ${_recallMinutes(night.length)} min',
               )
             : null;
@@ -164,7 +164,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     }
     // Sessions that finished no card (a review started from Keep going, extra practice, the evening or morning recall)
     // show as their own done card, so the day's minutes add up to what the cards show.
-    String extraTag(String kind) => switch (kind) { 'night' => 'Before sleep', 'rise' => 'This morning', 'lesson' => 'Lesson', 'fix' => 'Fix', 'review' => 'Review', _ => 'Extra' };
+    String extraTag(String kind) => switch (kind) { 'night' => 'When you lie down', 'rise' => 'This morning', 'lesson' => 'Lesson', 'fix' => 'Fix', 'review' => 'Review', _ => 'Extra' };
     if (sameDay) {
       for (final x in extraSessions(today)) {
         final course = courseFor(x.course);

@@ -98,7 +98,7 @@ export function TodayCards() {
   const rise = focusCourse ? riseOffer(mine, now) : null;
   const night = focusCourse && !rise ? nightOffer(mine, focusIds, now) : null;
   const live: Live | null = rise ? { key: 'rise', when: localDay(now), href: '/heir/lesson?mode=rise', title: 'When you rise', line: `Recall last night’s · ${recallMinutes(rise.length)} min` }
-    : night ? { key: 'night', when: localDay(new Date(now.getTime() - 3 * 3_600_000)), href: '/heir/lesson?mode=night', title: 'Before you sleep', line: `A quiet recall · ${recallMinutes(night.length)} min` } : null;
+    : night ? { key: 'night', when: localDay(new Date(now.getTime() - 3 * 3_600_000)), href: '/heir/lesson?mode=night', title: 'When you lie down', line: `A quiet recall · ${recallMinutes(night.length)} min` } : null;
   for (const s of left) { const sl = cardSlide(s); if (sl) slides.push(sl); }
   if (allDone) {
     const allIds = new Set(started.flatMap((c) => [...ids(c)]));
@@ -113,7 +113,7 @@ export function TodayCards() {
   for (const s of states.filter((x) => x.done)) { const sl = cardSlide(s); if (sl) slides.push(sl); }
   // Sessions that finished no card (a review started from Keep going, extra practice, the evening or morning recall) show as
   // their own done card, so the day's minutes add up to what the cards show.
-  const extraTag = (k: DaySession['kind']) => (k === 'night' ? 'Before sleep' : k === 'rise' ? 'This morning' : k === 'lesson' ? 'Lesson' : k === 'fix' ? 'Fix' : k === 'review' ? 'Review' : 'Extra');
+  const extraTag = (k: DaySession['kind']) => (k === 'night' ? 'When you lie down' : k === 'rise' ? 'This morning' : k === 'lesson' ? 'Lesson' : k === 'fix' ? 'Fix' : k === 'review' ? 'Review' : 'Extra');
   for (const x of today?.day === day ? extraSessions(today) : []) { const course = courseFor(x.course); if (course) slides.push({ type: 'extra', session: x, course, tag: extraTag(x.kind) }); }
 
   // Warnings: words about to leave your count, or already gone. One line, at most.

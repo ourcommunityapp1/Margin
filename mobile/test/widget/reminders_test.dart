@@ -54,11 +54,11 @@ void main() {
 
     test('recalls: an evening one each night and a morning one after it; tonight’s is left out once done', () {
       final r = planReminders(const ReminderSettings(recalls: true), now, keptToday: false, eveningDone: false);
-      expect(r.where((x) => x.title == 'Before you sleep'), hasLength(10));
+      expect(r.where((x) => x.title == 'When you lie down'), hasLength(10));
       expect(r.where((x) => x.title == 'Good morning'), hasLength(9), reason: 'no morning one for today: it is already afternoon');
       expect(r.first.at, DateTime(2026, 11, 24, 19, 30));
       final done = planReminders(const ReminderSettings(recalls: true), now, keptToday: false, eveningDone: true);
-      expect(done.where((x) => x.title == 'Before you sleep'), hasLength(9));
+      expect(done.where((x) => x.title == 'When you lie down'), hasLength(9));
     });
 
     test('times read well and settings survive being saved', () {
@@ -89,7 +89,7 @@ void main() {
     expect(find.text('At 9:00 AM'), findsOneWidget);
     await _tap(tester, 'Evening and morning recalls');
     expect(sched.asked, 1, reason: 'already allowed: not asked again');
-    expect(sched.current.any((r) => r.title == 'Before you sleep'), isTrue);
+    expect(sched.current.any((r) => r.title == 'When you lie down'), isTrue);
     await _tap(tester, 'Daily reminder');
     await _tap(tester, 'Evening and morning recalls');
     expect(sched.current, isEmpty);
