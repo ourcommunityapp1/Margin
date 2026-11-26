@@ -106,6 +106,20 @@ Progress, the Mastered wording on related verses) shows only to the accounts in 
 - [ ] Children's track: simpler questions, encouraging feedback.
 - [ ] Server route for the model (key kept server-side), rate limits, and a fallback when offline.
 
+## To do: find sunrise and night photos we can credit (requested 2026-11-26)
+
+Today's "When you rise" and "When you lie down" circles will show real photographs, not emoji (mockup: https://claude.ai/artifact/LVxYQkiMggQhZTBUxRfYKS).
+
+- **The nine photos the owner liked** (bright sunrises and colourful night scenes) came without a source. **Do not ship them until their
+  source and licence are known.** Find the photographer and licence for each (a reverse image search, or the site they came from).
+- **Or replace them** with photos we can credit: Unsplash, Pexels or Wikimedia Commons, free to use. Keep a list of photographer, link and
+  licence for each, and put the credits on the About page next to the stained-glass window credits (a test already fails if a window is not credited).
+- **Wanted:** clear sunrises (the sun visible, warm colour) and night or dusk scenes (stars, northern lights, a lit town at dusk). Reformation
+  churches (Grossmünster, St Giles', Geneva's St Pierre) are nice but not required. A short looping clip would be a bonus.
+- Photos found so far with licences are in the mockups (Wikimedia Commons, CC BY-SA or CC BY): Grossmünster, St Giles', St Pierre, and sunrises
+  of Edinburgh and Lake Zurich. Credit lines are listed at the bottom of those mockup pages.
+- Size: small copies (about 600 px, 50 to 100 KB each) so the app stays light; the circle is 180 px.
+
 ## To do: explore Today by course, with the person choosing their focus course(s) (requested 2026-11-25)
 
 Mockups first, then decide. The aim: nobody ever chooses *which verse* to learn next; they choose only *which course(s)*, and
