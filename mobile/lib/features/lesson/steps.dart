@@ -264,7 +264,7 @@ class NextStep extends StatelessWidget {
     final k = context.k;
     return StepFrame(
       body: [
-        Text('What comes next?', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text('What comes next?', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         Text.rich(
           TextSpan(children: [
             if ((step.lead ?? '').isNotEmpty) TextSpan(text: '${step.lead} ', style: serif(22, weight: FontWeight.w700, color: k.ink, height: 1.7)),
@@ -337,7 +337,7 @@ class _SpotStepState extends State<SpotStep> {
     final wrongAt = step.wrongIndex!;
     return StepFrame(
       body: [
-        Text('One word is wrong. Tap it.', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text('One word is wrong. Tap it.', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         Wrap(
           children: [
             for (final (i, t) in tokens.indexed)
@@ -519,7 +519,7 @@ class _OrderStepState extends State<OrderStep> {
 
     return StepFrame(
       body: [
-        Text(pieces ? 'Put the phrases in order' : 'Put the words in order', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text(pieces ? 'Put the phrases in order' : 'Put the words in order', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         answerBox,
         bank,
       ],
@@ -670,7 +670,7 @@ class _BlanksStepState extends State<BlanksStep> {
     }
     return StepFrame(
       body: [
-        Text('Fill in the missing words', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text('Fill in the missing words', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         Text.rich(TextSpan(children: spans), style: serif(22, color: k.ink, height: 1.7)),
       ],
       dock: Dock(
@@ -804,7 +804,7 @@ class _LettersStepState extends State<LettersStep> with SingleTickerProviderStat
 
     return StepFrame(
       body: [
-        Text('Type the first letter of each word', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text('Type the first letter of each word', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         GestureDetector(
           onTap: _focus.requestFocus,
           child: Stack(
@@ -930,6 +930,15 @@ class TypeStep extends StatefulWidget {
 
 class _TypeStepState extends State<TypeStep> {
   final _text = TextEditingController();
+  final _field = GlobalKey();
+
+  /// As the answer grows, keep the whole field in view (the page scrolls up past the question if it must).
+  void _keepInView() => WidgetsBinding.instance.addPostFrameCallback((_) {
+        final c = _field.currentContext;
+        if (c != null && c.mounted) {
+          Scrollable.ensureVisible(c, alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd, duration: const Duration(milliseconds: 120));
+        }
+      });
 
   @override
   void dispose() {
@@ -944,26 +953,33 @@ class _TypeStepState extends State<TypeStep> {
     OutlineInputBorder border(Color c) => OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: c));
     return StepFrame(
       body: [
-        Text('Type it from memory', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text('Type it from memory', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         _ContinueFrom(step.lead ?? ''),
         Semantics(
+          key: _field,
           label: 'Your answer',
           child: TextField(
             controller: _text,
             autofocus: true,
-            minLines: 4,
+            minLines: 3,
             maxLines: null,
             autocorrect: false,
             enableSuggestions: false,
             textCapitalization: TextCapitalization.sentences,
             keyboardType: TextInputType.multiline,
-            onChanged: (_) => setState(() {}),
+            onChanged: (_) {
+              setState(() {});
+              _keepInView();
+            },
             style: serif(18, color: k.ink, height: 1.5),
             cursorColor: k.ink,
+            scrollPadding: const EdgeInsets.only(bottom: 120),
             decoration: InputDecoration(
               filled: true,
               fillColor: k.card,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              hintText: 'Your answer',
+              hintStyle: serif(18, color: k.muted, height: 1.5),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: border(k.line),
               enabledBorder: border(k.line),
               focusedBorder: border(k.ink),
@@ -1057,7 +1073,7 @@ class _SayStepState extends ConsumerState<SayStep> {
     final self = !_mic;
     return StepFrame(
       body: [
-        Text('Say it from memory', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+        Text('Say it from memory', style: sans(14, weight: FontWeight.w600, color: k.muted)),
         _ContinueFrom(step.lead ?? ''),
         if (_mic)
           Column(

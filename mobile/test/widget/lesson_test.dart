@@ -204,6 +204,33 @@ void main() {
     expect(find.text('Continue'), findsOneWidget, reason: 'the feedback sheet shows once the last word is typed');
   });
 
+  testWidgets('a long typed answer keeps the whole field in view above the keyboard', (tester) async {
+    final s = await _session(tester);
+    final type = s.session.steps.last;
+    final session = Session(
+      label: s.session.label,
+      kind: s.session.kind,
+      steps: [type],
+      units: s.session.units,
+      group: null,
+      courseId: s.session.courseId,
+      memberId: s.session.memberId,
+      dayCourse: s.session.dayCourse,
+      before: s.session.before,
+    );
+    await _pump(tester, session, MemoryStore({householdKey: householdToJson(addMember(emptyHousehold(), 'Ann', Track.adult, 'me', DateTime(2026, 11, 20)))}));
+    // The keyboard takes the bottom 340 points of an 874-point screen.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 340 * 3);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+    final long = List.filled(6, 'and all their actions every one of them always').join(' ');
+    await tester.enterText(find.byType(TextField), long);
+    await tester.pumpAndSettle();
+    final field = tester.getRect(find.byType(TextField));
+    final check = tester.getRect(find.text('Check'));
+    expect(field.bottom, lessThanOrEqualTo(check.top), reason: 'the field’s bottom edge is above Check, not cut off');
+  });
+
   group('say it from memory', () {
     /// A session of one "say" step, made from the lesson's typing step.
     Future<({Session session, lesson.Step step})> sayOnly(WidgetTester tester) async {
