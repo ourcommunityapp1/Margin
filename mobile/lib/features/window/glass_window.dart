@@ -9,6 +9,7 @@
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -24,7 +25,7 @@ int _nowMs() => DateTime.now().millisecondsSinceEpoch - _clockStart;
 
 /// The glass alone, in a circle: loads and draws the picture, a dark circle until it is ready.
 class _GlassCircle extends StatefulWidget {
-  const _GlassCircle({required this.base, required this.lit, required this.dusty, required this.started, required this.size, required this.sharp, this.motion, this.inList = false});
+  const _GlassCircle({required this.base, required this.lit, required this.dusty, required this.started, required this.size, required this.sharp, this.motion, this.inList = false, this.sweep});
   final String base;
   final List<double> lit;
   final List<bool>? dusty;
@@ -35,6 +36,9 @@ class _GlassCircle extends StatefulWidget {
   final bool sharp;
   final GlassMotion? motion;
   final bool inList;
+
+  /// While a window lights up pane by pane (sweep.dart): its pictures, drawn instead of the still one.
+  final ValueListenable<ui.Image?>? sweep;
 
   @override
   State<_GlassCircle> createState() => _GlassCircleState();
@@ -104,25 +108,31 @@ class _GlassCircleState extends State<_GlassCircle> with SingleTickerProviderSta
 
   @override
   Widget build(BuildContext context) {
-    final image = _full ?? _small;
-    return SizedBox(
-      width: widget.size,
-      height: widget.size,
-      child: ClipOval(
-        child: ColoredBox(
-          color: const Color(0xFF0B0D0F),
-          child: image == null
-              ? null
-              : RepaintBoundary(
-                  child: CustomPaint(
-                    painter: _GlassPainter(image: image, peak: _peak, motion: _moving ? widget.motion : null, glow: _anyLit, repaint: _repaint),
-                    size: Size.square(widget.size),
-                  ),
-                ),
-        ),
-      ),
+    final sweep = widget.sweep;
+    if (sweep == null) return _frame(_full ?? _small, glow: _anyLit);
+    return ValueListenableBuilder<ui.Image?>(
+      valueListenable: sweep,
+      builder: (context, img, _) => _frame(img ?? _full ?? _small, glow: img != null || _anyLit),
     );
   }
+
+  Widget _frame(ui.Image? image, {required bool glow}) => SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: ClipOval(
+          child: ColoredBox(
+            color: const Color(0xFF0B0D0F),
+            child: image == null
+                ? null
+                : RepaintBoundary(
+                    child: CustomPaint(
+                      painter: _GlassPainter(image: image, peak: _peak, motion: _moving ? widget.motion : null, glow: glow, repaint: _repaint),
+                      size: Size.square(widget.size),
+                    ),
+                  ),
+          ),
+        ),
+      );
 }
 
 class _GlassPainter extends CustomPainter {
@@ -178,7 +188,7 @@ class _GlassPainter extends CustomPainter {
 
 /// The small window for a list: a ring of stone around the glass.
 class MiniWindow extends StatelessWidget {
-  const MiniWindow({super.key, required this.base, required this.lit, this.dusty, this.size = 64, this.started = false, this.label, this.motion, this.inList = false});
+  const MiniWindow({super.key, required this.base, required this.lit, this.dusty, this.size = 64, this.started = false, this.label, this.motion, this.inList = false, this.sweep});
   final String base;
   final List<double> lit;
   final List<bool>? dusty;
@@ -194,6 +204,9 @@ class MiniWindow extends StatelessWidget {
   /// In the Courses list: dark glass rests a little brighter, so no window reads as black.
   final bool inList;
 
+  /// Pictures of the window lighting up, pane by pane (sweep.dart), drawn while they come.
+  final ValueListenable<ui.Image?>? sweep;
+
   @override
   Widget build(BuildContext context) {
     return Semantics(
@@ -208,7 +221,7 @@ class MiniWindow extends StatelessWidget {
           gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFFA69B89), Color(0xFF6F675A), Color(0xFF4A443C)], stops: [0, 0.55, 1]),
           boxShadow: const [BoxShadow(color: Color(0x59000000), spreadRadius: 1, blurRadius: 0), BoxShadow(color: Color(0x2E000000), blurRadius: 12, offset: Offset(0, 4))],
         ),
-        child: _GlassCircle(base: base, lit: lit, dusty: dusty, started: started, size: size - 6, sharp: size >= 140, motion: motion, inList: inList),
+        child: _GlassCircle(base: base, lit: lit, dusty: dusty, started: started, size: size - 6, sharp: size >= 140, motion: motion, inList: inList, sweep: sweep),
       ),
     );
   }
@@ -217,7 +230,7 @@ class MiniWindow extends StatelessWidget {
 /// The round window in a stone frame, with a gold arc that traces how far round the light has come and a small notch
 /// where the next pane will light.
 class RoundWindow extends StatelessWidget {
-  const RoundWindow({super.key, required this.base, required this.lit, this.dusty, required this.share, this.size = 240, this.started = true, this.label, this.beam});
+  const RoundWindow({super.key, required this.base, required this.lit, this.dusty, required this.share, this.size = 240, this.started = true, this.label, this.beam, this.sweep});
   final String base;
   final List<double> lit;
   final List<bool>? dusty;
@@ -231,6 +244,9 @@ class RoundWindow extends StatelessWidget {
   /// A dim light moving behind the dark glass of a course not yet begun.
   final GlassMotion? beam;
 
+  /// Pictures of the window lighting up, pane by pane (sweep.dart), drawn while they come.
+  final ValueListenable<ui.Image?>? sweep;
+
   @override
   Widget build(BuildContext context) {
     final glass = size * 292 / 324, inset = (size - glass) / 2;
@@ -242,7 +258,7 @@ class RoundWindow extends StatelessWidget {
         height: size,
         child: Stack(
           children: [
-            Positioned(left: inset, top: inset, child: _GlassCircle(base: base, lit: lit, dusty: dusty, started: started, size: glass, sharp: size >= 140, motion: beam)),
+            Positioned(left: inset, top: inset, child: _GlassCircle(base: base, lit: lit, dusty: dusty, started: started, size: glass, sharp: size >= 140, motion: beam, sweep: sweep)),
             Positioned.fill(child: CustomPaint(painter: _FramePainter(share.clamp(0.0, 1.0)))),
           ],
         ),

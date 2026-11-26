@@ -1,11 +1,10 @@
-// How a step is laid out (lesson.tsx, steps.tsx): a card that fills the screen, holding the step's content, with the
-// step's buttons pinned in a bar beneath it (the website's "dock"), above the keyboard while typing.
-// The lesson screen puts the tag, cue and earlier words at the top of every card through [StepChrome].
+// How a step is laid out: the step's content on the open page (no card), scrolling when it needs to, with the step's
+// buttons pinned in a bar beneath it (the website's "dock"), just above the keyboard while typing.
+// The lesson screen puts the tag, question and earlier words at the top of every step through [StepChrome].
 
 import 'package:material_ui/material_ui.dart';
 
 import '../../ui/theme.dart';
-import '../../ui/widgets.dart';
 import 'outcome.dart';
 
 /// What the lesson screen shares with the step on screen.
@@ -25,13 +24,14 @@ class StepChrome extends InheritedWidget {
   bool updateShouldNotify(StepChrome old) => locked != old.locked || header != old.header;
 }
 
-/// The card and its dock.
+/// A step on the open page (no card around it: the question and the answer sit on the page, as Today's do) and its dock.
+/// The page scrolls when the keyboard is up or an answer is long; the dock rides just above the keyboard.
 class StepFrame extends StatelessWidget {
   const StepFrame({super.key, required this.body, this.dock});
 
   final List<Widget> body;
 
-  /// The step's buttons, pinned under the card.
+  /// The step's buttons, pinned under the page.
   final Widget? dock;
 
   @override
@@ -44,17 +44,17 @@ class StepFrame extends StatelessWidget {
         Expanded(
           child: IgnorePointer(
             ignoring: chrome.locked,
-            child: KCard(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [for (var i = 0; i < children.length; i++) ...[if (i > 0) const SizedBox(height: 18), children[i]]],
-                ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(4, 6, 4, 12),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [for (var i = 0; i < children.length; i++) ...[if (i > 0) const SizedBox(height: 18), children[i]]],
               ),
             ),
           ),
         ),
-        if (dock != null && !chrome.locked) ...[const SizedBox(height: 12), dock!],
+        if (dock != null && !chrome.locked) ...[const SizedBox(height: 10), dock!],
       ],
     );
   }

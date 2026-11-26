@@ -1,12 +1,15 @@
-// The lesson-done window (src/app/heir/ui/lesson.tsx DoneWindow): the window as it was, then the new light arriving a few
-// panes at a time, and the gold arc on the frame moving on to the new share.
+// The lesson-done window (src/app/heir/ui/lesson.tsx DoneWindow): the window as it was, then the new light arriving pane
+// by pane (sweep.dart, about two and a half seconds), and the gold arc on the frame moving on to the new share. The phone
+// ticks for every new pane, taps more firmly when a whole question's glass is lit, and settles when the light stops.
 
 import 'dart:async';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../platform/haptics.dart';
 import 'glass_render.dart';
 import 'glass_window.dart';
+import 'sweep.dart';
 
 class RevealWindow extends StatefulWidget {
   const RevealWindow({super.key, required this.base, required this.before, required this.after, required this.dustyBefore, required this.dustyAfter, this.size = 280, this.label});
@@ -20,76 +23,93 @@ class RevealWindow extends StatefulWidget {
   State<RevealWindow> createState() => _RevealWindowState();
 }
 
-class _RevealWindowState extends State<RevealWindow> {
-  static const _stageMs = 280;
-
+class _RevealWindowState extends State<RevealWindow> with TickerProviderStateMixin {
   late List<double> _lit = widget.before;
   late List<bool> _dusty = widget.dustyBefore;
-  Timer? _start, _timer;
-  int _stage = 0;
+  late double _share = _shareOf(widget.before);
+  int _arcMs = 900;
+  GlassSweep? _sweep;
+  bool _begun = false, _disposed = false;
 
-  double _share(List<double> l) => l.isEmpty ? 0 : l.fold<double>(0, (a, b) => a + b) / l.length;
+  static double _shareOf(List<double> l) => l.isEmpty ? 0 : l.fold<double>(0, (a, b) => a + b) / l.length;
 
-  List<double> _at(int stage, int stages) => [for (var i = 0; i < widget.after.length; i++) widget.before[i] + (widget.after[i] - widget.before[i]) * stage / stages];
-
-  int _stages = 0;
-  bool _begun = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final changed = [for (var i = 0; i < widget.after.length; i++) if (widget.after[i] > widget.before[i] + 1e-6) i];
-    if (changed.isEmpty) {
-      _dusty = widget.dustyAfter;
-      return;
+  bool get _anyNew {
+    for (var i = 0; i < widget.after.length; i++) {
+      if (widget.after[i] > (i < widget.before.length ? widget.before[i] : 0) + 1e-6) return true;
     }
-    // A few stages of new light, each drawn ahead of time so it appears the moment its turn comes.
-    _stages = (_share(widget.after) - _share(widget.before)) * 100 > 12 ? 8 : 4;
-    final tier = widget.size >= 140 ? GlassTier.full : GlassTier.small;
-    for (var s = 1; s <= _stages; s++) {
-      final lit = _at(s, _stages);
-      windowImage(widget.base, lit, widget.dustyAfter, rest: restStarted, tier: GlassTier.small).ignore();
-      if (tier == GlassTier.full) windowImage(widget.base, lit, widget.dustyAfter, rest: restStarted, tier: tier).ignore();
-    }
+    return false;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Start the reveal once (the "reduce motion" setting can only be read here, not in initState).
-    if (_begun || _stages == 0) return;
+    if (_begun) return;
     _begun = true;
-    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) {
+    if (!_anyNew || (MediaQuery.maybeDisableAnimationsOf(context) ?? false)) {
       _lit = widget.after;
       _dusty = widget.dustyAfter;
+      _share = _shareOf(widget.after);
       return;
     }
-    _start = Timer(const Duration(milliseconds: 700), () {
-      if (!mounted) return;
-      _timer = Timer.periodic(const Duration(milliseconds: _stageMs), (t) {
-        if (!mounted) return t.cancel();
-        _stage++;
-        setState(() {
-          _lit = _at(_stage, _stages);
-          _dusty = widget.dustyAfter;
-        });
-        if (_stage >= _stages) t.cancel();
-      });
+    _run();
+  }
+
+  Future<void> _run() async {
+    final tier = widget.size >= 140 ? GlassTier.full : GlassTier.small;
+    GlassSweep? sweep;
+    try {
+      sweep = await GlassSweep.prepare(widget.base, widget.after, rest: restStarted, tier: tier, from: widget.before, fromDusty: widget.dustyBefore);
+    } catch (_) {}
+    // The window as it was, for a moment, before the new light comes.
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    if (_disposed || !mounted) {
+      sweep?.dispose();
+      return;
+    }
+    if (sweep == null) return _settle();
+    final s = sweep;
+    s.onPane = (last) => last ? Haptics.questionLit() : Haptics.pane();
+    setState(() {
+      _sweep = s;
+      _arcMs = s.length < 600 ? 600 : s.length;
+      _share = _shareOf(widget.after);
+    });
+    s.start(this);
+    await s.done;
+    if (_disposed || !mounted) return;
+    Haptics.settled();
+    _settle();
+    try {
+      await windowImage(widget.base, widget.after, widget.dustyAfter, rest: restStarted, tier: tier);
+    } catch (_) {}
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    if (_disposed || !mounted) return;
+    setState(() => _sweep = null);
+    s.dispose();
+  }
+
+  void _settle() {
+    if (!mounted) return;
+    setState(() {
+      _lit = widget.after;
+      _dusty = widget.dustyAfter;
+      _share = _shareOf(widget.after);
     });
   }
 
   @override
   void dispose() {
-    _start?.cancel();
-    _timer?.cancel();
+    _disposed = true;
+    _sweep?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-        tween: Tween(end: _share(_lit)),
-        duration: const Duration(milliseconds: 900),
+        tween: Tween(end: _share),
+        duration: Duration(milliseconds: _arcMs),
         curve: const Cubic(.3, .6, .25, 1),
-        builder: (context, share, _) => RoundWindow(base: widget.base, lit: _lit, dusty: _dusty, share: share, size: widget.size, label: widget.label),
+        builder: (context, share, _) => RoundWindow(base: widget.base, lit: _lit, dusty: _dusty, share: share, size: widget.size, label: widget.label, sweep: _sweep?.image),
       );
 }

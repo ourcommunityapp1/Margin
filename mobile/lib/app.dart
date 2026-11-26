@@ -35,6 +35,9 @@ import 'platform/links.dart';
 import 'state/auth.dart';
 import 'state/board.dart';
 import 'state/reminders.dart';
+import 'platform/haptics.dart';
+import 'state/clock.dart';
+import 'state/haptics.dart';
 import 'state/household.dart';
 import 'state/sync.dart';
 import 'ui/background.dart';
@@ -53,7 +56,7 @@ class KatekizeApp extends ConsumerStatefulWidget {
 }
 
 class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingObserver {
-  DateTime? get now => widget.now;
+  DateTime? get now => widget.now ?? simulatedStart;
 
   @override
   void initState() {
@@ -64,6 +67,8 @@ class _KatekizeAppState extends ConsumerState<KatekizeApp> with WidgetsBindingOb
     ref.read(boardProvider);
     // Keep reminders matching what is already done today.
     ref.read(remindersProvider);
+    // Vibration on or off, as the person last chose on this phone.
+    ref.read(hapticsOnProvider);
   }
 
   @override
@@ -235,7 +240,10 @@ class _TabShell extends ConsumerWidget {
               tabs: tabs,
               current: shell.currentIndex,
               dots: {if (signedIn && (ref.watch(boardProvider)?.alert ?? false)) 2: 'Your place on the leaderboard changed'},
-              onTap: (i) => shell.goBranch(i, initialLocation: i == shell.currentIndex),
+              onTap: (i) {
+                Haptics.select();
+                shell.goBranch(i, initialLocation: i == shell.currentIndex);
+              },
             ),
           ),
         ],

@@ -187,6 +187,12 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     );
     ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
     Haptics.finished();
+    // A stone earned: felt once the window's new light has arrived (about three and a half seconds in).
+    if (settled.ups.isNotEmpty) {
+      Future<void>.delayed(const Duration(milliseconds: 3600), () {
+        if (mounted) Haptics.stone();
+      });
+    }
     final recall = recorded.where((r) => r.kind != 'intro').toList();
     setState(() {
       _feedback = null;
@@ -303,7 +309,6 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                         ),
                       ],
                     ),
-                    Padding(padding: const EdgeInsets.fromLTRB(4, 10, 4, 0), child: KLabel(_session.label)),
                     if (_session.kind == 'checkpoint' && _pos == 0 && feedback == null)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(4, 10, 4, 0),
@@ -413,8 +418,8 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               tagged('$label$second'),
-              const SizedBox(height: 6),
-              Text(item.prompt, style: serif(20, weight: FontWeight.w600, color: k.ink, height: 1.35)),
+              const SizedBox(height: 10),
+              Text(item.prompt, style: serif(25, weight: FontWeight.w500, color: k.ink, height: 1.3)),
             ],
           ),
           ?whyLine,

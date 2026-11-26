@@ -319,7 +319,9 @@ Session buildNightSession({
 }) {
   final r = rng ?? _random.nextDouble;
   final ids = courseItems(course).map((i) => i.id).toSet();
-  final picked = [for (final id in planner.bedtimePicks(mine, ids, now)) ?getItem(id)];
+  // Tonight's picks; with nothing new today and nothing on the edge, the ones most worth recalling (as the website).
+  final tonight = planner.bedtimePicks(mine, ids, now);
+  final picked = [for (final id in tonight.isNotEmpty ? tonight : planner.morningPicks(mine, ids, now)) ?getItem(id)];
   final steps = lesson.buildNight(items: picked, track: track, pool: allItems(), rng: r);
   return Session(
     label: 'When you lie down',
@@ -335,7 +337,7 @@ Session buildNightSession({
   );
 }
 
-/// When you rise: last night's questions, recalled in full from the question alone.
+/// When you rise: last night's questions (or ones on the edge of being forgotten), recalled in full from the question alone.
 Session buildRiseSession({
   required Course course,
   required Track track,
@@ -345,7 +347,9 @@ Session buildRiseSession({
   lesson.Rng? rng,
 }) {
   final r = rng ?? _random.nextDouble;
-  final risen = [for (final id in mine.night?.items ?? const <String>[]) ?getItem(id)];
+  // Last night's questions if "When you lie down" came the evening before; otherwise learned ones on the edge (morningPicks).
+  final ids = courseItems(course).map((i) => i.id).toSet();
+  final risen = [for (final id in planner.morningPicks(mine, ids, now)) ?getItem(id)];
   final steps = lesson.buildRise(items: risen, track: track, pool: allItems(), rng: r);
   return Session(
     label: 'When you rise',

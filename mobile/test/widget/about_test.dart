@@ -38,6 +38,18 @@ void main() {
     }
   });
 
+  test('every sunrise and night photo on Today is credited, Wikimedia ones with their licence and link', () {
+    final files = [
+      for (final d in ['dawn', 'dusk']) ...Directory('assets/photos/$d').listSync().whereType<File>().map((f) => f.uri.pathSegments.last),
+    ];
+    expect(files, hasLength(13));
+    expect(about.todayPhotos, hasLength(13));
+    for (final c in about.todayPhotos) {
+      expect(c.license, isNotEmpty);
+      if (c.license.startsWith('CC')) expect(c.page, startsWith('https://commons.wikimedia.org/'), reason: c.title);
+    }
+  });
+
   testWidgets('the About screen shows what Katekize is and lists the credits', (tester) async {
     await pumpApp(tester);
     await tester.pumpWidget(const SizedBox());

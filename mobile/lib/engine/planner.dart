@@ -195,7 +195,9 @@ const morningFrom = 5;
 List<String> morningPicks(MemberProgress p, Set<String> itemIds, DateTime now) {
   final n = p.night;
   if (n != null && !n.risen && n.items.isNotEmpty && _eveningOf(DateTime.parse(n.at)) != _eveningOf(now) &&
-      now.millisecondsSinceEpoch - DateTime.parse(n.at).millisecondsSinceEpoch < 30 * 3600000) return n.items;
+      now.millisecondsSinceEpoch - DateTime.parse(n.at).millisecondsSinceEpoch < 30 * 3600000) {
+    return n.items;
+  }
   final order = [for (final x in riskOrder(p, itemIds, now)) if (!waitingForSleep(p, x.itemId, now)) x];
   final edge = [for (final x in order) if (x.recall >= 0.55 && x.recall <= 0.92) x];
   return (edge.isNotEmpty ? edge : order).take(5).map((x) => x.itemId).toList();

@@ -204,6 +204,33 @@ void main() {
     expect(find.text('Continue'), findsOneWidget, reason: 'the feedback sheet shows once the last word is typed');
   });
 
+  testWidgets('a long typed answer keeps the whole field in view above the keyboard', (tester) async {
+    final s = await _session(tester);
+    final type = s.session.steps.last;
+    final session = Session(
+      label: s.session.label,
+      kind: s.session.kind,
+      steps: [type],
+      units: s.session.units,
+      group: null,
+      courseId: s.session.courseId,
+      memberId: s.session.memberId,
+      dayCourse: s.session.dayCourse,
+      before: s.session.before,
+    );
+    await _pump(tester, session, MemoryStore({householdKey: householdToJson(addMember(emptyHousehold(), 'Ann', Track.adult, 'me', DateTime(2026, 11, 20)))}));
+    // The keyboard takes the bottom 340 points of an 874-point screen.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 340 * 3);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+    final long = List.filled(6, 'and all their actions every one of them always').join(' ');
+    await tester.enterText(find.byType(TextField), long);
+    await tester.pumpAndSettle();
+    final field = tester.getRect(find.byType(TextField));
+    final check = tester.getRect(find.text('Check'));
+    expect(field.bottom, lessThanOrEqualTo(check.top), reason: 'the field’s bottom edge is above Check, not cut off');
+  });
+
   group('say it from memory', () {
     /// A session of one "say" step, made from the lesson's typing step.
     Future<({Session session, lesson.Step step})> sayOnly(WidgetTester tester) async {
@@ -236,6 +263,7 @@ void main() {
       await tester.tap(find.bySemanticsLabel('Start speaking'));
       await tester.pumpAndSettle();
       expect(mic.starts, 1);
+      expect(mic.hints, isNotEmpty, reason: 'the answer’s rare words go with it, for ElevenLabs');
       expect(find.text('Listening. Tap again when you’re done.'), findsOneWidget);
       mic.say(s.step.text!);
       await tester.pumpAndSettle();
@@ -288,6 +316,44 @@ void main() {
       await _tap(tester, 'Can’t speak now, type it');
       expect(find.text('Type it from memory'), findsOneWidget);
       expect(mic.cancels, greaterThan(0));
+    });
+
+    testWidgets('after “Can’t speak now”, nothing else in that lesson asks to speak, not even a second try', (tester) async {
+      final s = await sayOnly(tester);
+      final first = s.step.copyWith(id: 'say-1');
+      final second = lesson.Step(id: 'say-2', itemId: 'wsc-2', kind: 'say', review: false, lead: 'What rule hath God given to direct us?', text: 'The word of God is the only rule');
+      final session = Session(
+        label: s.session.label,
+        kind: s.session.kind,
+        steps: [first, second],
+        units: s.session.units,
+        group: null,
+        courseId: s.session.courseId,
+        memberId: s.session.memberId,
+        dayCourse: s.session.dayCourse,
+        before: s.session.before,
+      );
+      final mic = FakeSpeech();
+      await _pump(tester, session, store(), speech: mic);
+      // The first: said, but only part of it, so it comes back at the end for a second try.
+      await tester.tap(find.bySemanticsLabel('Start speaking'));
+      await tester.pumpAndSettle();
+      mic.say(first.text!.split(' ').take(2).join(' '));
+      mic.end();
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Continue');
+      // The second: can't speak now.
+      expect(find.bySemanticsLabel('Start speaking'), findsOneWidget);
+      await _tap(tester, 'Can’t speak now, type it');
+      expect(find.text('Type it from memory'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), second.text!);
+      await tester.pumpAndSettle();
+      await _tap(tester, 'Check');
+      await _tap(tester, 'Continue');
+      // The second try of the first: typed, never the microphone again.
+      expect(find.text('Type it from memory'), findsOneWidget);
+      expect(find.bySemanticsLabel('Start speaking'), findsNothing);
+      expect(find.text('Can’t speak now, type it'), findsNothing);
     });
   });
 

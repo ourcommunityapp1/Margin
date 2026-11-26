@@ -56,9 +56,9 @@ void main() {
     // Today: the day's card for the course, ready to begin.
     expect(find.text('Good afternoon, Landon'), findsOneWidget);
     expect(find.text('First Verses'), findsWidgets);
-    expect(find.text('Recommended'.toUpperCase()), findsOneWidget);
-    expect(find.text('Begin'), findsOneWidget);
-    expect(find.textContaining('0 of 1 done'), findsOneWidget);
+    // One big thing: the course's window, its name, and the pill button with the minutes after a dot.
+    expect(find.textContaining('Begin · '), findsOneWidget);
+    expect(find.textContaining('min'), findsWidgets);
     expect(find.text('Today'), findsOneWidget);
     expect(find.text('Courses'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);
@@ -181,13 +181,13 @@ void main() {
     expect(find.text('Get started'), findsNothing);
     expect(find.text('Good afternoon, Ann'), findsOneWidget);
     expect(find.text('Psalm 23'), findsWidgets);
-    expect(find.text('Begin'), findsOneWidget);
+    expect(find.textContaining('Begin · '), findsOneWidget);
   });
 
   testWidgets('beginning a card opens its lesson', (tester) async {
     await pumpApp(tester);
     await setUpAccount(tester);
-    await tester.tap(find.text('Begin'));
+    await tester.tap(find.textContaining('Begin · '));
     await tester.pumpAndSettle();
     expect(find.text('Welcome'), findsWidgets);
     expect(find.text('Why learn verses by heart?'), findsOneWidget);

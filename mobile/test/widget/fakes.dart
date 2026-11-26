@@ -65,7 +65,8 @@ class FakeAuth implements Auth {
 }
 
 /// The whole app at a fixed time (a Tuesday afternoon), on an iPhone-sized screen, with a fake sign-in.
-Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social, Sharer? sharer, ReminderScheduler? reminders, List<Override> overrides = const []}) async {
+Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialApi? social, Sharer? sharer, ReminderScheduler? reminders, List<Override> overrides = const [], DateTime? now}) async {
+  final at = now ?? DateTime(2026, 11, 24, 14);
   await tester.runAsync(loadBundledContent);
   tester.view.physicalSize = const Size(1206, 2622);
   tester.view.devicePixelRatio = 3;
@@ -86,10 +87,10 @@ Future<void> pumpApp(WidgetTester tester, {FakeAuth? auth, Store? store, SocialA
         verseApiProvider.overrideWithValue(FakeVerses()),
         // Never touch the phone's real notifications in tests.
         reminderSchedulerProvider.overrideWithValue(reminders ?? FakeScheduler()),
-        clockProvider.overrideWithValue(() => DateTime(2026, 11, 24, 14)),
+        clockProvider.overrideWithValue(() => at),
         ...overrides,
       ],
-      child: KatekizeApp(now: DateTime(2026, 11, 24, 14)),
+      child: KatekizeApp(now: at),
     ),
   );
   await tester.pumpAndSettle();
@@ -287,9 +288,14 @@ class FakeScheduler implements ReminderScheduler {
 
 /// A microphone that hears what a test says. [allow] false is a refused permission.
 class FakeSpeech implements SpeechService {
-  FakeSpeech({this.allow = true});
+  FakeSpeech({this.allow = true, this.live = true});
   final bool allow;
+  @override
+  final bool live;
+  @override
+  String? problem;
   var starts = 0, cancels = 0;
+  List<String> hints = const [];
   void Function(String)? _onWords;
   void Function()? _onEnded;
 
@@ -304,8 +310,9 @@ class FakeSpeech implements SpeechService {
   }
 
   @override
-  Future<bool> start({required void Function(String words) onWords, required void Function() onEnded}) async {
+  Future<bool> start({required void Function(String words) onWords, required void Function() onEnded, List<String> hints = const []}) async {
     starts++;
+    this.hints = hints;
     if (!allow) return false;
     _onWords = onWords;
     _onEnded = onEnded;
