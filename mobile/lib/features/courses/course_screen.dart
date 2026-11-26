@@ -20,6 +20,7 @@ import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../state/item_stats.dart';
 import '../../ui/stone.dart';
+import '../window/appear_window.dart';
 import '../window/glass_window.dart';
 import '../window/light.dart';
 import '../../ui/screen_parts.dart';
@@ -75,7 +76,19 @@ class CourseScreen extends ConsumerWidget {
           gap: 8,
           children: [
             if (parts.length <= 1) ...[
-              Center(child: RoundWindow(base: w.base, lit: w.lit, dusty: w.dusty, share: w.share, size: 168, started: started, beam: const CircleMotion(), label: '${course.title} window, ${stats.learned} of ${stats.total} learned')),
+              // Opening a course you have begun: its window lights up pane by pane to where you are.
+              Center(
+                child: AppearWindow(
+                  base: w.base,
+                  lit: w.lit,
+                  dusty: w.dusty,
+                  share: w.share,
+                  size: 168,
+                  started: started,
+                  beam: const CircleMotion(),
+                  label: '${course.title} window, ${stats.learned} of ${stats.total} learned',
+                ),
+              ),
               const SizedBox(height: 8),
             ],
             Semantics(
@@ -117,7 +130,7 @@ class CourseScreen extends ConsumerWidget {
                       final done = pw.lit.where((f) => f >= 1).length;
                       return Column(
                         children: [
-                          MiniWindow(base: pw.base, lit: pw.lit, dusty: pw.dusty, size: 78, started: started, motion: CircleMotion(delay: i * 0.35), label: '${p.title} window, $done of ${pw.items.length} learned'),
+                          AppearWindow(mini: true, base: pw.base, lit: pw.lit, dusty: pw.dusty, share: pw.share, size: 78, started: started, beam: CircleMotion(delay: i * 0.35), label: '${p.title} window, $done of ${pw.items.length} learned'),
                           const SizedBox(height: 8),
                           Text(p.title, textAlign: TextAlign.center, style: sans(14, weight: FontWeight.w600, color: k.ink, height: 1.25)),
                           Text('$done of ${pw.items.length}', style: sans(12, color: k.muted)),

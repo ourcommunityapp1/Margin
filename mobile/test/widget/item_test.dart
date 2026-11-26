@@ -63,4 +63,15 @@ void main() {
     expect(find.text('in memory'), findsOneWidget);
     expect(find.text('average strength'), findsOneWidget);
   });
+
+  testWidgets('My courses comes first on Courses, with the course Ann has begun', (tester) async {
+    await pumpApp(tester, store: _phone());
+    GoRouter.of(tester.element(find.byType(Navigator).first)).go('/courses');
+    await tester.pumpAndSettle();
+    final mine = find.text('My courses');
+    expect(mine, findsOneWidget);
+    final wsc = find.text('Westminster Shorter Catechism');
+    expect(wsc, findsOneWidget, reason: 'listed once, under My courses, not again on its shelf');
+    expect(tester.getTopLeft(mine).dy, lessThan(tester.getTopLeft(wsc).dy));
+  });
 }

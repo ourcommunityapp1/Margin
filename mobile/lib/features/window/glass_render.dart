@@ -126,6 +126,12 @@ void _shade(Uint8List o, Uint8List g, Uint8List ids, Int32List px, double b, dou
 Uint8List renderPixels(Glass d, List<int> state, {required double rest, double restMix = 0.45}) =>
     _renderPixels(d.size, d.glass, d.ids, d.panes, state, rest, restMix);
 
+/// [renderPixels] off the main thread (for the full-size glass, a million pixels).
+Future<Uint8List> renderPixelsOff(Glass d, List<int> state, {required double rest, double restMix = 0.45}) {
+  final size = d.size, glass = d.glass, ids = d.ids, panes = d.panes;
+  return Isolate.run(() => _renderPixels(size, glass, ids, panes, state, rest, restMix));
+}
+
 Uint8List _renderPixels(int size, Uint8List glass, Uint8List ids, Map<int, Int32List> panes, List<int> state, double rest, double restMix) {
   final out = Uint8List(size * size * 4);
   for (final e in panes.entries) {

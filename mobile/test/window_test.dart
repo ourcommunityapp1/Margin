@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,6 +10,7 @@ import 'package:katekize/engine/types.dart';
 import 'package:katekize/features/window/glass_motion.dart';
 import 'package:katekize/features/window/glass_render.dart';
 import 'package:katekize/features/window/light.dart';
+import 'package:katekize/features/window/sweep.dart';
 
 import 'engine/content_loader.dart';
 
@@ -207,5 +209,26 @@ void main() {
     final on = own.where((id) => state[id] == 1).length;
     expect(on, (own.length * 0.5).round());
     expect(state.where((s) => s != 0).length, on, reason: 'only that question lights');
+  });
+
+  test('a sweep lights exactly the panes the still window shows, question by question in sweep order', () {
+    final m = pieces('gospel');
+    final flat = [for (final q in m['questions'] as List) ...(q as List).cast<int>()];
+    final centres = [for (final c in m['centres'] as List) [(c[0] as num).toDouble(), (c[1] as num).toDouble()]];
+    final count = m['count'] as int;
+    final g = Glass(0, Uint8List(0), Uint8List(0), flat, count, const {}, centres);
+    for (final lit in [
+      [1.0, 0.5, 0.0, 0.0, 0.0, 0.0],
+      [1.0, 1.0, 1.0, 0.25, 0.0, 0.0],
+    ]) {
+      final ids = sweepIds(g, lit);
+      final still = paneStates(count: count, flat: flat, lit: lit, centres: centres);
+      expect(ids.toSet(), {for (var id = 1; id <= count; id++) if (still[id] == 1) id});
+      expect(ids.toSet().length, ids.length, reason: 'each pane once');
+      // The first question's panes all come before the second's.
+      final firstOwn = flat.sublist(0, flat.length ~/ 6).toSet();
+      final lastOfFirst = ids.lastIndexWhere(firstOwn.contains);
+      expect(ids.take(lastOfFirst + 1).every(firstOwn.contains), isTrue);
+    }
   });
 }

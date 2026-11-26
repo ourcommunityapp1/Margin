@@ -1,18 +1,18 @@
 // A window on Today that lights up when it comes into view (src/app/heir/ui/today.tsx CardWindow, glass/mini.tsx `reveal`).
 //
 // It starts dark (and the big window's gold arc at nothing). Once it is at least 60% on screen and its glass has loaded, it
-// waits 350 ms and lights, one connected patch at a time (the same `sweepOrder` as everywhere), up to where the person
-// really is, never beyond. The sweep lasts about min(2400, lit panes x 130) + 600 ms. Dust (needs a refresh) is shown once it
-// has settled, so the final picture is exactly the still window. It plays once each time Today is opened. A course with nothing
-// learned, and anyone who has "reduce motion" on, sees the final state at once.
+// waits 350 ms and lights pane by pane (sweep.dart: question by question in `sweepOrder`, each pane fading up over 400 ms,
+// about two and a half seconds in all) up to where the person really is, never beyond, while the gold arc grows with it.
+// Dust (needs a refresh) is shown once it has settled, so the final picture is exactly the still window. It plays each time
+// the screen is opened. A course with nothing learned, and anyone who has "reduce motion" on, sees the final state at once.
 
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
 import 'glass_render.dart';
 import 'glass_window.dart';
+import 'sweep.dart';
 
 class AppearWindow extends StatefulWidget {
   const AppearWindow({
@@ -46,13 +46,13 @@ class AppearWindow extends StatefulWidget {
   State<AppearWindow> createState() => _AppearWindowState();
 }
 
-class _AppearWindowState extends State<AppearWindow> {
-  static const _stages = 10;
+class _AppearWindowState extends State<AppearWindow> with TickerProviderStateMixin {
 
   late List<double> _lit = _dark;
   List<bool>? _dusty;
   double _share = 0;
-  Timer? _timer;
+  GlassSweep? _sweep;
+  int _arcMs = 500;
   ScrollPosition? _scroll;
   bool _seen = false, _ran = false, _reduce = false;
   int _run = 0; // bumped to cancel a sweep still waiting for its glass
@@ -127,7 +127,8 @@ class _AppearWindowState extends State<AppearWindow> {
 
   void _cancel() {
     _run++;
-    _timer?.cancel();
+    _sweep?.dispose();
+    _sweep = null;
   }
 
   void _settle() {
@@ -139,45 +140,50 @@ class _AppearWindowState extends State<AppearWindow> {
     });
   }
 
-  List<double> _at(int stage) => [for (final f in widget.lit) f * stage / _stages];
-
   Future<void> _play() async {
     if (_ran) return;
     _ran = true;
     _cancel();
     final run = _run;
-    final Glass glass;
+    final tier = widget.size >= 140 ? GlassTier.full : GlassTier.small;
+    final GlassSweep? prepared;
     try {
-      glass = await loadGlass(widget.base);
+      prepared = await GlassSweep.prepare(widget.base, widget.lit, rest: restStarted, tier: tier);
     } catch (_) {
       if (run == _run) _settle();
       return;
     }
-    if (!mounted || run != _run) return;
-    final panes = (widget.share * glass.count).round();
-    final total = math.min(2400, panes * 130) + 600;
-    // Draw each step ahead of time so it appears the moment its turn comes.
-    final sharp = widget.size >= 140;
-    for (var s = 1; s < _stages; s++) {
-      windowImage(widget.base, _at(s), null, rest: restStarted).ignore();
-      if (sharp) windowImage(widget.base, _at(s), null, rest: restStarted, tier: GlassTier.full).ignore();
+    if (!mounted || run != _run) {
+      prepared?.dispose();
+      return;
     }
+    if (prepared == null) return _settle();
+    final sweep = prepared;
     await Future<void>.delayed(const Duration(milliseconds: 350));
-    if (!mounted || run != _run) return;
-    var stage = 0;
-    _timer = Timer.periodic(Duration(milliseconds: total ~/ _stages), (t) {
-      if (!mounted || run != _run) return t.cancel();
-      stage++;
-      if (stage >= _stages) {
-        t.cancel();
-        _settle();
-      } else {
-        setState(() {
-          _lit = _at(stage);
-          _share = widget.share * stage / _stages;
-        });
-      }
+    if (!mounted || run != _run) {
+      sweep.dispose();
+      return;
+    }
+    setState(() {
+      _sweep = sweep;
+      _arcMs = sweep.length < 600 ? 600 : sweep.length;
+      _share = widget.share;
     });
+    sweep.start(this);
+    await sweep.done;
+    if (!mounted || run != _run) return;
+    // Settle: the still window takes over once its picture is ready, so nothing flickers back to dark.
+    setState(() {
+      _lit = widget.lit;
+      _dusty = widget.dusty;
+    });
+    try {
+      await windowImage(widget.base, widget.lit, widget.dusty, rest: restStarted, tier: tier);
+    } catch (_) {}
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    if (!mounted || run != _run) return;
+    setState(() => _sweep = null);
+    sweep.dispose();
   }
 
   @override
@@ -189,12 +195,13 @@ class _AppearWindowState extends State<AppearWindow> {
 
   @override
   Widget build(BuildContext context) {
+    final sweep = _sweep?.image;
     if (widget.mini) {
-      return MiniWindow(base: widget.base, lit: _lit, dusty: _dusty, size: widget.size, started: widget.started, label: widget.label, motion: widget.beam);
+      return MiniWindow(base: widget.base, lit: _lit, dusty: _dusty, size: widget.size, started: widget.started, label: widget.label, motion: widget.beam, sweep: sweep);
     }
     return TweenAnimationBuilder<double>(
       tween: Tween(end: _share),
-      duration: const Duration(milliseconds: 500),
+      duration: Duration(milliseconds: _arcMs),
       curve: Curves.easeOut,
       builder: (context, share, _) => RoundWindow(
         base: widget.base,
@@ -205,6 +212,7 @@ class _AppearWindowState extends State<AppearWindow> {
         size: widget.size,
         label: widget.label,
         beam: widget.beam,
+        sweep: sweep,
       ),
     );
   }
