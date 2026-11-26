@@ -332,7 +332,8 @@ function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWi
   const [settled, setSettled] = useState(false);
   const [ready, setReady] = useState(false);
   const [seen, setSeen] = useState(false);
-  const ran = useRef(false);
+  // Played once per window: later changes (the clock nudges the numbers) add any newly lit panes quietly, never starting over.
+  const played = useRef(false);
   useEffect(() => {
     const el = box.current;
     if (!el || typeof IntersectionObserver === 'undefined') { Promise.resolve().then(() => setSeen(true)); return; }
@@ -341,9 +342,13 @@ function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWi
     return () => io.disconnect();
   }, []);
   useEffect(() => {
-    if (!ready || !seen || ran.current) return;
-    ran.current = true;
+    if (!ready || !seen) return;
     const light = latest.current;
+    if (played.current) {
+      win.current?.revealTo(light.lit);
+      Promise.resolve().then(() => { setShare(light.share); setSettled(true); });
+      return;
+    }
     const pieces = win.current?.meta()?.count ?? 500;
     const lit = Math.round(light.share * pieces);
     // The engine spaces panes so the whole sweep takes about two and a half seconds at most.
@@ -353,8 +358,8 @@ function CardWindow({ light, hint, started, label, size = 240 }: { light: PartWi
       setArcMs(Math.max(600, sweep));
       setShare(light.share);
     }, 350);
-    const b = setTimeout(() => setSettled(true), 350 + sweep);
-    return () => { clearTimeout(a); clearTimeout(b); ran.current = false; };
+    const b = setTimeout(() => { played.current = true; setSettled(true); }, 350 + sweep);
+    return () => { clearTimeout(a); clearTimeout(b); };
   }, [ready, seen, sig]);
   return (
     <div ref={box} style={{ display: 'flex' }}>

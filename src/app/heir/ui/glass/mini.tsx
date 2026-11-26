@@ -88,6 +88,8 @@ export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind
   bright?: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  // The window whose light-up has played. A later change (the clock moves a pane's dust or strength a little) repaints quietly; it never goes dark and replays.
+  const played = useRef('');
   const key = `${lit.join(',')}|${dusty?.map(Number).join('') ?? ''}|${JSON.stringify(motion)}|${started}|${bright}|${reveal}`;
   useEffect(() => {
     let alive = true, raf = 0, visible = true;
@@ -121,7 +123,7 @@ export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind
       const dark = d.panes.filter((p) => !state[p.id]);
       const byId = new Map(d.panes.map((p) => [p.id, p]));
       const paint = (p: Pane) => shade(img.data, d.glass, d.ids, p.px, state[p.id] === 1 ? 1.05 : state[p.id] === 2 ? DUSTY : REST, state[p.id] === 1 ? 0 : state[p.id] === 2 ? 0.4 : 0.45);
-      if (reveal && !still && order.length) {
+      if (reveal && !still && order.length && played.current !== base) {
         // Start dark; when at least 60% in view, wait 350 ms, then light each pane in turn (fading up over 400 ms).
         // Lit panes show bright while sweeping; a pane due for a refresh gathers its dust once the sweep has settled.
         for (const p of d.panes) shade(img.data, d.glass, d.ids, p.px, REST, 0.45);
@@ -141,6 +143,7 @@ export function MiniWindow({ base, lit, dusty, size = 64, label, motion = { kind
             if (busy) { ctx.putImageData(img, 0, 0); raf = requestAnimationFrame(step); return; }
             for (const id of order) { const p = byId.get(id); if (p) paint(p); }
             ctx.putImageData(img, 0, 0);
+            played.current = base;
           };
           raf = requestAnimationFrame(step);
         }, 350)); };
