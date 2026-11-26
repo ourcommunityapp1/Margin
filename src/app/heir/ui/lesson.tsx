@@ -28,8 +28,6 @@ import { partOf, partWindow, windowBase, windowLight } from './glass/light';
 type Kind = 'learn' | 'checkpoint' | 'review';
 interface Session { course?: string; card?: string; why?: Record<string, string>; kind: Kind; steps: Step[]; units: Unit[]; group: Group | null; memberId: string; label: string; courseId: string; before: { lit: number[]; dusty: boolean[] }; rise?: boolean; night?: boolean }
 
-const PRAISE = ['Correct.', 'That’s right.', 'Well done.'];
-
 interface Finished { right: number; total: number; minutes: number; ups: { itemId: string; from: number; to: number }[]; awards: string[]; kept: number }
 
 // The text before a part's lead-in: the verse or answer up to where the part being practiced starts.
@@ -64,6 +62,8 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
   const [results, setResults] = useState<Record<string, StepResult>>({});
   const [retried, setRetried] = useState<Set<string>>(new Set());
   const [feedback, setFeedback] = useState<Outcome | null>(null);
+  const fbRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (feedback) fbRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, [feedback]);
   const [finished, setFinished] = useState<Finished | null>(null);
   // The NASB text of the session's verse, fetched as the session starts so it's ready by the time it comes up.
   // Until then, or if it can't be fetched, the verse shows in the KJV that ships with the app.
@@ -234,6 +234,8 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
   const item = getItem(step.itemId)!;
 
   const report: Report = (o) => {
+    // Checking puts the phone keyboard away so the feedback has room.
+    (document.activeElement as HTMLElement | null)?.blur?.();
     const ms = Date.now() - startedAt.current;
     const key = step.id.replace(/:typed$/, '');
     // The welcome lesson's easy questions teach about the catechism, not the answer: not graded or repeated.
@@ -279,11 +281,11 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
   const retry = retried.has(step.id.replace(/:typed$/, '')) && queue.indexOf(step) !== pos;
   // A lock-in says so on every question; elsewhere, practice on earlier questions is marked Review.
   const tag = session.kind === 'checkpoint' ? `Lock it in · ${Math.min(pos + 1, queue.length)} of ${queue.length}` : step.review ? 'Review' : null;
-  // A pass with a slip is "Good", not "Well done": praise should match what happened.
-  const heading = feedback?.ok ? (feedback.slip ? 'Good.' : PRAISE[pos % PRAISE.length]) : feedback?.close ? 'Almost.' : 'Not quite.';
+  // One word for how it went (a slip's note still explains the slip).
+  const heading = feedback?.ok ? 'Correct!' : feedback?.close ? 'Almost' : 'Not quite';
 
   return (
-    <main className="hr-page bare hr-lesson-screen" data-feedback={feedback ? 'true' : undefined} style={{ paddingBottom: feedback ? 300 : undefined }}>
+    <main className="hr-page bare hr-lesson-screen" data-feedback={feedback ? 'true' : undefined}>
       <div className="hr-lesson-top">
         <Link href="/heir" className="hr-back" aria-label="End lesson">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
@@ -292,11 +294,10 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
           <span style={{ width: `${Math.round((pos / queue.length) * 100)}%` }} />
         </div>
       </div>
-      {session.label && <span className="hr-label" style={{ margin: '-4px 4px 0' }}>{session.label}</span>}
       {session.kind === 'checkpoint' && pos === 0 && !feedback && (
         <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.45 }}><strong>Lock it in.</strong> Each of {session.group ? groupLabel(session.group) : 'these'}, from memory. This is meant to be hard.</p>
       )}
-      <section key={`${step.id}-${pos}`} className="hr-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, pointerEvents: feedback ? 'none' : undefined }}>
+      <section key={`${step.id}-${pos}`} className="hr-card hr-open" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 18, pointerEvents: feedback ? 'none' : undefined }}>
         {step.kind === 'intro' ? (
           <Intro item={item} track={track} step={step} onNext={advance} />
         ) : step.kind === 'info' ? (
@@ -341,14 +342,17 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       </section>
       <div id="hr-dock" className="hr-dock" />
       {feedback && (
-        <div className="hr-sheet" data-ok={feedback.ok} role="status">
-          <div>
-            <h2>{heading}</h2>
+        <div className="hr-fb" data-ok={feedback.ok} role="status" ref={fbRef}>
+          <div className="hr-fb-details">
             {feedback.note && <p style={{ margin: 0, fontSize: 16, lineHeight: 1.45, fontWeight: 500 }}>{feedback.note}</p>}
             {feedback.reveal}
             {!feedback.ok && !retry && step.kind !== 'quiz' && <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>You’ll get another try at the end.</p>}
-            <button type="button" className="hr-btn" onClick={advance} autoFocus>Continue</button>
           </div>
+          <span className="hr-fb-pill" data-ok={feedback.ok}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{feedback.ok ? <path d="M5 12l5 5 9-10" /> : <path d="M12 6v7M12 18h.01" />}</svg>
+            {heading}
+          </span>
+          <button type="button" className="hr-btn hr-fb-go" data-ok={feedback.ok} onClick={advance} autoFocus>Continue</button>
         </div>
       )}
     </main>
