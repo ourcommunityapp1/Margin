@@ -15,13 +15,13 @@ import { RoundWindow } from './glass/round';
 import type { WindowHandle } from './glass/window';
 import { MiniWindow } from './glass/mini';
 import { partOf, partWindow, type PartWindow } from './glass/light';
-import { courseFor, courseItems, itemLabel, type Course } from '@/heir/content';
+import { courseFor, courseItems, getCollection, getItem, isVerse, itemLabel, type Course } from '@/heir/content';
 import { cardStates, extraSessions, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, type CardState, type DayCard, type DaySession } from '@/heir/dayplan';
 import { dueCards, localDay, memberProgress, waitingForSleep, type MemberProgress } from '@/heir/progress';
 import { recalledRecently } from '@/heir/memory';
-import { nightOffer, riseOffer, riskOrder } from '@/heir/planner';
-import type { Track } from '@/heir/types';
-import { DAWN, DUSK, photoFor } from '@/heir/photos';
+import { nightOffer, planNext, riseOffer, riskOrder } from '@/heir/planner';
+import type { Item, Track } from '@/heir/types';
+import { DAWN, DUSK, photoFor, type Photo } from '@/heir/photos';
 import { PhotoCircle } from './photo-circle';
 
 const arrow = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
@@ -123,89 +123,135 @@ export function TodayCards() {
   // The hero follows the time of day: "When you rise" at dawn, the next lesson or review by day, "When you lie down" at night.
   const first = rise ? null : todo[0] ?? null;
   const heroKind: 'rise' | 'card' | 'night' | 'done' = rise ? 'rise' : first ? 'card' : night ? 'night' : 'done';
-  const later = first ? todo.slice(1) : todo;  // in the morning the rise hero comes first and every card is a row
+  const later = first ? todo.slice(1) : todo; // in the morning the rise hero comes first and every card is a row
   const photoDay = localDay(now);
   const dawn = photoFor(DAWN, photoDay), dusk = photoFor(DUSK, photoDay, 7);
-  const cardLine = (s: Extract<Slide, { type: 'card' }>) => {
-    const mins = Math.max(1, s.state.card.est);
-    return s.state.card.kind === 'lesson' ? `Lesson ${(mine.courseLessons[s.course.id] ?? 0) + 1} · about ${mins} min` : `${s.state.card.kind === 'fix' ? 'Fix' : 'Review'} · about ${mins} min`;
+  // What a card is about, in a few words: "Psalm 23:4", "Q23", "Review · 5 questions".
+  const cardWhat = (s: Extract<Slide, { type: 'card' }>) => {
+    if (s.state.card.kind === 'lesson') return lessonWhat(s.course, mine, track, now);
+    const due = dueCards(mine, now, ids(s.course)).map((d) => getItem(d.itemId)).filter((i): i is Item => !!i);
+    const word = s.state.card.kind === 'fix' ? 'Fix' : 'Review';
+    return due.length ? `${word} · ${countOf(due)}` : word;
   };
-  const rowFor = (s: Extract<Slide, { type: 'card' }>) => (
-    <Link key={s.state.card.id} href={s.href} className="hr-b4-row">
-      <MiniWindow base={windowFor(s.course, s.state.card.kind, track, mine, now).base} lit={windowFor(s.course, s.state.card.kind, track, mine, now).lit} size={52} started label={`${s.course.title} window`} />
-      <span className="hr-b4-t"><b>{s.course.title}</b><span>{cardLine(s)}</span></span>
-      <span className="hr-b4-go" aria-hidden="true">{arrow}</span>
-    </Link>
-  );
-  const nightRow = night && heroKind !== 'night' ? (
-    <Link href="/heir/lesson?mode=night" className="hr-b4-row">
-      <img className="hr-b4-thumb" src={dusk.file} alt="" width={52} height={52} />
-      <span className="hr-b4-t"><b>When you lie down</b><span>A quiet recall · {recallMinutes(night.length)} min</span></span>
-      <span className="hr-b4-go" aria-hidden="true">{arrow}</span>
-    </Link>
-  ) : null;
-  const doneMin = (secs: number) => `${Math.max(1, Math.round(secs / 60))} min`;
-  const heroPhoto = heroKind === 'rise' ? dawn : dusk;
+  const tick = (on: boolean) => <span className="hr-b4-ok" data-on={on || undefined} aria-hidden="true" />;
+  const rowFor = (s: Extract<Slide, { type: 'card' }>) => {
+    const w = windowFor(s.course, s.state.card.kind, track, mine, now);
+    return (
+      <Link key={s.state.card.id} href={s.href} className="hr-b4-row">
+        <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={52} started label={`${s.course.title} window`} />
+        <span className="hr-b4-t"><b>{s.course.title}</b><span>{cardWhat(s)}</span></span>
+        {tick(false)}
+      </Link>
+    );
+  };
+  const photoThumb = (ph: Photo) => <span className="hr-b4-thumb" style={{ backgroundImage: `url(${ph.file})` }} aria-hidden="true" />;
+  const recallLine = (items: string[], whose: string) => `Recall ${whose} ${countOf(items.map(getItem).filter((i): i is Item => !!i))} · ${minutesWord(recallMinutes(items.length))}`;
+  const doneRows = finished.map((x) => {
+    const secs = x.type === 'extra' ? x.session.secs : x.state.secs;
+    const mins = `${Math.max(1, Math.round(secs / 60))} min`;
+    if (x.type === 'extra' && (x.session.kind === 'night' || x.session.kind === 'rise')) {
+      return (
+        <div key={x.session.id} className="hr-b4-row" data-done="true">
+          {photoThumb(x.session.kind === 'night' ? dusk : dawn)}
+          <span className="hr-b4-t"><b>{x.session.kind === 'night' ? 'When you lie down' : 'When you rise'}</b><span>{minutesWord(Math.max(1, Math.round(secs / 60)))}</span></span>
+          {tick(true)}
+        </div>
+      );
+    }
+    const w = windowFor(x.course, x.type === 'card' ? x.state.card.kind : 'extra', track, mine, now);
+    const word = x.type === 'card' ? (x.state.card.kind === 'lesson' ? null : x.state.card.kind === 'fix' ? 'Fix' : 'Review') : x.session.kind === 'lesson' ? null : x.tag;
+    return (
+      <div key={x.type === 'card' ? x.state.card.id : x.session.id} className="hr-b4-row" data-done="true">
+        <MiniWindow base={w.base} lit={w.lit} size={52} started label={`${x.course.title} window`} />
+        <span className="hr-b4-t"><b>{x.course.title}</b><span>{word ? `${word} · ${mins}` : `Lesson · ${mins}`}</span></span>
+        {tick(true)}
+      </div>
+    );
+  });
+  const mood = heroKind === 'rise' ? 'dawn' : heroKind === 'night' ? 'night' : 'day';
   return (
     <>
+      <div className="hr-b4-sky" data-mood={mood} aria-hidden="true" />
       {warning && <Link href="/heir/keep" className="hr-day-warn">{warning}</Link>}
-      <section className="hr-b4-hero" data-mood={heroKind === 'rise' ? 'dawn' : heroKind === 'night' ? 'night' : 'day'} aria-label="Next up">
-        {(heroKind === 'rise' || heroKind === 'night') && (
+      <section className="hr-b4-hero" aria-label="Next up">
+        {heroKind === 'rise' && rise && (
           <>
-            <PhotoCircle photo={heroPhoto} />
-            <h2 className="serif hr-b4-title">{heroKind === 'rise' ? 'When you rise' : 'When you lie down'}</h2>
-            <p className="hr-b4-sub">{heroKind === 'rise' ? `Recall last night’s · ${recallMinutes(rise!.length)} min` : `A quiet recall · ${recallMinutes(night!.length)} min`}</p>
-            <Link className="hr-glass-btn" href={heroKind === 'rise' ? '/heir/lesson?mode=rise' : '/heir/lesson?mode=night'}><span>Start</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
+            <PhotoCircle photo={dawn} mood="dawn" />
+            <h2 className="serif hr-b4-title">When you rise</h2>
+            <p className="hr-b4-sub">{recallLine(rise, 'last night’s')}</p>
+            <Link className="hr-b4-go" href="/heir/lesson?mode=rise">Start</Link>
+          </>
+        )}
+        {heroKind === 'night' && night && (
+          <>
+            <PhotoCircle photo={dusk} mood="night" />
+            <h2 className="serif hr-b4-title">When you lie down</h2>
+            <p className="hr-b4-sub">{recallLine(night, 'today’s')}</p>
+            <Link className="hr-b4-go" data-mood="night" href="/heir/lesson?mode=night">Start</Link>
           </>
         )}
         {heroKind === 'card' && first && (() => {
           const w = windowFor(first.course, first.state.card.kind, track, mine, now);
+          const what = cardWhat(first);
           return (
             <>
-              <CardWindow key={w.base} light={w} started={w.share > 0} size={220} hint={first.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${first.course.title} window`} />
+              <CardWindow key={w.base} light={w} started={w.share > 0} size={190} hint={first.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${first.course.title} window`} />
               <h2 className="serif hr-b4-title">{first.course.title}</h2>
-              <p className="hr-b4-sub">{cardLine(first)}</p>
-              <Link className="hr-glass-btn" href={first.href}><span>{first.button}</span><span className="hr-glass-btn-go" aria-hidden="true">{arrow}</span></Link>
+              <p className="hr-b4-sub">{what} · about {minutesWord(Math.max(1, first.state.card.est))}</p>
+              <Link className="hr-b4-go" href={first.href}>Start</Link>
             </>
           );
         })()}
         {heroKind === 'done' && (
           <>
-            <span className="hr-day-tick hr-b4-tick">{check}</span>
+            <span className="hr-b4-donetick" aria-hidden="true">{check}</span>
             <h2 className="serif hr-b4-title">{states.length ? 'Done for today' : 'Today'}</h2>
-            {states.length > 0 && <p className="hr-b4-sub">{minutes} min</p>}
-            {allDone && extraOffer && <Link href="/heir/lesson?mode=extra" className="hr-day-extra">Extra practice</Link>}
+            {states.length > 0 && <p className="hr-b4-sub">{minutesWord(minutes)}</p>}
+            {extraOffer && <Link href="/heir/lesson?mode=extra" className="hr-b4-go">Extra practice</Link>}
           </>
         )}
       </section>
-      {states.length > 0 && <div className="hr-day-line"><span><b>Today</b> · {states.length - left.length} of {states.length} done</span><span>{left.length ? `about ${left.reduce((n, x) => n + x.card.est, 0)} min left` : `${minutes} min`}</span></div>}
-      {later.length > 0 && <div className="hr-b4-list">{later.map(rowFor)}</div>}
-      {nightRow && <><div className="hr-b4-divider"><span>This evening</span></div><div className="hr-b4-list">{nightRow}</div></>}
-      {finished.length > 0 && (
-        <>
-          <div className="hr-b4-divider"><span>Done</span></div>
-          <div className="hr-b4-list" data-done="true">
-            {finished.map((x) => {
-              const w = windowFor(x.course, x.type === 'card' ? x.state.card.kind : 'extra', track, mine, now);
-              const secs = x.type === 'extra' ? x.session.secs : x.type === 'card' ? x.state.secs : 0;
-              const word = x.type === 'card' ? ({ lesson: 'Lesson', review: 'Review', fix: 'Fix' } as const)[x.state.card.kind] : x.tag;
-              const nightish = x.type === 'extra' && (x.session.kind === 'night' || x.session.kind === 'rise');
-              return (
-                <div key={x.type === 'card' ? x.state.card.id : x.session.id} className="hr-b4-row" data-done="true">
-                  {nightish ? <img className="hr-b4-thumb" src={(x.session.kind === 'night' ? dusk : dawn).file} alt="" width={52} height={52} />
-                    : <MiniWindow base={w.base} lit={w.lit} size={52} started label={`${x.course.title} window`} />}
-                  <span className="hr-b4-t"><b>{nightish ? x.tag : x.course.title}</b><span>{word} · {doneMin(secs)}</span></span>
-                  <span className="hr-day-tick hr-b4-ok">{check}</span>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+      <div className="hr-b4-list">
+        {later.map(rowFor)}
+        {night && heroKind !== 'night' && (
+          <>
+            <div className="hr-b4-divider">This evening</div>
+            <Link href="/heir/lesson?mode=night" className="hr-b4-row">
+              {photoThumb(dusk)}
+              <span className="hr-b4-t"><b>When you lie down</b><span>A quiet recall</span></span>
+              {tick(false)}
+            </Link>
+          </>
+        )}
+        {doneRows.length > 0 && <><div className="hr-b4-divider" data-done="true">Done</div>{doneRows}</>}
+      </div>
       {started.length > 1 && <KeepGoing started={started} track={track} mine={mine} now={now} />}
     </>
   );
 }
+
+const minutesWord = (n: number) => `${n} minute${n === 1 ? '' : 's'}`;
+
+// "2 verses", "5 questions", "1 part": what a list of items is, counted.
+function countOf(items: Item[]): string {
+  const n = items.length;
+  const noun = items.every(isVerse) ? 'verse' : items.every((i) => getCollection(i.collection)?.unit === 'Question') ? 'question' : 'part';
+  return `${n} ${noun}${n === 1 ? '' : 's'}`;
+}
+
+// What the next lesson teaches: "Psalm 23:4", "Q23", "Q23 and Q24", or "Lock it in" / "Practice".
+function lessonWhat(course: Course, p: MemberProgress, track: Track, now: Date): string {
+  const plan = planNext({ courseId: course.id, items: courseItems(course), track, p, now });
+  if (!plan) return 'Practice';
+  if (plan.kind === 'checkpoint') return 'Lock it in';
+  if (plan.kind === 'learn' || plan.kind === 'welcome') {
+    const seen = new Set<string>(); const labels: string[] = [];
+    for (const u of plan.units) if (!seen.has(u.itemId)) { seen.add(u.itemId); const i = getItem(u.itemId); if (i) labels.push(shortLabel(i)); }
+    return plan.kind === 'welcome' && !labels.length ? 'Welcome' : labels.slice(0, 2).join(' and ') || 'Lesson';
+  }
+  return 'Practice';
+}
+const shortLabel = (i: Item) => (isVerse(i) ? i.prompt : getCollection(i.collection)?.unit === 'Question' ? `Q${i.number}` : `Part ${i.number}`);
 
 // About half a minute a question, at least one minute.
 const recallMinutes = (n: number) => Math.max(1, Math.round(n * 0.5));

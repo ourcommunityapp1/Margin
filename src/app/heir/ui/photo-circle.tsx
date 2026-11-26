@@ -1,12 +1,11 @@
 import type { Photo } from '@/heir/photos';
 
-// A round photograph (a sunrise, or the night sky) for "When you rise" and "When you lie down". It drifts very slowly;
-// a still picture for people who ask for less motion (see heir.css).
-export function PhotoCircle({ photo, size = 200 }: { photo: Photo; size?: number }) {
+// A round photograph (a sunrise, or the night sky) for "When you rise" and "When you lie down", in a stone ring with a
+// soft halo. It drifts very slowly and its light breathes; still for people who ask for less motion (see heir.css).
+export function PhotoCircle({ photo, mood, size = 180 }: { photo: Photo; mood: 'dawn' | 'night'; size?: number }) {
   return (
-    <div className="hr-pc" style={{ width: size, height: size }} role="img" aria-label={photo.alt}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={photo.file} alt="" width={520} height={520} draggable={false} />
+    <div className="hr-pc" data-mood={mood} style={{ width: size, height: size }} role="img" aria-label={photo.alt}>
+      <span className="hr-pc-bg" style={{ backgroundImage: `url(${photo.file})` }} />
       <span className="hr-pc-glow" aria-hidden="true" />
     </div>
   );
