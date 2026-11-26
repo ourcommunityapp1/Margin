@@ -163,3 +163,7 @@ Mockup first, then build.
      text (typed, said, fill-in-the-blank and first-letters answers). Never what was typed.
   2. **Card events:** `heir_events`, one row per card per event (shown, started, finished with its seconds). A card
      that was shown but never finished was skipped.
+
+## To do: a weekly rhythm, light steps, and grace in feedback (requested 2026-11-26)
+
+Planned in **ADR-003** (`docs/memory/ADR-003-weekly-rhythm-and-grace.md`), with the guard rails it must not break. Not built yet.
