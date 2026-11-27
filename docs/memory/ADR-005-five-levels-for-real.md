@@ -21,25 +21,31 @@ What *does* read levels, and so what this change touches:
 
 One honest edge: the keeping rules (a separate feature from Today) clamp a review's due date using the level. The re-keying keeps those identical, and the before/after test checks it on real data.
 
-## 2. How every level is earned (the whole ladder)
+## 2. How every level is earned (revised after the owner's note)
 
-Stored `levels[itemId]`: 0 none, **1 Familiar, 2 Recalled, 3 Memorized, 4 Proficient, 5 Expert.** Levels never go down. Nothing a person does today changes; the rules below are the current ones, renumbered.
+Owner's direction: **Familiar is a very low bar; Proficient and Expert lean on typed-out (whole) answers and demand more accuracy.**
 
-"Unaided" means no hints and nothing to pick from. A **whole answer** is typing it or saying it. A **light step** is blanks, first letters, ordering, spotting, matching. Light steps count by weight: letters 0.9, blanks 0.75, next 0.6, order 0.5, spot 0.5, match 0.4; a whole answer is 1.0. The easy kinds (match, spot, order, next) must be right first time; a light day only counts if there was no light miss since (ADR-003 amendment). Grading and these weights are not changing.
+Stored `levels[itemId]`: 0 none, **1 Familiar, 2 Recalled, 3 Memorized, 4 Proficient, 5 Expert.** Levels never go down.
 
-| Level | Gem | You get it when | Evidence required |
+Terms: a **whole answer** is typing it or saying it, right, with no hints (the grading is already strict: one wrong word and it is not "right"). A **light step** is blanks, first letters, ordering, spotting, matching.
+
+**How light steps count (the ".5" and ".7")**: a whole answer is worth 1.0 of "proof you know it". A light step is worth a share of that, by how much it makes you produce: first letters 0.9, blanks 0.75, next word 0.6, putting phrases in order 0.5, spotting the wrong word 0.5, matching 0.4. A review's steps add up (never above 1.0). "0.5 or more" means a quick review earns Recalled/Memorized credit if its steps add to at least half a whole answer: first letters alone (0.9) does, blanks alone (0.75) does, ordering alone (0.5) just does, matching alone (0.4) does not. The easy kinds (matching, spotting, ordering, next word) must be right the *first* time; the harder ones (letters, blanks) allow a slip or two. A light day also only counts if no light step has been missed since.
+
+| Level | Gem | You get it when | Light steps count? |
 |---|---|---|---|
-| **1 Familiar** | Stone | Every part has been typed in full, right, no hints, at its lesson | Whole answer, once. (Today this is the "Recited" step with no stone.) |
-| **2 Recalled** | Bronze | You recall it on a **later day** than the lesson | A whole answer, or light steps adding to at least 0.5, on a day after the first |
-| **3 Memorized** | Silver | You recall it on **3 different days** (the lesson day counts), with variety | Each day counts as above. Variety = one later whole answer, or two or more kinds of light step across those days |
-| **4 Proficient** | Gold | You recall it after **3 weeks or more away** | A whole answer, or light steps adding to at least 0.7, in a session 21+ days after its previous session |
-| **5 Expert** | Diamond | Known six months with every full recall in that time right (at least two), one of them after **2 months away** | Whole answers only. Checked as of each session, so a later long gap never undoes it |
+| **1 Familiar** | Stone | You've been through its lesson (it counts as learned). No typing needed. | n/a, the lowest bar |
+| **2 Recalled** | Bronze | On a **later day** you recall it (and you typed it in full at its lesson, as today) | Yes, at 0.5 or more |
+| **3 Memorized** | Silver | You recall it on **3 different days** with variety (a later whole answer, or two or more kinds of light step) | Yes, at 0.5 or more |
+| **4 Proficient** | Gold | After **3 weeks or more away** you **type or say the whole thing, right, no hints** | **No. Whole answer only** (changed: was 0.7 light) |
+| **5 Expert** | Diamond | Known **6 months**; **every whole answer in those six months right** (at least **three** now, was two), including one after **2 months away** | **No. Whole answers only** |
 
-The old Sapphire (a year) and Diamond (three years) rules are retired. Anything that reached them is simply Expert, and nothing is lost.
+What changed from the first draft:
+- **Familiar** drops from "typed it in full" to "finished the lesson". Words *in memory*, Growing, and the keeping rules still start at Recalled, so those totals do not move.
+- **Proficient** no longer accepts light recall: a typed or spoken answer after three weeks is the test of fluent and reliable.
+- **Expert** asks for three whole answers in six months (was two) and still one after two months away. Sapphire and Diamond are retired; anyone there is simply Expert.
+- **Recalled and Memorized** stay as they are today (light allowed), so the Today review engine and the 7-minute day still produce them in the normal rhythm.
 
-Why this suits "Expert: recall it effortlessly and accurately, even after extended periods without practice": two months away and still right is the "extended period", six months of right recalls is the "effortlessly and accurately". Owner may choose the three-year rule instead, but nobody could reach it for years and the top gem would sit empty for everyone.
-
-Fluency ("Proficient: fluently and reliably") is carried by the 3-week gap with 0.7 evidence, which a lucky easy match cannot reach alone.
+Effect on pace: Proficient and Expert are earned by the *whole-answer* check-ins the plan already schedules (the lesson's "Lock it in", and the typed recall inside a review when a verse is under 75%). Reviews at 75% and above are light by design (ADR-003), so a well-known verse reaches Proficient at the next scheduled whole-answer check after 3 weeks. If you want those check-ins to come up for items near Proficient, that is a Today-engine change and is **not** part of this plan; I would raise it separately.
 
 ## 3. Migration of saved data
 
