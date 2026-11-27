@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { courseItems, courses, getItem, itemNoun } from '@/heir/content';
-import { LEVELS } from '@/heir/levels';
+import { TIERS } from '@/heir/tiers';
 import { windowBase } from '@/app/heir/ui/glass/light';
 import { JsonLd, SiteFooter, SiteHeader } from '../shell';
 
@@ -25,7 +25,7 @@ const FAQ: { q: string; a: string }[] = [
   { q: 'How does Katekize help me memorize?', a: 'Every question or verse is broken into short phrases. You rebuild them in order, fill in missing words, then type or say the whole thing with the words hidden. Reviews come back when you are close to forgetting, and a unit is locked in after a night’s sleep, with all of its questions recalled together from memory.' },
   { q: 'What can I memorize with Katekize?', a: 'The Westminster Shorter Catechism (107 questions), the Westminster Larger Catechism (being added), the Apostles’ Creed and the Nicene Creed, Psalm 23, the Lord’s Prayer, the Shema and the priestly blessing, the Ten Commandments, and sets of verses on the gospel, who God is, and fear and peace, plus seasonal courses for Christmas and Easter.' },
   { q: 'Can my whole family use it?', a: 'Yes. Everyone gets their own pace and progress, and the child track uses shorter pieces. Each person can have a separate account. Accounts can be linked so one person can see the other’s progress, view only: nobody can change or delete another person’s progress.' },
-  { q: 'How do I know something is really memorized?', a: 'A verse or answer earns a stone only when you recall all of it from memory, with no hints, after time away: first a night’s sleep, then weeks, then months, and at the top a year or more. Practicing more keeps it fresh, but never earns a stone by itself.' },
+  { q: 'How do I know something is really memorized?', a: 'A verse or answer moves up a level only when you recall it from memory, with no hints, after time away: first a night’s sleep, then days, then weeks and months. Practicing more keeps it fresh, but never moves it up by itself.' },
   { q: 'Which Bible translation does it use?', a: 'Scripture in the app is the New American Standard Bible (NASB), used by permission of The Lockman Foundation. The Westminster Catechisms and the creeds are in the public domain.' },
   { q: 'Do I need to install anything?', a: 'No. Katekize runs in your phone’s browser. Open it, then add it to your Home Screen to use it like an app. Sign in with a code sent to your email and your progress is kept on every phone you use.' },
 ];
@@ -75,7 +75,7 @@ export default function Home() {
             <ol className="kz-steps">
               <li><h3>Learn in small pieces</h3><p>Each question or verse is split into short phrases. You rebuild them in order, fill in the missing words, then type or say them with the words hidden.</p></li>
               <li><h3>Recall after time away</h3><p>Reviews come back when you are close to forgetting, which is when recalling helps most. A unit is locked in after a night’s sleep, with every question recalled together from memory.</p></li>
-              <li><h3>Keep it for life</h3><p>Each question earns stones as you recall it with no hints after a night, then weeks, then months, and finally a year or more away.</p></li>
+              <li><h3>Keep it for life</h3><p>Each question climbs from Familiar to Expert as you recall it with no hints after a night, then days, then weeks and months away.</p></li>
             </ol>
           </section>
 
@@ -123,14 +123,13 @@ export default function Home() {
           </section>
 
           <section className="kz-sec" aria-labelledby="stones-h">
-            <h2 id="stones-h">Six stones, from remembered to lifelong</h2>
-            <p className="kz-intro">Every stone is earned the way memory research measures it: the whole thing recalled with no hints, after time away. The longer the time away, the higher the stone.</p>
+            <h2 id="stones-h">Five levels, from familiar to expert</h2>
+            <p className="kz-intro">Each verse or answer climbs the same five levels, measured the way memory research measures it: recalled from memory, with no hints, after time away. The longer the time away, the higher the level.</p>
             <ul className="kz-stones">
-              {LEVELS.map((l) => (
-                <li key={l.id} className="kz-stone">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/heir/stones/${l.id}.jpg`} width={56} height={56} alt={`${l.name}, the stone for ${l.counts.toLowerCase()}`} loading="lazy" />
-                  <div><b>{l.name} <span>· {l.counts}</span></b><p>{l.means}</p></div>
+              {TIERS.map((t) => (
+                <li key={t.id} className="kz-stone">
+                  <span aria-hidden="true" style={{ width: 56, height: 56, borderRadius: 16, flex: 'none', background: `linear-gradient(150deg, ${t.color}, ${t.edge})` }} />
+                  <div><b>{t.stone} <span>· {t.name}</span></b><p>{t.means}</p></div>
                 </li>
               ))}
             </ul>

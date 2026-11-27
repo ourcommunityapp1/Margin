@@ -10,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import { courseItems, courseParts, courseFor, getCollection, getCourse, itemNoun, type Course } from '@/heir/content';
 import { activeMember, setPlan } from '@/heir/household';
 import { groupsOf, unitsFor } from '@/heir/lesson';
-import { levelInfo, needsRefresh, recited } from '@/heir/levels';
+import { needsRefresh, recited } from '@/heir/levels';
+import { tierOf } from '@/heir/tiers';
 import { courseStats } from '@/heir/path';
 import { project } from '@/heir/planner';
 import { emptyProgress, memberProgress, type MemberProgress } from '@/heir/progress';
@@ -165,12 +166,12 @@ export function CourseScreen({ id }: { id: string }) {
                       const itemLearned = unitsFor(item, track).every((u) => learnedUnits.has(u.key));
                       const level = mine.levels[item.id] ?? 0;
                       const dim = needsRefresh(mine, item.id, now);
-                      const status = dim ? 'Needs a refresh' : level ? levelInfo(level)!.name : recited(item, track, mine.log) ? 'Recited' : itemLearned ? 'Practiced' : null;
+                      const status = dim ? 'Needs a refresh' : level ? tierOf(level)!.name : recited(item, track, mine.log) || itemLearned ? 'Familiar' : null;
                       const unit = getCollection(item.collection)?.unit;
                       return (
                         <li key={item.id}>
                           <Link className="hr-lesson" href={`/heir/item/${item.id}`} style={{ alignItems: 'flex-start', padding: '10px 4px' }}>
-                            <Stone level={level} size={30} dim={dim} />
+                            <Stone level={level} size={30} dim={dim} started={itemLearned} />
                             <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
                               <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{unit === 'Question' ? `Q${item.number} · ${item.prompt}` : unit === 'Verse' || unit === 'Commandment' ? item.prompt : `${item.number} · ${item.prompt}`}</span>
                               <span className="serif" style={{ fontSize: 16, lineHeight: 1.4, color: 'var(--muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{item.text}</span>

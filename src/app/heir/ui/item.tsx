@@ -8,7 +8,8 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
-import { STAGES, levelInfo, needsRefresh, nextStep, recited } from '@/heir/levels';
+import { needsRefresh, nextStep, recited } from '@/heir/levels';
+import { tierOf } from '@/heir/tiers';
 import { Explain } from './explain';
 import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
@@ -54,9 +55,9 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--well)', borderRadius: 16, padding: 12 }}>
               <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <Stone level={level} size={44} dim={dim} />
+                  <Stone level={level} size={44} dim={dim} started />
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontWeight: 600 }}>{level ? `${levelInfo(level)!.name} · ${levelInfo(level)!.counts}` : recited(item, me?.track ?? 'adult', mine.log) ? STAGES[0].name : 'Practiced'}</span>
+                    <span style={{ fontWeight: 600 }}>{level ? `${tierOf(level)!.stone} · ${tierOf(level)!.name}` : 'Stone · Familiar'}</span>
                     {dim && <span style={{ fontSize: 14, color: 'var(--miss)' }}>Due for a refresh</span>}
                     {strong && !dim && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span>}
                   </span>

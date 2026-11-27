@@ -1,17 +1,17 @@
 'use client';
 
 // Progress, as one scroll: a row of rings, the words in your memory (an arc over your window) and how they have grown,
-// the days kept, the stones, the window of every course you've begun (tap one to see it up close), and awards.
+// the five levels, and the window of every course you've begun (tap one to see it up close).
+// Hidden for now (see ADR-004): how a word gets into memory, keeping rows, days kept, the month calendar, understanding, awards.
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useHeir } from '../ui/provider';
 import { useKeep } from '../ui/keep';
 import { Tabs } from '../ui/tabs';
-import { DaysKept } from '../ui/days-kept';
 import { Stone } from '../ui/stone';
 import Link from 'next/link';
-import { allItems, courseItems, courses, isVerse, itemLabel } from '@/heir/content';
+import { allItems, courseItems, courses, isVerse } from '@/heir/content';
 import { unitsFor } from '@/heir/lesson';
 import { DEFAULT_GOAL } from '@/heir/planner';
 import { courseSummary } from '../ui/course-list';
@@ -19,19 +19,15 @@ import { MiniWindow } from '../ui/glass/mini';
 import { RoundWindow } from '../ui/glass/round';
 import type { PartWindow } from '../ui/glass/light';
 import { activeMember } from '@/heir/household';
-import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, recited, understanding } from '@/heir/levels';
+import { bestDaysKept, daysKept, recited } from '@/heir/levels';
+import { TIERS, tierIndex } from '@/heir/tiers';
 import { MILESTONES, milestones, wordsIn } from '@/heir/measures';
 import { wordsHistory, type WordsPoint } from '@/heir/memory-history';
 import { weekSummary } from '@/heir/week';
 import { localDay, memberProgress } from '@/heir/progress';
 
-// Recited (no stone yet) in warm glass, then each stone's own colour.
-const STAGE_COLORS = ['#C9A46A', '#7B52B5', '#D99A2B', '#B0442A', '#1E8657', '#2F5DA8', '#BFC6CC'];
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
 export default function Progress() {
-  const { ready, household, progress, now, labs } = useHeir();
+  const { ready, household, progress, now } = useHeir();
   const keep = useKeep();
   const router = useRouter();
   const [open, setOpen] = useState<string | null>(null);
@@ -53,40 +49,20 @@ export default function Progress() {
   const today = localDay(now);
   const kept = daysKept(mine.days, today);
   const best = Math.max(kept, bestDaysKept(mine.days));
-  // Each stone keeps the ones below it: an item at Topaz also counts toward Amethyst. So counts fall as you climb.
+  // How many questions and verses sit at each of the five levels right now (their highest).
   const levelOf = (id: string) => mine.levels[id] ?? 0;
   const recitedCount = items.filter((i) => levelOf(i.id) > 0 || recited(i, me.track, mine.log)).length;
-  const holding = LEVELS.map((l) => items.filter((i) => levelOf(i.id) >= l.n).length);
-  // Understanding, counted over items that have meaning notes: how many at each step or beyond.
-  const withNotes = items.filter((i) => i.meaning.length);
-  const grasp = UNDERSTANDING.map((u) => withNotes.filter((i) => understanding(i, mine) >= u.n).length);
+  const tierCounts = TIERS.map(() => 0);
+  for (const i of items) { if (levelOf(i.id) > 0) tierCounts[tierIndex(levelOf(i.id))]++; else if (recited(i, me.track, mine.log)) tierCounts[0]++; }
   // Every course with anything learned, the one in progress first: its window lit as far as you've come.
   const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const yours = courses
     .map((c) => ({ c, s: courseSummary(c, me.track, mine, minutes, now), stones: courseItems(c).filter((i) => (mine.levels[i.id] ?? 0) > 0).length }))
     .filter((x) => x.s.started)
     .sort((a, b) => Number(b.c.id === household.plan?.course) - Number(a.c.id === household.plan?.course));
-  const hints = items
-    .filter((i) => (mine.levels[i.id] ?? 0) > 0 && !needsRefresh(mine, i.id, now))
-    .sort((a, b) => (mine.levels[a.id] ?? 0) - (mine.levels[b.id] ?? 0))
-    .slice(0, 2)
-    .map((i) => `${itemLabel(i)}: ${nextStep(i, me.track, mine, now)}`);
 
-  // This month, Monday first.
-  const first = new Date(now.getFullYear(), now.getMonth(), 1);
-  const blanks = (first.getDay() + 6) % 7;
-  const daysIn = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const kept_ = new Set(mine.days);
-  const cells = Array.from({ length: daysIn }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth(), i + 1);
-    const key = localDay(d);
-    const state = kept_.has(key) ? 'kept' : key === today ? 'today' : key > today ? 'later' : d.getDay() === 0 ? 'rest' : 'missed';
-    return { key, n: i + 1, state };
-  });
-  const earned = AWARDS.filter((a) => mine.awards[a.id]).length;
   const fmt = (n: number) => n.toLocaleString('en-US');
 
-  const nextAward = AWARDS.find((a) => !mine.awards[a.id]);
   const viewing = yours.find((y) => y.c.id === open);
   const wash = yours[0]?.s.window.base ?? null;
   const week = weekSummary(mine, now);
@@ -102,14 +78,6 @@ export default function Progress() {
     minutes: Math.round(mine.log.filter((e) => Date.parse(e.at) > sinceWeek).reduce((n, e) => n + Math.min(e.ms, 120_000), 0) / 60_000),
     goalMinutes: (household.plan?.minutes ?? DEFAULT_GOAL) * 6,
   };
-  // One plain sentence for where you stand, and one line of what to do.
-  const toNext = miles.next ? miles.next - inMemory : 0;
-  const say = keep && keep.tryAgain.length > 0 ? 'A few to bring back' : keep && keep.review.length > 0 ? 'Keep them strong' : inMemory === 0 ? 'Your first words are coming' : miles.next ? 'Steady does it' : 'Every milestone reached';
-  const guide = inMemory === 0 ? 'Recall a verse or answer on a later day and it counts here.'
-    : keep && keep.tryAgain.length > 0 ? `${keep.tryAgain.length} ${keep.tryAgain.length === 1 ? 'needs' : 'need'} another go today to stay in your count.`
-    : keep && keep.review.length > 0 ? `Review ${keep.review.length} soon to keep ${keep.review.length === 1 ? 'it' : 'them'} in your count.`
-    : miles.next ? `Next milestone: ${fmt(miles.next)} words. You’re ${fmt(toNext)} ${toNext === 1 ? 'word' : 'words'} away.` : 'Every word you’ve learned is holding.';
-
   return (
     <>
       <main className="hr-page">
@@ -127,8 +95,6 @@ export default function Progress() {
           <Gauge frac={miles.next ? (inMemory - prevMile) / (miles.next - prevMile) : 1} left={miles.next ? fmt(prevMile) : undefined} right={miles.next ? fmt(miles.next) : undefined} />
           <span className="serif hr-pg-num">{fmt(inMemory)}</span>
           <span className="hr-pg-kicker">Words in your memory</span>
-          <span className="serif hr-pg-say">{say}</span>
-          <p className="hr-pg-line">{guide}</p>
           {keep && keep.review.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Review {keep.review.length} soon</Link>
             : keep && keep.out.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Bring {keep.out.length} back</Link> : null}
         </section>
@@ -150,69 +116,26 @@ export default function Progress() {
           </section>
         )}
 
-        <details className="hr-card hr-pg-how">
-          <summary>How a word gets into your memory</summary>
-          <p style={{ margin: '10px 0 0', fontSize: 14, lineHeight: 1.5, color: 'var(--muted)' }}>{keep ? 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it, and stays there as long as you recall it again in time.' : 'A word is in your memory once you’ve recalled it with no hints on a later day than you first recited it.'}{words.recited > words.inMemory ? ` ${fmt(words.recited - words.inMemory)} more are recited, not yet recalled on a later day.` : ''}</p>
-        </details>
-
-        {keep && (keep.tryAgain.length > 0 || keep.review.length > 0 || keep.out.length > 0) && (
-          <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 15 }} aria-label="Keeping your words">
-            {keep.tryAgain.length > 0 && <span style={{ display: 'flex', justifyContent: 'space-between' }}><span>Try again today</span><b>{keep.tryAgain.length} {keep.tryAgain.length === 1 ? 'verse or answer' : 'verses and answers'}</b></span>}
-            {keep.review.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'inherit', textDecoration: 'none' }}><span>Review soon</span><b>{fmt(keep.review.reduce((n, h) => n + h.words, 0))} words ›</b></Link>}
-            {keep.out.length > 0 && <Link href="/heir/keep" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)', textDecoration: 'none' }}><span>Out of memory · one recall brings back</span><b>{keep.out.length} ›</b></Link>}
-          </section>
-        )}
-
-        <DaysKept days={mine.days} today={localDay(now)} now={now} dueCount={0} />
-
-        <details className="hr-card hr-pg-how" aria-label="Days kept this month">
-          <summary>{MONTHS[now.getMonth()]}, day by day{best ? ` · best ${best}` : ''}</summary>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 6, textAlign: 'center', marginTop: 12 }}>
-            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i} style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)' }}>{d}</span>)}
-            {Array.from({ length: blanks }, (_, i) => <span key={`b${i}`} />)}
-            {cells.map((c) => <span key={c.key} className="hr-cal" data-state={c.state}>{c.n}</span>)}
-          </div>
-          <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--muted)', lineHeight: 1.45 }}>A day is kept by finishing a lesson or review. Sundays are days of rest, and each week has one more free day: learning on them counts, and skipping one never breaks the run.</p>
-        </details>
-
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Stones">
+        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Levels">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span className="hr-label">Stones</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>All courses · {recitedCount} recited</span>
+            <span className="hr-label">Levels</span>
+            <span style={{ fontSize: 13, color: 'var(--muted)' }}>All courses · {recitedCount} started</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[{ n: 0, name: STAGES[0].name, word: 'No stone yet', count: recitedCount, color: STAGE_COLORS[0] },
-              ...LEVELS.map((l, i) => ({ n: l.n, name: l.name, word: l.counts, count: holding[i], color: STAGE_COLORS[l.n] }))].map((r) => (
-              <div key={r.name} className="hr-stone-row">
-                <Stone level={r.n} size={36} dim={r.n > 0 && r.count === 0} />
+            {TIERS.map((t, k) => (
+              <div key={t.id} className="hr-stone-row">
+                <Stone level={t.n} size={36} started dim={tierCounts[k] === 0} />
                 <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                  <span style={{ fontWeight: 600, fontSize: 15 }}>{r.name}</span>
-                  <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{r.word}</span>
+                  <span style={{ fontWeight: 600, fontSize: 15 }}>{t.name}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t.stone}</span>
                 </span>
-                <span className="hr-ladder-bar"><span style={{ width: `${recitedCount ? (r.count / recitedCount) * 100 : 0}%`, background: r.color }} /></span>
-                <span className="hr-ladder-n" style={{ fontSize: 15 }}>{r.count}</span>
+                <span className="hr-ladder-bar"><span style={{ width: `${recitedCount ? (tierCounts[k] / recitedCount) * 100 : 0}%`, background: t.color }} /></span>
+                <span className="hr-ladder-n" style={{ fontSize: 15 }}>{tierCounts[k]}</span>
               </div>
             ))}
           </div>
-          {hints.length > 0 && <p style={{ margin: 0, background: 'var(--well)', borderRadius: 14, padding: '12px 14px', fontSize: 14, lineHeight: 1.45 }}><strong>Closest next:</strong> {hints.join('. ')}.</p>}
-          <Link href="/heir/how" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>How to earn each stone</Link>
+          <Link href="/heir/how" style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>What the levels mean</Link>
         </section>
-
-        {labs && <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Understanding">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span className="hr-label">Understanding</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>Separate from memory</span>
-          </div>
-          <div className="hr-ladder">
-            {UNDERSTANDING.map((u, i) => (
-              <div key={u.name} className="hr-ladder-row">
-                <span className="hr-ladder-name">{u.name}</span>
-                <span className="hr-ladder-bar"><span style={{ width: `${withNotes.length ? (grasp[i] / withNotes.length) * 100 : 0}%`, background: 'var(--good)', opacity: 0.55 + i * 0.2 }} /></span>
-                <span className="hr-ladder-n">{grasp[i]}</span>
-              </div>
-            ))}
-          </div>
-        </section>}
 
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Your windows">
           <span className="hr-label">Your windows</span>
@@ -228,31 +151,6 @@ export default function Progress() {
           </div>
         </section>
 
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }} aria-label="Awards">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-            <span className="hr-label">Awards</span>
-            <span style={{ fontSize: 13, color: 'var(--muted)' }}>{earned} of {AWARDS.length}</span>
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {AWARDS.filter((a) => mine.awards[a.id]).map((a) => <span key={a.id} className="hr-seal big" title={a.name} role="img" aria-label={a.name}><Star /></span>)}
-            {nextAward && <span className="hr-seal big next" role="img" aria-label={`Next: ${nextAward.name}`}><Star /></span>}
-          </div>
-          {nextAward && <span style={{ fontSize: 14 }}><b>Next: {nextAward.name}</b> <span style={{ color: 'var(--muted)' }}>· {nextAward.hint}</span></span>}
-          <details className="hr-awards-all">
-            <summary>See all awards</summary>
-            <ul>
-              {AWARDS.map((a) => {
-                const when = mine.awards[a.id];
-                return (
-                  <li key={a.id} data-earned={!!when}>
-                    <span style={{ fontWeight: 600 }}>{a.name}</span>
-                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{when ? new Date(when).toLocaleDateString(undefined, { day: 'numeric', month: 'long' }) : a.hint}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </details>
-        </section>
       </main>
       {viewing ? <WindowView title={viewing.c.title} part={viewing.s.window.count > 1 ? `Part ${viewing.s.window.index + 1} · ${viewing.s.window.title}` : null}
         learned={viewing.s.learned >= viewing.s.total ? 'Finished' : `${viewing.s.learned} of ${viewing.s.total} learned`}
@@ -321,7 +219,6 @@ function StepChart({ pts }: { pts: WordsPoint[] }) {
   );
 }
 
-const Star = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z" /></svg>;
 
 // A course's window up close: full screen, with a way back and a quiet way into the course.
 function WindowView({ title, part, learned, window: w, href, onClose }: { title: string; part: string | null; learned: string; window: PartWindow; href: string; onClose(): void }) {

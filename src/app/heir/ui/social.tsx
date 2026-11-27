@@ -14,7 +14,8 @@ import {
   deleteProfile, unfriend, usernameFree, viewPerson, type FriendRow, type MyProfile, type Person, type RequestRow,
 } from './cloud';
 import { courseFor } from '@/heir/content';
-import { LEVELS } from '@/heir/levels';
+import { TIERS } from '@/heir/tiers';
+import { Stone } from './stone';
 import { friendsCount, place, sinceLabel, streakLine, usernameProblem } from '@/heir/social';
 import { localDay } from '@/heir/progress';
 
@@ -453,15 +454,18 @@ export function PersonScreen({ name }: { name: string }) {
                 </section>
                 <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Stones">
                   <span className="hr-label">Stones</span>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, textAlign: 'center' }}>
-                    {LEVELS.map((l, i) => (
-                      <div key={l.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: (p.stones?.[i] ?? 0) > 0 ? 1 : 0.4 }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={`/heir/stones/${l.id}.jpg`} alt="" width={40} height={40} style={{ borderRadius: 20, objectFit: 'cover', filter: (p.stones?.[i] ?? 0) > 0 ? 'none' : 'grayscale(1)' }} />
-                        <b style={{ fontVariantNumeric: 'tabular-nums' }}>{p.stones?.[i] ?? 0}</b>
-                        <span style={{ fontSize: 11, color: 'var(--muted)' }}>{l.counts}</span>
-                      </div>
-                    ))}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, textAlign: 'center' }}>
+                    {TIERS.slice(1).map((t) => {
+                      const st = p.stones ?? [];
+                      const n = t.n === 4 ? (st[3] ?? 0) + (st[4] ?? 0) + (st[5] ?? 0) : (st[t.n - 1] ?? 0);
+                      return (
+                        <div key={t.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: n > 0 ? 1 : 0.4 }}>
+                          <Stone level={t.n} size={36} />
+                          <b style={{ fontVariantNumeric: 'tabular-nums' }}>{n}</b>
+                          <span style={{ fontSize: 11, color: 'var(--muted)' }}>{t.name}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </section>
                 {(p.courses ?? []).length > 0 && (

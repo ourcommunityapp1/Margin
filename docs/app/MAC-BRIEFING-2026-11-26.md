@@ -117,3 +117,7 @@ A question practised today shows "Practised today" under its number (course list
 - **Course page:** four boxes: "% of the course done", learned of total, in memory, average strength.
 
 **Today wording (Nov 27):** when the day's cards are done but "When you lie down" is still to come, the big card says **"Done for now"** with "7 minutes · one light recall tonight"; it says "Done for today" only when the evening recall is done too (or there is none).
+
+## Update 2026-11-27: five levels and a simpler Progress tab
+
+See `docs/memory/ADR-004-five-levels-and-simpler-progress.md`. Display-only: Familiar (Stone), Recalled (Bronze), Memorized (Silver), Proficient (Gold), Expert (Diamond); engine levels 4–6 all show as Expert. Progress hides: how-a-word-gets-in fold, keeping rows, days-kept card, month calendar, Understanding, Awards, "Closest next"; the arc card loses its two sentences. Finish screen announces only new tiers. Mirror `src/heir/tiers.ts`; no engine/fixture change.

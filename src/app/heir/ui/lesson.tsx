@@ -17,7 +17,8 @@ import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, waitingForSleep, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
-import { AWARDS, daysKept, levelInfo, settle } from '@/heir/levels';
+import { AWARDS, daysKept, settle } from '@/heir/levels';
+import { tierIndex, tierOf } from '@/heir/tiers';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { startedCourses, withSession, withStarted } from '@/heir/dayplan';
@@ -383,9 +384,11 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
   const item = first ? getItem(first.itemId) : null;
   const partial = first && first.part < first.of;
   const label = session.group ? groupLabel(session.group) : '';
-  const top = finished.ups[0];
+  // Only a move to a new tier is news: Emerald, Sapphire and Diamond all show as Expert.
+  const tierUps = finished.ups.filter((u) => tierIndex(u.to) > tierIndex(u.from));
+  const top = tierUps[0];
   const topItem = top ? getItem(top.itemId) : null;
-  const topLevel = top ? levelInfo(top.to) : null;
+  const topLevel = top ? tierOf(top.to) : null;
   const kind = session.label === 'Welcome' ? 'Welcome lesson complete' : session.label ? `${session.label} complete` : 'Lesson complete';
   const message =
     session.kind === 'checkpoint' ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
@@ -423,7 +426,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
           <span className="hr-label">{kind}</span>
           <span className="hr-halo"><Stone level={top.to} size={112} /></span>
           <h1 className="serif" style={{ margin: '4px 0 0', fontSize: 28, lineHeight: 1.18, fontWeight: 600 }}>{itemLabel(topItem)} reached {topLevel.name}</h1>
-          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--muted)' }}>{topLevel.rule}.{topLevel.counts ? ` Now: ${topLevel.counts}.` : ''}</p>
+          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: 'var(--muted)' }}>{topLevel.stone} · {topLevel.means}</p>
         </section>
       ) : (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -442,14 +445,14 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
         </section>
       )}
 
-      {(finished.ups.length > (session.kind === 'checkpoint' ? 0 : 1) || awardNames.length > 0) && (
+      {(tierUps.length > (session.kind === 'checkpoint' ? 0 : 1) || awardNames.length > 0) && (
         <section className="hr-card" style={{ padding: '6px 20px' }}>
-          {finished.ups.slice(session.kind === 'checkpoint' ? 0 : 1).map((u) => {
-            const it = getItem(u.itemId); const lv = levelInfo(u.to);
+          {tierUps.slice(session.kind === 'checkpoint' ? 0 : 1).map((u) => {
+            const it = getItem(u.itemId); const lv = tierOf(u.to);
             return it && lv ? (
               <div key={u.itemId} className="hr-row" style={{ justifyContent: 'flex-start', gap: 12 }}>
                 <Stone level={u.to} size={30} />
-                <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>{itemLabel(it)} · {lv.name}</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>{lv.rule}</span></span>
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>{itemLabel(it)} · {lv.name}</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>{lv.means}</span></span>
               </div>
             ) : null;
           })}

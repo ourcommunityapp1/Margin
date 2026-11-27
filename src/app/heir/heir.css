@@ -1307,3 +1307,16 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
 .hr-cstats[data-four] { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 .hr-cstats[data-four] b { font-size: 21px; }
 .hr-cstats[data-four] span { font-size: 11px; }
+
+/* Gems: the five levels (Stone, Bronze, Silver, Gold, Diamond) */
+.hr-stone.gem {
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0) 46%),
+    linear-gradient(150deg, var(--gem), var(--gem-edge));
+}
+.hr-stone.gem[data-tier='diamond'] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0 18%, rgba(255, 255, 255, 0) 18% 100%),
+    linear-gradient(225deg, rgba(255, 255, 255, 0.35) 0 22%, rgba(255, 255, 255, 0) 22% 100%),
+    linear-gradient(150deg, var(--gem), var(--gem-edge));
+}

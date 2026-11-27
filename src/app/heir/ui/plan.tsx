@@ -14,7 +14,7 @@ import { courseStats } from '@/heir/path';
 import { memberProgress } from '@/heir/progress';
 import { setPlan } from '@/heir/household';
 import { GRADES } from '@/heir/progress';
-import { LEVELS } from '@/heir/levels';
+import { TIERS } from '@/heir/tiers';
 import { AllCourses, GoalChoices, LongTermNote } from './goal';
 import { Stone } from './stone';
 
@@ -46,13 +46,13 @@ export function PlanScreen({ setup }: { setup: boolean }) {
         </section>
       )}
       <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <h2 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>What the stones mean</h2>
-        {LEVELS.filter((l) => l.means).map((l) => (
-          <div key={l.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            <Stone level={l.n} size={30} />
+        <h2 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>What the levels mean</h2>
+        {TIERS.map((t) => (
+          <div key={t.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+            <Stone level={t.n} size={30} started />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontWeight: 600 }}>{l.counts} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· {l.name}</span></span>
-              <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{l.means}</span>
+              <span style={{ fontWeight: 600 }}>{t.name} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· {t.stone}</span></span>
+              <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{t.means}</span>
             </span>
           </div>
         ))}

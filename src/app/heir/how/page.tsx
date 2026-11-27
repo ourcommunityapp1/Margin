@@ -4,7 +4,7 @@
 
 import { Back, Tabs } from '../ui/tabs';
 import { Stone } from '../ui/stone';
-import { LEVELS, STAGES } from '@/heir/levels';
+import { TIERS } from '@/heir/tiers';
 import { GRADES } from '@/heir/progress';
 
 export default function HowPage() {
@@ -14,15 +14,14 @@ export default function HowPage() {
         <div style={{ marginTop: 8 }}><Back href="/heir/you" /></div>
         <h1 className="serif" style={{ margin: '0 4px', fontSize: 32, fontWeight: 500 }}>How it works</h1>
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h2 className="serif" style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>The stones</h2>
-          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--muted)' }}>Each question or verse climbs a ladder of memory. It starts {STAGES[0].name.toLowerCase()}: {STAGES[0].means.charAt(0).toLowerCase() + STAGES[0].means.slice(1)} Every stone after that is earned the way memory research measures it: the whole thing recalled with no hints, after time away. Extra practice keeps it fresh, but doesn’t earn a stone by itself.</p>
-          {LEVELS.map((l) => (
-            <div key={l.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <Stone level={l.n} size={34} />
+          <h2 className="serif" style={{ margin: 0, fontSize: 22, fontWeight: 600 }}>The five levels</h2>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, color: 'var(--muted)' }}>Each question or verse climbs five levels. Recalling it from memory, with no hints, on different days and after time away is what moves it up. Extra practice keeps it fresh, but doesn’t move it up by itself.</p>
+          {TIERS.map((t) => (
+            <div key={t.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <Stone level={t.n} size={34} started />
               <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontWeight: 600 }}>{l.name} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· {l.counts}</span></span>
-                <span style={{ fontSize: 15, lineHeight: 1.45 }}>{l.means}</span>
-                <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--muted)' }}>{l.rule}.</span>
+                <span style={{ fontWeight: 600 }}>{t.stone} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· {t.name}</span></span>
+                <span style={{ fontSize: 15, lineHeight: 1.45 }}>{t.means}</span>
               </span>
             </div>
           ))}
