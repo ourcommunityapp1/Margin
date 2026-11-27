@@ -136,3 +136,7 @@ A bug fix with an engine change: reviews made of quick steps (fill in, order, sp
 - The household's `plan` JSON is synced, so keep `removed` when the app rewrites the plan (do not drop unknown fields).
 
 **One CTA look.** Course page and plan screen use the same two words and nothing else: "Add to plan" and "Remove from plan" (no separate "make daily"; adding a course makes it the one new lessons come from). Two button styles only: on a dark card (Today hero, course, Progress) a cream pill (`hr-hero-btn`, same as Today's Start) and an outlined pill for the quieter choice; on a plain card `hr-btn` and `hr-btn quiet`. The old frosted button with the arrow chip is gone.
+
+## Update 2026-11-27 (night): verse / answer page layout
+
+The passage sits open on the page, then Practice (solid) and Review (outlined) side by side with no explanatory lines under them, then one status card (strength ring, level, three numbers: recited perfectly, times practised, next review; then Learned, Last time, Often missed; then "Next: <level>, once …"), then Word by word, Strength over time, meaning, related. No card inside a card. `nextStep` now names the five levels (Recalled, Memorized, Proficient, Expert; null at Expert).

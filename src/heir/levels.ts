@@ -182,20 +182,18 @@ export function needsRefresh(p: MemberProgress, itemId: string, now: Date): bool
   return !!card && Date.parse(card.due) < now.getTime() - DAY / 2;
 }
 
-// What the next stone asks for, in a few words, or null at the top.
+// What the next level asks for, in a few words (the five levels people see, see tiers.ts), or null at the top (Expert).
 export function nextStep(item: Item, track: Track, p: MemberProgress, now: Date): string | null {
   const n = levelOf(p, item.id);
-  if (n === 0) return recited(item, track, p.log) ? 'Amethyst, once you recall it after a night’s sleep' : 'Type it in full with no hints to recite it';
+  if (n === 0) return recited(item, track, p.log) ? 'Recalled, once you recall it after a night’s sleep' : 'Type it in full with no hints to recite it';
   if (n === 1) {
     const days = new Set(countingSessions(sessions(p.log, item.id), 0.5).map((s) => localDay(new Date(s.at)))).size;
     const left = Math.max(1, 3 - days);
-    return `Topaz, once you recall it on ${left} more ${left === 1 ? 'day' : 'days'}`;
+    return `Memorized, once you recall it on ${left} more ${left === 1 ? 'day' : 'days'}`;
   }
   void now;
-  if (n === 2) return 'Carnelian, once you recall it after three weeks away';
-  if (n === 3) return 'Emerald, once it’s held for six months';
-  if (n === 4) return 'Sapphire, once you recall it a year on, after six months away';
-  if (n === 5) return 'Diamond, once you recall it three years on, after a year away';
+  if (n === 2) return 'Proficient, once you recall it after three weeks away';
+  if (n === 3) return 'Expert, once it’s held for six months';
   return null;
 }
 

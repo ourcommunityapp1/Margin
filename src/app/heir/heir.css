@@ -1340,3 +1340,25 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
 .hr-plan-btn { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--button); background: var(--button); color: var(--button-ink); font: 600 14px/1 var(--font-inter), Inter, system-ui, sans-serif; cursor: pointer; white-space: nowrap; }
 .hr-plan-btn[data-quiet='true'] { background: transparent; color: var(--ink); border-color: var(--edge, rgba(128, 128, 128, 0.4)); }
 .hr-plan-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+
+/* A verse or answer's page: the passage open on the page, the two actions straight under it, then one status card. */
+.hr-passage { display: flex; flex-direction: column; gap: 12px; padding: 10px 4px 2px; }
+.hr-passage-q { margin: 0; font-size: 20px; line-height: 1.35; font-weight: 600; }
+.hr-passage-text { margin: 0; font-size: 25px; line-height: 1.45; text-wrap: pretty; }
+.hr-actions { display: flex; gap: 10px; }
+.hr-actions .hr-btn { flex: 1; width: auto; }
+.hr-btn.hr-btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--edge, rgba(128, 128, 128, 0.45)); }
+.hr-status { display: flex; flex-direction: column; gap: 22px; }
+.hr-status-top { display: flex; align-items: center; gap: 18px; }
+.hr-status-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.hr-status-text b { font-size: 19px; font-weight: 600; line-height: 1.2; }
+.hr-status-text span { font-size: 14px; color: var(--muted); line-height: 1.35; }
+.hr-status-text .hr-status-cap { font-size: 12.5px; }
+.hr-status-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.hr-status-nums div { display: flex; flex-direction: column; gap: 4px; }
+.hr-status-nums b { font-size: 22px; font-weight: 600; line-height: 1; }
+.hr-status-nums span { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+.hr-status .hr-kv { border-top: 1px solid var(--line); padding-top: 6px; }
+.hr-status .hr-kv div { border-bottom: 0; padding: 7px 2px; }
+.hr-status-next { margin: 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
+.hr-status-next b { color: var(--ink); font-weight: 600; }

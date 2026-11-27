@@ -8,7 +8,7 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
-import { needsRefresh, nextStep, recited } from '@/heir/levels';
+import { needsRefresh, nextStep } from '@/heir/levels';
 import { tierOf } from '@/heir/tiers';
 import { Explain } from './explain';
 import { Stone } from './stone';
@@ -48,43 +48,52 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           <span style={{ fontSize: 15, fontWeight: 600 }}>{collectionTitle} · {unit === 'Question' ? 'Q' : unit === 'Verse' || unit === 'Commandment' ? `${unit} ` : 'Part '}{item.number}</span>
         </div>
 
-        <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <p className="serif" style={{ margin: 0, fontSize: 20, lineHeight: 1.35, fontWeight: 600 }}>{item.prompt}</p>
-          <p className="serif" style={{ margin: 0, fontSize: 24, lineHeight: 1.45 }}>{item.text}</p>
-          {learned && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--well)', borderRadius: 16, padding: 12 }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <Stone level={level} size={44} dim={dim} started />
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontWeight: 600 }}>{level ? `${tierOf(level)!.stone} · ${tierOf(level)!.name}` : 'Stone · Familiar'}</span>
-                    {dim && <span style={{ fontSize: 14, color: 'var(--miss)' }}>Due for a refresh</span>}
-                    {strong && !dim && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span>}
-                  </span>
-                </div>
-                {strength !== null && (
-                  <div className="hr-ring" data-band={strengthBand(strength)} style={{ ['--v' as string]: Math.round(strength * 100) }}><b className="serif">{Math.round(strength * 100)}%</b><span>{today ? 'practised today' : 'strength'}</span></div>
-                )}
-              </div>
-              {stats && (
-                <div className="hr-kv">
-                  {stats.learnedAt && <div><span>Learned</span><span>{date(stats.learnedAt)}</span></div>}
-                  <div><span>Recited perfectly</span><span>{perfect} time{perfect === 1 ? '' : 's'}</span></div>
-                  <div><span>Practised in all</span><span>{practised} time{practised === 1 ? '' : 's'}</span></div>
-                  {stats.last && <div><span>Last time</span><span>{ago(stats.last)}{stats.lastRight === false ? ' · a slip' : ''}</span></div>}
-                  {stats.oftenMissed && <div><span>Often missed</span><span>“{stats.oftenMissed}”</span></div>}
-                  {stats.due && <div><span>Next review</span><span>{stats.due.getTime() <= now.getTime() ? 'Now' : date(stats.due)}</span></div>}
-                </div>
-              )}
-              {next && <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{level === 0 && !recited(item, me?.track ?? 'adult', mine.log) ? 'Next' : 'Next stone'}: {next}.</span>}
-              <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}`} className="hr-btn">Practice</Link>
-              <span className="hr-btn-note">A mix of steps, chosen by how well you know it</span>
-              <Link href={`/heir/lesson?mode=keep&items=${encodeURIComponent(item.id)}`} className="hr-btn quiet" style={{ background: 'var(--card)', color: 'var(--ink)' }}>Review</Link>
-              <span className="hr-btn-note">Type or say the whole {noun} from memory</span>
-            </div>
-          )}
+        {/* The passage sits open on the page, with the two actions straight under it. */}
+        <section className="hr-passage" aria-label="Passage">
+          {unit === 'Question'
+            ? <p className="serif hr-passage-q">{item.prompt}</p>
+            : <span className="hr-label">{item.prompt}</span>}
+          <p className="serif hr-passage-text">{item.text}</p>
           {labs && !item.reviewed && <div><span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span></div>}
         </section>
+
+        {learned && (
+          <div className="hr-actions">
+            <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}`} className="hr-btn">Practice</Link>
+            <Link href={`/heir/lesson?mode=keep&items=${encodeURIComponent(item.id)}`} className="hr-btn hr-btn-outline" aria-label={`Review: type or say the whole ${noun} from memory`}>Review</Link>
+          </div>
+        )}
+
+        {learned && (
+          <section className="hr-card hr-status" aria-label="How it is going">
+            <div className="hr-status-top">
+              {strength !== null
+                ? <div className="hr-ring" data-band={strengthBand(strength)} style={{ ['--v' as string]: Math.round(strength * 100), width: 92, height: 92 }}><b className="serif">{Math.round(strength * 100)}%</b></div>
+                : <Stone level={level} size={56} dim={dim} started />}
+              <span className="hr-status-text">
+                <span className="hr-status-cap">{strength !== null ? (today ? 'Strength, practised today' : 'Strength') : 'Level'}</span>
+                <b>{level ? `${tierOf(level)!.stone} · ${tierOf(level)!.name}` : 'Stone · Familiar'}</b>
+                {dim ? <span style={{ color: 'var(--miss)' }}>Due for a refresh</span>
+                  : strong ? <span>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span> : null}
+              </span>
+            </div>
+            {stats && (
+              <>
+                <div className="hr-status-nums">
+                  <div><b className="serif">{perfect}</b><span>recited perfectly</span></div>
+                  <div><b className="serif">{practised}</b><span>times practised</span></div>
+                  <div><b className="serif">{stats.due ? (stats.due.getTime() <= now.getTime() ? 'Now' : date(stats.due)) : '–'}</b><span>next review</span></div>
+                </div>
+                <div className="hr-kv">
+                  {stats.learnedAt && <div><span>Learned</span><span>{date(stats.learnedAt)}</span></div>}
+                  {stats.last && <div><span>Last time</span><span>{ago(stats.last)}{stats.lastRight === false ? ' · a slip' : ''}</span></div>}
+                  {stats.oftenMissed && <div><span>Often missed</span><span>“{stats.oftenMissed}”</span></div>}
+                </div>
+              </>
+            )}
+            {next && <p className="hr-status-next"><b>Next: {next.split(',')[0]}</b>{next.includes(',') ? `, ${next.slice(next.indexOf(',') + 2)}` : ''}.</p>}
+          </section>
+        )}
 
         {learned && cards.some((c) => c.band !== 'none') && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Word by word">
