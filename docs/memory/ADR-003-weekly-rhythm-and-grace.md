@@ -1,6 +1,6 @@
 # ADR-003: A weekly rhythm, light steps, and grace in feedback
 
-Status: **proposed, not built** (Nov 26, 2026). Amends ADR-001 (Decision 5, cue fading) and ADR-002 (Decision 5 and "After first use").
+Status: **partly built** (Nov 27, 2026): Decisions 1–3, 7 and 8 are live on the website; 4, 5 and 9 are next. See "Owner's corrections" below, which override the first draft. Amends ADR-001 (Decision 5, cue fading) and ADR-002 (Decision 5 and "After first use").
 Mockup of a week: https://claude.ai/artifact/KzCidu6f6R525MEym1Li5d
 
 ## Why
@@ -32,6 +32,37 @@ otherwise minimal; about three to five new pieces a week ("probably").
   item is recalled reliably. So the expensive kind of recall should be spent where it proves or repairs something, not everywhere.
 - **Cued recall** (first letters, blanks, order) is real retrieval with support. It builds and repairs memory cheaply. It is weaker evidence
   that something is *stored*, which is why the model rates it "Hard" at best (ADR-001 Decision 4).
+
+## Owner's corrections (Nov 27), which override the first draft below
+
+- **85% is the target.** Today does not spend extra effort on precision beyond that: an item at 85% or more is good enough and gets at most a quick
+  light touch.
+- **No whole-answer typing because an item is "due" when it is already at 75% or more.** Typing the whole answer is much harder and adds little when
+  recall is already good enough. So the "check-in" of Decision 2 is **dropped**: reviews are light at every strength.
+- Whole recall stays only where it proves or protects something: a **fix** (G5), a **lock-in**, a **new lesson's one closing recall** (G4), and
+  **"Test myself"** when the person chooses it. That makes the daily cap of Decision 4 unnecessary for reviews.
+- **What this means for stones:** stones need unaided whole recall on later days (G4). With reviews light, stones rise through lock-ins, fixes and
+  "Test myself". A gentle, optional invitation on Today ("Q4 is ready for Amethyst: type it from memory, 1 min, if you like") is proposed as the
+  next step, so stones keep moving without making anyone type by default.
+
+### Built (Nov 27)
+- **Reviews are light** (`ladder` in `src/heir/lesson.ts` and `mobile/lib/engine/lesson.dart`): under 75% fill in the blanks (or match) then first
+  letters; 75–85% first letters; 85% and over one quick touch (tap the wrong word or fill in the blanks). Never the whole answer. With no model
+  chance, also light. Fixtures regenerated: only `buildReview` and `buildRise` cases changed (104 each).
+- **"When you rise" is light** (`buildRise`): one step per question, fill in the blanks and putting the phrases in order in turn, then a verse.
+- **Feedback bands** (`src/heir/feedback.ts`, test `feedback.test.ts`; `lesson.tsx`, `steps.tsx`, `heir.css`): Perfect (gold; a whole answer from memory
+  gets a bigger, glowing pill), Correct (green), "Good. We'll strengthen this." (soft green), "Good job. We'll strengthen this." (warm), "No problem,
+  you're still learning." (calm blue). Main words count fully, small words a quarter. The strict `ok`/`correct` is unchanged; a test proves a band
+  never turns a miss into a pass. A miss still comes back once at the end ("It'll come back once more at the end.").
+- **Effort said up front** (`today.tsx`): the big card shows "Light", "Ends with one full answer", "✎ Type it from memory" (fix) or "✎ Lock it in";
+  rows with a full answer show "✎" before their minutes.
+
+### Next
+- The optional "ready for a stone" invitation (above).
+- Decision 5: a 7-minute default goal (the goal options live in the engine's `GOALS`, so this is an engine and Dart change) and the weekly target of
+  about 3–5 new pieces.
+- Decision 9: the week line on Progress.
+- Review time estimates (`reviewEst`) still assume two steps per item; lighter reviews will finish sooner than the card says until it is adjusted.
 
 ---
 

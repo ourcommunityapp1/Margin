@@ -133,13 +133,27 @@ test('every part of every course builds sensible steps on both tracks', () => {
   }
 });
 
-test('a review session recalls each due item twice, a quick recall first, then in full', () => {
+test('a review session is light: one quick step per due item, never the whole answer typed or said (ADR-003)', () => {
   const due = ['wsc-1', 'wsc-2', 'wsc-3'].map((id) => ({ item: getItem(id)!, strength: 2 }));
   const steps = buildReview({ due, track: 'adult', pool: allItems(), rng: seeded(3) });
-  assert.equal(steps.length, 6);
-  assert.ok(steps.slice(3).every((s) => s.kind === 'say' || s.kind === 'type'));
-  const say = steps.find((s) => s.kind === 'say');
-  if (say) assert.equal(withoutSpeaking(say).kind, 'type');
+  assert.equal(steps.length, 3);
+  assert.ok(steps.every((s) => s.kind !== 'say' && s.kind !== 'type'), 'no whole recall in a review');
+  for (const chance of [0.3, 0.6, 0.74, 0.8, 0.84, 0.86, 0.95]) {
+    const one = buildReview({ due: [{ item: getItem('wsc-4')!, strength: 5, chance }], track: 'adult', pool: allItems(), rng: seeded(7) });
+    assert.ok(one.every((s) => s.kind !== 'say' && s.kind !== 'type'), `no whole recall at ${chance}`);
+    assert.equal(one.length, chance < 0.75 ? 2 : 1, `${chance}: two light steps when shaky, otherwise one`);
+  }
+  assert.equal(withoutSpeaking({ id: 'x', itemId: 'wsc-1', review: true, kind: 'say', lead: '', text: 'a' } as never).kind, 'type');
+});
+
+test('when you rise is light: one step per question, blanks and phrase order in turn, then a verse', async () => {
+  const { buildRise } = await import('../lesson.ts');
+  const items = ['wsc-1', 'wsc-2', 'wsc-3', 'wsc-4'].map((id) => getItem(id)!);
+  const steps = buildRise({ items, track: 'adult', pool: allItems(), rng: seeded(5) });
+  const asked = steps.filter((s) => s.kind !== 'verse');
+  assert.equal(asked.length, items.length, 'one step per question');
+  assert.deepEqual(asked.map((s) => s.kind), ['blanks', 'order', 'blanks', 'order']);
+  assert.ok(steps.every((s) => s.kind !== 'say' && s.kind !== 'type'), 'nothing whole in the morning');
 });
 
 test('feedback says what went wrong with a word bank', () => {

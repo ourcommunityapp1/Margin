@@ -150,6 +150,12 @@ export function TodayCards() {
     return dueCards(mine, now, course).map((d) => getItem(d.itemId)).filter((i): i is Item => !!i);
   };
   const refs = (items: Item[]) => refList(items) || null;
+  // How hard a card is, said before it starts (ADR-003): reviews are light; a lesson ends with one full answer; a fix is typed whole.
+  const effort = (s: Extract<Slide, { type: 'card' }>): { full: boolean; label: string } =>
+    s.state.card.kind === 'review' ? { full: false, label: 'Light' }
+    : s.state.card.kind === 'fix' ? { full: true, label: '✎ Type it from memory' }
+    : s.button === 'Lock it in' ? { full: true, label: '✎ Lock it in: each from memory' }
+    : { full: true, label: 'Ends with one full answer' };
   const recallRefs = (list: string[]) => refList(list.map(getItem).filter((i): i is Item => !!i));
   const mins = (n: number) => `${Math.max(1, Math.round(n))} min`;
   const doneTick = <span className="hr-b4-tick" aria-label="Done">{check}</span>;
@@ -160,7 +166,7 @@ export function TodayCards() {
     const r = refs(cardItems(s));
     upcoming.push({ key: s.state.card.id, label: i === 0 ? 'Up next' : 'Then',
       left: <MiniWindow base={w.base} lit={w.lit} dusty={w.dusty} size={48} started={w.share > 0} reveal label={`${s.course.title} window`} />,
-      title: r ? `${s.course.title} · ${r}` : s.course.title, right: mins(s.state.card.est) });
+      title: r ? `${s.course.title} · ${r}` : s.course.title, right: `${effort(s).full ? '✎ ' : ''}${mins(s.state.card.est)}` });
   });
   if (rise && heroKind !== 'rise') upcoming.push({ key: 'rise', label: upcoming.length ? 'Then' : 'Up next', left: <PhotoThumb photo={dawn} />, title: `When you rise · ${recallRefs(rise)}`, right: mins(recallMinutes(rise.length)) });
   if (night && heroKind !== 'night') upcoming.push({ key: 'night', label: 'This evening', ev: true, left: <PhotoThumb photo={dusk} />, title: `When you lie down · ${recallRefs(night)}`, right: mins(recallMinutes(night.length)) });
@@ -188,6 +194,7 @@ export function TodayCards() {
             <PhotoCircle photo={dawn} mood="dawn" />
             <h2 className="serif hr-b4-title">When you rise</h2>
             <p className="hr-b4-sub">{heroRefs(rise.map(getItem).filter((i): i is Item => !!i), undefined, true)}</p>
+            <span className="hr-b4-effort">Light</span>
             <Link className="hr-b4-go" href="/heir/lesson?mode=rise"><span>Start</span><span className="hr-b4-gomin"> · {mins(recallMinutes(rise.length))}</span></Link>
           </>
         )}
@@ -196,6 +203,7 @@ export function TodayCards() {
             <PhotoCircle photo={dusk} mood="night" />
             <h2 className="serif hr-b4-title">When you lie down</h2>
             <p className="hr-b4-sub">{heroRefs(night.map(getItem).filter((i): i is Item => !!i), undefined, true)}</p>
+            <span className="hr-b4-effort">Light</span>
             <Link className="hr-b4-go" data-mood="night" href="/heir/lesson?mode=night"><span>Start</span><span className="hr-b4-gomin"> · {mins(recallMinutes(night.length))}</span></Link>
           </>
         )}
@@ -207,6 +215,7 @@ export function TodayCards() {
               <CardWindow key={w.base} light={w} started={w.share > 0} size={190} hint={first.state.card.kind === 'lesson' && w.next >= 0 ? w.next : undefined} label={`${first.course.title} window`} />
               <h2 className="serif hr-b4-title">{first.course.title}</h2>
               {what && <p className="hr-b4-sub">{what}</p>}
+              <span className="hr-b4-effort" data-full={effort(first).full || undefined}>{effort(first).label}</span>
               <Link className="hr-b4-go" href={first.href}><span>{first.button}</span><span className="hr-b4-gomin"> · {mins(first.state.card.est)}</span></Link>
             </>
           );

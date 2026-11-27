@@ -322,19 +322,20 @@ export interface Due { item: Item; strength: number; weak?: string[]; chance?: n
 // The parts to ask about: the weak ones when there are any, otherwise any part.
 const partsFor = (c: Ctx, d: Due) => { const all = unitsFor(d.item, c.track); const weak = all.filter((u) => d.weak?.includes(u.key)); return weak.length ? weak : all; };
 
-// A gentle ladder for reviews (with the newer engine): help to start with when recall is shaky, then a little less.
-//   under 75%: fill in the blanks, then first letters;  75 to 90%: first letters, then the whole thing;
-//   90% and over: the whole thing, once.
+// A gentle ladder for reviews (with the newer engine): light steps only. Typing or saying the whole answer is costly and adds
+// little once recall is good enough (85% is the target), so reviews never ask for it (ADR-003):
+//   under 75%: fill in the blanks (or match), then first letters;  75 to 85%: first letters;  85% and over: one quick touch.
+// Whole recall stays where it proves or protects something: a fix, a lock-in, a new lesson's closing recall, "Test myself".
 type Rung = PracticeKind[];
 function ladder(chance: number): [Rung, Rung | null] {
   if (chance < 0.75) return [['blanks', 'match'], ['letters']];
-  if (chance < 0.9) return [['letters'], ['type', 'say']];
-  return [['type', 'say'], null];
+  if (chance < 0.85) return [['letters'], null];
+  return [['spot', 'blanks'], null];
 }
 
 function dueStep(c: Ctx, d: Due, avoid?: StepKind): Step {
   const kinds: PracticeKind[] = d.chance !== undefined ? ladder(d.chance)[0]
-    : d.strength < 7 ? ['letters', 'spot', 'match', 'blanks'] : ['type', 'say', 'match'];
+    : d.strength < 7 ? ['letters', 'spot', 'match', 'blanks'] : ['spot', 'blanks', 'match'];
   return practiceStep(c, d.item, partsFor(c, d), kinds, true, avoid);
 }
 
@@ -466,14 +467,14 @@ export function buildCheckpoint(o: { group: Group; track: Track; pool: Item[]; r
   return out;
 }
 
-// Reviews only: each due item twice, first a quicker recall, then said or typed in full, spread apart.
+// Reviews only: one light step per due item, and a second light step for one under 75%, spread apart.
 export function buildReview(o: { due: Due[]; track: Track; pool: Item[]; rng: Rng; max?: number }): Step[] {
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
   // Look-alikes (verses or answers sharing many words) are kept apart, so neither prompts the other.
   const chosen = spreadApart(o.due.slice(0, o.max ?? 6), (d) => d.item.chunks[o.track].join(' '));
   const first = chosen.map((d) => dueStep(c, { ...d, strength: Math.min(d.strength, 6) }));
   const second = chosen.flatMap((d, i) => {
-    const rung = d.chance !== undefined ? ladder(d.chance)[1] : ['say', 'type'] as PracticeKind[];
+    const rung = d.chance !== undefined ? ladder(d.chance)[1] : null;
     return rung ? [practiceStep(c, d.item, partsFor(c, d), rung, true, first[i].kind)] : [];
   });
   return [...first, ...shuffle(second, o.rng)];
@@ -507,9 +508,15 @@ function withVerse(c: Ctx, steps: Step[], from: 'last' | 'first' = 'last'): Step
   return steps;
 }
 
-// "When you rise": last night's questions recalled in full from the question alone, said or typed in turn.
+// "When you rise": light, about a minute. One step per question, fill in the blanks and putting the phrases in order in turn.
 export function buildRise(o: { items: Item[]; track: Track; pool: Item[]; rng: Rng }): Step[] {
   const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
-  let k = 0;
-  return withVerse(c, o.items.flatMap((item) => unitsFor(item, o.track).map((u) => textStep(c, k++ % 2 === 0 ? 'say' : 'type', item, u, true))), 'first');
+  return withVerse(c, o.items.map((item, k) => {
+    const unit = pick(unitsFor(item, o.track), c.rng);
+    if (k % 2 === 0) return textStep(c, 'blanks', item, unit, true, 0.4);
+    const chunks = item.chunks[o.track];
+    const pieces = chunks.slice(unit.start, unit.end);
+    const lead = chunks[unit.start - 1] ?? '';
+    return pieces.length >= 2 ? orderStep(c, item, pieces, lead, true, true) : orderStep(c, item, pieces[0].split(' '), lead, false, true, true);
+  }), 'first');
 }

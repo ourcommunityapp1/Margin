@@ -12,12 +12,13 @@ import { getCollection, getItem, isVerse, itemLabel, itemNoun } from '@/heir/con
 import { useHeir } from './provider';
 import { activeMember } from '@/heir/household';
 import { speechHints } from '@/heir/speech';
+import { mainWordShare } from '@/heir/feedback';
 import { canRecord, cloudSpeechBroken, markCloudSpeechBroken, startRecording, transcribe, type Recording } from './cloud-speech';
 import { checkOrder, closeWord, firstLetter, gradeSpoken, NEARLY, SPOKEN_PASS, TYPED_PASS, wordMatches } from '@/heir/grade';
 
 // `slip`: right, but not cleanly (a spelling slip, a missed word), so the praise should be quieter.
 // `missedAt`: positions (0-based) of the words missed or shown, in the step's text. Kept with the answer, never what was typed.
-export interface Outcome { ok: boolean; close?: boolean; slip?: boolean; hints?: number; misses?: number; missedAt?: number[]; note?: string; reveal?: ReactNode }
+export interface Outcome { ok: boolean; close?: boolean; slip?: boolean; hints?: number; misses?: number; missedAt?: number[]; note?: string; reveal?: ReactNode; /** Share of the main words recalled, for the feedback band only. */ share?: number }
 export type Report = (o: Outcome) => void;
 
 // Splits "God," into the word to type and the punctuation around it.
@@ -343,6 +344,7 @@ function scored(text: string, lead: string, said: string, pass: number, verb: st
     missedAt: tokens.map((_, i) => i).filter((i) => !r.heard[i]),
     slip: r.score >= pass && notes.length > 0,
     close: r.score < pass && r.score >= NEARLY,
+    share: mainWordShare(tokens, tokens.map((_, i) => r.heard[i] || r.moved[i])),
     note: notes.join(' ') || undefined,
     reveal: notes.length ? <Heard lead={lead} text={text} heard={r.heard} moved={r.moved} /> : undefined,
   };

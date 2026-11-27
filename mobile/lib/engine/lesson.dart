@@ -451,11 +451,12 @@ List<Unit> _partsFor(_Ctx c, Due d) {
   return weak.isNotEmpty ? weak : all;
 }
 
-/// The review ladder: help to start with when recall is shaky, then a little less.
+/// The review ladder: light steps only (ADR-003). Under 75%: blanks (or match), then first letters; 75 to 85%: first
+/// letters; 85% and over: one quick touch. Whole recall stays for fixes, lock-ins, a new lesson's close and "Test myself".
 (List<String>, List<String>?) _ladder(double chance) {
   if (chance < 0.75) return (['blanks', 'match'], ['letters']);
-  if (chance < 0.9) return (['letters'], ['type', 'say']);
-  return (['type', 'say'], null);
+  if (chance < 0.85) return (['letters'], null);
+  return (['spot', 'blanks'], null);
 }
 
 Step _dueStep(_Ctx c, Due d, [String? avoid]) {
@@ -463,7 +464,7 @@ Step _dueStep(_Ctx c, Due d, [String? avoid]) {
       ? _ladder(d.chance!).$1
       : d.strength < 7
           ? ['letters', 'spot', 'match', 'blanks']
-          : ['type', 'say', 'match'];
+          : ['spot', 'blanks', 'match'];
   return _practiceStep(c, d.item, _partsFor(c, d), kinds, true, avoid);
 }
 
@@ -610,7 +611,7 @@ List<Step> buildCheckpoint({required Group group, required Track track, required
   return out;
 }
 
-/// Reviews only: each due item twice, first a quicker recall, then said or typed in full, spread apart.
+/// Reviews only: one light step per due item, and a second light step for one under 75%, spread apart.
 List<Step> buildReview({required List<Due> due, required Track track, required List<Item> pool, required Rng rng, int? max}) {
   final c = _Ctx(0, rng, track, pool);
   final chosen = spreadApart(due.take(max ?? 6).toList(), (d) => d.item.chunks[track]!.join(' '));
@@ -618,7 +619,7 @@ List<Step> buildReview({required List<Due> due, required Track track, required L
   final second = <Step>[];
   for (var i = 0; i < chosen.length; i++) {
     final d = chosen[i];
-    final rung = d.chance != null ? _ladder(d.chance!).$2 : const ['say', 'type'];
+    final rung = d.chance != null ? _ladder(d.chance!).$2 : null;
     if (rung != null) second.add(_practiceStep(c, d.item, _partsFor(c, d), rung, true, first[i].kind));
   }
   return [...first, ...shuffle(second, rng)];
@@ -649,12 +650,23 @@ List<Step> _withVerse(_Ctx c, List<Step> steps, [String from = 'last']) {
   return steps;
 }
 
-/// "When you rise": last night's questions recalled in full from the question alone, said or typed in turn.
+/// "When you rise": light, about a minute. One step per question, fill in the blanks and putting the phrases in order in turn.
 List<Step> buildRise({required List<Item> items, required Track track, required List<Item> pool, required Rng rng}) {
   final c = _Ctx(0, rng, track, pool);
-  var k = 0;
-  return _withVerse(c, [
-    for (final item in items)
-      for (final u in unitsFor(item, track)) _textStep(c, k++ % 2 == 0 ? 'say' : 'type', item, u, true),
-  ], 'first');
+  final steps = <Step>[];
+  for (var k = 0; k < items.length; k++) {
+    final item = items[k];
+    final unit = _pick(unitsFor(item, track), c.rng);
+    if (k % 2 == 0) {
+      steps.add(_textStep(c, 'blanks', item, unit, true, 0.4));
+      continue;
+    }
+    final chunks = item.chunks[track]!;
+    final pieces = chunks.sublist(unit.start, unit.end);
+    final lead = unit.start - 1 >= 0 ? chunks[unit.start - 1] : '';
+    steps.add(pieces.length >= 2
+        ? _orderStep(c, item, pieces, lead, true, true)
+        : _orderStep(c, item, pieces[0].split(' '), lead, false, true, true));
+  }
+  return _withVerse(c, steps, 'first');
 }

@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { BAND_WORDS, bandFor } from '@/heir/feedback';
 import { useHeir } from './provider';
 import type { Item, Track } from '@/heir/types';
 import { groupLabel, useCourse } from './course';
@@ -292,8 +293,11 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
   const retry = retried.has(step.id.replace(/:typed$/, '')) && queue.indexOf(step) !== pos;
   // A lock-in says so on every question; elsewhere, practice on earlier questions is marked Review.
   const tag = session.kind === 'checkpoint' ? `Lock it in · ${Math.min(pos + 1, queue.length)} of ${queue.length}` : step.review ? 'Review' : null;
-  // One word for how it went (a slip's note still explains the slip).
-  const heading = feedback?.ok ? 'Correct!' : feedback?.close ? 'Almost' : 'Not quite';
+  // How it went, generously (ADR-003): the words and colour only. Whether it counts as right was decided strictly in `report`.
+  const band = feedback ? bandFor(feedback) : null;
+  const heading = band ? BAND_WORDS[band] : '';
+  // A whole answer from memory, perfect: celebrated.
+  const celebrate = band === 'perfect' && (step.kind === 'type' || step.kind === 'say');
 
   return (
     <main className="hr-page bare hr-lesson-screen" data-feedback={feedback ? 'true' : undefined}>
@@ -353,17 +357,17 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       </section>
       <div id="hr-dock" className="hr-dock" />
       {feedback && (
-        <div className="hr-fb" data-ok={feedback.ok} role="status" ref={fbRef}>
+        <div className="hr-fb" data-band={band ?? undefined} data-celebrate={celebrate || undefined} role="status" ref={fbRef}>
           <div className="hr-fb-details">
             {feedback.note && <p style={{ margin: 0, fontSize: 16, lineHeight: 1.45, fontWeight: 500 }}>{feedback.note}</p>}
             {feedback.reveal}
-            {!feedback.ok && !retry && step.kind !== 'quiz' && <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>You’ll get another try at the end.</p>}
+            {!feedback.ok && !retry && step.kind !== 'quiz' && <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)' }}>It’ll come back once more at the end.</p>}
           </div>
-          <span className="hr-fb-pill" data-ok={feedback.ok}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{feedback.ok ? <path d="M5 12l5 5 9-10" /> : <path d="M12 6v7M12 18h.01" />}</svg>
+          <span className="hr-fb-pill" data-band={band ?? undefined} data-big={celebrate || undefined}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{band === 'perfect' ? <path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z" /> : band === 'pass' || band === 'good' ? <path d="M5 12l5 5 9-10" /> : <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" />}</svg>
             {heading}
           </span>
-          <button type="button" className="hr-btn hr-fb-go" data-ok={feedback.ok} onClick={advance} autoFocus>Continue</button>
+          <button type="button" className="hr-btn hr-fb-go" data-band={band ?? undefined} onClick={advance} autoFocus>Continue</button>
         </div>
       )}
     </main>
