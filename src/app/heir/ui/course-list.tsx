@@ -119,7 +119,8 @@ export function CourseScreen({ id }: { id: string }) {
         </section>
 
         {learnedItems.length > 0 && (
-          <section className="hr-cstats" aria-label="Where you are">
+          <section className="hr-cstats" data-four aria-label="Where you are">
+            <div><b className="serif">{Math.round((learnedItems.length / Math.max(1, all.length)) * 100)}%</b><span>of the course done</span></div>
             <div><b className="serif">{learnedItems.length}</b><span>learned of {all.length}</span></div>
             <div><b className="serif">{inMemory}</b><span>in memory</span></div>
             <div><b className="serif">{average === null ? '–' : `${average}%`}</b><span>average strength</span></div>
