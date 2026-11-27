@@ -3,6 +3,7 @@
 
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import { allowedMisses, type LogEntry, type SavedCard, type StepResult } from './progress.ts';
+import { lightMark } from './observe.ts';
 
 /** Stamped on every answer with the chance the model gave just before it, so we can check the model is right. */
 export const MODEL_VERSION = 'fsrs6-default-v1';
@@ -124,16 +125,30 @@ export interface PartSnapshot { asOf: string; mem: Record<string, PartMem> }
 const replayer = fsrs(generatorParameters({ enable_fuzz: false, enable_short_term: false }));
 const GRADE = { again: Rating.Again, hard: Rating.Hard, good: Rating.Good } as const;
 
+/** A quick step's effect on a memory: the full update for a good (or missed) recall, moved only `weight` of the way. A match
+ *  nudges; first letters nearly counts in full. The review date moves to today, so the next one is spaced from now, and a
+ *  quick step never counts as a lapse. Pure; `engine` decides the full update (so parts can use the deterministic one). */
+export function dampedStep(prev: Card, at: Date, mark: 'good' | 'again', weight: number, engine: { next(c: Card, d: Date, g: Grade): { card: Card } }): Card {
+  const full = engine.next(prev, at, mark === 'good' ? Rating.Good : Rating.Again).card;
+  const s = prev.stability + weight * (full.stability - prev.stability);
+  const d = prev.difficulty + weight * (full.difficulty - prev.difficulty);
+  const days = Math.max(1, Math.round(s));
+  return { ...prev, stability: s, difficulty: d, state: prev.state, reps: prev.reps + 1, last_review: at, scheduled_days: days, due: new Date(at.getTime() + days * DAY) };
+}
+
 /** Replay answers (any order) on top of `start`. Only the first graded recall of a part on a given day moves its memory. */
 export function replayParts(entries: LogEntry[], start: Record<string, PartMem> = {}): Record<string, PartMem> {
   const mem: Record<string, PartMem> = { ...start };
   // Group by part and session; one mark per part per session (the worst), and the first session of each day counts.
-  const sessions = new Map<string, { part: string; at: string; day: string; marks: Mark[] }>();
+  // A session with only quick steps (fill in, order, spot, match, next; reviews only) moves the memory by what they show.
+  const sessions = new Map<string, { part: string; at: string; day: string; marks: Mark[]; light: LogEntry[] }>();
   for (const e of entries) {
-    if (!e.part || !RECALL.has(e.kind)) continue;
+    if (!e.part) continue;
+    const isRecall = RECALL.has(e.kind);
+    if (!isRecall && !lightMark([e])) continue;
     const key = `${e.part}|${e.at}`;
-    const s = sessions.get(key) ?? { part: e.part, at: e.at, day: e.day ?? e.at.slice(0, 10), marks: [] };
-    s.marks.push(markOf(e as StepResult));
+    const s = sessions.get(key) ?? { part: e.part, at: e.at, day: e.day ?? e.at.slice(0, 10), marks: [], light: [] };
+    if (isRecall) s.marks.push(markOf(e as StepResult)); else s.light.push(e);
     sessions.set(key, s);
   }
   const seenDay = new Set<string>();
@@ -141,13 +156,21 @@ export function replayParts(entries: LogEntry[], start: Record<string, PartMem> 
     const m = mem[s.part];
     if (m && s.at <= m.last) continue;
     if (seenDay.has(`${s.part}|${s.day}`) || (m && (m.last.slice(0, 10) === s.day))) continue;
-    seenDay.add(`${s.part}|${s.day}`);
-    const mark: Mark = s.marks.includes('again') ? 'again' : s.marks.includes('hard') ? 'hard' : 'good';
     const at = new Date(s.at);
-    const card: Card = m
+    const prev: Card | null = m
       ? { ...createEmptyCard(new Date(m.last)), stability: m.s, difficulty: m.d, reps: m.reps, lapses: m.lapses, state: m.state, last_review: new Date(m.last), due: new Date(Date.parse(m.last) + m.s * DAY) }
-      : createEmptyCard(at);
-    const next = replayer.next(card, at, GRADE[mark]).card;
+      : null;
+    let next: Card;
+    if (s.marks.length) {
+      const mark: Mark = s.marks.includes('again') ? 'again' : s.marks.includes('hard') ? 'hard' : 'good';
+      next = replayer.next(prev ?? createEmptyCard(at), at, GRADE[mark]).card;
+    } else {
+      const lm = lightMark(s.light);
+      // Quick steps strengthen or weaken a memory that exists; they never create one (that takes a recall).
+      if (!lm || !prev || prev.state === State.New) continue;
+      next = dampedStep(prev, at, lm.mark, lm.weight, replayer);
+    }
+    seenDay.add(`${s.part}|${s.day}`);
     mem[s.part] = { s: next.stability, d: next.difficulty, last: s.at, reps: next.reps, lapses: next.lapses, state: next.state };
   }
   return mem;

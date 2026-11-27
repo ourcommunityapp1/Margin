@@ -207,11 +207,11 @@ function bankFor(tiles: string[], decoyWords: string[], rng: Rng): string[] {
 interface Ctx { n: number; rng: Rng; track: Track; pool: Item[] }
 const nextId = (c: Ctx, kind: StepKind, itemId: string) => `${kind}:${itemId}:${c.n++}`;
 
-function orderStep(c: Ctx, item: Item, tiles: string[], lead: string, pieces: boolean, review: boolean, slots = false): Step {
+function orderStep(c: Ctx, item: Item, tiles: string[], lead: string, pieces: boolean, review: boolean, slots = false, unit?: Unit): Step {
   // Never a decoy that appears anywhere in this answer: that would be a trick, not a test.
   const extra = pieces ? [] : otherWords(c.pool.filter((i) => i.id !== item.id), item.text).slice(0, 40);
   const decoys = shuffle(extra, c.rng).slice(0, pieces ? 0 : tiles.length > 4 ? 2 : 1);
-  return { id: nextId(c, 'order', item.id), itemId: item.id, review, kind: 'order', tiles, decoys, bank: bankFor(tiles, decoys, c.rng), pieces, slots, lead };
+  return { id: nextId(c, 'order', item.id), itemId: item.id, review, kind: 'order', tiles, decoys, bank: bankFor(tiles, decoys, c.rng), pieces, slots, lead, ...(unit ? { part: unit.key, partOf: unit.of } : {}) };
 }
 
 // Swaps one word for a believable mix-up ("the only rule to guide us"), keeping its capital letter and
@@ -262,7 +262,7 @@ function nextPhraseStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step |
   });
   const wrong = [...mixed, ...real].slice(0, 2);
   if (wrong.length < 2) return null;
-  return { id: nextId(c, 'next', item.id), itemId: item.id, review, kind: 'next', lead: chunks[j - 1], answer, options: shuffle([answer, ...wrong], c.rng) };
+  return { id: nextId(c, 'next', item.id), itemId: item.id, review, kind: 'next', lead: chunks[j - 1], answer, options: shuffle([answer, ...wrong], c.rng), part: unit.key, partOf: unit.of };
 }
 
 function matchStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null {
@@ -271,14 +271,14 @@ function matchStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null
   const prompts = [...new Set([...shuffle(same, c.rng), ...shuffle(rest, c.rng)].map((i) => i.prompt))].filter((p) => p !== item.prompt).slice(0, 3);
   if (prompts.length < 2) return null;
   const { text } = unitText(item, c.track, unit);
-  return { id: nextId(c, 'match', item.id), itemId: item.id, review, kind: 'match', text, answer: item.prompt, options: shuffle([item.prompt, ...prompts], c.rng) };
+  return { id: nextId(c, 'match', item.id), itemId: item.id, review, kind: 'match', text, answer: item.prompt, options: shuffle([item.prompt, ...prompts], c.rng), part: unit.key, partOf: unit.of };
 }
 
 function spotStep(c: Ctx, item: Item, unit: Unit, review: boolean): Step | null {
   const { text } = unitText(item, c.track, unit);
   const m = mixUp(c, text, item.text);
   if (!m) return null;
-  return { id: nextId(c, 'spot', item.id), itemId: item.id, review, kind: 'spot', text: m.text, wrongIndex: m.at, rightWord: text.split(' ')[m.at], correctText: text };
+  return { id: nextId(c, 'spot', item.id), itemId: item.id, review, kind: 'spot', text: m.text, wrongIndex: m.at, rightWord: text.split(' ')[m.at], correctText: text, part: unit.key, partOf: unit.of };
 }
 
 function textStep(c: Ctx, kind: 'blanks' | 'letters' | 'say' | 'type', item: Item, unit: Unit, review: boolean, blankShare = 0.3): Step {
@@ -517,6 +517,6 @@ export function buildRise(o: { items: Item[]; track: Track; pool: Item[]; rng: R
     const chunks = item.chunks[o.track];
     const pieces = chunks.slice(unit.start, unit.end);
     const lead = chunks[unit.start - 1] ?? '';
-    return pieces.length >= 2 ? orderStep(c, item, pieces, lead, true, true) : orderStep(c, item, pieces[0].split(' '), lead, false, true, true);
+    return pieces.length >= 2 ? orderStep(c, item, pieces, lead, true, true, false, unit) : orderStep(c, item, pieces[0].split(' '), lead, false, true, true, unit);
   }), 'first');
 }

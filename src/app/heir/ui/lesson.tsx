@@ -19,6 +19,7 @@ import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, settle } from '@/heir/levels';
 import { tierIndex, tierOf } from '@/heir/tiers';
+import { testedPositions } from '@/heir/observe';
 import { Stone } from './stone';
 import { allItems, courseItems, courseParts, getItem, itemLabel, isVerse } from '@/heir/content';
 import { startedCourses, withSession, withStarted } from '@/heir/dayplan';
@@ -255,7 +256,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     if (step.kind === 'quiz') { setFeedback(o); return; }
     // The chance the model gave before this answer, kept beside it so we can check the model is right.
     const chance = ['type', 'say', 'letters'].includes(step.kind) ? predictedChance(mine.cards[step.itemId], new Date()) : null;
-    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(chance !== null ? { p: chance } : {}), ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}), ...(o.missedAt?.length ? { missed: o.missedAt.slice(0, 60) } : {}) } }));
+    setResults((r) => (r[key] ? r : { ...r, [key]: { itemId: step.itemId, kind: step.kind, correct: o.ok, hints: o.hints ?? 0, ms, review: step.review, ...(chance !== null ? { p: chance } : {}), ...(step.part ? { part: step.part } : {}), ...(step.partOf ? { of: step.partOf } : {}), ...('text' in step && typeof step.text === 'string' && step.kind !== 'verse' ? { words: wordCount(step.text) } : {}), ...(o.misses !== undefined ? { misses: o.misses } : {}), ...(o.missedAt?.length ? { missed: o.missedAt.slice(0, 60) } : step.kind === 'spot' && !o.ok ? { missed: [step.wrongIndex] } : {}), ...(testedPositions(step) ? { tested: testedPositions(step)!.slice(0, 60) } : {}) } }));
     if (!o.ok && !retried.has(key)) {
       setRetried((s) => new Set(s).add(key));
       setQueue((q) => [...q, step]);

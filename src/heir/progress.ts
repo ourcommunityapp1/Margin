@@ -4,7 +4,8 @@
 import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
 import type { StepKind, Unit } from './lesson.ts';
 import { clampDue } from './keep.ts';
-import { daysToChance, foldTrimmed, gradeRecall, mergeSnapshot, MODEL_VERSION, parseSnapshot, partMemories, speedBaseline, type PartSnapshot } from './memory.ts';
+import { lightMark } from './observe.ts';
+import { dampedStep, daysToChance, foldTrimmed, gradeRecall, mergeSnapshot, MODEL_VERSION, parseSnapshot, partMemories, speedBaseline, type PartSnapshot } from './memory.ts';
 
 // How many answers the phone keeps (the account keeps them all).
 export const LOG_KEEP = 1500;
@@ -36,6 +37,8 @@ export interface LogEntry {
   words?: number;
   // Positions (0-based) of the words missed or shown, in the part's text.
   missed?: number[];
+  // Positions of the words this step asked about, when it asks about only some (fill in the blanks, spot the wrong word).
+  tested?: number[];
   // The phone's local date when it was answered, so days are never worked out in another time zone.
   day?: string;
   // The chance of recall the model gave just before this answer, and which model gave it (to check the model is right).
@@ -97,6 +100,8 @@ export interface StepResult {
   misses?: number;
   // Positions (0-based) of the words missed or shown, in the part's text. Never what was typed.
   missed?: number[];
+  // Positions of the words this step actually asked about, when it asks about only some (fill in the blanks, spot the wrong word).
+  tested?: number[];
   // Right on the first try.
   correct: boolean;
   hints: number;
@@ -175,7 +180,13 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
     if (card.state === State.New && o.now < card.due) continue;
     // The newer grading (accuracy, cues and your own speed; see memory.ts) is tried on owner accounts first.
     const grade = o.grading === 'v2' ? gradeRecall(rs, card, speed) : ratingFor(rs, card);
-    if (grade === null) continue;
+    if (grade === null) {
+      // A review of quick steps only (fill in, order, spot, match, next): still evidence. It strengthens or weakens the schedule
+      // by how much those steps show (observe.ts), and the next review is spaced from today.
+      const light = lightMark(rs);
+      if (light && card.state !== State.New) cards[itemId] = fromCard(dampedStep(card, o.now, light.mark, light.weight, scheduler));
+      continue;
+    }
     cards[itemId] = fromCard(scheduler.next(card, o.now, grade).card);
   }
   // With the newer engine, an item also comes back when its weakest line is due: a line you missed or haven't recalled for

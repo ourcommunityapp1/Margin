@@ -14,7 +14,8 @@
 // three to six years stays for decades ("permastore"). So Diamond asks for exactly that.
 
 import { unitsFor } from './lesson.ts';
-import { keptRecall, localDay, type LogEntry, type MemberProgress } from './progress.ts';
+import { LIGHT_WEIGHT, lightPass } from './observe.ts';
+import { localDay, type LogEntry, type MemberProgress } from './progress.ts';
 import { relatedFor } from './related.ts';
 import type { Item, Track } from './types.ts';
 
@@ -61,9 +62,7 @@ const anyUnaided = (s: { entries: LogEntry[] }) => s.entries.some(unaided);
 // weighed by how much it shows: the easy ones (recognizing, ordering) count little and must be right the first time; the
 // ones that make you produce words count more and keep today's slack for a slip or two. Whole recall always counts in full
 // and the higher stones still need it (see levelFromLog).
-export const LIGHT_WEIGHT: Record<string, number> = { match: 0.4, spot: 0.5, order: 0.5, next: 0.6, blanks: 0.75, letters: 0.9 };
-const EASY = new Set(['match', 'spot', 'order', 'next']);
-const lightPass = (e: LogEntry) => !e.hints && (EASY.has(e.kind) ? e.correct : keptRecall(e));
+export { LIGHT_WEIGHT };
 type Sess = { at: number; entries: LogEntry[] };
 /** How much one session shows: 1 for a whole answer; else the weights of the distinct light kinds passed (a kind missed first and passed on the retry counts half), at most 1. */
 export function evidence(s: Sess): number {

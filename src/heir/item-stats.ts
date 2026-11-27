@@ -3,6 +3,7 @@
 // not shown on a day the item was practised (it would only say "just now"); the page says "Today" instead.
 
 import { itemChance, partMemories, recallChance, type PartMem } from './memory.ts';
+import { LIGHT_WEIGHT } from './observe.ts';
 import { unitsFor, unitText } from './lesson.ts';
 import { localDay, type MemberProgress } from './progress.ts';
 import type { Item, Track } from './types.ts';
@@ -76,31 +77,38 @@ export interface WordCard { word: string; band: WordBand; tries: number; misses:
 const WORD_KINDS = new Set(['type', 'say', 'letters']);
 const RECENCY = 0.85;
 
+/** Every step that says something about particular words feeds the same word-by-word view, each by what it shows (observe.ts):
+ *  a typed, said or first-letters answer is about every word in it; fill-in-the-blanks and spot-the-wrong-word are about only the
+ *  words they asked, so only those words move. A right answer counts by the step's weight; a miss always counts at least 0.6.
+ *  Steps that don't name words (ordering, next phrase, match) still strengthen the verse as a whole, but can't colour a word. */
 export function wordCards(item: Item, track: Track, log: MemberProgress['log']): WordCard[] {
   const chunks = item.chunks[track];
   const words = chunks.join(' ').split(/\s+/).filter(Boolean);
-  const seen: { hit: boolean; at: string }[][] = words.map(() => []);
+  const seen: { hit: boolean; at: string; w: number }[][] = words.map(() => []);
   const units = new Map(unitsFor(item, track).map((u) => [u.key, u]));
-  for (const e of log.filter((x) => x.itemId === item.id && x.part && (WORD_KINDS.has(x.kind) || x.kind === 'blanks'))) {
+  for (const e of log.filter((x) => x.itemId === item.id && x.part && (WORD_KINDS.has(x.kind) || x.kind === 'blanks' || x.kind === 'spot'))) {
     const u = units.get(e.part!);
     if (!u) continue;
     const offset = chunks.slice(0, u.start).join(' ').split(/\s+/).filter(Boolean).length;
     const count = unitText(item, track, u).text.split(/\s+/).filter(Boolean).length;
     const missed = new Set(e.missed ?? []);
-    const clean = (e.misses ?? (e.correct ? 0 : undefined)) === 0;
+    const weight = e.kind === 'type' || e.kind === 'say' ? 1 : LIGHT_WEIGHT[e.kind] ?? 1;
+    const asked = e.tested?.length ? new Set(e.tested) : null;
+    const clean = (e.misses ?? (e.correct ? 0 : undefined)) === 0 || (e.kind === 'spot' && e.correct);
     if (!clean && !e.missed?.length) continue; // unknown which words
     for (let i = 0; i < count; i++) {
       const at = offset + i;
       if (at >= words.length) continue;
-      if (missed.has(i)) seen[at].push({ hit: false, at: e.at });
-      else if (WORD_KINDS.has(e.kind)) seen[at].push({ hit: true, at: e.at });
+      if (missed.has(i)) seen[at].push({ hit: false, at: e.at, w: Math.max(weight, 0.6) });
+      else if (WORD_KINDS.has(e.kind)) seen[at].push({ hit: true, at: e.at, w: weight });
+      else if (asked?.has(i)) seen[at].push({ hit: true, at: e.at, w: weight }); // a quick step that named this word and got it right
     }
   }
   return words.map((word, i) => {
     const obs = [...seen[i]].sort((a, b) => b.at.localeCompare(a.at));
     if (!obs.length) return { word, band: 'none' as const, tries: 0, misses: 0 };
     let w = 0, wMiss = 0, misses = 0;
-    obs.forEach((o, k) => { const x = RECENCY ** k; w += x; if (!o.hit) { wMiss += x; misses++; } });
+    obs.forEach((o, k) => { const x = o.w * RECENCY ** k; w += x; if (!o.hit) { wMiss += x; misses++; } });
     const rate = wMiss / w;
     const band: WordBand = rate >= 0.5 ? 'red' : rate >= 0.25 ? 'yellow' : obs.length >= 3 && rate <= 0.08 ? 'dark' : 'light';
     return { word, band, tries: obs.length, misses };

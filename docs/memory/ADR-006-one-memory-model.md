@@ -1,6 +1,6 @@
 # ADR-006: one memory model, and levels built on it (plan and assessment)
 
-Status: **proposed, 2026-11-27.** Replaces the rules-ladder plan in ADR-005 §2 if accepted. ADR-005's decisions still stand: five levels (Familiar, Recalled, Memorized, Proficient, Expert), awards removed for now with stored dates kept, Familiar a very low bar, Proficient and Expert leaning on whole (typed or spoken) answers.
+Status: **Phase 0 built 2026-11-27 (see "Phase 0: built" below); Phases 1 onward are planned, not started.** Replaces the rules-ladder plan in ADR-005 §2 if accepted. ADR-005's decisions still stand: five levels (Familiar, Recalled, Memorized, Proficient, Expert), awards removed for now with stored dates kept, Familiar a very low bar, Proficient and Expert leaning on whole (typed or spoken) answers.
 
 ---
 
@@ -185,3 +185,31 @@ Rollout of each phase: shadow first. The new model and levels are computed next 
 - Word-level stays out until the data for it exists.
 
 **What would make me say no:** if you need the five levels shipped this week. Then the ADR-005 rules ladder is the right short-term move, built behind the same view so it can be swapped for this later. I'd still do Phase 0 regardless.
+
+
+---
+
+## Phase 0: built (2026-11-27)
+
+The bug in section 1 is fixed, and every step now feeds the same two views: how strong the verse is, and which words are weak.
+
+**One table of what a step shows** (`src/heir/observe.ts`, new): the weights (whole answer 1, first letters 0.9, blanks 0.75, next phrase 0.6, order 0.5, spot 0.5, match 0.4), which steps are easy (right the first time), `lightPass`, `lightMark` (a quick-steps session reduced to "good" with a weight, or "again" with half the weight of the worst miss) and `testedPositions` (which words a step asked). `levels.ts` now imports the weights from here instead of keeping its own copy.
+
+**Strength (the verse and its lines):**
+- `dampedStep` (`memory.ts`): the full update for a good (or missed) recall, moved only `weight` of the way, last-review set to today, next review spaced from today, never a lapse.
+- Per-line memory (`replayParts`): quick steps in reviews now move the line's memory (they never create one; a lesson step with the words on screen doesn't count; still one update per line per day).
+- Whole-item schedule (`finishSession`): a review with only quick steps now updates the item's card the same way. Before, nothing moved and the item came back the next day.
+- Quick steps now carry the line they were about (`part`) so the lines can learn from them (`spot`, `match`, `next`, `order` in `lesson.ts`).
+- The strength number, the strength-over-time line and "review soon" all read these memories, so they pick this up with no further change.
+
+**Words (the passage cards):**
+- New answer field `tested`: the word positions a step asked (blanks, spot). Stored in the progress record, with the existing `missed`.
+- `wordCards` now reads typed, said, first-letters, blanks and spot. Blanks and spot colour only the words they asked: a right answer counts by the step's weight, a miss counts at least 0.6. Ordering, next-phrase and match name no words, so they strengthen the verse as a whole but cannot colour one.
+
+**Tests:** `light-feeds-memory.test.ts` (7). All 178 engine tests pass; the three timezone tests that fail under `TZ=America/Chicago` fail on the untouched branch too. Fixtures `lesson.json` and `memory.json` regenerated.
+
+**What this changes on Today (deliberately):** a strong verse reviewed with quick steps is spaced out from that day, not brought back the next. A missed easy step brings it back sooner, by a gentle amount.
+
+**Not built (still the plan):** Phases 1 to 4 and the word-level model. The server's answers table does not yet store `tested` (the device log does); add it with the Phase 3 migration.
+
+**For the Mac session (Dart):** port `observe.dart` (weights, `lightPass`, `lightMark`, `testedPositions`), `dampedStep` in `memory.dart`, the quick-step branch in `replayParts`, the quick-step branch in `finishSession` (`progress.dart`), `part`/`partOf` on the quick steps in `lesson.dart`, `tested` on the log entry, and the new `wordCards` (`item_stats`, if the app has the word cards). Then run `TZ=America/Chicago flutter test` against the regenerated `fixtures/engine/lesson.json` and `memory.json`; fix only the Dart if they differ.

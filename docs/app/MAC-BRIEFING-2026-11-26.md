@@ -121,3 +121,8 @@ A question practised today shows "Practised today" under its number (course list
 ## Update 2026-11-27: five levels and a simpler Progress tab
 
 See `docs/memory/ADR-004-five-levels-and-simpler-progress.md`. Display-only: Familiar (Stone), Recalled (Bronze), Memorized (Silver), Proficient (Gold), Expert (Diamond); engine levels 4–6 all show as Expert. Progress hides: how-a-word-gets-in fold, keeping rows, days-kept card, month calendar, Understanding, Awards, "Closest next"; the arc card loses its two sentences. Finish screen announces only new tiers. Mirror `src/heir/tiers.ts`; no engine/fixture change.
+
+
+## Update 2026-11-27 (later): quick steps now feed memory and words (ADR-006 Phase 0)
+
+A bug fix with an engine change: reviews made of quick steps (fill in, order, spot, match, next phrase) used to move nothing, so strong verses came back daily. Now each step moves the memory by what it shows (weights in `observe.ts`). See `docs/memory/ADR-006-one-memory-model.md`, section "Phase 0: built", for the exact Dart port list and the two fixtures (`lesson.json`, `memory.json`) to test against. Also record the new `tested` positions on blanks and spot answers.
