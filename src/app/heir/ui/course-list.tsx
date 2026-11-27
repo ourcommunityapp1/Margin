@@ -90,7 +90,7 @@ export function CourseScreen({ id }: { id: string }) {
   const mems = partMemories(mine.log, mine.partSnap);
   const all = courseItems(course);
   const learnedItems = all.filter((i) => unitsFor(i, track).every((u) => learnedUnits.has(u.key)));
-  const strengthOf = new Map(learnedItems.map((i) => [i.id, practisedToday(mine, i.id, now) ? 'today' as const : itemStrength(mine, i.id, now, mems)]));
+  const strengthOf = new Map(learnedItems.map((i) => [i.id, itemStrength(mine, i.id, now, mems)]));
   const nums = [...strengthOf.values()].filter((v): v is number => typeof v === 'number');
   const average = nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) : null;
   const inMemory = heldItems(all, mine, track, now, { launch: KEEP_LAUNCH, tz: localTz(), mode: 'whole' }).filter((h) => h.state.state === 'kept' || h.state.state === 'review').length;
@@ -179,8 +179,8 @@ export function CourseScreen({ id }: { id: string }) {
                               if (st === undefined) return status && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: 'var(--muted)', paddingTop: 2 }}>{status}</span>;
                               return (
                                 <span style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, paddingTop: 2 }}>
-                                  {st === 'today' ? <span className="hr-strength">Today</span> : st === null ? null : <span className="hr-strength" data-band={strengthBand(st)}>{Math.round(st * 100)}%</span>}
-                                  {status && <span style={{ fontSize: 11.5, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)' }}>{status}</span>}
+                                  {st === null ? null : <span className="hr-strength" data-band={strengthBand(st)}>{Math.round(st * 100)}%</span>}
+                                  {(practisedToday(mine, item.id, now) || status) && <span style={{ fontSize: 11.5, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)' }}>{practisedToday(mine, item.id, now) ? 'Practised today' : status}</span>}
                                 </span>
                               );
                             })()}

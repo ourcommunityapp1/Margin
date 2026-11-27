@@ -29,7 +29,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
   const next = learned ? nextStep(item, me?.track ?? 'adult', mine, now) : null;
   const strong = learned ? strongUntilFor(item, mine, me?.track ?? 'adult') : null;
   const today = learned && practisedToday(mine, item.id, now);
-  const strength = learned && !today ? itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap)) : null;
+  const strength = learned ? itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap)) : null;
   const stats = learned ? itemStats(item, mine, me?.track ?? 'adult') : null;
   const noun = unit === 'Question' ? 'answer' : unit === 'Verse' ? 'verse' : 'words';
   const date = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
@@ -57,10 +57,8 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
                     {strong && !dim && <span style={{ fontSize: 14, color: 'var(--muted)' }}>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span>}
                   </span>
                 </div>
-                {today ? (
-                  <div className="hr-ring" style={{ ['--v' as string]: 100 }}><b className="serif" style={{ fontSize: 20 }}>Today</b><span>practised</span></div>
-                ) : strength !== null && (
-                  <div className="hr-ring" data-band={strengthBand(strength)} style={{ ['--v' as string]: Math.round(strength * 100) }}><b className="serif">{Math.round(strength * 100)}%</b><span>strength</span></div>
+                {strength !== null && (
+                  <div className="hr-ring" data-band={strengthBand(strength)} style={{ ['--v' as string]: Math.round(strength * 100) }}><b className="serif">{Math.round(strength * 100)}%</b><span>{today ? 'practised today' : 'strength'}</span></div>
                 )}
               </div>
               {stats && (
