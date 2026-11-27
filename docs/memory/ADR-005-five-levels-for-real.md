@@ -1,67 +1,73 @@
 # ADR-005: make the five levels the real levels (plan, not yet built)
 
-Status: **plan, awaiting the owner's two decisions below.** ADR-004 shipped the five names as a display-only mapping over the six internal stones. That is a stopgap. This plan makes five levels the only levels, in the engine, the saved data, the server and both apps, so there is one scale and nobody has to translate.
+Status: **plan, revised 2026-11-27 after the owner's answers.** ADR-004 shipped the five names as a display-only mapping over six internal stones. This makes five levels the only levels, everywhere.
 
-## Why not stay with the mapping
+Owner's answers: (2) **remove awards entirely for now**; they get an overhaul and come back later. (1) Expert rule: see "Expert" below; the recommendation stands unless the owner says otherwise.
 
-- Two scales (six inside, five shown) means every future change has to remember the fold; the finish screen already needed a special rule.
-- Friends' numbers, awards ("First Amethyst"), keeping windows and the Dart app all still speak six stones.
-- "Expert" is currently three different engine levels. The Mac app would need the same fold in Dart.
+## 1. The guarantee: the Today engine does not change
 
-## The new scale
+I checked what reads a level number. **`dayplan.ts`, `planner.ts` (including `morningPicks`), `lesson.ts` (every lesson, review, rise and night builder), the FSRS grades and `cards`/`due`, and `today.tsx` do not read levels at all.** What goes on Today, how long it takes, what is in "When you rise" and "When you lie down", the 7-minute default, the weekly new-lesson limit, and the windows lighting up are all computed from the answer log, FSRS cards and the plan, never from a stone.
 
-Stored `levels[itemId]`: **0** none yet, **1** Familiar, **2** Recalled, **3** Memorized, **4** Proficient, **5** Expert. (Gem names: Stone, Bronze, Silver, Gold, Diamond.)
+What *does* read levels, and so what this change touches:
 
-| New | Name | Rule (engine) | Comes from old |
+| Reads a level | What it does | Change |
+|---|---|---|
+| `levels.ts` (`levelFromLog`, `settle`, `nextStep`, `needsRefresh`) | decides the level | rewritten (below) |
+| `keep.ts` (`heldItems`, `windowDays`) and `progress.ts` `clampDue` | "in memory" counting and the keeping-rule review dates | re-keyed so each item keeps the **same window and the same dates** it has now |
+| `measures.ts`, `memory-history.ts`, `stats.ts`, `statsjob.ts`, `recover.ts` | words in memory, Growing chart, friends' numbers | thresholds shifted by one so the totals are identical |
+| UI: Progress, item page, course rows, finish screen, friends, linked, how, plan, katekize | display | five levels |
+
+**Proof that Today is untouched, built into the work:** before changing anything I snapshot the outputs of the Today engine (the existing `fixtures/engine/lesson.json`, `journeys.json`, `memory.json`, plus a new `today-before.json` of day plans for the test accounts). After the change they must be **byte-identical** and the 171 tests must pass unchanged; any difference blocks the deploy. A new test also fails if `dayplan.ts`, `planner.ts` or `lesson.ts` ever import `levels.ts`.
+
+One honest edge: the keeping rules (a separate feature from Today) clamp a review's due date using the level. The re-keying keeps those identical, and the before/after test checks it on real data.
+
+## 2. How every level is earned (the whole ladder)
+
+Stored `levels[itemId]`: 0 none, **1 Familiar, 2 Recalled, 3 Memorized, 4 Proficient, 5 Expert.** Levels never go down. Nothing a person does today changes; the rules below are the current ones, renumbered.
+
+"Unaided" means no hints and nothing to pick from. A **whole answer** is typing it or saying it. A **light step** is blanks, first letters, ordering, spotting, matching. Light steps count by weight: letters 0.9, blanks 0.75, next 0.6, order 0.5, spot 0.5, match 0.4; a whole answer is 1.0. The easy kinds (match, spot, order, next) must be right first time; a light day only counts if there was no light miss since (ADR-003 amendment). Grading and these weights are not changing.
+
+| Level | Gem | You get it when | Evidence required |
 |---|---|---|---|
-| 1 | Familiar | Recited in full, unaided, at its lesson (what `recited()` is today) | "Recited", which was level 0 |
-| 2 | Recalled | Recalled unaided on a later day (whole answer, or light recall at 0.5+) | Amethyst (1) |
-| 3 | Memorized | Recalled on 3 different days, with variety | Topaz (2) |
-| 4 | Proficient | Recalled after a gap of 3 weeks or more (0.7+ evidence) | Carnelian (3) |
-| 5 | Expert | **Decision A below** | Emerald / Sapphire / Diamond (4, 5, 6) |
+| **1 Familiar** | Stone | Every part has been typed in full, right, no hints, at its lesson | Whole answer, once. (Today this is the "Recited" step with no stone.) |
+| **2 Recalled** | Bronze | You recall it on a **later day** than the lesson | A whole answer, or light steps adding to at least 0.5, on a day after the first |
+| **3 Memorized** | Silver | You recall it on **3 different days** (the lesson day counts), with variety | Each day counts as above. Variety = one later whole answer, or two or more kinds of light step across those days |
+| **4 Proficient** | Gold | You recall it after **3 weeks or more away** | A whole answer, or light steps adding to at least 0.7, in a session 21+ days after its previous session |
+| **5 Expert** | Diamond | Known six months with every full recall in that time right (at least two), one of them after **2 months away** | Whole answers only. Checked as of each session, so a later long gap never undoes it |
 
-Grading, FSRS, light-recall weights and grace feedback are untouched. Only the ladder's top and the numbering change.
+The old Sapphire (a year) and Diamond (three years) rules are retired. Anything that reached them is simply Expert, and nothing is lost.
 
-## Decisions for the owner (my recommendations first)
+Why this suits "Expert: recall it effortlessly and accurately, even after extended periods without practice": two months away and still right is the "extended period", six months of right recalls is the "effortlessly and accurately". Owner may choose the three-year rule instead, but nobody could reach it for years and the top gem would sit empty for everyone.
 
-**A. What earns Expert?**
-1. *Recommended:* the old Emerald rule: known 6 months, every full recall in that time right, one after a 2-month gap. It matches "effortlessly and accurately, even after extended periods without practice" and is reachable within a year.
-2. The old Diamond rule (known 3 years, recalled after a year away). Honest to the word "Expert", but nobody reaches it for years, so the top gem would sit empty on everyone's Progress.
-Sapphire and Diamond disappear either way (nothing is lost: anyone who held them is Expert).
+Fluency ("Proficient: fluently and reliably") is carried by the 3-week gap with 0.7 evidence, which a lucky easy match cannot reach alone.
 
-**B. Awards.** Keep the award ids (so nobody loses one) and rename: First Amethyst → First Recalled, First Topaz → First Memorized, First Carnelian → First Proficient, First Emerald → First Expert; "…memorized" course awards keep meaning "every question at Memorized". They are hidden on Progress for now anyway.
+## 3. Migration of saved data
 
-## Work, in order
+- Add `levelScale: 2` to the progress record; a record without it is the old scale.
+- `migrateLevels(p)`: old 1→2, 2→3, 3→4, 4/5/6→5; anything recited and at 0 becomes 1 (computed from the log). Idempotent.
+- `mergeProgress` normalises both sides to the new scale **before** taking the max, so an old device syncing later cannot be misread.
+- Applied on read (local, remote and the server stats job).
 
-1. **Engine (`src/heir/levels.ts`)** — rewrite `LEVELS` to five entries and `levelFromLog` to return 0 to 5 (Familiar is the first step: `recited()` true gives 1). Drop Sapphire and Diamond rules. Update `nextStep`, `needsRefresh`, `settle`, `earnedLevels`, `countsFor`, `shelf`, award rules. `tiers.ts` becomes a thin look-up of the same five (names, gems); `tierOf` goes away.
-2. **Everything that reads a level number.** Audit (all of them check `> 0` / `>= 1` today and each must be re-read against the new meaning of 1):
-   - `measures.ts` (words "in memory" must stay "Recalled or above", i.e. `>= 2`, not `>= 1`);
-   - `memory-history.ts`, `keep.ts` (`heldItems` filter, and `windowDays(level)` is keyed to the old scale: re-key it so Recalled/Memorized/Proficient/Expert keep the windows Amethyst/Topaz/Carnelian/Emerald have now, and Familiar has none);
-   - `progress.ts` (`clampDue` guard), `stats.ts` (friends' counts), `statsjob.ts`, `recover.ts`, `item-stats.ts`;
-   - UI: Progress, item page, course rows, finish screen, social, linked, how, plan, katekize.
-3. **Migration of saved progress** (the risky part, because progress lives in localStorage, Supabase and two apps, and merges take the larger number):
-   - Add `levelScale: 2` to the progress record. A record without it is the old scale.
-   - One pure `migrateLevels(p)`: old 1→2, 2→3, 3→4, 4/5/6→5; old 0 stays 0, then `earnedLevels` raises anything recited to 1. Idempotent and covered by a test with every old value.
-   - `mergeProgress` normalises either side to the new scale **before** taking the max, so an old device syncing later cannot push a Topaz back in as a "level 2" and be misread. Old-scale writers are migrated on read, never trusted as new.
-   - Applied in `pullProgress` (local and remote) and in the server stats job.
-4. **Server (Supabase).** `heir_stats.stones` is `integer[6]` with a check. New migration: change to 5 entries (collapse old 4–6 into the last), update `heir_stats_put` default and check, rewrite existing rows. Friends' profiles then show five. Ship the SQL **before** the web build that sends five-entry arrays, and keep the function accepting 6 for one release so the old Mac build does not error.
-5. **Fixtures and Dart.** Regenerate `fixtures/engine/*.json` (TZ America/Chicago); the Mac session ports `levels.dart`, `keep.dart` (window re-key), `stats.dart`, `progress.dart` merge + migration, `stone.dart` (five drawn gems), and runs `flutter test`. Nothing ships to the App Store until the fixtures pass in Dart, since a mismatch would change what people see as their level.
-6. **Cleanup.** Delete the six stone photos and the stone credits on About, `STAGES`, `tiers.ts`'s fold; update ADR-001/003 wording and the course "memorized" awards.
+## 4. Awards: removed for now
 
-## Tests that must exist before deploy
+- Remove the Awards section (already hidden on Progress), the award names on the finish screen, `AWARDS`, `awardsMet`, the `awards` calls in `settle`, and the "First Amethyst" and similar copy.
+- **Keep the stored `awards` record untouched** (existing dates stay in the data and in merges), so when awards come back after their overhaul nobody has lost one. Nothing reads it in the meantime.
+- Mac session: remove the Awards screen and finish-screen award rows. No stone rules depend on awards.
 
-- every old level 0 to 6 migrates as the table says; running it twice changes nothing;
-- merge of an old-scale and a new-scale record equals the merge of two new-scale records;
-- an item with old Topaz shows Memorized, is still due the same day, and its keeping window is unchanged;
-- words-in-memory and friends' totals before and after migration are identical for a real exported record (use the owner's account: Supabase read-only compare);
-- Expert rule (per Decision A) with the existing 6-month and 2-month fixtures.
+## 5. Server and apps
 
-## Rollout
+- Supabase: `heir_stats.stones` from 6 to 5 entries (collapse old 4 to 6), `heir_stats_put` accepts either for one release; migration ships before the web build.
+- Regenerate the engine fixtures (TZ America/Chicago). Mac session ports `levels.dart`, `keep.dart` re-key, `stats.dart`, merge/migration, five drawn gems, runs `flutter test`. Nothing reaches the App Store until the Dart fixtures pass.
+- Delete the six stone photos and their About credits, `STAGES`, and `tiers.ts` becomes the single five-entry table.
 
-Branch, migrate and verify on the owner's own record first (dry run: print before/after counts, no write), then Supabase migration, then web deploy, then the Mac build. Levels never go down, and the migration only maps up or across, so it is safe to re-run.
+## 6. Tests required before deploy
 
-## Risks
+1. Today-engine snapshots byte-identical (section 1); no import of `levels.ts` from `dayplan.ts`, `planner.ts`, `lesson.ts`.
+2. Every old level 0 to 6 migrates as stated; twice is the same as once; merge of old and new scale equals merge of two new.
+3. Owner's real record, dry run, no write: words in memory, Growing chart points, keeping states and due dates identical before and after.
+4. One test per rule above using the existing light-recall fixtures (the Familiar, Recalled, Memorized, Proficient and Expert boundaries, including a light day with a missed easy step not counting).
+5. Awards: finishing a lesson shows no award row; the stored awards record is unchanged after a save.
 
-- Anyone on an old app build after the server moves: covered by the migrate-on-read and by the SQL accepting six entries for one release.
-- Words-in-memory silently jumping because `>= 1` changed meaning: caught by the before/after count test above.
-- Keeping windows shifting: caught by the `windowDays` re-key test.
+## 7. Order of work
+
+1. Snapshot Today outputs. 2. Engine rules + keep/measures re-key + tests. 3. Migration + merge. 4. Remove awards. 5. UI to five levels, delete photos. 6. Dry run on the owner's record. 7. Supabase migration. 8. Web deploy. 9. Fixtures to the Mac session.
