@@ -133,7 +133,7 @@ class SupabaseAccountApi implements AccountApi {
   Future<Map<String, MemberProgress>> saveProgressRows(String householdId, Map<String, MemberProgress> mine) async {
     if (mine.isEmpty) return {};
     final theirs = await loadProgressRows(householdId);
-    final merged = {for (final e in mine.entries) e.key: theirs[e.key] != null ? mergeProgress(theirs[e.key]!, e.value) : e.value};
+    final merged = {for (final e in mine.entries) e.key: theirs[e.key] != null ? mergeProgress(withoutFutureToday(theirs[e.key]!), e.value) : e.value};
     final changed = [for (final id in mine.keys) if (theirs[id] == null || !sameProgress(theirs[id]!, merged[id]!)) id];
     if (changed.isNotEmpty) {
       final at = DateTime.now().toUtc().toIso8601String();

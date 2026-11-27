@@ -78,12 +78,10 @@ void main() {
     expect(find.textContaining('When you lie down · '), findsOneWidget);
   });
 
-  testWidgets('by day the lesson is the big card and both recalls are rows', (tester) async {
+  testWidgets('in the afternoon, "When you rise" not yet done is still the big card; the lesson waits as a row', (tester) async {
     await pumpApp(tester, store: _phone((day) => null, learned: 3), now: DateTime(2026, 11, 24, 14));
-    // Three verses learned: the next lesson locks them in. Its grey line names them.
-    expect(find.textContaining('Lock it in · 6 min'), findsOneWidget);
-    expect(find.text('Genesis 1:1, Psalm 23:1, John 3:16'), findsOneWidget);
-    expect(find.textContaining('When you rise · '), findsOneWidget);
+    expect(find.text('When you rise'), findsOneWidget, reason: 'until 7 pm, as on the website (Nov 26)');
+    expect(find.text('UP NEXT'), findsOneWidget);
     expect(find.textContaining('When you lie down · '), findsOneWidget);
   });
 

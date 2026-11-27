@@ -1,3 +1,7 @@
+import 'dart:convert';
+
+import '../engine/progress.dart';
+
 // Turning a household into database rows and back, and answers into rows (src/heir/sync.ts and answers.ts). Pure, so the
 // sync rules are tested without a database.
 
@@ -97,3 +101,13 @@ List<Map<String, Object?>> toAnswerRows(String householdId, String memberId, Lis
 /// Answers newer than the last one this phone sent ([since] is that answer's time), oldest first.
 List<LogEntry> unsent(List<LogEntry> entries, String since) =>
     [for (final e in entries) if (e.id != null && e.at.compareTo(since) > 0) e]..sort((a, b) => a.at.compareTo(b.at));
+
+/// A saved day plan dated after this device's day is dropped before merging (src/app/heir/ui/provider.tsx withoutFutureToday).
+/// One came from a simulator run with a pretend date while signed in to a real account; because merging keeps the later day,
+/// it kept coming back and Today planned again and saved again, about once a second.
+MemberProgress withoutFutureToday(MemberProgress p, [DateTime? now]) {
+  final t = p.today;
+  if (t == null || t.day.compareTo(localDay(now ?? DateTime.now())) <= 0) return p;
+  final j = p.toJson()..remove('today');
+  return parseProgress(jsonEncode({'m': j}))['m']!;
+}

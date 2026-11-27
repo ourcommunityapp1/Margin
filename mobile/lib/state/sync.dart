@@ -157,7 +157,7 @@ class SyncController extends Notifier<SyncInfo> {
     final merged = <String, MemberProgress>{...local};
     final send = <String, MemberProgress>{};
     for (final id in memberIds) {
-      final a = local[id], b = theirs[id];
+      final a = local[id] == null ? null : withoutFutureToday(local[id]!), b = theirs[id] == null ? null : withoutFutureToday(theirs[id]!);
       final m = a != null && b != null ? mergeProgress(b, a) : (a ?? b);
       if (m == null) {
         merged.remove(id);
@@ -219,7 +219,8 @@ class SyncController extends Notifier<SyncInfo> {
         final cur = ref.read(progressProvider);
         final out = {...cur};
         for (final e in saved.entries) {
-          out[e.key] = out[e.key] != null ? mergeProgress(out[e.key]!, e.value) : e.value;
+          final v = withoutFutureToday(e.value);
+          out[e.key] = out[e.key] != null ? mergeProgress(out[e.key]!, v) : v;
         }
         ref.read(progressProvider.notifier).replaceFromRemote(out);
         state = SyncInfo(SyncState.synced, summary: state.summary);

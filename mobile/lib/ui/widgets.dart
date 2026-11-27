@@ -471,12 +471,14 @@ class KBalancedText extends StatelessWidget {
   Widget build(BuildContext context) {
     final scaler = MediaQuery.textScalerOf(context);
     final direction = Directionality.of(context);
+    // Measure exactly what Text will draw: the style merged into the default one (letter spacing, font features and all).
+    final drawn = DefaultTextStyle.of(context).style.merge(style);
     return LayoutBuilder(
       builder: (context, c) {
         final max = c.maxWidth;
         if (!max.isFinite) return Text(text, style: style, maxLines: maxLines, textAlign: textAlign);
         int linesAt(double w) {
-          final tp = TextPainter(text: TextSpan(text: text, style: style), textDirection: direction, textScaler: scaler, maxLines: maxLines)..layout(maxWidth: w);
+          final tp = TextPainter(text: TextSpan(text: text, style: drawn), textDirection: direction, textScaler: scaler, maxLines: maxLines)..layout(maxWidth: w);
           final n = tp.computeLineMetrics().length;
           tp.dispose();
           return n;
@@ -495,7 +497,8 @@ class KBalancedText extends StatelessWidget {
               hi = mid;
             }
           }
-          width = hi;
+          // A pixel of slack for rounding, never past the room there is.
+          width = (hi + 1).clamp(0, max).toDouble();
         }
         return Align(
           alignment: textAlign == TextAlign.center ? Alignment.topCenter : AlignmentDirectional.topStart,
