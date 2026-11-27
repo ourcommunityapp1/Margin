@@ -23,7 +23,10 @@ export const FIX_EST = 3;
 export const MAX_CARDS = 4;
 /** A course with this many reviews due is "piling up": its review comes before the lesson. */
 export const PILE = 6;
-export const reviewEst = (due: number) => Math.min(6, Math.max(2, Math.ceil(due * 0.75)));
+/** About half a minute a due item: reviews are light now (ADR-003), so they take about two-thirds of what they did. */
+export const reviewEst = (due: number) => Math.min(6, Math.max(2, Math.ceil(due * 0.5)));
+/** About three to five new pieces a week: at five new lessons in the last 7 days, the day is for keeping what you know. */
+export const NEW_PER_WEEK = 5;
 
 /** The courses this person has started (learned anything in), with the focus course first even if not begun. */
 export function startedCourses(p: MemberProgress, track: Track, focus: string | null): Course[] {
@@ -58,13 +61,15 @@ export function planDay(o: { p: MemberProgress; track: Track; started: Course[];
     .sort((a, b) => b.due - a.due)
     .map((x) => ({ card: card('review', x.c.id, reviewEst(x.due)), piling: x.due >= PILE }));
 
-  // The brake on new material: when reviews already fill most of the day, today is for keeping what you know, not adding.
+  // The brake on new material: when reviews already fill most of the day, or five new lessons came in the last week, today is
+  // for keeping what you know, not adding.
   // Something new still comes at least every third day, so learning never stalls.
   if (lesson?.kind === 'lesson' && focus) {
     const load = o.started.reduce((n, c) => { const due = dueCards(o.p, o.now, new Set(courseItems(c).map((i) => i.id))).length; return n + (due ? reviewEst(due) : 0); }, 0);
     const lastNew = o.p.log.reduce((m, e) => (e.kind === 'intro' && e.at > m ? e.at : m), '');
     const daysSinceNew = lastNew ? (o.now.getTime() - Date.parse(lastNew)) / 86_400_000 : Infinity;
-    if (load > 0.7 * o.goal && daysSinceNew < 3) {
+    const lessonsThisWeek = new Set(o.p.log.filter((e) => e.kind === 'intro' && Date.parse(e.at) > o.now.getTime() - 7 * 86_400_000).map((e) => e.at)).size;
+    if ((load > 0.7 * o.goal && daysSinceNew < 3) || lessonsThisWeek >= NEW_PER_WEEK) {
       const focusDue = dueCards(o.p, o.now, new Set(courseItems(focus).map((i) => i.id))).length;
       lesson = focusDue ? card('review', focus.id, reviewEst(focusDue)) : null;
     }

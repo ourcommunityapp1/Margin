@@ -1285,3 +1285,10 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
 /* Effort, said before you start (ADR-003): light, or a full answer from memory. */
 .hr-b4-effort { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); color: #C9C1B3; }
 .hr-b4-effort[data-full] { background: rgba(243, 216, 182, 0.16); color: #F3D8B6; }
+
+/* The week in one line (ADR-003). */
+.hr-pg-week { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding-top: 18px; }
+.hr-pg-week-title { position: absolute; top: 0; left: 6px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.hr-pg-week div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 6px; border-radius: 18px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.08); text-align: center; }
+.hr-pg-week b { font-size: 24px; font-weight: 500; line-height: 1.1; }
+.hr-pg-week span:not(.hr-pg-week-title) { font-size: 12px; color: var(--muted); }

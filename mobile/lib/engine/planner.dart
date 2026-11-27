@@ -138,7 +138,10 @@ String describe(LessonPlan plan, String Function(Group g) groupName) {
 
 const lessonMinutes = 6;
 const _lockInMinutes = 4;
-const goals = [5, 15, 25];
+const goals = [5, 7, 15, 25];
+
+/// The default daily goal: about seven minutes. People can always do more.
+const defaultGoal = 7;
 
 class Projection {
   final int remaining, learnDays;

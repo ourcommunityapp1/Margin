@@ -6,6 +6,7 @@
 // The evening and morning recalls are optional, so they are not cards: a night-blue (or dawn) banner above the carousel,
 // which can be put away for the evening (or morning).
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useHeir } from './provider';
@@ -50,7 +51,7 @@ export function TodayCards() {
   const { me, track, mine } = useCourse();
   const keep = useKeep();
   const focus = household.plan?.course ?? null;
-  const goal = household.plan?.minutes ?? 15;
+  const goal = household.plan?.minutes ?? DEFAULT_GOAL;
   const day = localDay(now);
   const started = useMemo(() => startedCourses(mine, track, focus), [mine, track, focus]);
   const fixIds = useMemo(() => keep?.tryAgain.map((h) => h.item.id) ?? [], [keep]);

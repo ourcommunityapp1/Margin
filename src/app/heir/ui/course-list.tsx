@@ -3,6 +3,7 @@
 // One course at a glance, for the Courses list and a course's own page: what kind of thing you memorize,
 // how long it takes at your daily goal, how far you've come, and its window as lit so far.
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -69,7 +70,7 @@ export function CourseScreen({ id }: { id: string }) {
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
   const track = me?.track ?? 'adult';
-  const minutes = household.plan?.minutes ?? 15;
+  const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const s = courseSummary(course, track, mine, minutes, now);
   const currentCourse = courseFor(household.plan?.course);
   const current = currentCourse?.id === course.id;

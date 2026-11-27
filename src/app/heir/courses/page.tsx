@@ -4,6 +4,7 @@
 // in season, then every other course on its shelf. Each is a card with its window (lit as far as you've come), its name and
 // two lines on what it is.
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import Link from 'next/link';
 import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
@@ -23,7 +24,7 @@ export default function Courses() {
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
   const track = me?.track ?? 'adult';
-  const minutes = household.plan?.minutes ?? 15;
+  const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const summary = (c: Course) => courseSummary(c, track, mine, minutes, now);
   const current = courseFor(household.plan?.course);
   const mineCourses = startedCourses(mine, track, current?.id ?? null);

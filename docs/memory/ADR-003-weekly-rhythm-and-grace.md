@@ -1,6 +1,6 @@
 # ADR-003: A weekly rhythm, light steps, and grace in feedback
 
-Status: **partly built** (Nov 27, 2026): Decisions 1–3, 7 and 8 are live on the website; 4, 5 and 9 are next. See "Owner's corrections" below, which override the first draft. Amends ADR-001 (Decision 5, cue fading) and ADR-002 (Decision 5 and "After first use").
+Status: **built on the website** (Nov 27, 2026); the engine is ported to Dart and the app screens are still to do (see docs/app/CHANGES-2026-11-25.md). See "Owner's corrections" below, which override the first draft. Amends ADR-001 (Decision 5, cue fading) and ADR-002 (Decision 5 and "After first use").
 Mockup of a week: https://claude.ai/artifact/KzCidu6f6R525MEym1Li5d
 
 ## Why
@@ -57,8 +57,37 @@ otherwise minimal; about three to five new pieces a week ("probably").
 - **Effort said up front** (`today.tsx`): the big card shows "Light", "Ends with one full answer", "✎ Type it from memory" (fix) or "✎ Lock it in";
   rows with a full answer show "✎" before their minutes.
 
+### Amendment to G4 (owner, Nov 27): light recall earns the first three stones
+"Light should light up with consistent recall on a variety of steps." Reviews are light, so the first three stones can now also be earned by
+**consistent recall across a variety of light steps**, weighed by how much each shows. Whole recall still counts in full, and **Emerald, Sapphire and
+Diamond (six months and longer) still need whole recall**; "Recited" still needs the lesson's typed answer. Nothing else changed: keeping rules,
+fixes and the strict grade are untouched.
+
+| Step | Weight | Standard |
+|---|---|---|
+| Whole answer (type or say) | 1 | as before: right, no hints |
+| First letters | 0.9 | right, or within the allowance (a slip or two), no hints |
+| Fill in the blanks | 0.75 | right, or within the allowance, no hints |
+| What comes next | 0.6 | **right the first time** (easy) |
+| Put the phrases in order, tap the wrong word | 0.5 | **right the first time** (easy) |
+| Match the question | 0.4 | **right the first time** (easy) |
+
+- A session shows the weights of the distinct kinds answered right, at most 1. A kind missed first and put right in the same session counts half.
+- **Remembered:** a later day (than the lesson) with at least 0.5. **Memorized:** three days (the lesson day counts) with at least 0.5 each, and two or more
+  kinds of step among the light days unless a later day was a whole answer. **Lasting:** after a gap of three weeks, with at least 0.7 (so an easy step alone
+  is not enough).
+- **A miss starts the light count again:** a session in which a light kind was never answered right cancels the light days before it; whole answers always count.
+- Code: `src/heir/levels.ts` (`LIGHT_WEIGHT`, `evidence`, `countingSessions`), ported to `mobile/lib/engine/levels.dart`; tests in `src/heir/test/levels-light.test.ts`;
+  fixtures regenerated (only the simulated learners' level-ups changed).
+
+### Also built (Nov 27)
+- **Default daily goal 7 minutes** (`DEFAULT_GOAL`; 5, 7, 15 and 25 are offered; anyone with a saved goal keeps it). Today, Courses, Progress, You, Plan and Start use it.
+- **About three to five new pieces a week** (`NEW_PER_WEEK = 5` in `dayplan.ts` and `dayplan.dart`): at five new lessons in the last 7 days there is no new lesson today (a review instead, or nothing), joining the existing brake. Test added.
+- **Review time estimates** are about half a minute an item (`reviewEst` now `ceil(due × 0.5)`), since reviews are light.
+- **The week in one line on Progress** (`src/heir/week.ts`, test `week.test.ts`): learned, kept up, strengthened, days kept (last 7 days). Pure; the app ports it outside the engine folder.
+- The "ready for a stone" invitation is dropped: light recall now moves the first stones on its own.
+
 ### Next
-- The optional "ready for a stone" invitation (above).
 - Decision 5: a 7-minute default goal (the goal options live in the engine's `GOALS`, so this is an engine and Dart change) and the weekly target of
   about 3–5 new pieces.
 - Decision 9: the week line on Progress.

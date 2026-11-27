@@ -3,6 +3,7 @@
 // Progress, as one scroll: a row of rings, the words in your memory (an arc over your window) and how they have grown,
 // the days kept, the stones, the window of every course you've begun (tap one to see it up close), and awards.
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useHeir } from '../ui/provider';
@@ -20,6 +21,7 @@ import { activeMember } from '@/heir/household';
 import { AWARDS, LEVELS, STAGES, UNDERSTANDING, bestDaysKept, daysKept, needsRefresh, nextStep, recited, understanding } from '@/heir/levels';
 import { MILESTONES, milestones, wordsIn } from '@/heir/measures';
 import { wordsHistory, type WordsPoint } from '@/heir/memory-history';
+import { weekSummary } from '@/heir/week';
 import { localDay, memberProgress } from '@/heir/progress';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
@@ -58,7 +60,7 @@ export default function Progress() {
   const withNotes = items.filter((i) => i.meaning.length);
   const grasp = UNDERSTANDING.map((u) => withNotes.filter((i) => understanding(i, mine) >= u.n).length);
   // Every course with anything learned, the one in progress first: its window lit as far as you've come.
-  const minutes = household.plan?.minutes ?? 15;
+  const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const yours = courses
     .map((c) => ({ c, s: courseSummary(c, me.track, mine, minutes, now), stones: courseItems(c).filter((i) => (mine.levels[i.id] ?? 0) > 0).length }))
     .filter((x) => x.s.started)
@@ -86,6 +88,7 @@ export default function Progress() {
   const nextAward = AWARDS.find((a) => !mine.awards[a.id]);
   const viewing = yours.find((y) => y.c.id === open);
   const wash = yours[0]?.s.window.base ?? null;
+  const week = weekSummary(mine, now);
   const learnedAll = yours.reduce((n, y) => n + y.s.learned, 0), totalAll = yours.reduce((n, y) => n + y.s.total, 0);
   // One plain sentence for where you stand, and one line of what to do.
   const toNext = miles.next ? miles.next - inMemory : 0;
@@ -116,6 +119,13 @@ export default function Progress() {
           <p className="hr-pg-line">{guide}</p>
           {keep && keep.review.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Review {keep.review.length} soon</Link>
             : keep && keep.out.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Bring {keep.out.length} back</Link> : null}
+        </section>
+
+        <section className="hr-pg-week" aria-label="This week">
+          {[[week.learned, 'learned'], [week.kept, 'kept up'], [week.strengthened, 'strengthened'], [week.days, week.days === 1 ? 'day kept' : 'days kept']].map(([n, label]) => (
+            <div key={String(label)}><b className="serif">{n}</b><span>{label}</span></div>
+          ))}
+          <span className="hr-pg-week-title">This week</span>
         </section>
 
         {history.length > 2 && (

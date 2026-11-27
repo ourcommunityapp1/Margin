@@ -126,7 +126,9 @@ export function describe(plan: LessonPlan, groupName: (g: Group) => string): str
 //     last question is learned.
 export const LESSON_MINUTES = 6;
 const LOCK_IN_MINUTES = 4;
-export const GOALS = [5, 15, 25] as const;
+export const GOALS = [5, 7, 15, 25] as const;
+/** The default daily goal: about seven minutes, as three small pieces (a light morning recall, one main card, a light evening recall). People can always do more. */
+export const DEFAULT_GOAL = 7;
 
 export interface Projection { remaining: number; learnDays: number; learnedBy: Date; longTermBy: Date }
 

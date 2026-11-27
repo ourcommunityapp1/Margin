@@ -3,6 +3,7 @@
 // Choosing what to memorize and how long each day, with what that means in dates, and what the stones
 // and grades mean. Progress on every course is kept, so switching is safe.
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import { useRouter } from 'next/navigation';
 import { useHeir } from './provider';
 import { Back } from './tabs';
@@ -23,7 +24,7 @@ export function PlanScreen({ setup }: { setup: boolean }) {
   if (!ready) return <main className="hr-page" aria-busy="true" />;
   const current = courseFor(household.plan?.course)?.id ?? null;
   const course = courseFor(household.plan?.course) ?? null;
-  const minutes = household.plan?.minutes ?? 15;
+  const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
   const stats = Object.fromEntries(courses.map((c) => [c.id, courseStats(courseItems(c), me?.track ?? 'adult', mine)]));

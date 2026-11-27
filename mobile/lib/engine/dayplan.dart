@@ -46,7 +46,11 @@ const lessonEst = 6;
 const fixEst = 3;
 const maxCards = 4;
 const pile = 6;
-int reviewEst(int due) => math.min(6, math.max(2, (due * 0.75).ceil()));
+/// About half a minute a due item: reviews are light now (ADR-003).
+int reviewEst(int due) => math.min(6, math.max(2, (due * 0.5).ceil()));
+
+/// About three to five new pieces a week: at five new lessons in the last 7 days, the day is for keeping what you know.
+const newPerWeek = 5;
 
 /// The courses this person has started, with the focus course first even if not begun.
 List<Course> startedCourses(MemberProgress p, Track track, String? focus) {
@@ -88,7 +92,8 @@ List<DayCard> planDay({required MemberProgress p, required Track track, required
     });
     final lastNew = p.log.fold<String>('', (m, e) => e.kind == 'intro' && e.at.compareTo(m) > 0 ? e.at : m);
     final daysSinceNew = lastNew.isNotEmpty ? (now.millisecondsSinceEpoch - parseMs(lastNew)) / dayMillis : double.infinity;
-    if (load > 0.7 * goal && daysSinceNew < 3) {
+    final lessonsThisWeek = {for (final e in p.log) if (e.kind == 'intro' && parseMs(e.at) > now.millisecondsSinceEpoch - 7 * dayMillis) e.at}.length;
+    if ((load > 0.7 * goal && daysSinceNew < 3) || lessonsThisWeek >= newPerWeek) {
       final focusDue = _dueIn(p, now, focusCourse);
       lesson = focusDue > 0 ? card('review', focusCourse.id, reviewEst(focusDue)) : null;
     }

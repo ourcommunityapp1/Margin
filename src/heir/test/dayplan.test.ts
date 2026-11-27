@@ -114,10 +114,21 @@ test('the brake: when reviews fill most of the day and something new came lately
   p = learn(p, 'psalm-23', 6, past);
   p = { ...p, log: [{ at: '2026-11-23T10:00:00Z', itemId: 'wsc-3', kind: 'intro', correct: true, hints: 0, ms: 1, review: false }] };
   const started = startedCourses(p, 'adult', 'westminster-shorter');
-  assert.deepEqual(planDay({ p, track: 'adult', started, focus: 'westminster-shorter', goal: 5, now }).map((c) => `${c.kind}:${c.course}`), ['review:psalm-23']);
+  assert.deepEqual(planDay({ p, track: 'adult', started, focus: 'westminster-shorter', goal: 4, now }).map((c) => `${c.kind}:${c.course}`), ['review:psalm-23']);
   // Three days without anything new: the lesson comes back.
   const quiet = { ...p, log: [{ ...p.log[0], at: '2026-11-20T10:00:00Z' }] };
-  assert.ok(planDay({ p: quiet, track: 'adult', started, focus: 'westminster-shorter', goal: 5, now }).some((c) => c.kind === 'lesson'));
+  assert.ok(planDay({ p: quiet, track: 'adult', started, focus: 'westminster-shorter', goal: 4, now }).some((c) => c.kind === 'lesson'));
+});
+
+test('about three to five new pieces a week: after five new lessons in seven days, the day is for keeping (ADR-003)', () => {
+  const p0 = learn(emptyProgress(), 'westminster-shorter', 3, later);
+  const intro = (at: string) => ({ at, itemId: 'wsc-3', kind: 'intro' as const, correct: true, hints: 0, ms: 1, review: false });
+  const started = startedCourses(p0, 'adult', 'westminster-shorter');
+  const days = ['2026-11-18', '2026-11-19', '2026-11-20', '2026-11-21', '2026-11-22'].map((d) => `${d}T10:00:00Z`);
+  const four = { ...p0, log: days.slice(0, 4).map(intro) };
+  const five = { ...p0, log: days.map(intro) };
+  assert.ok(planDay({ p: four, track: 'adult', started, focus: 'westminster-shorter', goal: 15, now }).some((c) => c.kind === 'lesson'), 'four this week: a fifth comes');
+  assert.ok(!planDay({ p: five, track: 'adult', started, focus: 'westminster-shorter', goal: 15, now }).some((c) => c.kind === 'lesson'), 'five this week: no new lesson today');
 });
 
 test('card events: shown, opened, finished, and merged across phones', () => {

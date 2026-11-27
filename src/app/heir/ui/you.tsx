@@ -2,6 +2,7 @@
 
 // "You": everything about the person on this phone in one place, opened from their initial on Today.
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useHeir } from './provider';
@@ -51,7 +52,7 @@ export function YouScreen() {
         )}
         <section className="hr-card" style={{ padding: '4px 20px' }} aria-label="Settings">
           {accounts && email && <Row href="/heir/profile" title="Your profile" sub="Name, username, city, who can find you" />}
-          <Row href="/heir/plan" title="Course and daily goal" sub={course ? `${course.title} · ${household.plan?.minutes ?? 15} min a day` : 'Choose a course'} />
+          <Row href="/heir/plan" title="Course and daily goal" sub={course ? `${course.title} · ${household.plan?.minutes ?? DEFAULT_GOAL} min a day` : 'Choose a course'} />
           <Row href="/heir/family" title="Family" sub={others > 0 ? `You and ${others} more on this phone` : 'Just you · add someone'} />
           {accounts && email && <Row href="/heir/linked" title="Linked accounts" sub="See a family member’s progress, view only" />}
           {accounts && !email && <Row href="/heir/signin" title="Sign in" sub="Keep your progress on every phone" />}

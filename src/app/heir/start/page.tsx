@@ -3,6 +3,7 @@
 // First run: a name, what to memorize, a daily goal with what it means in dates, then the first lesson.
 // Other family members and settings can wait; they live under Family.
 
+import { DEFAULT_GOAL } from '@/heir/planner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useHeir } from '../ui/provider';
@@ -19,7 +20,7 @@ export default function Start() {
   const [step, setStep] = useState<'name' | 'course' | 'goal'>('name');
   const [name, setName] = useState('');
   const [course, setCourse] = useState<string | null>(null);
-  const [minutes, setMinutes] = useState<number | null>(15);
+  const [minutes, setMinutes] = useState<number | null>(DEFAULT_GOAL);
   const hasSomeone = household.members.length > 0;
   const starting = useRef(false);
 
@@ -36,7 +37,7 @@ export default function Start() {
     starting.current = true;
     // Made once, outside the update: an update function may run twice and must give the same result.
     const id = newId(), now = new Date();
-    update((h) => setPlan(h.members.length ? h : addMember(h, name, 'adult', id, now), { course, minutes: minutes ?? 15 }));
+    update((h) => setPlan(h.members.length ? h : addMember(h, name, 'adult', id, now), { course, minutes: minutes ?? DEFAULT_GOAL }));
     router.push('/heir/lesson');
   };
 
