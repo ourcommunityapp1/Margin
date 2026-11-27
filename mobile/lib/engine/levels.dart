@@ -16,10 +16,10 @@ class Level {
 
 const levelList = [
   Level(1, 'amethyst', 'Amethyst', '12th foundation', 'Remembered', 'You recalled it, unaided, after a night’s sleep: it has started to stick.',
-      'Recalled in full with no hints on a day after you first recited it'),
-  Level(2, 'topaz', 'Topaz', '9th foundation', 'Memorized', 'You’ve recalled it unaided on three different days: it’s yours, word for word.', 'Recalled in full with no hints on 3 different days'),
+      'Recalled with no hints on a day after you first recited it: in full, or right in a quick step like filling in the blanks'),
+  Level(2, 'topaz', 'Topaz', '9th foundation', 'Memorized', 'You’ve recalled it unaided on three different days: it’s yours, word for word.', 'Recalled with no hints on 3 different days: in full, or right in two or more kinds of quick step'),
   Level(3, 'carnelian', 'Carnelian', '6th foundation', 'Lasting', 'Still there after three weeks away: it has moved past short-term memory.',
-      'Recalled in full with no hints after a gap of 3 weeks or more'),
+      'Recalled with no hints after a gap of 3 weeks or more: in full, or right in a step that makes you find the words'),
   Level(4, 'emerald', 'Emerald', '4th foundation', 'Long-term', 'Right every time for six months, including after two months away: it’s in long-term memory.',
       'Every recall right for 6 months, including one after a gap of 2 months or more'),
   Level(5, 'sapphire', 'Sapphire', '2nd foundation', 'Enduring', 'A year after you first knew it, still there after half a year away.',
@@ -44,6 +44,41 @@ class _S {
   final List<LogEntry> entries;
   _S(this.at, this.entries);
   bool get anyUnaided => entries.any(_unaided);
+}
+
+// Light recall (ADR-003; the same as src/heir/levels.ts). Reviews are light, so the first three stones can also be earned by
+// consistent recall across a variety of light steps. Easy kinds weigh little and must be right the first time; the kinds that
+// make you produce words weigh more and keep the slack for a slip or two. Whole recall counts in full; higher stones need it.
+const lightWeight = <String, double>{'match': 0.4, 'spot': 0.5, 'order': 0.5, 'next': 0.6, 'blanks': 0.75, 'letters': 0.9};
+const _easy = {'match', 'spot', 'order', 'next'};
+bool _lightPass(LogEntry e) => e.hints == 0 && (_easy.contains(e.kind) ? e.correct : keptRecall(e));
+
+/// How much one session shows: 1 for a whole answer; else the weights of the distinct light kinds passed (a kind missed
+/// first and passed on the retry counts half), at most 1.
+double _evidence(_S s) {
+  if (s.anyUnaided) return 1;
+  var sum = 0.0;
+  for (final kind in lightWeight.keys) {
+    final es = s.entries.where((e) => e.kind == kind).toList();
+    if (es.isEmpty) continue;
+    sum += _lightPass(es.first) ? lightWeight[kind]! : es.any(_lightPass) ? lightWeight[kind]! / 2 : 0;
+  }
+  return sum > 1 ? 1.0 : sum;
+}
+
+bool _failedLight(_S s) => lightWeight.keys.any((kind) {
+      final es = s.entries.where((e) => e.kind == kind).toList();
+      return es.isNotEmpty && !es.any(_lightPass);
+    });
+Iterable<String> _lightKinds(_S s) => lightWeight.keys.where((k) => s.entries.any((e) => e.kind == k && _lightPass(e)));
+
+/// The sessions that count toward a stone: whole answers always; light ones only after the last light miss, with `min` evidence.
+List<_S> _countingSessions(List<_S> ss, double min) {
+  var lastFail = -1;
+  for (final s in ss) {
+    if (_failedLight(s) && s.at > lastFail) lastFail = s.at;
+  }
+  return [for (final s in ss) if (s.anyUnaided || (s.at > lastFail && _evidence(s) >= min)) s];
 }
 
 List<_S> _sessions(List<LogEntry> log, String itemId) {
@@ -72,9 +107,17 @@ int levelFromLog(Item item, Track track, List<LogEntry> log, DateTime now) {
   bool knownFor(int days) => firstRecall != null && firstRecall.at <= now.millisecondsSinceEpoch - days * _day;
 
   final firstDay = ss.isNotEmpty ? localDay(fromMs(ss[0].at)) : '';
-  if (!ss.any((s) => localDay(fromMs(s.at)) != firstDay && s.anyUnaided)) return 0;
-  if ({for (final s in ss) if (s.anyUnaided) localDay(fromMs(s.at))}.length < 3) return 1;
-  if (afterGap(21).isEmpty) return 2;
+  final counting = _countingSessions(ss, 0.5);
+  if (!counting.any((s) => localDay(fromMs(s.at)) != firstDay)) return 0;
+  final days = {for (final s in counting) localDay(fromMs(s.at))};
+  final variety = counting.any((s) => s.anyUnaided && localDay(fromMs(s.at)) != firstDay) || {for (final s in counting) ..._lightKinds(s)}.length >= 2;
+  if (days.length < 3 || !variety) return 1;
+  final lasting = _countingSessions(ss, 0.7);
+  var gapped = false;
+  for (var i = 1; i < ss.length; i++) {
+    if (ss[i].at - ss[i - 1].at >= 21 * _day && lasting.contains(ss[i])) gapped = true;
+  }
+  if (!gapped) return 2;
 
   final gap60 = afterGap(60);
   bool longTermAt(int t) {
@@ -132,7 +175,7 @@ String? nextStep(Item item, Track track, MemberProgress p, DateTime now) {
   final n = levelOf(p, item.id);
   if (n == 0) return recited(item, track, p.log) ? 'Amethyst, once you recall it after a night’s sleep' : 'Type it in full with no hints to recite it';
   if (n == 1) {
-    final days = {for (final s in _sessions(p.log, item.id)) if (s.anyUnaided) localDay(fromMs(s.at))}.length;
+    final days = {for (final s in _countingSessions(_sessions(p.log, item.id), 0.5)) localDay(fromMs(s.at))}.length;
     final left = 3 - days < 1 ? 1 : 3 - days;
     return 'Topaz, once you recall it on $left more ${left == 1 ? 'day' : 'days'}';
   }

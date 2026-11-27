@@ -14,7 +14,7 @@
 // three to six years stays for decades ("permastore"). So Diamond asks for exactly that.
 
 import { unitsFor } from './lesson.ts';
-import { localDay, type LogEntry, type MemberProgress } from './progress.ts';
+import { keptRecall, localDay, type LogEntry, type MemberProgress } from './progress.ts';
 import { relatedFor } from './related.ts';
 import type { Item, Track } from './types.ts';
 
@@ -24,13 +24,13 @@ export interface Level { n: number; id: string; name: string; foundation: string
 export const LEVELS: Level[] = [
   { n: 1, id: 'amethyst', name: 'Amethyst', foundation: '12th foundation', counts: 'Remembered',
     means: 'You recalled it, unaided, after a night’s sleep: it has started to stick.',
-    rule: 'Recalled in full with no hints on a day after you first recited it' },
+    rule: 'Recalled with no hints on a day after you first recited it: in full, or right in a quick step like filling in the blanks' },
   { n: 2, id: 'topaz', name: 'Topaz', foundation: '9th foundation', counts: 'Memorized',
     means: 'You’ve recalled it unaided on three different days: it’s yours, word for word.',
-    rule: 'Recalled in full with no hints on 3 different days' },
+    rule: 'Recalled with no hints on 3 different days: in full, or right in two or more kinds of quick step' },
   { n: 3, id: 'carnelian', name: 'Carnelian', foundation: '6th foundation', counts: 'Lasting',
     means: 'Still there after three weeks away: it has moved past short-term memory.',
-    rule: 'Recalled in full with no hints after a gap of 3 weeks or more' },
+    rule: 'Recalled with no hints after a gap of 3 weeks or more: in full, or right in a step that makes you find the words' },
   { n: 4, id: 'emerald', name: 'Emerald', foundation: '4th foundation', counts: 'Long-term',
     means: 'Right every time for six months, including after two months away: it’s in long-term memory.',
     rule: 'Every recall right for 6 months, including one after a gap of 2 months or more' },
@@ -56,6 +56,35 @@ const FULL = new Set(['type', 'say']);
 const unaided = (e: LogEntry) => FULL.has(e.kind) && e.correct && !e.hints;
 const anyUnaided = (s: { entries: LogEntry[] }) => s.entries.some(unaided);
 
+// ---- Light recall (ADR-003). Reviews are light now (blanks, first letters, putting phrases in order, spotting the wrong word,
+// matching), so the first three stones can also be earned by consistent recall across a variety of light steps. Each kind is
+// weighed by how much it shows: the easy ones (recognizing, ordering) count little and must be right the first time; the
+// ones that make you produce words count more and keep today's slack for a slip or two. Whole recall always counts in full
+// and the higher stones still need it (see levelFromLog).
+export const LIGHT_WEIGHT: Record<string, number> = { match: 0.4, spot: 0.5, order: 0.5, next: 0.6, blanks: 0.75, letters: 0.9 };
+const EASY = new Set(['match', 'spot', 'order', 'next']);
+const lightPass = (e: LogEntry) => !e.hints && (EASY.has(e.kind) ? e.correct : keptRecall(e));
+type Sess = { at: number; entries: LogEntry[] };
+/** How much one session shows: 1 for a whole answer; else the weights of the distinct light kinds passed (a kind missed first and passed on the retry counts half), at most 1. */
+export function evidence(s: Sess): number {
+  if (anyUnaided(s)) return 1;
+  let sum = 0;
+  for (const kind of Object.keys(LIGHT_WEIGHT)) {
+    const es = s.entries.filter((e) => e.kind === kind);
+    if (!es.length) continue;
+    sum += lightPass(es[0]) ? LIGHT_WEIGHT[kind] : es.some(lightPass) ? LIGHT_WEIGHT[kind] / 2 : 0;
+  }
+  return Math.min(1, sum);
+}
+/** A session in which some light kind was never answered right (a miss that was not put right in the same session). */
+const failedLight = (s: Sess) => Object.keys(LIGHT_WEIGHT).some((kind) => { const es = s.entries.filter((e) => e.kind === kind); return es.length > 0 && !es.some(lightPass); });
+const lightKinds = (s: Sess) => Object.keys(LIGHT_WEIGHT).filter((k) => s.entries.some((e) => e.kind === k && lightPass(e)));
+/** The sessions that count toward a stone: whole answers always; light ones only after the last light miss ("consistent"), with `min` evidence. */
+export function countingSessions(ss: Sess[], min: number): Sess[] {
+  const lastFail = Math.max(-1, ...ss.filter(failedLight).map((s) => s.at));
+  return ss.filter((s) => anyUnaided(s) || (s.at > lastFail && evidence(s) >= min));
+}
+
 // Sessions for one item, oldest first: each is the answers given in one lesson or review.
 function sessions(log: LogEntry[], itemId: string): { at: number; entries: LogEntry[] }[] {
   const by = new Map<string, LogEntry[]>();
@@ -78,16 +107,21 @@ export function levelFromLog(item: Item, track: Track, log: LogEntry[], now: Dat
   const firstRecall = ss.find(anyUnaided);
   const knownFor = (days: number) => !!firstRecall && firstRecall.at <= now.getTime() - days * DAY;
 
-  // Remembered: unaided on a later day than it was first practiced. Recall in the same sitting is mostly
-  // short-term memory; recall after a night's sleep is the first sign it's stored.
+  // Remembered: recalled on a later day than it was first practiced: a whole answer, or light recall that shows at least 0.5.
+  // Recall in the same sitting is mostly short-term memory; recall after a night's sleep is the first sign it's stored.
   const firstDay = ss.length ? localDay(new Date(ss[0].at)) : '';
-  if (!ss.some((s) => localDay(new Date(s.at)) !== firstDay && anyUnaided(s))) return 0;
+  const counting = countingSessions(ss, 0.5);
+  if (!counting.some((s) => localDay(new Date(s.at)) !== firstDay)) return 0;
 
-  // Memorized: unaided on three different days.
-  if (new Set(ss.filter(anyUnaided).map((s) => localDay(new Date(s.at)))).size < 3) return 1;
+  // Memorized: recalled on three different days (the lesson day counts); light days must show variety (two or more kinds of
+  // step across them) unless a later day was a whole answer.
+  const days = new Set(counting.map((s) => localDay(new Date(s.at))));
+  const variety = counting.some((x) => anyUnaided(x) && localDay(new Date(x.at)) !== firstDay) || new Set(counting.flatMap(lightKinds)).size >= 2;
+  if (days.size < 3 || !variety) return 1;
 
-  // Lasting: unaided after three weeks away.
-  if (!afterGap(21).length) return 2;
+  // Lasting: recalled after three weeks away (a whole answer, or light recall that shows at least 0.7).
+  const lasting = countingSessions(ss, 0.7);
+  if (!ss.some((s, i) => i > 0 && s.at - ss[i - 1].at >= 21 * DAY && lasting.includes(s))) return 2;
 
   // Long-term: at some point, known six months, with every full recall in those six months right (at least two),
   // one of them after two months away. Checked as of each session, so a later long gap doesn't undo it.
@@ -154,7 +188,7 @@ export function nextStep(item: Item, track: Track, p: MemberProgress, now: Date)
   const n = levelOf(p, item.id);
   if (n === 0) return recited(item, track, p.log) ? 'Amethyst, once you recall it after a night’s sleep' : 'Type it in full with no hints to recite it';
   if (n === 1) {
-    const days = new Set(sessions(p.log, item.id).filter(anyUnaided).map((s) => localDay(new Date(s.at)))).size;
+    const days = new Set(countingSessions(sessions(p.log, item.id), 0.5).map((s) => localDay(new Date(s.at)))).size;
     const left = Math.max(1, 3 - days);
     return `Topaz, once you recall it on ${left} more ${left === 1 ? 'day' : 'days'}`;
   }
