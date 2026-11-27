@@ -228,8 +228,9 @@ export function TodayCards() {
               const w = partWindow(doneCourse, track, mine, now);
               return <CardWindow key={w.base} light={w} started={w.share > 0} size={190} label={`${doneCourse.title} window`} />;
             })()}
-            <h2 className="serif hr-b4-title">{states.length ? 'Done for today' : 'Today'}</h2>
-            {states.length > 0 && <p className="hr-b4-sub">{minutesWord(minutes)}</p>}
+            {/* The evening recall is still to come: not "done for today" yet. */}
+            <h2 className="serif hr-b4-title">{states.length ? (night ? 'Done for now' : 'Done for today') : 'Today'}</h2>
+            {states.length > 0 && <p className="hr-b4-sub">{minutesWord(minutes)}{night ? ' · one light recall tonight' : ''}</p>}
             {extraOffer && <Link href="/heir/lesson?mode=extra" className="hr-b4-go">Extra practice</Link>}
           </>
         )}
