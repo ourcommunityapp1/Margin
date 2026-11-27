@@ -3,7 +3,6 @@
 // Progress, as one scroll: a row of rings, the words in your memory (an arc over your window) and how they have grown,
 // the days kept, the stones, the window of every course you've begun (tap one to see it up close), and awards.
 
-import { DEFAULT_GOAL } from '@/heir/planner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useHeir } from '../ui/provider';
@@ -12,7 +11,9 @@ import { Tabs } from '../ui/tabs';
 import { DaysKept } from '../ui/days-kept';
 import { Stone } from '../ui/stone';
 import Link from 'next/link';
-import { allItems, courseItems, courses, itemLabel } from '@/heir/content';
+import { allItems, courseItems, courses, isVerse, itemLabel } from '@/heir/content';
+import { unitsFor } from '@/heir/lesson';
+import { DEFAULT_GOAL } from '@/heir/planner';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { RoundWindow } from '../ui/glass/round';
@@ -89,7 +90,18 @@ export default function Progress() {
   const viewing = yours.find((y) => y.c.id === open);
   const wash = yours[0]?.s.window.base ?? null;
   const week = weekSummary(mine, now);
-  const learnedAll = yours.reduce((n, y) => n + y.s.learned, 0), totalAll = yours.reduce((n, y) => n + y.s.total, 0);
+  // The ring row: verses and catechism answers learned (of those in the courses you've begun), active minutes this week, the streak.
+  const startedItems = yours.flatMap(({ c }) => courseItems(c));
+  const learnedUnits = new Set(mine.units);
+  const isLearned = (i: (typeof startedItems)[number]) => unitsFor(i, me.track).every((u) => learnedUnits.has(u.key));
+  const verseItems = startedItems.filter((i) => isVerse(i)), answerItems = startedItems.filter((i) => !isVerse(i));
+  const sinceWeek = now.getTime() - 7 * 86_400_000;
+  const glance = {
+    verses: { learned: verseItems.filter(isLearned).length, total: verseItems.length },
+    answers: { learned: answerItems.filter(isLearned).length, total: answerItems.length },
+    minutes: Math.round(mine.log.filter((e) => Date.parse(e.at) > sinceWeek).reduce((n, e) => n + Math.min(e.ms, 120_000), 0) / 60_000),
+    goalMinutes: (household.plan?.minutes ?? DEFAULT_GOAL) * 6,
+  };
   // One plain sentence for where you stand, and one line of what to do.
   const toNext = miles.next ? miles.next - inMemory : 0;
   const say = keep && keep.tryAgain.length > 0 ? 'A few to bring back' : keep && keep.review.length > 0 ? 'Keep them strong' : inMemory === 0 ? 'Your first words are coming' : miles.next ? 'Steady does it' : 'Every milestone reached';
@@ -104,10 +116,10 @@ export default function Progress() {
         <h1 className="serif" style={{ margin: '20px 4px 4px', fontSize: 34, fontWeight: 500 }}>Progress</h1>
 
         <div className="hr-pg-chips" role="list" aria-label="At a glance">
-          <RingChip frac={miles.next ? (inMemory - prevMile) / (miles.next - prevMile) : 1} value={fmt(inMemory)} label="Words" color="#F3D8B6" />
-          <RingChip frac={best ? Math.min(1, kept / best) : 0} value={String(kept)} label="Days kept" color="#9fb8e8" />
-          <RingChip frac={recitedCount ? holding[0] / recitedCount : 0} value={String(holding[0])} label="Stones" color="#b9a1e6" />
-          <RingChip frac={totalAll ? learnedAll / totalAll : 0} value={String(yours.length)} label="Windows" color="#e5b66a" />
+          <RingChip frac={glance.verses.total ? glance.verses.learned / glance.verses.total : 0} value={String(glance.verses.learned)} label="Verses" color="#F3D8B6" />
+          <RingChip frac={glance.answers.total ? glance.answers.learned / glance.answers.total : 0} value={String(glance.answers.learned)} label="Catechism" color="#9fb8e8" />
+          <RingChip frac={glance.goalMinutes ? Math.min(1, glance.minutes / glance.goalMinutes) : 0} value={String(glance.minutes)} label="Min this week" color="#b9e3b0" />
+          <RingChip frac={best ? Math.min(1, kept / best) : 0} value={String(kept)} label="Day streak" color="#e5b66a" />
         </div>
 
         <section className="hr-pg-hero" aria-label="Words in your memory">

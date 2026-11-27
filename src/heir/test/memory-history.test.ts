@@ -27,3 +27,18 @@ test('words in memory over time: counts from the day a question first held a sto
   assert.ok(h.every((x, i) => i === 0 || x.words >= h[i - 1].words), 'never goes down');
   assert.deepEqual(wordsHistory([item], 'adult', emptyProgress(), now, 0), [], 'nothing yet: no chart');
 });
+
+test('a short history is a point a day, and a stone earned under an earlier rule is dated to its first later answer', () => {
+  const item = getItem('wsc-1')!;
+  const part = unitsFor(item, 'adult')[0];
+  const p = finishSession(emptyProgress(), { results: [intro(item.id), type(item.id, part.key)], learned: unitsFor(item, 'adult'), now: new Date(2026, 10, 1, 9) });
+  const later = finishSession(p, { results: [{ itemId: item.id, kind: 'order', correct: true, hints: 0, ms: 1, review: true }], now: new Date(2026, 10, 3, 9) });
+  // Today's rules replay it too; but a stored stone with no replay is still dated.
+  const stored = { ...later, levels: { [item.id]: 1 } };
+  const now = new Date(2026, 10, 6, 9);
+  const h = wordsHistory([item], 'adult', stored, now, itemWords(item, 'adult'));
+  assert.equal(h.length, 5, "a point a day from before the first stone to now");
+  assert.ok(h.every((x, i) => i === 0 || x.words >= h[i - 1].words));
+  assert.equal(h.at(-1)!.words, itemWords(item, 'adult'));
+  assert.ok(h.some((x) => x.words === 0) && h.some((x) => x.words > 0), 'it climbs from zero');
+});
