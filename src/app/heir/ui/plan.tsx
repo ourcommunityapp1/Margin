@@ -47,7 +47,7 @@ export function PlanScreen({ setup }: { setup: boolean }) {
               ))}
             </div>
           )}
-        <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>Today is made from your plan: new lessons from your daily course, and reviews from every course in it. Removing a course keeps your progress.</p>
+        <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>Today is made from your plan: new lessons from the course you added last, and reviews from every course in it. Removing a course keeps your progress.</p>
       </section>
       {course && (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

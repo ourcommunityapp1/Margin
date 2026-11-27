@@ -24,12 +24,11 @@ export function usePlanState(course: Course) {
   const isDaily = daily === course.id;
   const dailyTitle = courseFor(daily)?.title ?? null;
   const add = () => update((h) => setPlan(h, { course: course.id }));
-  const makeDaily = add;
   const remove = () => update((h) => {
     const next = inYourPlan.find((c) => c.id !== course.id)?.id ?? null;
     return removeFromPlan(h, course.id, next);
   });
-  return { isIn, isDaily, dailyTitle, add, makeDaily, remove, othersInPlan: inYourPlan.filter((c) => c.id !== course.id) };
+  return { isIn, isDaily, dailyTitle, add, remove, othersInPlan: inYourPlan.filter((c) => c.id !== course.id) };
 }
 
 /** The primary and secondary buttons for a course, on a dark card (`hero`) or a plain one. */
@@ -38,23 +37,17 @@ export function PlanButtons({ course, surface = 'hero' }: { course: Course; surf
   const hero = surface === 'hero';
   const primary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn'} onClick={on}>{label}</button>;
   const secondary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn quiet'} {...(hero ? { 'data-quiet': 'true' } : {})} onClick={on}>{label}</button>;
-  // Not in the plan: Add. In it but not the daily course: make it daily, or remove. The daily course: remove (quietly).
-  return (
-    <>
-      {!s.isIn && primary('Add to plan', s.add)}
-      {s.isIn && !s.isDaily && primary('Make it my daily course', s.makeDaily)}
-      {s.isIn && secondary('Remove from plan', s.remove)}
-    </>
-  );
+  // Two states, two words: Add to plan, or Remove from plan.
+  return s.isIn ? secondary('Remove from plan', s.remove) : primary('Add to plan', s.add);
 }
 
 /** One quiet line under the buttons: where this course stands in the plan. */
 export function PlanNote({ course }: { course: Course }) {
   const s = usePlanState(course);
-  const text = s.isDaily ? 'Your daily course: today’s new lessons come from here.'
-    : s.isIn ? `In your plan for reviews. New lessons come from ${s.dailyTitle ?? 'your daily course'}.`
-    : s.dailyTitle ? `Adds ${course.title} as your daily course. ${s.dailyTitle} stays in your plan for reviews.`
-    : `Adds ${course.title} as your daily course.`;
+  const text = s.isDaily ? 'In your plan: today’s new lessons come from here.'
+    : s.isIn ? `In your plan: reviews here, new lessons from ${s.dailyTitle ?? 'your newest course'}.`
+    : s.dailyTitle ? `Adds ${course.title} to your daily courses. New lessons will come from it, and ${s.dailyTitle} stays for reviews.`
+    : `Adds ${course.title} to your daily courses.`;
   return <p className="hr-hero-note">{text}</p>;
 }
 
@@ -65,10 +58,9 @@ export function PlanRow({ course, learned, total }: { course: Course; learned: n
     <div className="hr-plan-row" data-in={s.isIn}>
       <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: '1 1 170px' }}>
         <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.25 }}>{course.title}</span>
-        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{s.isDaily ? 'Daily course · ' : s.isIn ? 'Reviews · ' : ''}{learned ? `${learned} of ${total} learned` : 'Not started'}</span>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{s.isIn ? 'In your plan · ' : ''}{learned ? `${learned} of ${total} learned` : 'Not started'}</span>
       </span>
       <span className="hr-plan-actions">
-        {s.isIn && !s.isDaily && <button type="button" className="hr-plan-btn" onClick={s.makeDaily}>Make daily</button>}
         {s.isIn
           ? <button type="button" className="hr-plan-btn" data-quiet="true" onClick={s.remove}>Remove from plan</button>
           : <button type="button" className="hr-plan-btn" onClick={s.add}>Add to plan</button>}
