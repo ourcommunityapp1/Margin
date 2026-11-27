@@ -6,9 +6,8 @@
 import { DEFAULT_GOAL } from '@/heir/planner';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { courseItems, courseParts, courseFor, getCollection, getCourse, itemNoun, type Course } from '@/heir/content';
-import { activeMember, setPlan } from '@/heir/household';
+import { courseItems, courseParts, getCollection, getCourse, itemNoun, type Course } from '@/heir/content';
+import { activeMember, dailyCourse } from '@/heir/household';
 import { groupsOf, unitsFor } from '@/heir/lesson';
 import { needsRefresh, recited } from '@/heir/levels';
 import { tierOf } from '@/heir/tiers';
@@ -21,6 +20,7 @@ import { Back, Tabs } from './tabs';
 import { groupLabel } from './course';
 import { partWindow } from './glass/light';
 import { ShareCourseIcon } from './share-course';
+import { PlanButtons, PlanNote } from './plan-button';
 import { MiniWindow } from './glass/mini';
 import { Stone } from './stone';
 import { partMemories } from '@/heir/memory';
@@ -62,8 +62,7 @@ export function courseSummary(course: Course, track: Track, p: MemberProgress, m
 // A course's own page. Long courses show one part at a time (its window is the switcher), opened at the unit
 // you're on; every other unit folds to one line that opens on tap.
 export function CourseScreen({ id }: { id: string }) {
-  const { ready, household, progress, now, update } = useHeir();
-  const router = useRouter();
+  const { ready, household, progress, now } = useHeir();
   const [part, setPart] = useState<number | null>(null);
   const [opened, setOpened] = useState<Record<string, boolean>>({});
   const course = getCourse(id);
@@ -73,8 +72,6 @@ export function CourseScreen({ id }: { id: string }) {
   const track = me?.track ?? 'adult';
   const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const s = courseSummary(course, track, mine, minutes, now);
-  const currentCourse = courseFor(household.plan?.course);
-  const current = currentCourse?.id === course.id;
   const parts = courseParts(course);
   const groups = groupsOf(courseItems(course));
   const learnedUnits = new Set(mine.units);
@@ -95,7 +92,6 @@ export function CourseScreen({ id }: { id: string }) {
   const nums = [...strengthOf.values()].filter((v): v is number => typeof v === 'number');
   const average = nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) : null;
   const inMemory = heldItems(all, mine, track, now, { launch: KEEP_LAUNCH, tz: localTz(), mode: 'whole' }).filter((h) => h.state.state === 'kept' || h.state.state === 'review').length;
-  const go = <span className="hr-glass-btn-go" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg></span>;
 
   return (
     <>
@@ -113,10 +109,8 @@ export function CourseScreen({ id }: { id: string }) {
             <p style={{ margin: 0, fontSize: 16, color: '#D9D1C4', lineHeight: 1.45 }}>{course.blurb}</p>
             <p style={{ margin: 0, fontSize: 13, color: '#C9C1B3' }}>{s.total} {s.noun} · about {s.time}{s.learned > 0 ? ` · ${s.learned} learned` : ''}</p>
           </div>
-          {current
-            ? <Link className="hr-glass-btn" href="/heir"><span>Continue this course</span>{go}</Link>
-            : <button type="button" className="hr-glass-btn" style={{ font: 'inherit', fontWeight: 600, fontSize: 17, cursor: 'pointer', textAlign: 'left' }} onClick={() => { update((h) => setPlan(h, { course: course.id, minutes: h.plan?.minutes })); router.push('/heir'); }}><span>{s.started ? 'Continue this course' : 'Start this course'}</span>{go}</button>}
-          {!current && currentCourse && <p style={{ margin: 0, fontSize: 13, color: '#C9C1B3', textAlign: 'center' }}>Makes {course.title} your daily course. Your place in {currentCourse.title} is kept.</p>}
+          <PlanButtons course={course} surface="hero" />
+          <PlanNote course={course} />
         </section>
 
         {learnedItems.length > 0 && (
@@ -156,7 +150,7 @@ export function CourseScreen({ id }: { id: string }) {
                 <button type="button" className="hr-unit-head" aria-expanded={open} onClick={() => fold && setOpened((o) => ({ ...o, [g.key]: !open }))} disabled={!fold}>
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'left' }}>
                     <span style={{ fontWeight: 600, fontSize: 16 }}>Unit {n} · {groupLabel(g)}</span>
-                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{g.key === here?.key && !locked.has(g.key) && current ? 'You’re here' : summary}</span>
+                    <span style={{ fontSize: 13, color: 'var(--muted)' }}>{g.key === here?.key && !locked.has(g.key) && dailyCourse(household.plan) === course.id ? 'You’re here' : summary}</span>
                   </span>
                   {fold && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: 'var(--muted)', transform: open ? 'rotate(180deg)' : undefined, transition: 'transform .2s' }}><path d="M6 9l6 6 6-6" /></svg>}
                 </button>

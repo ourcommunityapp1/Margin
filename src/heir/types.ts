@@ -53,6 +53,8 @@ export interface Plan {
   course: string;
   // The daily practice goal in minutes (5, 15 or 25), chosen at the start and changeable any time.
   minutes?: number;
+  // Courses taken out of the plan. Nothing is lost: the progress is kept, and adding the course again brings it back.
+  removed?: string[];
 }
 
 export interface Household {

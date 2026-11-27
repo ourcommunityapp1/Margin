@@ -95,8 +95,8 @@ export default function Progress() {
           <Gauge frac={miles.next ? (inMemory - prevMile) / (miles.next - prevMile) : 1} left={miles.next ? fmt(prevMile) : undefined} right={miles.next ? fmt(miles.next) : undefined} />
           <span className="serif hr-pg-num">{fmt(inMemory)}</span>
           <span className="hr-pg-kicker">Words in your memory</span>
-          {keep && keep.review.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Review {keep.review.length} soon</Link>
-            : keep && keep.out.length > 0 ? <Link href="/heir/keep" className="hr-pg-btn">Bring {keep.out.length} back</Link> : null}
+          {keep && keep.review.length > 0 ? <Link href="/heir/keep" className="hr-hero-btn">Review {keep.review.length} soon</Link>
+            : keep && keep.out.length > 0 ? <Link href="/heir/keep" className="hr-hero-btn">Bring {keep.out.length} back</Link> : null}
         </section>
 
         <section className="hr-pg-week" aria-label="This week">
@@ -245,7 +245,7 @@ function WindowView({ title, part, learned, window: w, href, onClose }: { title:
           <span className="serif" style={{ fontSize: 26, fontWeight: 500, lineHeight: 1.15 }}>{title}</span>
           <span style={{ fontSize: 14, color: '#C9C1B3' }}>{part ? `${part} · ` : ''}{learned}</span>
         </span>
-        <Link href={href} className="hr-window-view-go">Go to course</Link>
+        <Link href={href} className="hr-hero-btn" data-quiet="true">Go to course</Link>
       </div>
     </div>
   );

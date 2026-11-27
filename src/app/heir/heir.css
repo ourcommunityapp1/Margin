@@ -1320,3 +1320,23 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
     linear-gradient(225deg, rgba(255, 255, 255, 0.35) 0 22%, rgba(255, 255, 255, 0) 22% 100%),
     linear-gradient(150deg, var(--gem), var(--gem-edge));
 }
+
+/* One call to action, one look. On a dark card (Today's hero, a course, Progress): a cream pill, and an outlined pill for the
+   quieter choice. On a plain card: .hr-btn, and .hr-btn.quiet. */
+.hr-b4-go, .hr-hero-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; box-sizing: border-box;
+  margin-top: 4px; padding: 12px 28px; border: 1px solid transparent; border-radius: 999px; background: #F3D8B6; color: #15181B;
+  font: 700 15px/1 var(--font-inter), Inter, system-ui, sans-serif; text-decoration: none; cursor: pointer; text-align: center;
+}
+.hr-hero-btn { align-self: stretch; }
+.hr-hero-btn[data-quiet='true'] {
+  background: transparent; color: #F3E9D8; border-color: rgba(243, 216, 182, 0.55); font-weight: 600;
+}
+.hr-hero-btn:active, .hr-b4-go:active { transform: scale(0.985); }
+.hr-pg-hero .hr-hero-btn, .hr-window-view-body .hr-hero-btn { align-self: center; }
+.hr-hero-note { margin: 0; font-size: 13px; line-height: 1.45; color: #C9C1B3; text-align: center; }
+.hr-plan-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.hr-plan-row:first-of-type { border-top: 0; }
+.hr-plan-btn { min-height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--button); background: var(--button); color: var(--button-ink); font: 600 14px/1 var(--font-inter), Inter, system-ui, sans-serif; cursor: pointer; white-space: nowrap; }
+.hr-plan-btn[data-quiet='true'] { background: transparent; color: var(--ink); border-color: var(--edge, rgba(128, 128, 128, 0.4)); }
+.hr-plan-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }

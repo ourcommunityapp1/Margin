@@ -12,7 +12,7 @@ import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { courseFor, courses, SHELVES, type Course } from '@/heir/content';
 import { startedCourses } from '@/heir/dayplan';
-import { activeMember } from '@/heir/household';
+import { activeMember, dailyCourse } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
 import { seasonLabel } from '@/heir/season';
 
@@ -26,8 +26,8 @@ export default function Courses() {
   const track = me?.track ?? 'adult';
   const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const summary = (c: Course) => courseSummary(c, track, mine, minutes, now);
-  const current = courseFor(household.plan?.course);
-  const mineCourses = startedCourses(mine, track, current?.id ?? null);
+  const current = courseFor(dailyCourse(household.plan));
+  const mineCourses = startedCourses(mine, track, current?.id ?? null, household.plan?.removed);
   const mineIds = new Set(mineCourses.map((c) => c.id));
 
   // The season's course, if one is in season now.

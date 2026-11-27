@@ -126,3 +126,13 @@ See `docs/memory/ADR-004-five-levels-and-simpler-progress.md`. Display-only: Fam
 ## Update 2026-11-27 (later): quick steps now feed memory and words (ADR-006 Phase 0)
 
 A bug fix with an engine change: reviews made of quick steps (fill in, order, spot, match, next phrase) used to move nothing, so strong verses came back daily. Now each step moves the memory by what it shows (weights in `observe.ts`). See `docs/memory/ADR-006-one-memory-model.md`, section "Phase 0: built", for the exact Dart port list and the two fixtures (`lesson.json`, `memory.json`) to test against. Also record the new `tested` positions on blanks and spot answers.
+
+## Update 2026-11-27 (evening): plan add/remove, and one call-to-action look
+
+**Plan.** `Plan` gains `removed?: string[]` (courses taken out of the plan; progress is kept). Rules (see `src/heir/household.ts`, `dayplan.ts`, test `plan.test.ts`):
+- the plan is the daily course plus every course begun and not removed; Today's new lessons come only from the daily course, reviews from all of them;
+- `dailyCourse(plan)` is `plan.course` unless it is in `removed`; `startedCourses(p, track, focus, removed)` skips removed courses (the focus is always kept);
+- Add to plan = `setPlan` (makes it the daily course, un-removes it, the others stay in for reviews); Remove from plan = `removeFromPlan(h, id, next)` (another course in the plan takes over as daily, else none); with nothing in the plan Today shows "Your plan is empty / Add a course".
+- The household's `plan` JSON is synced, so keep `removed` when the app rewrites the plan (do not drop unknown fields).
+
+**One CTA look.** Course page, plan screen and course rows use the same words: "Add to plan", "Remove from plan", "Make it my daily course". Two button styles only: on a dark card (Today hero, course, Progress) a cream pill (`hr-hero-btn`, same as Today's Start) and an outlined pill for the quieter choice; on a plain card `hr-btn` and `hr-btn quiet`. The old frosted button with the arrow chip is gone.

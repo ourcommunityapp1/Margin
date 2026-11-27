@@ -26,9 +26,26 @@ export function setActive(h: Household, id: string): Household {
   return h.members.some((m) => m.id === id) ? { ...h, activeMemberId: id } : h;
 }
 
+/** Add a course to the plan as the daily course (the one new lessons come from). Courses already in the plan stay in it, for reviews. */
 export function setPlan(h: Household, plan: Plan): Household {
   const minutes = plan.minutes ?? h.plan?.minutes;
-  return { ...h, plan: minutes ? { course: plan.course, minutes } : { course: plan.course } };
+  const removed = (plan.removed ?? h.plan?.removed ?? []).filter((id) => id !== plan.course);
+  return { ...h, plan: { course: plan.course, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}) } };
+}
+
+/** The daily course: where new lessons come from. Null when it has been taken out of the plan. */
+export const dailyCourse = (plan: Plan | null | undefined): string | null => (plan && !plan.removed?.includes(plan.course) ? plan.course : null);
+
+/** Is this course in the plan? The daily course always is; any other is once you've started it, until you remove it. */
+export const inPlan = (plan: Plan | null | undefined, courseId: string, started: boolean): boolean =>
+  dailyCourse(plan) === courseId || (started && !plan?.removed?.includes(courseId));
+
+/** Take a course out of the plan (its progress is kept). If it was the daily course, `next` (another course in the plan) takes over. */
+export function removeFromPlan(h: Household, courseId: string, next: string | null): Household {
+  if (!h.plan) return h;
+  const removed = [...new Set([...(h.plan.removed ?? []), courseId])].filter((id) => id !== next);
+  const course = h.plan.course === courseId ? (next ?? courseId) : h.plan.course;
+  return { ...h, plan: { course, ...(h.plan.minutes ? { minutes: h.plan.minutes } : {}), removed } };
 }
 
 export function activeMember(h: Household): Member | null {
@@ -48,7 +65,8 @@ export function parseHousehold(raw: string | null): Household {
     // Older plans named a collection; the Apostles' Creed now lives in the Creeds course.
     const named = v.plan && (typeof v.plan.course === 'string' ? v.plan.course : typeof v.plan.collection === 'string' ? v.plan.collection : null);
     const minutes = v.plan && typeof v.plan.minutes === 'number' && v.plan.minutes >= 1 && v.plan.minutes <= 120 ? v.plan.minutes : undefined;
-    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}) } : null;
+    const removed = v.plan && Array.isArray(v.plan.removed) ? v.plan.removed.filter((x: unknown): x is string => typeof x === 'string').slice(0, 40) : [];
+    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}) } : null;
     return { members, activeMemberId, plan };
   } catch {
     return emptyHousehold();

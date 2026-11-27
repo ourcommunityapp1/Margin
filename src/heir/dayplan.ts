@@ -28,10 +28,11 @@ export const reviewEst = (due: number) => Math.min(6, Math.max(2, Math.ceil(due 
 /** About three to five new pieces a week: at five new lessons in the last 7 days, the day is for keeping what you know. */
 export const NEW_PER_WEEK = 5;
 
-/** The courses this person has started (learned anything in), with the focus course first even if not begun. */
-export function startedCourses(p: MemberProgress, track: Track, focus: string | null): Course[] {
+/** The courses in this person's plan: the focus course (even if not begun), then every course they've learned anything in,
+ *  except those they've taken out of the plan (`removed`; their progress is kept). */
+export function startedCourses(p: MemberProgress, track: Track, focus: string | null, removed: string[] = []): Course[] {
   const learned = new Set(p.units);
-  const started = courses.filter((c) => c.id === focus || courseItems(c).some((i) => unitsFor(i, track).some((u) => learned.has(u.key))));
+  const started = courses.filter((c) => c.id === focus || (!removed.includes(c.id) && courseItems(c).some((i) => unitsFor(i, track).some((u) => learned.has(u.key)))));
   return started.sort((a, b) => (a.id === focus ? -1 : b.id === focus ? 1 : 0));
 }
 

@@ -17,6 +17,7 @@ import type { WindowHandle } from './glass/window';
 import { MiniWindow } from './glass/mini';
 import { partOf, partWindow, type PartWindow } from './glass/light';
 import { courseFor, courseItems, getCollection, getItem, isVerse, itemLabel, type Course } from '@/heir/content';
+import { dailyCourse } from '@/heir/household';
 import { cardStates, extraSessions, minutesToday, nextLine, planDay, startedCourses, withFix, withPlan, type CardState, type DayCard, type DaySession } from '@/heir/dayplan';
 import { dueCards, localDay, memberProgress, waitingForSleep, type MemberProgress } from '@/heir/progress';
 import { recalledRecently } from '@/heir/memory';
@@ -50,10 +51,10 @@ export function TodayCards() {
   const { household, now, updateProgress } = useHeir();
   const { me, track, mine } = useCourse();
   const keep = useKeep();
-  const focus = household.plan?.course ?? null;
+  const focus = dailyCourse(household.plan);
   const goal = household.plan?.minutes ?? DEFAULT_GOAL;
   const day = localDay(now);
-  const started = useMemo(() => startedCourses(mine, track, focus), [mine, track, focus]);
+  const started = useMemo(() => startedCourses(mine, track, focus, household.plan?.removed), [mine, track, focus, household.plan?.removed]);
   const fixIds = useMemo(() => keep?.tryAgain.map((h) => h.item.id) ?? [], [keep]);
 
   // Make the day's plan once, the first time Today opens on a new day; add a fix found later in the day at the end.

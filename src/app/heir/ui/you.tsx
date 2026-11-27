@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
-import { activeMember } from '@/heir/household';
+import { activeMember, dailyCourse } from '@/heir/household';
 import { courseFor } from '@/heir/content';
 import { InstallApp } from './install';
 
@@ -29,7 +29,7 @@ export function YouScreen() {
   const [cleared, setCleared] = useState(false);
   if (!ready) return <main className="hr-page" aria-busy="true" />;
   const me = activeMember(household);
-  const course = courseFor(household.plan?.course);
+  const course = courseFor(dailyCourse(household.plan));
   const others = household.members.length - 1;
   const erase = () => {
     const id = household.activeMemberId;

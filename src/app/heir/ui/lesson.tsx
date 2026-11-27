@@ -18,6 +18,7 @@ import { finishSession, localDay, markNight, markRisen, memberProgress, seenCoun
 import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { AWARDS, daysKept, settle } from '@/heir/levels';
+import { dailyCourse } from '@/heir/household';
 import { tierIndex, tierOf } from '@/heir/tiers';
 import { testedPositions } from '@/heir/observe';
 import { Stone } from './stone';
@@ -141,7 +142,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
     const one = mode === 'item' && itemId ? getItem(itemId) : undefined;
     if (mode === 'extra') {
       // Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
-      const started = startedCourses(mine, track, household.plan?.course ?? null);
+      const started = startedCourses(mine, track, dailyCourse(household.plan), household.plan?.removed);
       const allIds = new Set(started.flatMap((c) => courseItems(c).map((i) => i.id)));
       const recent = recalledRecently(mine.log, new Date());
       const picks = riskOrder(mine, allIds, new Date(), parts).filter((x) => !waitingForSleep(mine, x.itemId, new Date()) && !recent.has(x.itemId));
@@ -227,7 +228,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       // Opening a card from Today is recorded (finished or not), to tell whether the recommendations are used.
       if (cardId && me) updateProgress((all) => { const p = memberProgress(all, me.id); return p.today?.started?.includes(cardId) ? all : { ...all, [me.id]: { ...p, today: withStarted(p.today, localDay(new Date()), cardId) } }; });
     });
-  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan?.course, courseId, cardId, course.title, updateProgress]);
+  }, [ready, household.members.length, session, me, items, track, mine, due, course.id, mode, itemId, idsKey, keepRules, router, household.plan, courseId, cardId, course.title, updateProgress]);
 
   if (!ready || !session) return <main className="hr-page bare" aria-busy="true" />;
 

@@ -12,7 +12,9 @@ import { courseFor, courseItems, courses } from '@/heir/content';
 import { activeMember } from '@/heir/household';
 import { courseStats } from '@/heir/path';
 import { memberProgress } from '@/heir/progress';
-import { setPlan } from '@/heir/household';
+import { dailyCourse, setPlan } from '@/heir/household';
+import { startedCourses } from '@/heir/dayplan';
+import { PlanRow } from './plan-button';
 import { GRADES } from '@/heir/progress';
 import { TIERS } from '@/heir/tiers';
 import { AllCourses, GoalChoices, LongTermNote } from './goal';
@@ -22,20 +24,30 @@ export function PlanScreen({ setup }: { setup: boolean }) {
   const { ready, household, update, progress } = useHeir();
   const router = useRouter();
   if (!ready) return <main className="hr-page" aria-busy="true" />;
+  const daily = dailyCourse(household.plan);
   const current = courseFor(household.plan?.course)?.id ?? null;
-  const course = courseFor(household.plan?.course) ?? null;
+  const course = courseFor(daily) ?? null;
   const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
+  const inPlanIds = new Set(startedCourses(mine, me?.track ?? 'adult', daily, household.plan?.removed).map((c) => c.id));
   const stats = Object.fromEntries(courses.map((c) => [c.id, courseStats(courseItems(c), me?.track ?? 'adult', mine)]));
 
   return (
     <main className="hr-page bare">
       {!setup && <div><Back href="/heir/you" /></div>}
       <section className="hr-card" style={{ marginTop: setup ? 40 : 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <h1 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 600, lineHeight: 1.2 }}>Courses</h1>
-        <CourseChoices value={current} progress={stats} onChange={(id) => { update((h) => setPlan(h, { course: id })); router.push('/heir'); }} />
-        <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>Progress in each course is kept when you switch. Passages of Scripture come later.</p>
+        <h1 className="serif" style={{ margin: 0, fontSize: 28, fontWeight: 600, lineHeight: 1.2 }}>{setup ? 'Courses' : 'Your plan'}</h1>
+        {setup
+          ? <CourseChoices value={current} progress={stats} onChange={(id) => { update((h) => setPlan(h, { course: id })); router.push('/heir'); }} />
+          : (
+            <div>
+              {[...courses].sort((a, b) => Number(inPlanIds.has(b.id)) - Number(inPlanIds.has(a.id)) || Number(b.id === daily) - Number(a.id === daily)).map((c) => (
+                <PlanRow key={c.id} course={c} learned={stats[c.id]?.learned ?? 0} total={stats[c.id]?.total ?? courseItems(c).length} />
+              ))}
+            </div>
+          )}
+        <p style={{ margin: 0, fontSize: 15, color: 'var(--muted)', lineHeight: 1.5 }}>Today is made from your plan: new lessons from your daily course, and reviews from every course in it. Removing a course keeps your progress.</p>
       </section>
       {course && (
         <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
