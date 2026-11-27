@@ -19,9 +19,21 @@ class KBackground extends StatefulWidget {
   State<KBackground> createState() => _KBackgroundState();
 }
 
-class _KBackgroundState extends State<KBackground> with SingleTickerProviderStateMixin {
-  late final AnimationController _drift =
-      AnimationController(vsync: this, duration: const Duration(seconds: 40));
+class _KBackgroundState extends State<KBackground> {
+  /// The drift's position, moved about 12 times a second: the photo travels a few percent of the screen in 40 seconds under a
+  /// dark wash, so each step is a fraction of a pixel. Redrawing the whole blurred photo on every frame (60 to 120 a second)
+  /// kept the phone busy on every screen.
+  /// A plain timer, not a frame ticker, so the app isn't woken on every frame just to move the photo a fraction of a pixel.
+  final _pos = ValueNotifier<double>(0);
+  final _since = Stopwatch();
+  Timer? _drift;
+
+  void _step() {
+    // 0 → 1 over 40 s, then back (as `repeat(reverse: true)` did).
+    final phase = (_since.elapsedMilliseconds % 80000) / 40000;
+    _pos.value = phase <= 1 ? phase : 2 - phase;
+  }
+
   Timer? _clock;
   late String _time = timeOfDay(widget.now ?? DateTime.now());
 
@@ -42,16 +54,20 @@ class _KBackgroundState extends State<KBackground> with SingleTickerProviderStat
     // Drift only when the person hasn't asked for less motion (prefers-reduced-motion).
     final still = MediaQuery.maybeDisableAnimationsOf(context) ?? false;
     if (still || widget.now != null) {
-      _drift.stop();
-    } else if (!_drift.isAnimating) {
-      _drift.repeat(reverse: true);
+      _drift?.cancel();
+      _drift = null;
+      _since.stop();
+    } else if (_drift == null) {
+      _since.start();
+      _drift = Timer.periodic(const Duration(milliseconds: 83), (_) => _step());
     }
   }
 
   @override
   void dispose() {
     _clock?.cancel();
-    _drift.dispose();
+    _drift?.cancel();
+    _pos.dispose();
     super.dispose();
   }
 
@@ -64,30 +80,28 @@ class _KBackgroundState extends State<KBackground> with SingleTickerProviderStat
         fit: StackFit.expand,
         children: [
           ColoredBox(color: context.k.ground),
-          ClipRect(
-            child: AnimatedBuilder(
-              animation: _drift,
-              builder: (context, child) {
-                final t = Curves.easeInOut.transform(_drift.value);
-                // translate3d(-4%, 1%) scale(1.02) → translate3d(4%, -2%) scale(1.09), on an image 116% of the screen.
-                final size = MediaQuery.sizeOf(context);
-                final dx = (-0.04 + 0.08 * t) * size.width * 1.16;
-                final dy = (0.01 - 0.03 * t) * size.height * 1.16;
-                final scale = 1.02 + 0.07 * t;
-                return Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()
-                    ..translateByDouble(dx, dy, 0, 1)
-                    ..scaleByDouble(scale * 1.16, scale * 1.16, 1, 1),
-                  child: child,
-                );
-              },
-              child: ColorFiltered(
-                colorFilter: const ColorFilter.matrix(_saturate60),
-                child: Image.asset(
-                  'assets/images/bg-$_time.jpg',
-                  fit: BoxFit.cover,
-                  gaplessPlayback: true,
+          RepaintBoundary(
+            child: ClipRect(
+              child: AnimatedBuilder(
+                animation: _pos,
+                builder: (context, child) {
+                  final t = Curves.easeInOut.transform(_pos.value);
+                  // translate3d(-4%, 1%) scale(1.02) → translate3d(4%, -2%) scale(1.09), on an image 116% of the screen.
+                  final size = MediaQuery.sizeOf(context);
+                  final dx = (-0.04 + 0.08 * t) * size.width * 1.16;
+                  final dy = (0.01 - 0.03 * t) * size.height * 1.16;
+                  final scale = 1.02 + 0.07 * t;
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..translateByDouble(dx, dy, 0, 1)
+                      ..scaleByDouble(scale * 1.16, scale * 1.16, 1, 1),
+                    child: child,
+                  );
+                },
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.matrix(_saturate60),
+                  child: Image.asset('assets/images/bg-$_time.jpg', fit: BoxFit.cover, gaplessPlayback: true),
                 ),
               ),
             ),

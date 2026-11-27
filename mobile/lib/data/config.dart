@@ -17,7 +17,10 @@ abstract final class Config {
   /// On by default, as on the website (decided with the owner after a real test, Nov 25, 2026). To run a build that only
   /// READS the account, e.g. when testing against someone's real data:
   ///   flutter run --dart-define=SYNC_WRITES=false
-  static const syncWrites = bool.fromEnvironment('SYNC_WRITES', defaultValue: true);
+  ///
+  /// A build started at a pretend time (`--dart-define=NOW=...`, for checking screens at another hour) never writes: its
+  /// "today" would be saved to the account with a future date (this happened once on Nov 26 and made Today blink on the website).
+  static const syncWrites = bool.fromEnvironment('SYNC_WRITES', defaultValue: true) && String.fromEnvironment('NOW') == '';
 
   /// Accounts are on when both are set (as `heirCloudConfigured` on the website). With them off, the household
   /// stays on the phone and no sign-in is asked for.

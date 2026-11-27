@@ -199,7 +199,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         : null;
 
     // The big card follows the time of day.
-    final riseFirst = rise != null && hour < 12;
+    // "When you rise" comes first whenever it isn't done yet (until the evening takes over at 7 pm): the screen is in time order.
+    final riseFirst = rise != null;
     final hero = riseFirst
         ? _Hero.rise
         : todo.isNotEmpty

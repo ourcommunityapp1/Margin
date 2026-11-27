@@ -6,11 +6,11 @@
 // A window shows its quick small picture first, then swaps in the sharp full-size one. Lit panes glow a little past the
 // lead, and the moving light is a soft gradient over a brighter copy of the dark glass.
 
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'glass_motion.dart';
@@ -44,11 +44,42 @@ class _GlassCircle extends StatefulWidget {
   State<_GlassCircle> createState() => _GlassCircleState();
 }
 
-class _GlassCircleState extends State<_GlassCircle> with SingleTickerProviderStateMixin {
+class _GlassCircleState extends State<_GlassCircle> {
   ui.Image? _small, _full, _peak;
   String _asked = '';
-  Ticker? _ticker;
+  // A plain timer (30 a second), not a frame ticker, so an unstarted window doesn't wake the app on every frame.
+  Timer? _ticker;
+  final _since = Stopwatch();
   final _repaint = ValueNotifier<int>(0);
+
+  // The moving light is slow and dim: it is redrawn at most 30 times a second, only while this window is on screen, and only
+  // while the light is on this window (in a list, one light passes through one window at a time). It used to repaint every
+  // window on every frame, which kept the phone busy on Courses.
+  int _lastPaint = -1000, _lastLook = -1000;
+  bool _onScreen = true, _wasLit = true;
+
+  void _tick(Duration elapsed) {
+    final t = elapsed.inMilliseconds;
+    if (t - _lastLook >= 500) {
+      _lastLook = t;
+      _onScreen = _visible();
+    }
+    if (!_onScreen || t - _lastPaint < 25) return;
+    final m = widget.motion;
+    final lit = m != null && lightAt(m, _nowMs()) != null;
+    if (!lit && !_wasLit) return; // dark now and dark at the last paint: nothing changes
+    _wasLit = lit;
+    _lastPaint = t;
+    _repaint.value++;
+  }
+
+  bool _visible() {
+    if (!mounted) return false;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return false;
+    final rect = box.localToGlobal(Offset.zero) & box.size;
+    return rect.overlaps(Offset.zero & MediaQuery.sizeOf(context));
+  }
 
   bool get _anyLit => widget.lit.any((f) => f > 0);
 
@@ -91,17 +122,19 @@ class _GlassCircleState extends State<_GlassCircle> with SingleTickerProviderSta
       windowImage(widget.base, widget.lit, widget.dusty, rest: peakBrightness, restMix: mix, tier: widget.sharp ? GlassTier.full : GlassTier.small).then((img) {
         if (!stale()) setState(() => _peak = img);
       }).catchError((Object _) {});
-      _ticker ??= createTicker((_) => _repaint.value++)..start();
+      _since.start();
+      _ticker ??= Timer.periodic(const Duration(milliseconds: 33), (_) => _tick(_since.elapsed));
     } else {
       _peak = null;
-      _ticker?.dispose();
+      _ticker?.cancel();
       _ticker = null;
+      _since.stop();
     }
   }
 
   @override
   void dispose() {
-    _ticker?.dispose();
+    _ticker?.cancel();
     _repaint.dispose();
     super.dispose();
   }
