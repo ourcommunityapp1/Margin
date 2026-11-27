@@ -152,7 +152,16 @@ export function replayParts(entries: LogEntry[], start: Record<string, PartMem> 
     sessions.set(key, s);
   }
   const seenDay = new Set<string>();
+  // A day's quick-step update is only a first look: if a typed, said or first-letters recall of the same line comes later that day,
+  // it replaces the quick-step update (the stronger evidence wins), as if the quick steps had not moved the memory.
+  const quick = new Map<string, { day: string; prev: PartMem | undefined }>();
   for (const s of [...sessions.values()].sort((a, b) => a.at.localeCompare(b.at))) {
+    const undo = quick.get(s.part);
+    if (undo && undo.day === s.day && s.marks.length) {
+      if (undo.prev) mem[s.part] = undo.prev; else delete mem[s.part];
+      quick.delete(s.part);
+      seenDay.delete(`${s.part}|${s.day}`);
+    }
     const m = mem[s.part];
     if (m && s.at <= m.last) continue;
     if (seenDay.has(`${s.part}|${s.day}`) || (m && (m.last.slice(0, 10) === s.day))) continue;
@@ -171,6 +180,7 @@ export function replayParts(entries: LogEntry[], start: Record<string, PartMem> 
       next = dampedStep(prev, at, lm.mark, lm.weight, replayer);
     }
     seenDay.add(`${s.part}|${s.day}`);
+    if (!s.marks.length) quick.set(s.part, { day: s.day, prev: m });
     mem[s.part] = { s: next.stability, d: next.difficulty, last: s.at, reps: next.reps, lapses: next.lapses, state: next.state };
   }
   return mem;

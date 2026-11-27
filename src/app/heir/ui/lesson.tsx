@@ -17,7 +17,7 @@ import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, waitingForSleep, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
-import { AWARDS, daysKept, settle } from '@/heir/levels';
+import { daysKept, settle } from '@/heir/levels';
 import { dailyCourse } from '@/heir/household';
 import { tierIndex, tierOf } from '@/heir/tiers';
 import { testedPositions } from '@/heir/observe';
@@ -403,7 +403,6 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
     : group ? `${groupLearned} of ${group.items.length} in ${groupLabel(group)}. The next lesson adds one and practices these again.` : '';
   // Started from a card on Today: back to Today, where the next card is waiting.
   const cta = session.card ? null : upNext?.kind === 'checkpoint' ? 'Lock them in now' : upNext ? 'Next lesson' : null;
-  const awardNames = finished.awards.map((id) => AWARDS.find((a) => a.id === id)?.name).filter(Boolean);
 
   return (
     <>
@@ -447,7 +446,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
         </section>
       )}
 
-      {(tierUps.length > (session.kind === 'checkpoint' ? 0 : 1) || awardNames.length > 0) && (
+      {(tierUps.length > (session.kind === 'checkpoint' ? 0 : 1)) && (
         <section className="hr-card" style={{ padding: '6px 20px' }}>
           {tierUps.slice(session.kind === 'checkpoint' ? 0 : 1).map((u) => {
             const it = getItem(u.itemId); const lv = tierOf(u.to);
@@ -458,12 +457,6 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
               </div>
             ) : null;
           })}
-          {awardNames.map((n) => (
-            <div key={n} className="hr-row" style={{ justifyContent: 'flex-start', gap: 12 }}>
-              <span className="hr-seal" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z" /></svg></span>
-              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}><span style={{ fontWeight: 600 }}>Award: {n}</span><span style={{ fontSize: 14, color: 'var(--muted)' }}>See it in Progress</span></span>
-            </div>
-          ))}
         </section>
       )}
 

@@ -92,3 +92,30 @@ test('strength over the verse reads the quick steps', () => {
   const some = w([{ ...light('spot', part), at: day(12).toISOString(), day: '2026-11-12' }]);
   assert.ok(some! > none!);
 });
+
+test('a typed recall later the same day replaces that day’s quick-step update', () => {
+  const p = learned();
+  const part = us[0].key;
+  const rise = { ...light('blanks', part, true, { words: 12, misses: 0, missed: [] }), at: day(12, 7).toISOString(), day: '2026-11-12' };
+  const typedLater = { ...typed(part, true), at: day(12, 19).toISOString(), day: '2026-11-12' };
+  const onlyTyped = partMemories([...p.log, typedLater] as never)[part];
+  const both = partMemories([...p.log, rise, typedLater] as never)[part];
+  assert.equal(both.s, onlyTyped.s);
+  assert.equal(both.last, onlyTyped.last);
+});
+
+test('folding old answers into the snapshot gives the same memory as replaying them all (quick steps included)', async () => {
+  const { foldTrimmed } = await import('../memory.ts');
+  const p = learned();
+  const part = us[0].key;
+  const extra = [
+    { ...light('spot', part), at: day(10).toISOString(), day: '2026-11-10' },
+    { ...light('blanks', part, true, { words: 12, misses: 0, missed: [] }), at: day(14).toISOString(), day: '2026-11-14' },
+    { ...typed(part, true), at: day(20).toISOString(), day: '2026-11-20' },
+    { ...light('match', part, false), at: day(25).toISOString(), day: '2026-11-25' },
+  ] as never[];
+  const all = [...p.log, ...extra] as never[];
+  const cut = p.log.length + 2;
+  const snap = foldTrimmed(all.slice(0, cut));
+  assert.deepEqual(partMemories(all.slice(cut), snap), partMemories(all));
+});

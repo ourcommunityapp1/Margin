@@ -84,7 +84,8 @@ test('the day is worked out in the person’s time zone', () => {
   assert.equal(dayIn('America/Chicago', new Date('2026-12-30T03:00:00Z')), '2026-12-29');
   assert.equal(dayIn('Pacific/Auckland', new Date('2026-12-30T03:00:00Z')), '2026-12-30');
   assert.equal(dayIn('Not/AZone', new Date('2026-12-30T03:00:00Z')), '2026-12-30');
-  assert.equal(dayIn(null, new Date('2026-12-30T03:00:00Z')), '2026-12-30');
+  // With no zone the machine's own day is used, whatever zone the machine is in.
+  assert.equal(dayIn(null, new Date('2026-12-30T03:00:00Z')), new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date('2026-12-30T03:00:00Z')));
 });
 
 test('with the keeping rules on, words not recalled in time are not counted; without them they are', async () => {

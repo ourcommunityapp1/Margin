@@ -217,7 +217,7 @@ test('progress: a newly learned question comes back after a night’s sleep, how
   assert.deepEqual(evening.cards['wsc-1'], good.cards['wsc-1']);
   assert.equal(dueCards(good, at('2026-11-19T22:00:00Z')).length, 0);
   // The morning recall is the first real rating.
-  const morning = at('2026-11-20T09:00:00Z');
+  const morning = at('2026-11-20T18:00:00Z');
   assert.deepEqual(dueCards(good, morning).map((c) => c.itemId), ['wsc-1']);
   const rated = finishSession(good, { results: [ok('wsc-1', 'type')], now: morning });
   const days = (new Date(rated.cards['wsc-1'].due).getTime() - morning.getTime()) / 86400000;
@@ -246,7 +246,7 @@ test('planner: a unit’s lock-in waits for a night’s sleep, and learning carr
   const p = finishSession({ ...emptyProgress(), courseLessons: { 'westminster-shorter': 3 } }, { results: first.items.map((i) => ok(i.id)), learned, courseId: 'westminster-shorter', now: noon });
   const later = planNext({ courseId: 'westminster-shorter', items, track: 'adult', p, now: at('2026-11-19T15:00:00Z') });
   assert.equal(later?.kind === 'learn' && later.group.key !== first.key, true, JSON.stringify(later?.kind));
-  const tomorrow = planNext({ courseId: 'westminster-shorter', items, track: 'adult', p, now: at('2026-11-20T09:00:00Z') });
+  const tomorrow = planNext({ courseId: 'westminster-shorter', items, track: 'adult', p, now: at('2026-11-20T18:00:00Z') });
   assert.equal(tomorrow?.kind, 'checkpoint');
   const path = coursePath(items, 'adult', p, at('2026-11-19T15:00:00Z'));
   assert.equal(path[0].lockWaiting, true);

@@ -26,16 +26,6 @@ const WINDOWS = [
   { name: 'The empty tomb', place: 'Trinity Church, Boston (Eugène Oudinot)', who: 'NateBergin', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Oudinot_Stained-Glass_Window,_the_Empty_Tomb,_Trinity_Church,_Boston.png' },
 ];
 
-// Close-up crops of these photos, shared under the same licenses.
-const STONES = [
-  { name: 'Amethyst', who: 'Jon Zander (Digon3)', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Amethyst_Quartz_Macro_1.JPG' },
-  { name: 'Topaz', who: 'Didier Descouens', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Topaze_Br%C3%A9sil.jpg' },
-  { name: 'Carnelian', who: 'Claire Pearcy', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Three_Carnelian_Gemstones.jpg' },
-  { name: 'Emerald', who: 'Didier Descouens', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:(Muzo)_Emerald_crystal_in_its_matrix.jpg' },
-  { name: 'Sapphire', who: 'W.carter', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Four_man-made_faceted_blue_sapphires_1.jpg' },
-  { name: 'Diamond', who: 'Petragems', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Round_Brilliant_Cut_Diamond.jpg' },
-];
-
 export default function About() {
   return (
     <main className="hr-page bare">
@@ -82,14 +72,6 @@ export default function About() {
               <span><b>{p.alt}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
             </div>
           )
-        ))}
-      </section>
-      <section className="hr-card" style={{ padding: '6px 22px' }}>
-        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Stone photos (close-up crops, same licenses), from Wikimedia Commons</h2>
-        {STONES.map((p) => (
-          <a key={p.name} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
-            <span><b>{p.name}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
-          </a>
         ))}
       </section>
     </main>
