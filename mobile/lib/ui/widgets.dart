@@ -101,11 +101,14 @@ class KCard extends StatelessWidget {
 
 /// The main button (`.hr-btn`): full width, 56 tall, pill shaped. [quiet] is the plain text button under it.
 class KButton extends StatelessWidget {
-  const KButton(this.label, {super.key, required this.onPressed, this.quiet = false, this.busyLabel, this.busy = false, this.color, this.ink});
+  const KButton(this.label, {super.key, required this.onPressed, this.quiet = false, this.outline = false, this.busyLabel, this.busy = false, this.color, this.ink});
 
   final String label;
   final VoidCallback? onPressed;
   final bool quiet;
+
+  /// The quieter of two buttons side by side (`.hr-btn-outline`): no fill, a thin edge, full height.
+  final bool outline;
 
   /// A fill and text colour other than the usual (Continue turns green after a right answer).
   final Color? color, ink;
@@ -118,8 +121,8 @@ class KButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final enabled = onPressed != null && !busy;
-    final bg = color ?? (quiet ? Colors.transparent : k.button);
-    final fg = ink ?? (quiet ? k.ink : k.buttonInk);
+    final bg = color ?? (quiet || outline ? Colors.transparent : k.button);
+    final fg = ink ?? (quiet || outline ? k.ink : k.buttonInk);
     return Semantics(
       button: true,
       enabled: enabled,
@@ -127,7 +130,10 @@ class KButton extends StatelessWidget {
         opacity: enabled || quiet ? 1 : 0.45,
         child: Material(
           color: bg,
-          borderRadius: BorderRadius.circular(KSize.cardRadius),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(KSize.cardRadius),
+            side: outline ? BorderSide(color: k.edge) : BorderSide.none,
+          ),
           child: InkWell(
             borderRadius: BorderRadius.circular(KSize.cardRadius),
             onTap: enabled

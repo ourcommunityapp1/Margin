@@ -97,7 +97,7 @@ class ItemScreen extends ConsumerWidget {
                 child: Semantics(
                   label: 'Review: type or say the whole ${unit == 'Question' ? 'answer' : unit == 'Verse' ? 'verse' : 'words'} from memory',
                   excludeSemantics: true,
-                  child: KButton('Review', quiet: true, onPressed: () => context.push('/lesson?mode=keep&items=${Uri.encodeQueryComponent(item.id)}')),
+                  child: KButton('Review', outline: true, onPressed: () => context.push('/lesson?mode=keep&items=${Uri.encodeQueryComponent(item.id)}')),
                 ),
               ),
             ],

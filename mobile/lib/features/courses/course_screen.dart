@@ -109,16 +109,19 @@ class CourseScreen extends ConsumerWidget {
           Semantics(
             container: true,
             label: 'Where you are',
-            child: Row(
-              children: [
-                _Stat('${(learnedItems.length / (items.isEmpty ? 1 : items.length) * 100).round()}%', 'of the course done'),
-                const SizedBox(width: 6),
-                _Stat('${learnedItems.length}', 'learned of ${items.length}'),
-                const SizedBox(width: 6),
-                _Stat('$inMemory', 'in memory'),
-                const SizedBox(width: 6),
-                _Stat(average == null ? '–' : '$average%', 'average strength'),
-              ],
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Stat('${(learnedItems.length / (items.isEmpty ? 1 : items.length) * 100).round()}%', 'of the course done'),
+                  const SizedBox(width: 6),
+                  _Stat('${learnedItems.length}', 'learned of ${items.length}'),
+                  const SizedBox(width: 6),
+                  _Stat('$inMemory', 'in memory'),
+                  const SizedBox(width: 6),
+                  _Stat(average == null ? '–' : '$average%', 'average strength'),
+                ],
+              ),
             ),
           ),
         if (parts.length > 1)
@@ -183,6 +186,7 @@ class _Stat extends StatelessWidget {
           border: Border.all(color: const Color(0x14FFFFFF)),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(value, style: serif(21, weight: FontWeight.w500, color: k.ink, height: 1.1)),
             const SizedBox(height: 2),
