@@ -132,7 +132,8 @@ class KButton extends StatelessWidget {
           color: bg,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(KSize.cardRadius),
-            side: outline ? BorderSide(color: k.edge) : BorderSide.none,
+            // Light enough to see on the blurred photo behind the page (the website's darker edge disappears there).
+            side: outline ? BorderSide(color: k.ink.withValues(alpha: 0.45), width: 1.5) : BorderSide.none,
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(KSize.cardRadius),
