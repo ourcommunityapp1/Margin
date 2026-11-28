@@ -12,7 +12,6 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
-import '../../engine/keep.dart' show strongUntilFor;
 import '../../engine/lesson.dart' show unitsFor;
 import '../../engine/levels.dart' show levelShown, needsRefresh, nextStep;
 import '../../engine/tiers.dart';
@@ -28,7 +27,6 @@ import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const _monthsLong = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 class ItemScreen extends ConsumerWidget {
   const ItemScreen({super.key, required this.id});
@@ -46,8 +44,11 @@ class ItemScreen extends ConsumerWidget {
     }
     final collection = getCollection(item.collection);
     final unit = collection?.unit ?? '';
-    final label =
-        '${collection?.title ?? ''} · ${unit == 'Question' ? 'Q' : unit == 'Verse' || unit == 'Commandment' ? '$unit ' : 'Part '}${item.number}';
+    // A verse is named by its reference alone (it saves a line); a question or creed part by its course and number.
+    final verse = isVerse(item);
+    final label = verse
+        ? item.prompt
+        : '${collection?.title ?? ''} · ${unit == 'Question' ? 'Q' : unit == 'Commandment' ? '$unit ' : 'Part '}${item.number}';
     final track = ref.watch(meProvider)?.track ?? Track.adult;
     final mine = ref.watch(myProgressProvider);
     final now = ref.watch(clockProvider)();
@@ -55,9 +56,10 @@ class ItemScreen extends ConsumerWidget {
     final owner = courses.where((c) => courseItems(c).any((i) => i.id == item.id)).firstOrNull;
 
     return KPage(
+      top: 8,
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 8),
+          padding: EdgeInsets.zero,
           child: Row(
             children: [
               KBack(onPressed: () => context.canPop() ? context.pop() : context.go('/courses')),
@@ -71,15 +73,15 @@ class ItemScreen extends ConsumerWidget {
           label: 'Passage',
           container: true,
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(4, 10, 4, 2),
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (unit == 'Question')
                   Text(item.prompt, style: serif(20, weight: FontWeight.w600, color: k.ink, height: 1.35))
-                else
+                else if (!verse)
                   KLabel(item.prompt),
-                const SizedBox(height: 12),
+                if (!verse) const SizedBox(height: 12),
                 Text(item.text, style: serif(25, color: k.ink, height: 1.45)),
               ],
             ),
@@ -108,6 +110,7 @@ class ItemScreen extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 10),
           _Status(item: item, track: track, now: now),
           if (owner != null) ItemPlanButton(item: item, course: owner),
           _WordByWord(item: item, track: track),
@@ -180,8 +183,6 @@ class _Status extends ConsumerWidget {
     final level = levelShown(mine, item, track);
     final dim = needsRefresh(mine, item.id, now);
     final next = nextStep(item, track, mine, now);
-    final strong = strongUntilFor(item, mine, track);
-    final today = practisedToday(mine, item.id, now);
     final strength = itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap));
     final stats = itemStats(item, mine, track);
     final perfect = recitedPerfectly(item, track, mine.log);
@@ -232,19 +233,8 @@ class _Status extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(strength != null ? (today ? 'Strength, practised today' : 'Strength') : 'Level', style: sans(12.5, color: k.muted)),
-                    const SizedBox(height: 5),
                     Text(info != null ? '${info.stone} · ${info.name}' : 'Not learned yet', style: sans(19, weight: FontWeight.w600, color: k.ink, height: 1.2)),
-                    if (dim) ...[const SizedBox(height: 5), Text('Due for a refresh', style: sans(14, color: k.miss, height: 1.35))]
-                    else if (strong != null) ...[
-                      const SizedBox(height: 5),
-                      Text(
-                        strong.isAfter(now)
-                            ? 'Strong until about ${_monthsLong[strong.toLocal().month - 1]}${strong.toLocal().year == now.toLocal().year ? '' : ' ${strong.toLocal().year}'}'
-                            : 'Worth a review now',
-                        style: sans(14, color: k.muted, height: 1.35),
-                      ),
-                    ],
+                    if (dim) ...[const SizedBox(height: 5), Text('Due for a refresh', style: sans(14, color: k.miss, height: 1.35))],
                   ],
                 ),
               ),
@@ -256,8 +246,6 @@ class _Status extends ConsumerWidget {
               num('$perfect', 'recited perfectly'),
               const SizedBox(width: 8),
               num('$practised', 'times practised'),
-              const SizedBox(width: 8),
-              num(stats.due == null ? '–' : stats.due!.isAfter(now) ? date(stats.due!) : 'Now', 'next review'),
             ],
           ),
           if (rows.isNotEmpty)

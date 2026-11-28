@@ -45,12 +45,11 @@ void main() {
     expect(find.text('Practice'), findsOneWidget);
     expect(find.text('Review'), findsOneWidget);
     expect(find.bySemanticsLabel('Review: type or say the whole answer from memory'), findsOneWidget);
-    expect(find.textContaining('Strength'), findsWidgets);
     expect(find.textContaining('%'), findsWidgets);
     expect(find.text('recited perfectly'), findsOneWidget);
     expect(find.text('times practised'), findsOneWidget);
     expect(find.text('3'), findsOneWidget, reason: 'the lesson and two reviews');
-    expect(find.text('next review'), findsOneWidget);
+    expect(find.text('next review'), findsNothing, reason: 'taken off the card');
     expect(find.text('Learned'), findsOneWidget);
     expect(find.text('Nov 20'), findsOneWidget);
     expect(find.text('Last time'), findsOneWidget);

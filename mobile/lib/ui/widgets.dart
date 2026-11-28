@@ -12,9 +12,12 @@ import 'theme.dart';
 /// A screen's column of cards (`.hr-page`): at most 520 wide, centred, with room for the status bar and,
 /// on tab screens, the floating tab bar. [bare] screens (welcome, sign in, start) have no tab bar.
 class KPage extends StatelessWidget {
-  const KPage({super.key, required this.children, this.bare = false, this.scroll = true, this.pushDown = false});
+  const KPage({super.key, required this.children, this.bare = false, this.scroll = true, this.pushDown = false, this.top = KSize.pageTop});
 
   final List<Widget> children;
+
+  /// Room above the first card, under the status bar.
+  final double top;
   final bool bare;
   final bool scroll;
 
@@ -27,7 +30,7 @@ class KPage extends StatelessWidget {
     final pad = MediaQuery.paddingOf(context);
     final padding = EdgeInsets.fromLTRB(
       KSize.pageSide + pad.left,
-      KSize.pageTop + pad.top,
+      top + pad.top,
       KSize.pageSide + pad.right,
       // The keyboard covers the safe area, so use whichever is taller. This lifts the page's last card above the
       // keyboard (nothing else in the app resizes for it).
