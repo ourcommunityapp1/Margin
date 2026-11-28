@@ -7,7 +7,7 @@
 // Stones never go down; this only changes the count. For the first 30 days after launch nothing leaves anyone's count.
 // Pure functions over the keep record the phone and the server both store (progress.ts, `Keep`), so both agree.
 
-import { levelOf } from './levels.ts';
+import { EXPERT, levelOf, RECALLED } from './levels.ts';
 import { itemParts, outAt, partMemories, strongUntil } from './memory.ts';
 import { itemWords } from './measures.ts';
 import { unitsFor } from './lesson.ts';
@@ -16,9 +16,9 @@ import type { Item, Track } from './types.ts';
 
 const DAY = 86_400_000;
 
-/** Days an item may go without a right recall, by the stone it has reached. */
+/** Days an item may go without a right recall, by the level it has reached (the same windows as before: 90, and 240 at Expert). */
 export function windowDays(level: number): number {
-  return level >= 5 ? 425 : level >= 4 ? 240 : 90;
+  return level >= EXPERT ? 240 : 90;
 }
 export const REVIEW_NOTICE_DAYS = 14;
 
@@ -130,7 +130,7 @@ export function heldItems(items: Item[], p: MemberProgress, track: Track, now: D
   const keep = keepOf(p, (id) => counts.get(id));
   const parts = o.model === false ? null : partMemories(p.log, p.partSnap);
   return items
-    .filter((i) => levelOf(p, i.id) >= 1)
+    .filter((i) => levelOf(p, i.id) >= RECALLED)
     .map((item) => {
       const mems = parts ? itemParts(unitsFor(item, track).map((u) => u.key), parts) : null;
       const level = levelOf(p, item.id);

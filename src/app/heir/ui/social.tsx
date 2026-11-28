@@ -15,6 +15,7 @@ import {
 } from './cloud';
 import { courseFor } from '@/heir/content';
 import { TIERS } from '@/heir/tiers';
+import { foldStones } from '@/heir/stats';
 import { Stone } from './stone';
 import { friendsCount, place, sinceLabel, streakLine, usernameProblem } from '@/heir/social';
 import { localDay } from '@/heir/progress';
@@ -453,12 +454,11 @@ export function PersonScreen({ name }: { name: string }) {
                   <span style={{ display: 'flex', flexDirection: 'column' }}><b className="serif" style={{ fontSize: 24 }}>{p.streak ?? 0}</b><span style={{ fontSize: 12, color: 'var(--muted)' }}>{(p.streak ?? 0) > 0 ? 'day streak' : streakLine(0, p.last_day, today)}</span></span>
                   <span style={{ display: 'flex', flexDirection: 'column' }}><b className="serif" style={{ fontSize: 24 }}>{p.friends_count}</b><span style={{ fontSize: 12, color: 'var(--muted)' }}>friends</span></span>
                 </section>
-                <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Stones">
-                  <span className="hr-label">Stones</span>
+                <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Levels">
+                  <span className="hr-label">Levels</span>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, textAlign: 'center' }}>
                     {TIERS.slice(1).map((t) => {
-                      const st = p.stones ?? [];
-                      const n = t.n === 4 ? (st[3] ?? 0) + (st[4] ?? 0) + (st[5] ?? 0) : (st[t.n - 1] ?? 0);
+                      const n = foldStones(p.stones ?? [])[t.n - 1] ?? 0;
                       return (
                         <div key={t.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, opacity: n > 0 ? 1 : 0.4 }}>
                           <Stone level={t.n} size={36} />

@@ -14,14 +14,14 @@ export interface Words { recited: number; atStage: number[]; inMemory: number }
 export const itemWords = (item: Item, track: Track) => wordCount(item.chunks[track].join(' '));
 
 export function wordsIn(items: Item[], track: Track, p: MemberProgress): Words {
-  const atStage = [0, 0, 0, 0, 0, 0, 0];
+  const atStage = [0, 0, 0, 0, 0, 0];
   for (const item of items) {
     const level = p.levels[item.id] ?? 0;
     if (!level && !recited(item, track, p.log)) continue;
     const words = itemWords(item, track);
-    for (let n = 0; n <= Math.min(6, level); n++) atStage[n] += words;
+    for (let n = 0; n <= Math.min(5, level); n++) atStage[n] += words;
   }
-  return { recited: atStage[0], atStage, inMemory: atStage[1] };
+  return { recited: atStage[0], atStage, inMemory: atStage[2] }; // in memory from Recalled (level 2) up
 }
 
 /** Words of items first recited in the last 7 days. */

@@ -8,7 +8,7 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
-import { needsRefresh, nextStep } from '@/heir/levels';
+import { levelShown, needsRefresh, nextStep } from '@/heir/levels';
 import { tierOf } from '@/heir/tiers';
 import { Explain } from './explain';
 import { ItemPlanButton } from './plan-button';
@@ -28,7 +28,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
   const mine = memberProgress(progress, me?.id);
   const owner = courses.find((c) => courseItems(c).some((i) => i.id === item.id));
   const learned = unitsFor(item, me?.track ?? 'adult').every((u) => mine.units.includes(u.key));
-  const level = mine.levels[item.id] ?? 0;
+  const level = levelShown(mine, item, me?.track ?? 'adult');
   const dim = needsRefresh(mine, item.id, now);
   const next = learned ? nextStep(item, me?.track ?? 'adult', mine, now) : null;
   const strong = learned ? strongUntilFor(item, mine, me?.track ?? 'adult') : null;
@@ -78,10 +78,10 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
             <div className="hr-status-top">
               {strength !== null
                 ? <div className="hr-ring" data-band={strengthBand(strength)} style={{ ['--v' as string]: Math.round(strength * 100), width: 92, height: 92 }}><b className="serif">{Math.round(strength * 100)}%</b></div>
-                : <Stone level={level} size={56} dim={dim} started />}
+                : <Stone level={level} size={56} dim={dim} />}
               <span className="hr-status-text">
                 <span className="hr-status-cap">{strength !== null ? (today ? 'Strength, practised today' : 'Strength') : 'Level'}</span>
-                <b>{level ? `${tierOf(level)!.stone} · ${tierOf(level)!.name}` : 'Stone · Familiar'}</b>
+                <b>{level ? `${tierOf(level)!.stone} · ${tierOf(level)!.name}` : 'Not learned yet'}</b>
                 {dim ? <span style={{ color: 'var(--miss)' }}>Due for a refresh</span>
                   : strong ? <span>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span> : null}
               </span>

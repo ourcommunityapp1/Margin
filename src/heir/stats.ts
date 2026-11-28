@@ -12,9 +12,9 @@ import type { Item, Track } from './types.ts';
 export interface CourseStat { course: string; learned: number; total: number }
 
 export interface Stats {
-  // Words of everything recalled unaided after a night's sleep (the Amethyst stone or higher).
+  // Words of everything recalled unaided after a night's sleep (the Recalled level or higher).
   wordsInMemory: number;
-  // How many items have reached each stone or higher, Amethyst (1) to Diamond (6); each stone keeps the ones below it.
+  // How many items have reached each level or higher, Familiar (1) to Expert (5); each level keeps the ones below it.
   stones: number[];
   // Days kept in a row (Sundays are rest days: skipping one never breaks the run).
   streak: number;
@@ -31,7 +31,7 @@ export const learnedItems = (items: Item[], track: Track, p: MemberProgress): nu
 };
 
 export function statsFor(courses: CourseInput[], allItems: Item[], track: Track, p: MemberProgress, today: string, keepRules?: { options: KeepOptions; now: Date } | null): Stats {
-  const stones = [1, 2, 3, 4, 5, 6].map((n) => allItems.filter((i) => levelOf(p, i.id) >= n).length);
+  const stones = [1, 2, 3, 4, 5].map((n) => allItems.filter((i) => levelOf(p, i.id) >= n).length);
   return {
     // With the keeping rules on, words that have left (not recalled in time) are not counted.
     wordsInMemory: keepRules ? summarize(heldItems(allItems, p, track, keepRules.now, keepRules.options)).wordsKept : wordsIn(allItems, track, p).inMemory,
@@ -43,3 +43,9 @@ export function statsFor(courses: CourseInput[], allItems: Item[], track: Track,
       .filter((c) => c.learned > 0),
   };
 }
+
+/** A friend's per-level counts on the current scale (Familiar to Expert, each "this level or higher"). Counts saved by an earlier
+ *  version have six entries (Amethyst to Diamond): Amethyst is Recalled, Topaz Memorized, Carnelian Proficient, Emerald and above
+ *  Expert; how many were merely Familiar was not counted, so it shows as the Recalled count. */
+export const foldStones = (stones: number[]): number[] =>
+  stones.length >= 6 ? [stones[0], stones[0], stones[1], stones[2], stones[3]] : [0, 1, 2, 3, 4].map((i) => stones[i] ?? 0);

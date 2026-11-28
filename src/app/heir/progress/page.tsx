@@ -19,7 +19,7 @@ import { MiniWindow } from '../ui/glass/mini';
 import { RoundWindow } from '../ui/glass/round';
 import type { PartWindow } from '../ui/glass/light';
 import { activeMember } from '@/heir/household';
-import { bestDaysKept, daysKept, recited } from '@/heir/levels';
+import { bestDaysKept, daysKept, levelShown } from '@/heir/levels';
 import { TIERS, tierIndex } from '@/heir/tiers';
 import { MILESTONES, milestones, wordsIn } from '@/heir/measures';
 import { wordsHistory, type WordsPoint } from '@/heir/memory-history';
@@ -49,14 +49,13 @@ export default function Progress() {
   const kept = daysKept(mine.days, today);
   const best = Math.max(kept, bestDaysKept(mine.days));
   // How many questions and verses sit at each of the five levels right now (their highest).
-  const levelOf = (id: string) => mine.levels[id] ?? 0;
-  const recitedCount = items.filter((i) => levelOf(i.id) > 0 || recited(i, me.track, mine.log)).length;
   const tierCounts = TIERS.map(() => 0);
-  for (const i of items) { if (levelOf(i.id) > 0) tierCounts[tierIndex(levelOf(i.id))]++; else if (recited(i, me.track, mine.log)) tierCounts[0]++; }
+  for (const i of items) { const n = levelShown(mine, i, me.track); if (n > 0) tierCounts[tierIndex(n)]++; }
+  const recitedCount = tierCounts.reduce((a, b) => a + b, 0);
   // Every course with anything learned, the one in progress first: its window lit as far as you've come.
   const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const yours = courses
-    .map((c) => ({ c, s: courseSummary(c, me.track, mine, minutes, now), stones: courseItems(c).filter((i) => (mine.levels[i.id] ?? 0) > 0).length }))
+    .map((c) => ({ c, s: courseSummary(c, me.track, mine, minutes, now)}))
     .filter((x) => x.s.started)
     .sort((a, b) => Number(b.c.id === household.plan?.course) - Number(a.c.id === household.plan?.course));
 
@@ -115,7 +114,7 @@ export default function Progress() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {TIERS.map((t, k) => (
               <div key={t.id} className="hr-stone-row">
-                <Stone level={t.n} size={36} started dim={tierCounts[k] === 0} />
+                <Stone level={t.n} size={36} dim={tierCounts[k] === 0} />
                 <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
                   <span style={{ fontWeight: 600, fontSize: 15 }}>{t.name}</span>
                   <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{t.stone}</span>

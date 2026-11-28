@@ -5,6 +5,7 @@ import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, t
 import type { StepKind, Unit } from './lesson.ts';
 import { clampDue } from './keep.ts';
 import { lightMark } from './observe.ts';
+import { LEVEL_SCALE, onCurrentScale } from './level-scale.ts';
 import { dampedStep, daysToChance, foldTrimmed, gradeRecall, mergeSnapshot, MODEL_VERSION, parseSnapshot, partMemories, speedBaseline, type PartSnapshot } from './memory.ts';
 
 // How many answers the phone keeps (the account keeps them all).
@@ -58,6 +59,8 @@ export interface MemberProgress {
   courseLessons: Record<string, number>;
   // Highest stone level each item has earned (1 Amethyst … 6 Diamond). Levels never go down.
   levels: Record<string, number>;
+  // Which scale `levels` is on: 2 is Familiar to Expert (level-scale.ts); a record without it is from the earlier six-stone scale and is moved across when read.
+  levelScale?: number;
   // Award id → ISO date it was first earned.
   awards: Record<string, string>;
   // Local dates (YYYY-MM-DD) with a finished lesson or review.
@@ -84,7 +87,7 @@ export interface Keep { good?: string; miss?: string; full?: string }
 
 export type Progress = Record<string, MemberProgress>;
 
-export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, courseLessons: {}, levels: {}, awards: {}, days: [], log: [] });
+export const emptyProgress = (): MemberProgress => ({ units: [], checkpoints: [], cards: {}, lessons: 0, courseLessons: {}, levels: {}, levelScale: LEVEL_SCALE, awards: {}, days: [], log: [] });
 
 export const memberProgress = (p: Progress, memberId: string | null | undefined): MemberProgress =>
   (memberId && p[memberId]) || emptyProgress();
@@ -207,7 +210,7 @@ export function finishSession(p: MemberProgress, o: { results: StepResult[]; lea
   if (o.keepRules) {
     for (const itemId of byItem.keys()) {
       const c = cards[itemId], level = p.levels[itemId] ?? 0;
-      if (c && level >= 1) cards[itemId] = { ...c, due: clampDue(new Date(c.due), level, keep[itemId], o.now, o.keepRules.tz, 'whole').toISOString() };
+      if (c && level >= 2) cards[itemId] = { ...c, due: clampDue(new Date(c.due), level, keep[itemId], o.now, o.keepRules.tz, 'whole').toISOString() };
     }
   }
   // Answers about to be trimmed are folded into the parts' snapshot first, so no part loses its history.
@@ -333,7 +336,7 @@ export function parseProgress(raw: string | null): Progress {
         cards: m.cards && typeof m.cards === 'object' ? m.cards : {},
         lessons: Number(m.lessons) || 0,
         courseLessons: m.courseLessons && typeof m.courseLessons === 'object' ? m.courseLessons : {},
-        levels: m.levels && typeof m.levels === 'object' ? m.levels : {},
+        ...(() => { const c = onCurrentScale({ levels: m.levels && typeof m.levels === 'object' ? m.levels : {}, levelScale: m.levelScale }); return { levels: c.levels, levelScale: c.levelScale }; })(),
         awards: m.awards && typeof m.awards === 'object' ? m.awards : {},
         days: Array.isArray(m.days) ? m.days : [],
         log: Array.isArray(m.log) ? m.log : [],
@@ -395,7 +398,9 @@ function mergeRecord<T>(a: Record<string, T>, b: Record<string, T>, pick: (x: T,
 // of the same kind to the same question in one lesson were once taken for one.
 const logKey = (e: LogEntry) => e.id ?? `${e.at}|${e.itemId}|${e.kind}|${e.review ? 1 : 0}`;
 
-export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgress {
+export function mergeProgress(a0: MemberProgress, b0: MemberProgress): MemberProgress {
+  // Both sides on the current scale first, so an older copy can never be read as higher levels than it earned.
+  const a = onCurrentScale(a0), b = onCurrentScale(b0);
   const log = new Map<string, LogEntry>();
   for (const e of [...a.log, ...b.log]) if (!log.has(logKey(e))) log.set(logKey(e), e);
   const night = !a.night ? b.night : !b.night ? a.night : a.night.at >= b.night.at ? a.night : b.night;
@@ -411,6 +416,7 @@ export function mergeProgress(a: MemberProgress, b: MemberProgress): MemberProgr
     lessons: Math.max(a.lessons, b.lessons),
     courseLessons: mergeRecord(a.courseLessons, b.courseLessons, Math.max),
     levels: mergeRecord(a.levels, b.levels, Math.max),
+    levelScale: LEVEL_SCALE,
     awards: mergeRecord(a.awards, b.awards, (x, y) => earliest(x, y)!),
     days: union(a.days, b.days).sort(),
     log: [...log.values()].sort((x, y) => x.at.localeCompare(y.at)),

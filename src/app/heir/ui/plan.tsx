@@ -61,7 +61,7 @@ export function PlanScreen({ setup }: { setup: boolean }) {
         <h2 className="serif" style={{ margin: 0, fontSize: 24, fontWeight: 600 }}>What the levels mean</h2>
         {TIERS.map((t) => (
           <div key={t.id} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-            <Stone level={t.n} size={30} started />
+            <Stone level={t.n} size={30} />
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <span style={{ fontWeight: 600 }}>{t.name} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>· {t.stone}</span></span>
               <span style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>{t.means}</span>

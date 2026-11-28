@@ -22,11 +22,11 @@ export function memoryDates(items: Item[], track: Track, log: MemberProgress['lo
     const times = [...new Set(entries.map((e) => e.at))].sort().filter((at) => localDay(new Date(at)) !== firstDay);
     for (const at of times) {
       const upTo = log.filter((e) => e.itemId === item.id && e.at <= at);
-      if (levelFromLog(item, track, upTo, new Date(at)) >= 1) { out.set(item.id, Date.parse(at)); break; }
+      if (levelFromLog(item, track, upTo, new Date(at)) >= 2) { out.set(item.id, Date.parse(at)); break; }
     }
     // A stone earned under an earlier rule is kept (stones never go down) even where the current rules can't replay it: date it
     // to the first answer on a later day, else the first answer.
-    if (!out.has(item.id) && (levels[item.id] ?? 0) >= 1) out.set(item.id, times.length ? Date.parse(times[0]) : Math.min(...entries.map((e) => Date.parse(e.at))));
+    if (!out.has(item.id) && (levels[item.id] ?? 0) >= 2) out.set(item.id, times.length ? Date.parse(times[0]) : Math.min(...entries.map((e) => Date.parse(e.at))));
   }
   return out;
 }

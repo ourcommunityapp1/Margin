@@ -13,25 +13,26 @@ const e = (day: number, kind: string, correct = true, extra: Partial<LogEntry> =
 const lesson = () => parts.map((u) => e(1, 'type', true, { part: u.key }));
 const at = new Date(2026, 11, 1);
 
-test('light recall earns the first stones: variety across days, near-perfect on the easy steps, a miss starts the count again', () => {
+test('light recall earns Recalled and Memorized: variety across days, near-perfect on the easy steps, a miss starts the count again', () => {
   // Day 1 recited, then light recall on later days.
   assert.equal(levelFromLog(item, 'adult', lesson(), at), 0, 'recited, nothing yet');
-  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order')], at), 1, 'one easy step, right first time, on a later day: Remembered');
+  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order')], at), 2, 'one easy step, right first time, on a later day: Recalled');
   assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order', false)], at), 0, 'an easy step missed counts for nothing');
-  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'blanks')], at), 1, 'filling in the blanks counts');
+  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'blanks')], at), 2, 'filling in the blanks counts');
   // Memorized: three days, and two or more kinds of step.
-  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'order'), e(7, 'order')], at), 1, 'three days of the same easy step is not enough variety');
-  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'spot'), e(7, 'blanks')], at), 2, 'three days, three kinds of step: Memorized');
+  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'order'), e(7, 'order')], at), 2, 'three days of the same easy step is not enough variety');
+  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'spot'), e(7, 'blanks')], at), 3, 'three days, three kinds of step: Memorized');
   // A miss in the middle starts the light count again; whole answers still count.
-  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'spot'), e(5, 'blanks', false), e(7, 'blanks')], at), 1, 'a missed light day resets: only the days after it count');
-  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'type'), e(5, 'blanks', false), e(7, 'blanks')], at), 2, 'a whole answer still counts in full');
-  // Lasting needs a gap of three weeks and a step that makes you find the words (0.7).
+  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'spot'), e(5, 'blanks', false), e(7, 'blanks')], at), 2, 'a missed light day resets: only the days after it count');
+  assert.equal(levelFromLog(item, 'adult', [...lesson(), e(2, 'order'), e(4, 'type'), e(5, 'blanks', false), e(7, 'blanks')], at), 3, 'a whole answer still counts in full');
+  // Proficient needs a gap of three weeks and a whole answer: light steps, however good, stay at Memorized.
   const base = [...lesson(), e(2, 'order'), e(4, 'spot'), e(7, 'blanks')];
-  assert.equal(levelFromLog(item, 'adult', [...base, e(30, 'order')], at), 2, 'an easy step after three weeks is not enough for Lasting');
-  assert.equal(levelFromLog(item, 'adult', [...base, e(30, 'blanks')], at), 3, 'blanks after three weeks: Lasting');
-  // The higher stones still need whole answers (Emerald and up): light recall never reaches them.
+  assert.equal(levelFromLog(item, 'adult', [...base, e(30, 'order')], at), 3, 'an easy step after three weeks is not enough for Proficient');
+  assert.equal(levelFromLog(item, 'adult', [...base, e(30, 'blanks')], at), 3, 'blanks after three weeks: still Memorized, it takes a whole answer');
+  assert.equal(levelFromLog(item, 'adult', [...base, e(30, 'type')], at), 4, 'a typed answer after three weeks: Proficient');
+  // Proficient and Expert need whole answers: light recall never reaches them.
   const long = [...base, e(30, 'blanks'), ...[0, 30, 60, 90, 120, 150, 180, 210, 240].map((d) => ({ ...e(1, 'letters'), at: new Date(2026, 10 + Math.floor(d / 30), 1 + (d % 30), 9).toISOString() }))];
-  assert.ok(levelFromLog(item, 'adult', long, new Date(2028, 0, 1)) <= 3, 'light recall alone stops at Lasting');
+  assert.ok(levelFromLog(item, 'adult', long, new Date(2028, 0, 1)) <= 3, 'light recall alone stops at Memorized');
 });
 
 test('light evidence is weighed by step: easy steps weigh little, the ones that make you produce words weigh more', () => {

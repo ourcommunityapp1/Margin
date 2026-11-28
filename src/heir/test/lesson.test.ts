@@ -263,7 +263,7 @@ test('progress: practice is counted in sessions, not in single answers', () => {
 
 test('progress: stored data that is broken is ignored', () => {
   assert.deepEqual(parseProgress('nope'), {});
-  assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], checkpoints: [], cards: {}, lessons: 0, courseLessons: {}, levels: {}, awards: {}, days: [], log: [] });
+  assert.deepEqual(parseProgress(JSON.stringify({ m1: { units: ['a', 3], lessons: 'x' } })).m1, { units: ['a'], checkpoints: [], cards: {}, lessons: 0, courseLessons: {}, levels: {}, levelScale: 2, awards: {}, days: [], log: [] });
 });
 
 test('path: units of named lessons, with exactly one current lesson', () => {

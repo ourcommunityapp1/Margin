@@ -17,7 +17,7 @@ import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, waitingForSleep, type StepResult } from '@/heir/progress';
 import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
-import { daysKept, settle } from '@/heir/levels';
+import { daysKept, RECALLED, settle } from '@/heir/levels';
 import { addVerse, dailyCourse } from '@/heir/household';
 import { tierIndex, tierOf } from '@/heir/tiers';
 import { testedPositions } from '@/heir/observe';
@@ -394,7 +394,7 @@ function Done({ session, finished, again, from }: { session: Session; finished: 
   const partial = first && first.part < first.of;
   const label = session.group ? groupLabel(session.group) : '';
   // Only a move to a new tier is news: Emerald, Sapphire and Diamond all show as Expert.
-  const tierUps = finished.ups.filter((u) => tierIndex(u.to) > tierIndex(u.from));
+  const tierUps = finished.ups.filter((u) => u.to >= RECALLED && tierIndex(u.to) > tierIndex(u.from));
   const top = tierUps[0];
   const topItem = top ? getItem(top.itemId) : null;
   const topLevel = top ? tierOf(top.to) : null;

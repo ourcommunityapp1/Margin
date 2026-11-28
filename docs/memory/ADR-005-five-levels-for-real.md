@@ -1,4 +1,4 @@
-# ADR-005: make the five levels the real levels (plan, not yet built)
+# ADR-005: make the five levels the real levels (BUILT 2026-11-28; see the end)
 
 Status: **plan, revised 2026-11-27 after the owner's answers.** ADR-004 shipped the five names as a display-only mapping over six internal stones. This makes five levels the only levels, everywhere.
 
@@ -77,3 +77,20 @@ Effect on pace: Proficient and Expert are earned by the *whole-answer* check-ins
 ## 7. Order of work
 
 1. Snapshot Today outputs. 2. Engine rules + keep/measures re-key + tests. 3. Migration + merge. 4. Remove awards. 5. UI to five levels, delete photos. 6. Dry run on the owner's record. 7. Supabase migration. 8. Web deploy. 9. Fixtures to the Mac session.
+
+
+---
+
+## Built (2026-11-28)
+
+The engine now has five levels, stored `levels[itemId]` 0 to 5 (Familiar 1, Recalled 2, Memorized 3, Proficient 4, Expert 5), with `levelScale: 2` on every progress record.
+
+- **Rules** (`levels.ts`): as the "How every level is earned" table above, with these exact choices: Familiar is "learned" (all parts through their lesson, so it needs no typing); Recalled and Memorized are the old Amethyst and Topaz rules (light steps count); **Proficient** needs a whole answer (typed or said, right, no hints) after a gap of three weeks or more (light steps no longer count, which the old Carnelian allowed); **Expert** needs three or more right whole answers in the six months, one after two months away (the old Emerald asked for two). Sapphire and Diamond are gone; anything that reached them is Expert.
+- **Migration** (`level-scale.ts`): a record without `levelScale` is on the old scale and is moved when read (old 1 to 2, 2 to 3, 3 to 4, 4 to 6 to 5), in `parseProgress`, `mergeProgress` (both sides first, so order never matters) and the stats job. Words in memory are identical before and after (test). A learned item with no level is shown as Familiar at once (`levelShown`) and gets it stored on the next lesson.
+- **Keep rules**: windows are 90 days, and 240 at Expert (the 425-day window went with Sapphire; nobody had reached it); "held" and the review clamp start at Recalled, so Familiar items are not "in memory".
+- **Awards**: the ids are kept, renamed (First Recalled, First Memorized, First Proficient, First Expert) and mapped to the new levels. They are not shown anywhere for now; stored dates are untouched.
+- **Friends' counts**: `heir_stats.stones` takes five (or, from older rows, six) numbers; migration `20261205000000_heir_five_levels.sql` (applied). `foldStones` reads either.
+- **Today engine**: `dayplan`, `planner`, `lesson` and the FSRS fixtures (`fsrs`, `grade`, `lesson`, `memory`, `words`) are unchanged by this work; only `journeys.json` and `small.json` changed (they carry levels).
+- **Not done**: the proof ledger and "model plus proof" levels of ADR-006 (Phase 2 there), and the Dart port.
+
+**Order of release matters.** The web app moves saved progress to the new scale when it reads it and writes it back with `levelScale: 2`. An app build that still has the six-stone engine would read those levels as the old stones (every level one too high). The Mac session must ship the matching engine (`level-scale`, `levels`, `keep`, `measures`, `stats`) before that build reads synced progress.

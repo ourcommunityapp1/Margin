@@ -6,8 +6,8 @@ const d = (s: string) => new Date(s);
 const LAUNCH = d('2026-10-01T00:00:00Z'); // long before the dates below: the 30-day grace is over
 const opts = { launch: LAUNCH, tz: 'UTC', mode: 'any-part' as const };
 
-test('the window grows with the stone: 90 days, then 240 at Emerald, then 425 at Sapphire and above', () => {
-  assert.deepEqual([1, 2, 3, 4, 5, 6].map(windowDays), [90, 90, 90, 240, 425, 425]);
+test('the window grows with the level: 90 days, then 240 at Expert', () => {
+  assert.deepEqual([1, 2, 3, 4, 5].map(windowDays), [90, 90, 90, 90, 240]);
 });
 
 test('an item with no stone is not counted at all', () => {
@@ -25,12 +25,11 @@ test('rule 1: kept for 76 days, due for review from day 76 to 90, out on day 90'
   assert.equal(keepState(2, keep, d('2027-01-30T00:00:00Z'), opts).state, 'out');           // day 90
 });
 
-test('higher stones get longer windows', () => {
+test('Expert gets a longer window', () => {
   const keep = { good: '2026-11-01T00:00:00Z' };
-  assert.equal(keepState(4, keep, d('2027-03-01T00:00:00Z'), opts).state, 'kept');    // day 120 at Emerald: fine
-  assert.equal(keepState(4, keep, d('2027-07-01T00:00:00Z'), opts).state, 'out');     // day 242
-  assert.equal(keepState(5, keep, d('2027-07-01T00:00:00Z'), opts).state, 'kept');    // day 242 at Sapphire: fine
-  assert.equal(keepState(6, keep, d('2028-01-01T00:00:00Z'), opts).state, 'out');     // day 426
+  assert.equal(keepState(4, keep, d('2027-03-01T00:00:00Z'), opts).state, 'out');     // day 120 at Proficient: past its 90 days
+  assert.equal(keepState(5, keep, d('2027-03-01T00:00:00Z'), opts).state, 'kept');    // day 120 at Expert: fine
+  assert.equal(keepState(5, keep, d('2027-07-01T00:00:00Z'), opts).state, 'out');     // day 242
 });
 
 test('rule 2: a miss keeps the words until the end of the next day; right by then loses nothing, otherwise they leave', () => {
@@ -99,7 +98,7 @@ test('the scheduler never sets a review past two weeks before the window ends, o
   assert.equal(clampDue(far, 2, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2027-01-30T00:00:00.000Z', 'recalled Nov 15 + 76 days');
   assert.equal(clampDue(d('2026-12-01T00:00:00Z'), 2, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2026-12-01T00:00:00.000Z', 'earlier than the limit: unchanged');
   assert.equal(clampDue(far, 2, { good: '2026-11-01T00:00:00Z', miss: '2026-11-19T20:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2026-11-20T23:59:59.999Z', 'after a miss: tomorrow');
-  assert.equal(clampDue(far, 4, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2027-06-01T00:00:00.000Z', 'Emerald: 226 days is later than this due date, so unchanged');
+  assert.equal(clampDue(far, 5, { good: '2026-11-15T00:00:00Z' }, now, 'UTC', 'any-part').toISOString(), '2027-06-01T00:00:00.000Z', 'Expert: 226 days is later than this due date, so unchanged');
   assert.equal(clampDue(far, 2, undefined, now, 'UTC', 'any-part').toISOString(), far.toISOString());
 });
 

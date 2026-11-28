@@ -3,8 +3,8 @@
 
 import { tierOf } from '@/heir/tiers';
 
-export function Stone({ level, size = 28, dim = false, label, started = false }: { level: number; size?: number; dim?: boolean; label?: string; started?: boolean }) {
-  const tier = tierOf(level, started || level > 0);
+export function Stone({ level, size = 28, dim = false, label }: { level: number; size?: number; dim?: boolean; label?: string }) {
+  const tier = tierOf(level);
   const radius = Math.round(size * 0.3);
   const name = label ?? (tier ? `${tier.stone}, ${tier.name}${dim ? ', needs a refresh' : ''}` : 'Not yet earned');
   if (!tier) return <span className="hr-stone empty" role="img" aria-label={name} style={{ width: size, height: size, borderRadius: radius }} />;

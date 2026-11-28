@@ -7,7 +7,7 @@
 // answers, because grading happens on the phone; answers are append-only and timestamped by the server, which makes
 // that slow and visible, not impossible.
 
-import { earnedLevels } from './levels.ts';
+import { earnedLevels, onCurrentScale } from './levels.ts';
 import type { KeepOptions } from './keep.ts';
 import type { LogEntry, MemberProgress } from './progress.ts';
 import { emptyProgress } from './progress.ts';
@@ -42,7 +42,7 @@ const logFromAnswers = (rows: AnswerIn[]): LogEntry[] => rows.map((r) => ({
 
 /** Progress as the server sees it: the full answer history in place of the phone's trimmed log, and days from both. */
 export function progressForStats(blob: MemberProgress | null, rows: AnswerIn[], track: Track, items: Item[], now: Date): MemberProgress {
-  const base = blob ?? emptyProgress();
+  const base = onCurrentScale(blob ?? emptyProgress());
   const log = logFromAnswers(rows);
   const days = [...new Set([...base.days, ...rows.map((r) => r.local_day).filter((d): d is string => !!d)])].sort();
   const withLog: MemberProgress = { ...base, log: log.length >= base.log.length ? log : base.log, days };
