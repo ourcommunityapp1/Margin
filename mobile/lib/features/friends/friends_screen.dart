@@ -155,14 +155,27 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               if (has)
                 Semantics(
                   button: true,
-                  label: 'Invite someone to Katekize',
+                  expanded: _invite,
+                  label: 'Share Katekize with someone',
+                  excludeSemantics: true,
                   child: Material(
                     color: k.button,
                     shape: const CircleBorder(),
                     child: InkWell(
                       customBorder: const CircleBorder(),
                       onTap: () => setState(() => _invite = !_invite),
-                      child: SizedBox(width: 44, height: 44, child: Icon(_invite ? Icons.close : Icons.add, color: k.buttonInk, size: 22)),
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Center(
+                          child: KIcon(
+                            '<path d="M12 15V3M8 7l4-4 4 4"/><path d="M7 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1"/>',
+                            size: 22,
+                            color: k.buttonInk,
+                            strokeWidth: 2.2,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),

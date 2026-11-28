@@ -47,7 +47,7 @@ void main() {
     await pumpApp(tester, store: _phone(), auth: FakeAuth(email: 'ann@example.com'), social: social, sharer: sharer);
     await tester.tap(find.bySemanticsLabel(RegExp('^Community')));
     await tester.pumpAndSettle();
-    await tester.tap(find.bySemanticsLabel('Invite someone to Katekize'));
+    await tester.tap(find.bySemanticsLabel('Share Katekize with someone'));
     await tester.pumpAndSettle();
     await _tap(tester, 'Send an invite');
     expect(sharer.shared, ['Memorize with me on Katekize|Memorize with me on Katekize:|https://katekize.com/heir/invite?code=f00dfeedf00dfeedf00dfeedf00dfeed']);

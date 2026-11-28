@@ -184,7 +184,7 @@ void main() {
     final social = FakeSocial(profile: _me);
     await _pump(tester, social);
     await _openFriends(tester);
-    await tester.tap(find.bySemanticsLabel('Invite someone to Katekize'));
+    await tester.tap(find.bySemanticsLabel('Share Katekize with someone'));
     await tester.pumpAndSettle();
     await _tap(tester, 'Send an invite');
     expect(social.friendInvites, 1);

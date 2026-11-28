@@ -26,18 +26,8 @@ class CommunityPreview extends ConsumerWidget {
     final status = ref.watch(boardProvider);
     final alert = status?.alert ?? false;
 
-    Widget go(String label, String to) => InkWell(
-          onTap: () => context.push(to),
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                Expanded(child: Text(label, style: sans(16, weight: FontWeight.w600, color: k.ink))),
-                KIcon('<path d="M5 12h14M13 6l6 6-6 6"/>', size: 16, color: k.ink, strokeWidth: 2.2),
-              ],
-            ),
-          ),
-        );
+    // One call-to-action look (Nov 28): a plain button, no arrow link.
+    Widget go(String label, String to) => KButton(label, onPressed: () => context.push(to));
 
     if (profile.value == null) {
       return Semantics(
