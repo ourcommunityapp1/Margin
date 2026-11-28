@@ -31,7 +31,7 @@ FakeSocial _social() => FakeSocial(profile: _me)
 Future<void> _pump(WidgetTester tester, FakeSocial social) => pumpApp(tester, store: _phone(), auth: FakeAuth(email: 'ann@example.com'), social: social);
 
 Future<void> _openFriends(WidgetTester tester) async {
-  await tester.tap(find.bySemanticsLabel(RegExp('^Friends')));
+  await tester.tap(find.bySemanticsLabel(RegExp('^Community')));
   await tester.pumpAndSettle();
 }
 
@@ -45,19 +45,19 @@ Future<void> _tap(WidgetTester tester, String text) async {
 void main() {
   testWidgets('the Friends tab shows a dot when your place moved', (tester) async {
     await _pump(tester, _social());
-    expect(find.bySemanticsLabel('Friends. Your place on the leaderboard changed'), findsOneWidget);
+    expect(find.bySemanticsLabel('Community. Your place on the leaderboard changed'), findsOneWidget);
   });
 
   testWidgets('no dot when nothing moved', (tester) async {
     final s = _social()..boardStatus = const BoardStatus(place: 5, total: 6);
     await _pump(tester, s);
-    expect(find.bySemanticsLabel('Friends. Your place on the leaderboard changed'), findsNothing);
+    expect(find.bySemanticsLabel('Community. Your place on the leaderboard changed'), findsNothing);
   });
 
   testWidgets('the preview on Friends: top three, a gap, then you, with your move', (tester) async {
     await _pump(tester, _social());
     await _openFriends(tester);
-    expect(find.text('Community'), findsOneWidget);
+    expect(find.text('Community'), findsWidgets, reason: 'the page title and its tab');
     expect(find.text('Bea'), findsOneWidget);
     expect(find.text('Cal'), findsOneWidget);
     expect(find.text('Dan'), findsOneWidget);
@@ -98,7 +98,7 @@ void main() {
     expect(find.text('Words in memory · 6 people in your community · '), findsOneWidget);
     expect(s.seenPeriods, ['all']);
     // Seen: the dot is gone.
-    expect(find.bySemanticsLabel('Friends. Your place on the leaderboard changed'), findsNothing);
+    expect(find.bySemanticsLabel('Community. Your place on the leaderboard changed'), findsNothing);
     await _tap(tester, 'This month');
     expect(s.lastBoardPeriod, Period.month);
     expect(s.seenPeriods, ['all', 'month']);

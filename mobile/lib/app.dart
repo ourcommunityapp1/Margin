@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import 'features/discover/discover_screen.dart';
 import 'features/about/about_screen.dart';
 import 'features/courses/course_screen.dart';
 import 'features/courses/courses_screen.dart';
@@ -193,6 +194,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: [GoRoute(path: ':id', builder: (_, s) => CourseScreen(id: s.pathParameters['id']!))],
             ),
             GoRoute(path: '/item/:id', builder: (_, s) => ItemScreen(id: s.pathParameters['id']!)),
+            GoRoute(path: '/discover', builder: (_, _) => const DiscoverScreen()),
           ]),
           StatefulShellBranch(routes: [GoRoute(path: '/progress', builder: (_, _) => const ProgressScreen())]),
           StatefulShellBranch(routes: [GoRoute(path: '/friends', builder: (_, _) => const FriendsScreen())]),
@@ -213,9 +215,9 @@ CustomTransitionPage<void> _fade(GoRouterState state, Widget child) => CustomTra
 
 const _tabs = [
   KTab('Today', KIcons.today),
-  KTab('Courses', KIcons.courses),
+  KTab('Learn', KIcons.courses),
   KTab('Progress', KIcons.progress),
-  KTab('Friends', KIcons.friends),
+  KTab('Community', KIcons.friends),
 ];
 
 /// The four tab screens with the floating tab bar over them. Friends shows only once signed in.

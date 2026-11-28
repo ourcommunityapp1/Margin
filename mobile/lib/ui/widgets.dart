@@ -490,11 +490,25 @@ class KBalancedText extends StatelessWidget {
           return n;
         }
 
+        // The widest single word: never narrower than that, or a long word would be broken in the middle.
+        double widest() {
+          var w = 0.0;
+          for (final word in text.split(RegExp(r'\s+'))) {
+            if (word.isEmpty) continue;
+            final tp = TextPainter(text: TextSpan(text: word, style: drawn), textDirection: direction, textScaler: scaler, maxLines: 1)..layout();
+            if (tp.width > w) w = tp.width;
+            tp.dispose();
+          }
+          return w;
+        }
+
         final lines = linesAt(max);
         var width = max;
-        if (lines > 1) {
-          // The narrowest width that still fits in [lines] lines: search between half the width and the full width.
-          var lo = max / 2, hi = max;
+        final floor = lines > 1 ? widest() : 0.0;
+        if (lines > 1 && floor < max) {
+          // The narrowest width that still fits in [lines] lines: search between half the width (or the widest word) and the
+          // full width.
+          var lo = floor > max / 2 ? floor : max / 2, hi = max;
           for (var i = 0; i < 12; i++) {
             final mid = (lo + hi) / 2;
             if (linesAt(mid) > lines) {

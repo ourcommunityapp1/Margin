@@ -45,7 +45,7 @@ void main() {
     final sharer = _Sharer();
     final social = FakeSocial(profile: const MyProfile(username: 'ann_s', firstName: 'Ann', lastName: 'Smith'));
     await pumpApp(tester, store: _phone(), auth: FakeAuth(email: 'ann@example.com'), social: social, sharer: sharer);
-    await tester.tap(find.bySemanticsLabel(RegExp('^Friends')));
+    await tester.tap(find.bySemanticsLabel(RegExp('^Community')));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Invite someone to Katekize'));
     await tester.pumpAndSettle();

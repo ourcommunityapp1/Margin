@@ -1,16 +1,20 @@
-// Courses (src/app/heir/courses/page.tsx): "My courses" first (the one you chose, then every course you have begun), then
-// the other courses on their shelves. Each is a card with its window (lit as far as you have come), its name, two lines on
-// what it is, and how far you have got. The season's course card is not here yet.
+// Learn (src/app/heir/courses/page.tsx): a search bar (opens Discover), "In your plan" first (the course you're on, then
+// every course you've begun), your single verses, the season's course while it's in season, then every other course on its
+// shelf, taken in turn with the shelves of single verses. Each course is a card with its window (lit as far as you have
+// come), its name, two lines on what it is, and how far you have got.
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/household.dart' show dailyCourse;
+import '../../data/verse_shelves.dart';
 import '../../engine/content.dart';
 import '../../engine/dayplan.dart' show startedCourses;
 import '../../engine/lesson.dart' show unitsFor;
 import '../../engine/path.dart';
 import '../../engine/progress.dart';
+import '../../engine/season.dart' show seasonLabel;
 import '../../engine/types.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
@@ -29,29 +33,121 @@ class CoursesScreen extends ConsumerWidget {
     final track = ref.watch(meProvider)?.track ?? Track.adult;
     final mine = ref.watch(myProgressProvider);
     final now = ref.watch(clockProvider)();
-    final focus = ref.watch(householdProvider).plan?.course;
-    final mineCourses = startedCourses(mine, track, focus);
+    final plan = ref.watch(householdProvider).plan;
+    final mineCourses = startedCourses(mine, track, dailyCourse(plan), plan?.removed ?? const [], plan?.verses ?? const []);
     final mineIds = mineCourses.map((c) => c.id).toSet();
-    List<Course> onShelf(String id) => courses.where((c) => c.shelf == id && !mineIds.contains(c.id)).toList();
+    // The season's course, if one is in season now.
+    final seasonal = [
+      for (final c in courses)
+        if (c.season != null)
+          if (seasonLabel(c.season!, now) case final label?) (c: c, label: label),
+    ].firstOrNull;
+    List<Course> onShelf(String id) => courses.where((c) => c.shelf == id && c.id != seasonal?.c.id && !mineIds.contains(c.id)).toList();
+    final learnedUnits = mine.units.toSet();
+    bool isLearned(Item i) => unitsFor(i, track).every((u) => learnedUnits.contains(u.key));
+    final myVerses = [for (final id in plan?.verses ?? const <String>[]) ?getItem(id)];
+    final courseShelves = [for (final (id, title) in shelves) if (onShelf(id).isNotEmpty) (id: id, title: title, list: onShelf(id))];
+    final verseRows = [for (final sh in verseShelves) (id: sh.id, title: sh.title, items: [for (final id in sh.ids) ?getItem(id)])];
+    Widget label(String t) => Padding(padding: const EdgeInsets.fromLTRB(6, 8, 6, 0), child: Semantics(header: true, child: KLabel(t)));
+    // A row that scrolls sideways; the cards share one height, as tall as the tallest needs (large text included).
+    Widget verseRow(List<Item> items) => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          clipBehavior: Clip.none,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (i, it) in items.indexed) ...[if (i > 0) const SizedBox(width: 10), _VerseCard(item: it, learned: isLearned(it))],
+              ],
+            ),
+          ),
+        );
+    var offset = 0;
     return KPage(
       children: [
-        const KTitle('Courses'),
-        if (mineCourses.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
-            child: Semantics(header: true, child: const KLabel('My courses')),
+        const KTitle('Learn'),
+        Semantics(
+          button: true,
+          label: 'Search verses, topics and courses',
+          excludeSemantics: true,
+          child: Material(
+            color: k.card,
+            shape: const StadiumBorder(),
+            child: InkWell(
+              customBorder: const StadiumBorder(),
+              onTap: () => context.push('/discover'),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(children: [
+                    KIcon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>', size: 18, color: k.muted, strokeWidth: 2.2),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text('Search verses, topics, courses', maxLines: 1, overflow: TextOverflow.ellipsis, style: sans(15, color: k.muted))),
+                  ]),
+                ),
+              ),
+            ),
           ),
+        ),
+        if (mineCourses.isNotEmpty) ...[
+          label('In your plan'),
           for (final (i, c) in mineCourses.indexed) _CourseCard(c, k, track, mine, now, ListMotion(index: i, count: mineCourses.length, offset: 0)),
         ],
-        for (final (n, (id, title)) in shelves.indexed)
-          if (onShelf(id).isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(6, 8, 6, 0),
-              child: Semantics(header: true, child: KLabel(title)),
-            ),
-            for (final (i, c) in onShelf(id).indexed) _CourseCard(c, k, track, mine, now, ListMotion(index: i, count: onShelf(id).length, offset: (n + 1) * 1700)),
+        if (myVerses.isNotEmpty) ...[label('Your verses'), verseRow(myVerses)],
+        if (seasonal != null && !mineIds.contains(seasonal.c.id)) ...[
+          label('In season · ${seasonal.label}'),
+          _CourseCard(seasonal.c, k, track, mine, now, ListMotion(index: 0, count: 1, offset: 900)),
+        ],
+        // Course shelves and verse shelves taken in turn, so the page alternates between a list of courses and a row of verses.
+        for (var n = 0; n < (courseShelves.length > verseRows.length ? courseShelves.length : verseRows.length); n++) ...[
+          if (n < courseShelves.length) ...[
+            label(courseShelves[n].title),
+            for (final (i, c) in courseShelves[n].list.indexed) _CourseCard(c, k, track, mine, now, ListMotion(index: i, count: courseShelves[n].list.length, offset: (offset += 1700))),
           ],
+          if (n < verseRows.length && verseRows[n].items.isNotEmpty) ...[label(verseRows[n].title), verseRow(verseRows[n].items)],
+        ],
       ],
+    );
+  }
+}
+
+/// A verse on a shelf: its reference, its first words, and whether it's learned.
+class _VerseCard extends StatelessWidget {
+  const _VerseCard({required this.item, required this.learned});
+  final Item item;
+  final bool learned;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      child: Material(
+        color: k.card,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => context.push('/item/${Uri.encodeComponent(item.id)}'),
+          child: SizedBox(
+            width: 168,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(itemLabel(item), style: serif(15, weight: FontWeight.w600, color: k.ink, height: 1.2)),
+                  const SizedBox(height: 8),
+                  Text(item.text, maxLines: 3, overflow: TextOverflow.ellipsis, style: sans(13, color: k.muted, height: 1.4)),
+                  const SizedBox(height: 8),
+                  const Spacer(),
+                  Text(learned ? 'Learned' : 'Learn · 2 min', style: sans(12.5, weight: FontWeight.w600, color: learned ? k.good : k.ink)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

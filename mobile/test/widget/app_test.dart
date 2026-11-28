@@ -60,9 +60,9 @@ void main() {
     expect(find.textContaining('Begin · '), findsOneWidget);
     expect(find.textContaining('min'), findsWidgets);
     expect(find.text('Today'), findsOneWidget);
-    expect(find.text('Courses'), findsOneWidget);
+    expect(find.text('Learn'), findsOneWidget);
     expect(find.text('Progress'), findsOneWidget);
-    expect(find.text('Friends'), findsNothing, reason: 'Friends shows only once signed in');
+    expect(find.text('Community'), findsNothing, reason: 'Community shows only once signed in');
   });
 
   testWidgets('Continue waits for a name', (tester) async {
@@ -78,7 +78,7 @@ void main() {
     await pumpApp(tester);
     await setUpAccount(tester);
 
-    await tester.tap(find.text('Courses'));
+    await tester.tap(find.text('Learn'));
     await tester.pumpAndSettle();
     expect(find.text('First Verses'), findsOneWidget);
     expect(find.text('Westminster Shorter Catechism'), findsOneWidget);
@@ -150,14 +150,14 @@ void main() {
     await pumpApp(tester);
     await setUpAccount(tester);
 
-    await tester.tap(find.text('Courses'));
+    await tester.tap(find.text('Learn'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Westminster Shorter Catechism'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Westminster Shorter Catechism'));
     await tester.pumpAndSettle();
     expect(find.text('Q1'), findsOneWidget);
-    expect(find.text('Courses'), findsWidgets, reason: 'the tab bar stays up on a course');
+    expect(find.text('Learn'), findsWidgets, reason: 'the tab bar stays up on a course');
 
     await tester.ensureVisible(find.text('Q1'));
     await tester.pumpAndSettle();

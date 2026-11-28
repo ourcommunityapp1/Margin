@@ -33,7 +33,7 @@ const _cal = Person(
 );
 
 Future<void> _openFriends(WidgetTester tester) async {
-  await tester.tap(find.bySemanticsLabel(RegExp('^Friends')));
+  await tester.tap(find.bySemanticsLabel(RegExp('^Community')));
   await tester.pumpAndSettle();
 }
 
