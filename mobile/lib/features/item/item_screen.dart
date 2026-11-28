@@ -13,7 +13,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
 import '../../engine/lesson.dart' show unitsFor;
-import '../../engine/levels.dart' show levelShown, needsRefresh, nextStep;
+import '../../engine/levels.dart' show levelShown, needsRefresh;
 import '../../engine/tiers.dart';
 import '../../engine/memory.dart' show partMemories;
 import '../../engine/types.dart';
@@ -87,6 +87,8 @@ class ItemScreen extends ConsumerWidget {
             ),
           ),
         ),
+        // In the plan or not, right under the verse.
+        if (owner != null) ItemPlanButton(item: item, course: owner),
         if (!learned) ...[
           if (owner != null)
             KButton('Learn it · 2 min', onPressed: () => context.push('/lesson?mode=learn&item=${Uri.encodeQueryComponent(item.id)}&course=${owner.id}'))
@@ -95,8 +97,9 @@ class ItemScreen extends ConsumerWidget {
               'Practice this ${unit == 'Question' ? 'question' : unit == 'Verse' ? 'verse' : 'now'}',
               onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'),
             ),
-          if (owner != null) ItemPlanButton(item: item, course: owner),
         ] else ...[
+          const SizedBox(height: 10),
+          _Status(item: item, track: track, now: now),
           Row(
             children: [
               Expanded(child: KButton('Practice', onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'))),
@@ -110,9 +113,6 @@ class ItemScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          _Status(item: item, track: track, now: now),
-          if (owner != null) ItemPlanButton(item: item, course: owner),
           _WordByWord(item: item, track: track),
           _StrengthOverTime(item: item, now: now),
         ],
@@ -182,7 +182,6 @@ class _Status extends ConsumerWidget {
     final mine = ref.watch(myProgressProvider);
     final level = levelShown(mine, item, track);
     final dim = needsRefresh(mine, item.id, now);
-    final next = nextStep(item, track, mine, now);
     final strength = itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap));
     final stats = itemStats(item, mine, track);
     final perfect = recitedPerfectly(item, track, mine.log);
@@ -193,16 +192,8 @@ class _Status extends ConsumerWidget {
       return '${_months[l.month - 1]} ${l.day}${l.year == now.toLocal().year ? '' : ', ${l.year}'}';
     }
 
-    String ago(DateTime d) {
-      final a = DateTime(d.toLocal().year, d.toLocal().month, d.toLocal().day);
-      final b = DateTime(now.toLocal().year, now.toLocal().month, now.toLocal().day);
-      final days = (b.difference(a).inHours / 24).round();
-      return days <= 0 ? 'Today' : days == 1 ? 'Yesterday' : '$days days ago';
-    }
 
     final rows = <(String, String)>[
-      if (stats.learnedAt != null) ('Learned', date(stats.learnedAt!)),
-      if (stats.last != null) ('Last time', '${ago(stats.last!)}${stats.lastRight == false ? ' · a slip' : ''}'),
       if (stats.oftenMissed != null) ('Often missed', '\u201c${stats.oftenMissed}\u201d'),
     ];
     Widget num(String big, String small) => Expanded(
@@ -246,6 +237,8 @@ class _Status extends ConsumerWidget {
               num('$perfect', 'recited perfectly'),
               const SizedBox(width: 8),
               num('$practised', 'times practised'),
+              const SizedBox(width: 8),
+              num(stats.learnedAt == null ? '–' : date(stats.learnedAt!), 'learned'),
             ],
           ),
           if (rows.isNotEmpty)
@@ -268,15 +261,6 @@ class _Status extends ConsumerWidget {
                     ),
                 ],
               ),
-            ),
-          if (next != null)
-            Text.rich(
-              TextSpan(children: [
-                TextSpan(text: 'Next: ${next.split(',').first}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                if (next.contains(',')) TextSpan(text: ', ${next.substring(next.indexOf(',') + 2)}'),
-                const TextSpan(text: '.'),
-              ]),
-              style: sans(14, color: k.muted, height: 1.45),
             ),
         ],
       ),

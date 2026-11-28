@@ -50,10 +50,12 @@ void main() {
     expect(find.text('times practised'), findsOneWidget);
     expect(find.text('3'), findsOneWidget, reason: 'the lesson and two reviews');
     expect(find.text('next review'), findsNothing, reason: 'taken off the card');
-    expect(find.text('Learned'), findsOneWidget);
+    // The date learned sits beside the two numbers; no "Last time" row.
+    expect(find.text('learned'), findsOneWidget);
     expect(find.text('Nov 20'), findsOneWidget);
-    expect(find.text('Last time'), findsOneWidget);
-    expect(find.text('2 days ago'), findsOneWidget);
+    expect(find.text('Last time'), findsNothing);
+    // The card comes before Practice and Review.
+    expect(tester.getTopLeft(find.text('recited perfectly')).dy, lessThan(tester.getTopLeft(find.text('Practice')).dy));
     // The word missed once is coloured; the passage word by word and its strength line follow.
     await tester.scrollUntilVisible(find.text('Word by word'), 200);
     expect(find.text('Missed a lot'), findsOneWidget);
