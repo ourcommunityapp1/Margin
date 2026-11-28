@@ -351,7 +351,7 @@ class SupabaseSocialApi implements SocialApi {
           final plan = h['plan'];
           return LinkedAccount(
             ownerId: h['owner_id'] as String,
-            plan: plan is Map && plan['course'] is String ? Plan(course: plan['course'] as String, minutes: (plan['minutes'] as num?)?.toInt()) : null,
+            plan: parsePlan(plan),
             members: [for (final m in mine) (id: m['id'] as String, name: m['name'] as String, track: m['track'] == 'child' ? Track.child : Track.adult)],
             progress: {for (final m in mine) if (progress[m['id']] != null) m['id'] as String: progress[m['id']]!},
           );

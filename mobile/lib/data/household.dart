@@ -20,11 +20,26 @@ class Member {
 
 /// What the household is memorizing: a course id from the content, and the daily goal in minutes (5, 15 or 25).
 class Plan {
-  const Plan({required this.course, this.minutes});
+  const Plan({required this.course, this.minutes, this.removed = const [], this.verses = const [], this.extra = const {}});
   final String course;
   final int? minutes;
 
-  Map<String, Object?> toJson() => {'course': course, if (minutes != null) 'minutes': minutes};
+  /// Courses taken out of the plan (their progress is kept). The daily course is out of the plan if it is listed here.
+  final List<String> removed;
+
+  /// Verses or answers added to the plan on their own (item ids).
+  final List<String> verses;
+
+  /// Any other fields a newer website or app saved on the plan: kept as they are, so saving here never drops them.
+  final Map<String, Object?> extra;
+
+  Map<String, Object?> toJson() => {
+        ...extra,
+        'course': course,
+        if (minutes != null) 'minutes': minutes,
+        if (removed.isNotEmpty) 'removed': removed,
+        if (verses.isNotEmpty) 'verses': verses,
+      };
 }
 
 class Household {
@@ -75,9 +90,60 @@ Household removeMember(Household h, String id) {
 Household setActive(Household h, String id) =>
     h.members.any((m) => m.id == id) ? Household(members: h.members, activeMemberId: id, plan: h.plan) : h;
 
+/// Adds a course to the plan as the daily course (the one new lessons come from). Courses already in the plan stay in it, for
+/// reviews; a course that had been removed comes back.
 Household setPlan(Household h, Plan plan) {
   final minutes = plan.minutes ?? h.plan?.minutes;
-  return Household(members: h.members, activeMemberId: h.activeMemberId, plan: Plan(course: plan.course, minutes: minutes));
+  final removed = (plan.removed.isNotEmpty ? plan.removed : h.plan?.removed ?? const <String>[]).where((id) => id != plan.course).toList();
+  final verses = plan.verses.isNotEmpty ? plan.verses : h.plan?.verses ?? const <String>[];
+  return Household(
+    members: h.members,
+    activeMemberId: h.activeMemberId,
+    plan: Plan(course: plan.course, minutes: minutes, removed: removed, verses: verses, extra: h.plan?.extra ?? const {}),
+  );
+}
+
+/// The daily course: where new lessons come from. Null when it has been taken out of the plan.
+String? dailyCourse(Plan? plan) => plan != null && !plan.removed.contains(plan.course) ? plan.course : null;
+
+/// Is this course in the plan? The daily course always is; any other is once you've started it, until you remove it.
+bool inPlan(Plan? plan, String courseId, bool started) => dailyCourse(plan) == courseId || (started && !(plan?.removed.contains(courseId) ?? false));
+
+/// Takes a course out of the plan (its progress is kept). If it was the daily course, [next] takes over (another course in
+/// the plan), else there is none.
+Household removeFromPlan(Household h, String courseId, String? next) {
+  final plan = h.plan;
+  if (plan == null) return h;
+  final removed = {...plan.removed, courseId}.where((id) => id != next).toList();
+  final course = plan.course == courseId && next != null ? next : plan.course;
+  return Household(
+    members: h.members,
+    activeMemberId: h.activeMemberId,
+    plan: Plan(course: course, minutes: plan.minutes, removed: removed, verses: plan.verses, extra: plan.extra),
+  );
+}
+
+/// Adds one verse or answer to the plan on its own. A household with no plan yet gets one, with this item's course named
+/// but taken out, so there is no daily course.
+Household addVerse(Household h, String itemId, String courseId) {
+  final base = h.plan ?? Plan(course: courseId, removed: [courseId]);
+  final verses = {...base.verses, itemId}.toList();
+  return Household(
+    members: h.members,
+    activeMemberId: h.activeMemberId,
+    plan: Plan(course: base.course, minutes: base.minutes, removed: base.removed, verses: verses, extra: base.extra),
+  );
+}
+
+/// Takes one verse or answer out of the plan. (If its course is in the plan it stays in it through the course.)
+Household removeVerse(Household h, String itemId) {
+  final plan = h.plan;
+  if (plan == null) return h;
+  return Household(
+    members: h.members,
+    activeMemberId: h.activeMemberId,
+    plan: Plan(course: plan.course, minutes: plan.minutes, removed: plan.removed, verses: plan.verses.where((id) => id != itemId).toList(), extra: plan.extra),
+  );
 }
 
 Member? activeMember(Household h) {
@@ -107,16 +173,29 @@ Household parseHousehold(String? raw) {
     ];
     final storedActive = v['activeMemberId'];
     final active = members.any((m) => m.id == storedActive) ? storedActive as String : (members.isEmpty ? null : members.first.id);
-    // Older plans named a collection; the Apostles' Creed now lives in the Creeds course.
-    final p = v['plan'];
-    final named = p is Map ? (p['course'] is String ? p['course'] as String : p['collection'] is String ? p['collection'] as String : null) : null;
-    final m = p is Map ? p['minutes'] : null;
-    final minutes = m is num && m >= 1 && m <= 120 ? m.toInt() : null;
-    final plan = named == null ? null : Plan(course: named == 'apostles-creed' ? 'creeds' : named, minutes: minutes);
+    final plan = parsePlan(v['plan']);
     return Household(members: members, activeMemberId: active, plan: plan);
   } catch (_) {
     return emptyHousehold();
   }
+}
+
+/// Reads a stored plan leniently (as the website's parseHousehold does): null when it names no course. Fields this app
+/// doesn't know are kept in [Plan.extra], so writing the plan back never drops them.
+Plan? parsePlan(Object? p) {
+  if (p is! Map) return null;
+  // Older plans named a collection; the Apostles' Creed now lives in the Creeds course.
+  final named = p['course'] is String ? p['course'] as String : p['collection'] is String ? p['collection'] as String : null;
+  if (named == null) return null;
+  final m = p['minutes'];
+  final minutes = m is num && m >= 1 && m <= 120 ? m.toInt() : null;
+  final removed = p['removed'] is List ? (p['removed'] as List).whereType<String>().take(40).toList() : const <String>[];
+  final verses = p['verses'] is List
+      ? (p['verses'] as List).whereType<String>().where((x) => RegExp(r'^[A-Za-z0-9._-]{1,40}$').hasMatch(x)).take(200).toList()
+      : const <String>[];
+  const known = {'course', 'collection', 'minutes', 'removed', 'verses'};
+  final extra = {for (final e in p.entries) if (e.key is String && !known.contains(e.key)) e.key as String: e.value};
+  return Plan(course: named == 'apostles-creed' ? 'creeds' : named, minutes: minutes, removed: removed, verses: verses, extra: extra);
 }
 
 /// A random version-4 UUID, so ids can be stored as they are when the household syncs (ui/ids.ts).

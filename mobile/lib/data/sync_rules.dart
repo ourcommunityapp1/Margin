@@ -32,13 +32,8 @@ class HouseholdRow {
   final String? activeMemberId;
 }
 
-Plan? planFromJson(Object? v) {
-  if (v is! Map) return null;
-  final course = v['course'];
-  if (course is! String) return null;
-  final m = v['minutes'];
-  return Plan(course: course, minutes: m is num ? m.toInt() : null);
-}
+/// The plan as the server holds it, read the same way as on the phone (removed courses, single verses and any newer fields kept).
+Plan? planFromJson(Object? v) => parsePlan(v);
 
 ({HouseholdRow household, List<MemberRow> members}) toRows(Household h, String householdId) => (
       household: HouseholdRow(id: householdId, plan: h.plan?.toJson(), activeMemberId: h.activeMemberId),
