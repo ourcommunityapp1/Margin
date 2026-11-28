@@ -126,6 +126,8 @@ void main() {
     final mine = container.read(progressProvider)['me']!;
     expect(mine.units, [s.unit.key], reason: 'the part is now learned');
     expect(mine.log.where((e) => e.kind != 'intro').length, 3, reason: 'each answer is in the log');
+    final blanksEntry = mine.log.firstWhere((e) => e.kind == 'blanks');
+    expect(blanksEntry.tested, s.session.steps.firstWhere((x) => x.kind == 'blanks').blanks, reason: 'the words the blanks asked about are kept');
     expect(mine.cards.keys, contains('wsc-1'));
     expect(mine.today!.sessions.single.kind, 'lesson');
     expect(mine.days, hasLength(1));

@@ -13,6 +13,7 @@ import '../../platform/haptics.dart';
 import '../../engine/dayplan.dart';
 import '../../engine/lesson.dart' as lesson;
 import '../../engine/levels.dart';
+import '../../engine/observe.dart' show testedPositions;
 import '../../engine/tiers.dart';
 import '../../ui/stone.dart';
 import '../../engine/measures.dart';
@@ -123,7 +124,14 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
         of: step.partOf,
         words: step.text != null && step.kind != 'verse' ? wordCount(step.text!) : null,
         misses: o.misses,
-        missed: o.missedAt != null && o.missedAt!.isNotEmpty ? o.missedAt!.take(60).toList() : null,
+        // A wrong spot answer missed the word it asked about (as the website records it).
+        missed: o.missedAt != null && o.missedAt!.isNotEmpty
+            ? o.missedAt!.take(60).toList()
+            : step.kind == 'spot' && !o.ok && step.wrongIndex != null
+            ? [step.wrongIndex!]
+            : null,
+        // The words a quick step asked about (blanks, spot), so the word-by-word view moves only those.
+        tested: testedPositions(kind: step.kind, blanks: step.blanks, wrongIndex: step.wrongIndex)?.take(60).toList(),
       ),
     );
     setState(() {
