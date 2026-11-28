@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Learn</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 20px 120px; display: flex; flex-direction: column; gap: 14px">
+    <h1 style="margin: 0 4px; font-family: 'Source Serif 4', Georgia, serif; font-size: 34px; font-weight: 500">Learn</h1>
+    <div role="group" aria-label="Course" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 20px; background: #F7F5F0">
+      <button type="button" aria-pressed="true" style="min-height: 44px; border-radius: 16px; border: 0; background: #1D2327; color: #F7F5F0; font: 600 15px Inter, sans-serif">Shorter</button>
+      <button type="button" aria-pressed="false" style="min-height: 44px; border-radius: 16px; border: 0; background: transparent; color: #1D2327; font: 600 15px Inter, sans-serif">Larger</button>
+      <button type="button" aria-pressed="false" style="min-height: 44px; border-radius: 16px; border: 0; background: transparent; color: #1D2327; font: 600 15px Inter, sans-serif">Creeds</button>
+    </div>
+
+    <section style="background: #F7F5F0; border-radius: 24px; padding: 16px 20px 6px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <span style="font-size: 14px; font-weight: 600; color: #5B6469">Unit 1 · Questions 1–5</span>
+        <span style="font-size: 13px; font-weight: 600; color: #5B6469">Locked in</span>
+      </div>
+      <ol style="list-style: none; margin: 6px 0 0; padding: 0">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+          <li style="border-top: {{r.top}}">
+            <a href="#" style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; text-decoration: none; color: #1D2327">
+              <dc-import name="Medal" level="{{r.level}}" size="30" dim="{{r.dim}}" hint-size="30px,30px"></dc-import>
+              <span style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1">
+                <span style="font-weight: 600; font-size: 16px; line-height: 1.35">{{r.q}} · {{r.prompt}}</span>
+                <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; line-height: 1.4; color: #4A5257; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">{{r.text}}</span>
+                <span style="font-size: 12px; font-weight: 700; color: {{r.noteInk}}">{{r.note}}</span>
+              </span>
+            </a>
+          </li>
+        </sc-for>
+      </ol>
+    </section>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #F7F5F0; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(20,24,28,0.12)">
+    <a href="Today.dc.html" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #ECE8DF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #1D2327">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="Progress.dc.html" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const line = '1px solid #E3DFD6';
+    return {
+      rows: [
+        { q: 'Q1', prompt: 'What is the chief end of man?', text: 'Man’s chief end is to glorify God, and to enjoy him forever.', level: 'carnelian', dim: false, note: 'Carnelian · mastered', noteInk: '#8E2F1C', top: '0' },
+        { q: 'Q2', prompt: 'What rule hath God given to direct us how we may glorify and enjoy him?', text: 'The Word of God, which is contained in the Scriptures of the Old and New Testaments…', level: 'topaz', dim: false, note: 'Topaz · memorized', noteInk: '#8A5A10', top: line },
+        { q: 'Q3', prompt: 'What do the Scriptures principally teach?', text: 'The Scriptures principally teach what man is to believe concerning God, and what duty God requires of man.', level: 'topaz', dim: true, note: 'Needs a refresh · review now', noteInk: '#96462A', top: line },
+        { q: 'Q4', prompt: 'What is God?', text: 'God is a Spirit, infinite, eternal, and unchangeable, in his being, wisdom, power, holiness, justice, goodness, and truth.', level: 'amethyst', dim: false, note: 'Amethyst · know it', noteInk: '#5B3A8E', top: line },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

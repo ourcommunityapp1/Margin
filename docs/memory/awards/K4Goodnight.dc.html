@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lie down, goodnight</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:inherit}
+@keyframes m-breathe{0%,100%{transform:scale(1);opacity:.55}50%{transform:scale(1.12);opacity:1}}
+@keyframes m-drift{0%{transform:translate3d(-6%,4%,0) rotate(-4deg) scale(1)}100%{transform:translate3d(5%,-3%,0) rotate(3deg) scale(1.12)}}
+@keyframes m-dim{0%{filter:brightness(1)}100%{filter:brightness(.35)}}
+@keyframes m-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes m-wave{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: radial-gradient(120% 70% at 50% 25%, #16182B, #050509 75%); color: #EDE6D8; font-family: Inter, system-ui, sans-serif">
+
+  <div style="position: absolute; left: 100px; top: 120px; width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, rgba(232,184,103,0.18), rgba(232,184,103,0) 70%)"></div>
+  <div style="position: absolute; left: 115px; top: 135px; animation: m-dim 7s 1.5s ease-in-out both"><div style="position: relative; width: 160px; height: 160px; border-radius: 50%; padding: 6px; box-sizing: border-box; background: linear-gradient(135deg, #A69B89, #5C544A);">
+      <img src="/_blob/b052dc3b71dd1ff234198caaa10cf1a8" alt="The round window" style="width: 100%; height: 100%; border-radius: 50%; display: block; filter: brightness(0.8); border: 3px solid #0B0D0F; box-sizing: border-box">
+    </div></div>
+  <div style="position: absolute; left: 32px; right: 32px; top: 340px; text-align: center; display: flex; flex-direction: column; gap: 22px; align-items: center; animation: m-rise 1.2s .4s ease-out both">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-size: 20px; line-height: 1.5; color: #D8CFBF">Lord, you are infinite, eternal and unchangeable. Keep me in your truth tonight.</span>
+    <span style="width: 40px; height: 1px; background: rgba(232,184,103,0.5)"></span>
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; line-height: 1.5">“In peace I will both lie down and sleep; for you alone, O Lord, make me dwell in safety.”</span>
+    <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.4px; color: #8E8AA8">PSALM 4:8</span>
+  </div>
+  <div style="position: absolute; left: 20px; right: 20px; bottom: 36px; display: flex; flex-direction: column; gap: 14px; align-items: center">
+    <span style="font-size: 13px; color: #6F6B86">5 recalled · Q7 comes back in the morning</span>
+    <a href="#" style="min-height: 52px; width: 160px; border-radius: 26px; border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 600; color: #CFC7D8">Goodnight</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

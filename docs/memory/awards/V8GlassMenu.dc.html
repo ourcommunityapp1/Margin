@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stained-glass arcs, with menu</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#F4EFE6}a:hover{color:#FFFFFF}
+@keyframes hr-sweep{to{transform:rotate(360deg)}}
+@keyframes hr-shimmer{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes hr-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; border: 0; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #1D2327; min-height: 40px">Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 5px; font-weight: 700; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 0 12px; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B0442A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <button type="button" aria-label="Menu" style="width: 40px; height: 40px; border-radius: 20px; background: rgba(250,247,241,0.85); border-style: solid; display: flex; align-items: center; justify-content: center; color: #1D2327; padding: 0; cursor: pointer; flex: none; border: 0"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"></path></svg></button>
+    </div>
+
+    <section style="background: #191D21; color: #F4EFE6; border-radius: 36px; padding: 26px 20px 24px; display: flex; flex-direction: column; align-items: center; gap: 20px; box-shadow: 0 24px 50px rgba(20,24,28,0.35)">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 2.4px; color: #A9A196">PART 1 · WHAT TO BELIEVE</span>
+      <div style="position: relative; width: 300px; height: 300px">
+        <svg width="300" height="300" viewBox="0 0 300 300" aria-hidden="true" style="position: absolute; inset: 0; transform: rotate(-90deg); animation: hr-shimmer 6s ease-in-out infinite">
+          <circle cx="150" cy="150" r="124" fill="none" stroke="#0E1114" stroke-width="44"></circle>
+          <sc-for list="{{panes}}" as="p" hint-placeholder-count="12">
+            <circle cx="150" cy="150" r="124" pathLength="100" fill="none" stroke="{{p.color}}" stroke-opacity="{{p.alpha}}" stroke-width="34" stroke-dasharray="{{p.dash}}" stroke-dashoffset="{{p.offset}}"></circle>
+          </sc-for>
+          <circle cx="150" cy="150" r="124" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" stroke-dasharray="2 6"></circle>
+        </svg>
+        <div style="position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 70%, rgba(255,246,220,0.55) 80%, transparent 90%); -webkit-mask: radial-gradient(circle, transparent 0 107px, #000 108px 142px, transparent 143px); mask: radial-gradient(circle, transparent 0 107px, #000 108px 142px, transparent 143px); mix-blend-mode: screen; animation: hr-sweep 9s linear infinite"></div>
+        <div style="position: absolute; inset: 74px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; animation: hr-rise 1s .3s ease-out both">
+          <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.6px; color: #D9C3F5">UNIT 2 OF 8</span>
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 500; line-height: 1.12">God’s plan and creation</span>
+          <span style="font-size: 13px; color: #A9A196">2 of 5 set</span>
+        </div>
+      </div>
+      <a href="#" style="align-self: stretch; min-height: 60px; border-radius: 30px; background: #F4EFE6; color: #191D21; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none">
+        Start lesson 8
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </a>
+    </section>
+
+    <p style="margin: 0 8px; text-align: center; font-family: 'Source Serif 4', Georgia, serif; font-size: 15px; line-height: 1.5; color: #2E3439">Every unit you learn becomes a pane of light.</p>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Each unit is a pane in its own jewel color: full glass when learned, faint glass still to come.
+    const jewels = ['#8E5FD0', '#E3A93A', '#C2492D', '#23A066', '#3A6FC4', '#A578E0', '#E8BC55', '#D4643F'];
+    const sizes = [5, 5, 5, 5, 5, 5, 4, 4], known = [5, 2, 0, 0, 0, 0, 0, 0];
+    const gap = 1.6, usable = 100 - gap * sizes.length, total = 38;
+    let at = gap / 2;
+    const panes = [];
+    sizes.forEach((n, i) => {
+      const len = (n / total) * usable, lit = (known[i] / n) * len;
+      if (lit > 0) panes.push({ color: jewels[i], alpha: 1, dash: `${lit} 100`, offset: `${-at}` });
+      if (len - lit > 0) panes.push({ color: jewels[i], alpha: i === 1 ? 0.35 : 0.16, dash: `${len - lit - (lit > 0 ? 0.6 : 0)} 100`, offset: `${-(at + lit + (lit > 0 ? 0.6 : 0))}` });
+      at += len + gap;
+    });
+    return { panes };
+  }
+}
+</script>
+</body>
+</html>

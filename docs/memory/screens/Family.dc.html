@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Who's in your family</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5D50}a:hover{color:#234A3F}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.h-bg{animation:none}}
+.h-glass{background:rgba(250,249,246,.78);border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(22px) saturate(1.1);-webkit-backdrop-filter:blur(22px) saturate(1.1)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #1F2421; background: #C8B48A">
+  <img class="h-bg" src="/_blob/454ea225b40ad6c86dd7d279a18cf289" alt="">
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 18px 32px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; gap: 6px; padding: 0 6px" aria-hidden="true">
+      <span style="flex: 1; height: 4px; border-radius: 2px; background: #2F5D50"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.6)"></span><span style="flex: 1; height: 4px; border-radius: 2px; background: rgba(255,255,255,.6)"></span>
+    </div>
+    <div class="h-glass" style="border-radius: 26px; padding: 22px 18px 18px; display: flex; flex-direction: column; gap: 14px; margin-top: 40px">
+      <h1 style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-weight: 500; font-size: 32px; line-height: 1.1">Who’s memorizing with you?</h1>
+      <p style="margin: 0; font-size: 15px; color: #55605A; line-height: 1.45">Everyone gets their own profile, pace and stones. Children get shorter pieces and more speaking.</p>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <sc-for list="{{people}}" as="p" hint-placeholder-count="4">
+          <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.7); border-radius: 18px; padding: 10px 12px">
+            <span style="{{p.dot}}">{{p.initial}}</span>
+            <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 16px">{{p.name}}</span><span style="font-size: 13px; color: #55605A; font-weight: 600">{{p.sub}}</span></span>
+            <button onClick="{{p.toggle}}" aria-pressed="{{p.kidOn}}" style="{{p.btn}}">{{p.btnLabel}}</button>
+          </div>
+        </sc-for>
+        <button style="height: 52px; border-radius: 18px; border: 1.5px dashed #B9B2A2; background: transparent; color: #2F5D50; font-weight: 800; font-size: 15px">+ Add someone</button>
+      </div>
+    </div>
+    <a href="Plan.dc.html" style="margin-top: auto; height: 56px; border-radius: 28px; background: #2F5D50; color: #F7F4EC; text-decoration: none; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center">Continue</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { kid: { June: true, Ezra: true } }; }
+  renderVals() {
+    const people = [['Dad', 'Parent', '#BFD8C9'], ['Mom', 'Parent', '#D9C3E6'], ['June', 'Age 7', '#E9C46A'], ['Ezra', 'Age 10', '#A9C8E8']];
+    return {
+      people: people.map(([name, sub, c]) => {
+        const kid = !!this.state.kid[name];
+        return {
+          name, sub: sub + (kid ? ' · child track' : ' · adult track'), initial: name[0],
+          dot: 'width: 44px; height: 44px; border-radius: 22px; background: ' + c + '; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; flex: none',
+          kidOn: kid ? 'true' : 'false', btnLabel: kid ? 'Child' : 'Adult',
+          btn: 'height: 36px; padding: 0 14px; border-radius: 18px; font-weight: 800; font-size: 13px; cursor: pointer; ' + (kid ? 'border: 0; background: #F6E9C8; color: #6B4A10' : 'border: 1px solid #CFC9BE; background: transparent; color: #1F2421'),
+          toggle: () => this.setState((s) => ({ kid: { ...s.kid, [name]: !s.kid[name] } }))
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

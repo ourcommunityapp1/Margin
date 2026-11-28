@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson meaning</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#2F5D50}a:hover{color:#234A3F}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.h-bg{animation:none}}
+.h-glass{background:rgba(250,249,246,.8);border:1px solid rgba(255,255,255,.6);backdrop-filter:blur(22px) saturate(1.1);-webkit-backdrop-filter:blur(22px) saturate(1.1)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #1F2421; background: #7FA3C8">
+  <img class="h-bg" src="/_blob/0b692594b50bb3d355c178e6771c8427" alt="">
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 54px 18px 28px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <a href="TodayDay.dc.html" aria-label="End lesson" class="h-glass" style="width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; color: #1F2421"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      <div style="flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.5)" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="4"><div style="width: 33%; height: 8px; border-radius: 4px; background: #2F5D50"></div></div>
+    </div>
+    <div class="h-glass" style="margin-top: 70px; border-radius: 26px; padding: 22px 20px; display: flex; flex-direction: column; gap: 14px">
+      <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 27px; line-height: 1.12"><b style="font-weight: 600">Understand.</b> <span style="color: #55605A">What does it mean?</span></p>
+      <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; line-height: 1.4">Man’s <span style="background: #F6E9C8; border-radius: 4px; padding: 0 4px">chief end</span> is to glorify God, and to enjoy him forever.</p>
+      <p style="margin: 0; font-size: 17px; font-weight: 800">What does “chief end” mean here?</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+      <sc-for list="{{options}}" as="o" hint-placeholder-count="4">
+        <button onClick="{{o.pick}}" aria-pressed="{{o.on}}" style="{{o.style}}">{{o.label}}</button>
+      </sc-for>
+    </div>
+    <sc-if value="{{answered}}" hint-placeholder-val="{{ false }}">
+      <div class="h-glass" style="border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px">
+        <span style="{{titleStyle}}">{{title}}</span>
+        <span style="font-size: 14px; line-height: 1.45; font-weight: 600">Your chief end is the main reason you were made. Paul says it this way: “whatever you do, do all to the glory of God” (1 Corinthians 10:31).</span>
+      </div>
+    </sc-if>
+    <a href="Speak.dc.html" style="{{next}}">Continue</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { pick: null }; }
+  renderVals() {
+    const opts = [['a', 'The last thing that happens to us'], ['b', 'The main reason we were made', true], ['c', 'The most important person'], ['d', 'A rule we must keep']];
+    const pick = this.state.pick, right = opts.some(([id, , r]) => r && id === pick);
+    const base = 'min-height: 92px; padding: 12px; border-radius: 20px; font-size: 16px; font-weight: 800; line-height: 1.25; cursor: pointer; border: 1px solid rgba(255,255,255,.6); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); ';
+    return {
+      options: opts.map(([id, label, r]) => ({ label, on: pick === id ? 'true' : 'false', pick: () => !pick && this.setState({ pick: id }),
+        style: base + (!pick ? 'background: rgba(250,249,246,.8); color: #1F2421' : r ? 'background: #2F5D50; color: #F7F4EC' : id === pick ? 'background: #F6E9C8; color: #6B4A10' : 'background: rgba(250,249,246,.55); color: #55605A') })),
+      answered: !!pick,
+      title: right ? 'That’s it.' : 'Not quite. It means the main reason we were made.',
+      titleStyle: 'font-weight: 800; font-size: 16px; color: ' + (right ? '#1E4A3E' : '#6B4A10'),
+      next: 'margin-top: auto; height: 56px; border-radius: 28px; text-decoration: none; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; ' + (pick ? 'background: #2F5D50; color: #F7F4EC' : 'background: rgba(250,249,246,.6); color: #55605A; pointer-events: none')
+    };
+  }
+}
+</script>
+</body>
+</html>

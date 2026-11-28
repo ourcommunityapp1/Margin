@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The ladder</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 900px; box-sizing: border-box; padding: 56px 64px; background: #EAE4D8; color: #1D2327; font-family: Inter, system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+  <header style="display: flex; flex-direction: column; gap: 10px; max-width: 900px">
+    <span style="font-size: 13px; font-weight: 700; letter-spacing: 1.6px; color: #5B6469">HEIR · PROGRESS</span>
+    <h1 style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 48px; font-weight: 600; line-height: 1.05">How a question grows</h1>
+    <p style="margin: 0; font-size: 18px; line-height: 1.5; color: #4A5257">Five foundation stones of the city in Revelation 21, climbed from the twelfth foundation to the second, then Diamond at the top. Each level is earned across separate days, so it measures memory, not one good afternoon.</p>
+  </header>
+
+  <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px">
+    <div style="grid-column: 1 / span 3; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; color: #5B6469">INTO MEMORY<span style="flex: 1; height: 1px; background: #CFC8BA"></span></div>
+    <div style="grid-column: 4 / span 3; display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 700; color: #5B6469">KEPT FOR LIFE<span style="flex: 1; height: 1px; background: #CFC8BA"></span></div>
+
+    <sc-for list="{{levels}}" as="l" hint-placeholder-count="6">
+      <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 20px; display: flex; flex-direction: column; gap: 12px; min-height: 360px; box-sizing: border-box; box-shadow: 0 1px 2px rgba(20,24,28,0.05), 0 8px 24px rgba(20,24,28,0.06)">
+        <dc-import name="Medal" level="{{l.id}}" size="72" hint-size="72px,72px"></dc-import>
+        <span style="font-size: 13px; font-weight: 600; color: #5B6469">Level {{l.n}} · {{l.f}}</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; font-weight: 600; line-height: 1">{{l.name}}</span>
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #5B6469">EARNED WHEN</span>
+        <span style="font-size: 15px; line-height: 1.45">{{l.rule}}</span>
+        <span style="margin-top: auto; align-self: flex-start; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 10px; background: {{l.tagBg}}; color: #1D2327">{{l.counts}}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.55fr 1fr 1fr; gap: 14px">
+    <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #5B6469">YOUR COUNTS, SHOWN ON TODAY AND PROGRESS</span>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+        <sc-for list="{{counts}}" as="c" hint-placeholder-count="4">
+          <div style="display: flex; gap: 10px; align-items: flex-start">
+            <dc-import name="Medal" level="{{c.level}}" size="28" hint-size="28px,28px"></dc-import>
+            <span style="display: flex; flex-direction: column; gap: 2px">
+              <span style="font-weight: 700; font-size: 16px">{{c.name}}</span>
+              <span style="font-size: 14px; color: #4A5257; line-height: 1.4">{{c.rule}}</span>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 24px; display: flex; gap: 16px; align-items: center">
+      <dc-import name="Medal" level="carnelian" size="56" dim="{{ true }}" hint-size="56px,56px"></dc-import>
+      <span style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-weight: 700; font-size: 16px">Needs a refresh</span>
+        <span style="font-size: 14px; color: #4A5257; line-height: 1.45">Overdue for review. The level stays; the stone fades until the next good review.</span>
+      </span>
+    </div>
+    <div style="background: #F7F5F0; border-radius: 24px; padding: 22px 24px; display: flex; flex-direction: column; gap: 6px">
+      <span style="font-weight: 700; font-size: 16px">Why this order</span>
+      <span style="font-size: 14px; color: #4A5257; line-height: 1.45">Revelation 21:19–20 lists the city’s twelve foundations. Levels 1–5 climb five of them, from amethyst (the twelfth) to sapphire (the second). Diamond, the hardest stone, crowns the ladder.</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      levels: [
+        { n: 1, f: '12th foundation', id: 'amethyst', name: 'Amethyst', rule: 'Typed in full, correctly, the first time.', counts: 'Counts as: Know it', tagBg: '#E5D9F5' },
+        { n: 2, f: '9th foundation', id: 'topaz', name: 'Topaz', rule: 'Said or typed right on 3 different days.', counts: 'Counts as: Memorized', tagBg: '#F6E3BC' },
+        { n: 3, f: '6th foundation', id: 'carnelian', name: 'Carnelian', rule: 'Recalled after a gap of 2 weeks or more, both ways: question to answer, and answer to question.', counts: 'Counts as: Mastered', tagBg: '#F3D6CC' },
+        { n: 4, f: '4th foundation', id: 'emerald', name: 'Emerald', rule: 'Every review right for 3 months, including one after a gap of a month.', counts: 'Counts as: Long-term memory', tagBg: '#CDEBDC' },
+        { n: 5, f: '2nd foundation', id: 'sapphire', name: 'Sapphire', rule: 'Emerald, plus its meaning and the Scripture it rests on.', counts: 'Long-term, and understood', tagBg: '#D9E3F4' },
+        { n: 6, f: 'the top', id: 'diamond', name: 'Diamond', rule: 'Left open: the top of the ladder, still to be decided. The hardest stone there is.', counts: 'To be decided', tagBg: '#E5E1D8' },
+      ],
+      counts: [
+        { level: 'amethyst', name: 'Know', rule: 'Amethyst and up' },
+        { level: 'topaz', name: 'Memorized', rule: 'Topaz and up' },
+        { level: 'carnelian', name: 'Mastered', rule: 'Carnelian and up' },
+        { level: 'emerald', name: 'Long-term memory', rule: 'Emerald and up' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

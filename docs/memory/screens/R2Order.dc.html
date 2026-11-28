@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lesson words in order</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}
+button{font:inherit}
+@keyframes rdrift{from{transform:scale(1.25) translate3d(-2%,0,0)}to{transform:scale(1.3) translate3d(2%,-1%,0)}}
+.r-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(26px) saturate(.55) brightness(1.06);animation:rdrift 90s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.r-bg{animation:none;transform:scale(1.25)}}
+.r-card{background:#F7F5F0;border-radius:28px;box-shadow:0 1px 2px rgba(20,24,28,.05),0 8px 24px rgba(20,24,28,.06)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #1D2327; background: #DCD4C3">
+  <img class="r-bg" src="/_blob/454ea225b40ad6c86dd7d279a18cf289" alt="">
+  <div style="position: absolute; inset: 0; background: rgba(242,240,235,.48)"></div>
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 20px 32px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 14px; padding: 0 4px">
+      <a href="R2Today.dc.html" aria-label="End lesson" style="width: 44px; height: 44px; border-radius: 22px; background: #F7F5F0; display: flex; align-items: center; justify-content: center; color: #1D2327"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+      <div style="flex: 1; height: 4px; border-radius: 2px; background: rgba(29,35,39,.15)" role="progressbar" aria-label="Lesson progress" aria-valuemin="0" aria-valuemax="12" aria-valuenow="5"><div style="width: 42%; height: 4px; border-radius: 2px; background: #1D2327"></div></div>
+    </div>
+    <div class="r-card" style="margin-top: auto; padding: 26px 22px 22px; display: flex; flex-direction: column; gap: 18px">
+      <p style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 28px; line-height: 1.18"><span style="font-weight: 600">Recall.</span> <span style="color: #5B6469">Finish the answer.</span></p>
+      <p style="margin: 0; font-size: 15px; font-weight: 600; color: #5B6469">What is the chief end of man?</p>
+      <p style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; line-height: 1.4">Man’s chief end is to glorify God,</p>
+      <div style="min-height: 52px; display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; border-bottom: 1px solid #D6D1C6; padding-bottom: 12px" aria-label="Your answer">
+        <sc-for list="{{placed}}" as="w" hint-placeholder-count="0">
+          <button onClick="{{w.take}}" style="height: 44px; padding: 0 14px; border-radius: 12px; border: 1.5px solid #1D2327; background: #F7F5F0; color: #1D2327; font-family: 'Source Serif 4', Georgia, serif; font-size: 19px; cursor: pointer">{{w.word}}</button>
+        </sc-for>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px" aria-label="Words to choose from">
+        <sc-for list="{{bank}}" as="w" hint-placeholder-count="6">
+          <button onClick="{{w.put}}" disabled="{{w.used}}" style="{{w.style}}">{{w.word}}</button>
+        </sc-for>
+      </div>
+      <p style="margin: 0; min-height: 22px; font-size: 16px; font-weight: 500" role="status">{{result}}</p>
+      <sc-if value="{{checking}}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{check}}" disabled="{{cantCheck}}" style="{{checkStyle}}">Check</button>
+      </sc-if>
+      <sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+        <a href="R2Speak.dc.html" style="height: 56px; border-radius: 28px; background: #1D2327; color: #F7F5F0; text-decoration: none; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center">Continue</a>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { placed: [], checked: false }; }
+  renderVals() {
+    const words = ['forever.', 'serve', 'and', 'him', 'always', 'to enjoy'];
+    const { placed, checked } = this.state;
+    const right = placed.join(' ') === 'and to enjoy him forever.';
+    const chip = 'height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #D6D1C6; background: #FFFFFF; color: #1D2327; font-family: Source Serif 4, Georgia, serif; font-size: 19px; cursor: pointer';
+    return {
+      placed: placed.map((w, i) => ({ word: w, take: () => !checked && this.setState({ placed: placed.filter((_, k) => k !== i) }) })),
+      bank: words.map((w) => { const used = placed.includes(w) || checked; return { word: w, used, style: chip + (used ? '; background: #ECE8DF; color: #ECE8DF; border-color: #ECE8DF; cursor: default' : ''), put: () => !used && this.setState({ placed: [...placed, w] }) }; }),
+      checking: !checked, done: checked, cantCheck: !placed.length,
+      checkStyle: 'height: 56px; border-radius: 28px; border: 0; font-weight: 600; font-size: 17px; cursor: pointer; ' + (placed.length ? 'background: #1D2327; color: #F7F5F0' : 'background: #ECE8DF; color: #5B6469'),
+      check: () => this.setState({ checked: true }),
+      result: checked ? (right ? 'Yes: “and to enjoy him forever.”' : 'Almost. It ends “and to enjoy him forever.”') : ''
+    };
+  }
+}
+</script>
+</body>
+</html>

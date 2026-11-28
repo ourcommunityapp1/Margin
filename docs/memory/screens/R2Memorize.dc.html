@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Memorize</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}
+button{font:inherit}
+@keyframes rdrift{from{transform:scale(1.25) translate3d(-2%,0,0)}to{transform:scale(1.3) translate3d(2%,-1%,0)}}
+.r-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(26px) saturate(.55) brightness(1.06);animation:rdrift 90s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.r-bg{animation:none;transform:scale(1.25)}}
+.r-card{background:#F7F5F0;border-radius:28px;box-shadow:0 1px 2px rgba(20,24,28,.05),0 8px 24px rgba(20,24,28,.06)}
+.r-tab{height:56px;border-radius:20px;text-decoration:none;color:#5B6469;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.r-tab.on{color:#1D2327;background:#ECE8DF}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #1D2327; background: #C9D3DC">
+  <img class="r-bg" src="/_blob/0b692594b50bb3d355c178e6771c8427" alt="">
+  <div style="position: absolute; inset: 0; background: rgba(242,240,235,.48)"></div>
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 64px 20px 110px; display: flex; flex-direction: column; gap: 16px">
+    <h1 style="margin: 0 4px; font-family: 'Source Serif 4', Georgia, serif; font-size: 34px; font-weight: 500">Memorize</h1>
+    <div class="r-card" style="border-radius: 20px; padding: 4px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px" role="tablist">
+      <sc-for list="{{segs}}" as="s" hint-placeholder-count="3">
+        <button role="tab" aria-selected="{{s.on}}" onClick="{{s.pick}}" style="{{s.style}}">{{s.label}}</button>
+      </sc-for>
+    </div>
+    <div class="r-card" style="padding: 4px 22px">
+      <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+        <a href="{{r.href}}" style="{{r.rowStyle}}">
+          <span style="flex: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-weight: 600; font-size: 16px">{{r.title}}</span><span style="font-size: 14px; color: #5B6469">{{r.sub}}</span></span>
+          <span style="font-size: 14px; color: #5B6469; white-space: nowrap">{{r.right}}</span>
+        </a>
+      </sc-for>
+    </div>
+  </div>
+  <nav aria-label="Main" class="r-card" style="position: absolute; left: 14px; right: 14px; bottom: 24px; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+    <a href="R2Today.dc.html" class="r-tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="R2Memorize.dc.html" class="r-tab on" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z"></path><path d="M8 7h6"></path></svg>Memorize</a>
+    <a href="#" class="r-tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" class="r-tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><circle cx="17" cy="9.5" r="2.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 20a4.5 4.5 0 0 1 7-3.7"></path></svg>Family</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { seg: 'Catechisms' }; }
+  renderVals() {
+    const data = {
+      Bible: [['Prayers', '12 passages', '3 learned'], ['The gospel', '10 passages', '2 learned'], ['When I’m afraid', '8 passages', '1 learned'], ['Psalms', 'By chapter', ''], ['Any passage', 'Search the Bible', '']],
+      Catechisms: [['Westminster Shorter', '107 questions', '6 of 107'], ['Westminster Larger', '196 questions', ''], ['New City Catechism', '52 questions', ''], ['Heidelberg', '129 questions', '']],
+      Creeds: [['Apostles’ Creed', '12 articles', '4 of 12'], ['Nicene Creed', '4 parts', ''], ['Athanasian Creed', '44 verses', '']]
+    };
+    const seg = this.state.seg, rows = data[seg];
+    return {
+      segs: Object.keys(data).map((k) => ({ label: k, on: k === seg ? 'true' : 'false', pick: () => this.setState({ seg: k }),
+        style: 'height: 44px; border-radius: 16px; border: 0; font-weight: 600; font-size: 15px; cursor: pointer; ' + (k === seg ? 'background: #1D2327; color: #F7F5F0' : 'background: transparent; color: #1D2327') })),
+      rows: rows.map(([title, sub, right], i) => ({ title, sub, right, href: title === 'Westminster Shorter' ? 'R2Verse.dc.html' : '#',
+        rowStyle: 'text-decoration: none; color: #1D2327; display: flex; align-items: center; gap: 12px; min-height: 68px; ' + (i < rows.length - 1 ? 'border-bottom: 1px solid #E3DFD6' : '') }))
+    };
+  }
+}
+</script>
+</body>
+</html>

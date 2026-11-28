@@ -1,0 +1,704 @@
+{
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "Learn.dc.html": {
+   "h": 844,
+   "title": "Learn with levels",
+   "w": 390,
+   "x": 940,
+   "y": 3400
+  },
+  "LevelUp.dc.html": {
+   "h": 844,
+   "title": "Lesson complete: level up",
+   "w": 390,
+   "x": 0,
+   "y": 3400
+  },
+  "LockIn.dc.html": {
+   "h": 844,
+   "title": "Unit locked in",
+   "w": 390,
+   "x": 470,
+   "y": 3400
+  },
+  "Main.dc.html": {
+   "h": 900,
+   "title": "The ladder",
+   "w": 1280,
+   "x": -160,
+   "y": -300
+  },
+  "Medal.dc.html": {
+   "h": 96,
+   "title": "Medal (shared art)",
+   "w": 96,
+   "x": 1360,
+   "y": 0
+  },
+  "Progress.dc.html": {
+   "h": 1780,
+   "title": "Progress (new tab)",
+   "w": 390,
+   "x": 470,
+   "y": 1260
+  },
+  "Today.dc.html": {
+   "h": 1500,
+   "title": "Today",
+   "w": 390,
+   "x": 0,
+   "y": 1260
+  },
+  "JourneyPath.dc.html": {
+   "h": 1640,
+   "title": "A \u00b7 The path",
+   "w": 390,
+   "x": 0,
+   "y": 4620
+  },
+  "JourneyWall.dc.html": {
+   "h": 1300,
+   "title": "B \u00b7 The wall",
+   "w": 390,
+   "x": 470,
+   "y": 4620
+  },
+  "JourneyParts.dc.html": {
+   "h": 1300,
+   "title": "C \u00b7 Parts and milestones",
+   "w": 390,
+   "x": 940,
+   "y": 4620
+  },
+  "UnitGuide.dc.html": {
+   "h": 844,
+   "title": "Unit guide (tap a unit)",
+   "w": 390,
+   "x": 1410,
+   "y": 4620
+  },
+  "C1Quiet.dc.html": {
+   "x": 0,
+   "y": 6720,
+   "w": 390,
+   "h": 1000,
+   "title": "C1 \u00b7 Quiet"
+  },
+  "C2Rings.dc.html": {
+   "x": 470,
+   "y": 6720,
+   "w": 390,
+   "h": 1100,
+   "title": "C2 \u00b7 Two rings"
+  },
+  "C3Ascent.dc.html": {
+   "x": 940,
+   "y": 6720,
+   "w": 390,
+   "h": 1100,
+   "title": "C3 \u00b7 The ascent"
+  },
+  "Q1Arcs.dc.html": {
+   "x": 0,
+   "y": 8240,
+   "w": 390,
+   "h": 1000,
+   "title": "C1\u00b7a \u00b7 Unit arcs"
+  },
+  "Q2Night.dc.html": {
+   "x": 470,
+   "y": 8240,
+   "w": 390,
+   "h": 1000,
+   "title": "C1\u00b7b \u00b7 Night sky"
+  },
+  "Q3Beads.dc.html": {
+   "x": 940,
+   "y": 8240,
+   "w": 390,
+   "h": 1000,
+   "title": "C1\u00b7c \u00b7 Beads"
+  },
+  "A1Dawn.dc.html": {
+   "x": 0,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Dawn draw"
+  },
+  "A2Glass.dc.html": {
+   "x": 470,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Stained glass"
+  },
+  "A3Rose.dc.html": {
+   "x": 940,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Rose window"
+  },
+  "A4Week.dc.html": {
+   "x": 1410,
+   "y": 9560,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 The week and the work"
+  },
+  "N1Stars.dc.html": {
+   "x": 0,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night \u00b7 Constellation"
+  },
+  "N2Aurora.dc.html": {
+   "x": 470,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night \u00b7 Aurora"
+  },
+  "N3Lamp.dc.html": {
+   "x": 940,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night \u00b7 Lamp"
+  },
+  "N4Morning.dc.html": {
+   "x": 1410,
+   "y": 10880,
+   "w": 390,
+   "h": 1000,
+   "title": "Night \u00b7 Morning star"
+  },
+  "G01Gallery.dc.html": {
+   "x": 0,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "1 \u00b7 Gallery wall"
+  },
+  "G02Pool.dc.html": {
+   "x": 470,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "2 \u00b7 Pool of light"
+  },
+  "G03Frost.dc.html": {
+   "x": 940,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "3 \u00b7 Frosted glass"
+  },
+  "G04Hold.dc.html": {
+   "x": 1410,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "4 \u00b7 Hold to light"
+  },
+  "G05Swipe.dc.html": {
+   "x": 1880,
+   "y": 12200,
+   "w": 390,
+   "h": 844,
+   "title": "5 \u00b7 Draw the light"
+  },
+  "G06Editorial.dc.html": {
+   "x": 0,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "6 \u00b7 Editorial"
+  },
+  "G07Lancets.dc.html": {
+   "x": 470,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "7 \u00b7 Three lancets"
+  },
+  "G08Mosaic.dc.html": {
+   "x": 940,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "8 \u00b7 Mosaic"
+  },
+  "G09Candle.dc.html": {
+   "x": 1410,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "9 \u00b7 Candle in the dark"
+  },
+  "G10Palette.dc.html": {
+   "x": 1880,
+   "y": 13200,
+   "w": 390,
+   "h": 844,
+   "title": "10 \u00b7 The glass's colours"
+  },
+  "H1EditHold.dc.html": {
+   "x": 0,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H1 \u00b7 Editorial + hold"
+  },
+  "H2Lancets.dc.html": {
+   "x": 470,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H2 \u00b7 Lancets, compact"
+  },
+  "H3FrostLight.dc.html": {
+   "x": 940,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H3 \u00b7 Frosted, on light"
+  },
+  "H4HoldHalf.dc.html": {
+   "x": 1410,
+   "y": 14480,
+   "w": 390,
+   "h": 844,
+   "title": "H4 \u00b7 Hold, half and half"
+  },
+  "L1Quiet.dc.html": {
+   "x": 0,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 quieter"
+  },
+  "L2Tracery.dc.html": {
+   "x": 470,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 tracery"
+  },
+  "E1Refined.dc.html": {
+   "x": 940,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Editorial \u00b7 refined"
+  },
+  "E2Night.dc.html": {
+   "x": 1410,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Editorial \u00b7 night edition"
+  },
+  "R1Quiet.dc.html": {
+   "x": 1880,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 quieter"
+  },
+  "R2Rise.dc.html": {
+   "x": 2350,
+   "y": 15780,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 light rises"
+  },
+  "V1LancetsTabs.dc.html": {
+   "x": 0,
+   "y": 17180,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 tabs"
+  },
+  "V2HoldTabs.dc.html": {
+   "x": 470,
+   "y": 17180,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 tabs"
+  },
+  "V3DawnTabs.dc.html": {
+   "x": 940,
+   "y": 17180,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Dawn \u00b7 tabs"
+  },
+  "V4GlassTabs.dc.html": {
+   "x": 1410,
+   "y": 17180,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Stained glass \u00b7 tabs"
+  },
+  "V5LancetsMenu.dc.html": {
+   "x": 0,
+   "y": 18320,
+   "w": 390,
+   "h": 844,
+   "title": "Lancets \u00b7 menu"
+  },
+  "V6HoldMenu.dc.html": {
+   "x": 470,
+   "y": 18320,
+   "w": 390,
+   "h": 844,
+   "title": "Hold \u00b7 menu"
+  },
+  "V7DawnMenu.dc.html": {
+   "x": 940,
+   "y": 18320,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Dawn \u00b7 menu"
+  },
+  "V8GlassMenu.dc.html": {
+   "x": 1410,
+   "y": 18320,
+   "w": 390,
+   "h": 1000,
+   "title": "Arcs \u00b7 Stained glass \u00b7 menu"
+  },
+  "V9MenuOpen.dc.html": {
+   "x": 1880,
+   "y": 18320,
+   "w": 390,
+   "h": 844,
+   "title": "The menu, open"
+  },
+  "W1GlassArcsTabs.dc.html": {
+   "x": 0,
+   "y": 19760,
+   "w": 390,
+   "h": 1000,
+   "title": "Stained-glass arcs \u00b7 tabs"
+  },
+  "W2GlassArcsMenu.dc.html": {
+   "x": 470,
+   "y": 19760,
+   "w": 390,
+   "h": 1000,
+   "title": "Stained-glass arcs \u00b7 menu"
+  },
+  "W3HoldPanesTabs.dc.html": {
+   "x": 940,
+   "y": 19760,
+   "w": 390,
+   "h": 844,
+   "title": "Hold, glass panes \u00b7 tabs"
+  },
+  "W4HoldPanesMenu.dc.html": {
+   "x": 1410,
+   "y": 19760,
+   "w": 390,
+   "h": 844,
+   "title": "Hold, glass panes \u00b7 menu"
+  },
+  "W5RoseWindow.dc.html": {
+   "x": 1880,
+   "y": 19760,
+   "w": 390,
+   "h": 1000,
+   "title": "Stained-glass arcs \u00b7 a whole rose window"
+  },
+  "W6CircleFace.dc.html": {
+   "x": 0,
+   "y": 21180,
+   "w": 390,
+   "h": 1000,
+   "title": "Round window \u00b7 the face"
+  },
+  "W7CircleEmbrace.dc.html": {
+   "x": 470,
+   "y": 21180,
+   "w": 390,
+   "h": 1000,
+   "title": "Round window \u00b7 shepherd and lamb"
+  },
+  "W8CircleLamb.dc.html": {
+   "x": 940,
+   "y": 21180,
+   "w": 390,
+   "h": 1000,
+   "title": "Round window \u00b7 the lamb"
+  },
+  "K1EveningToday.dc.html": {
+   "x": 0,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Today, evening"
+  },
+  "K2Listen.dc.html": {
+   "x": 470,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Lie down: listen and answer"
+  },
+  "K3Check.dc.html": {
+   "x": 940,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Lie down: did you have it?"
+  },
+  "K4Goodnight.dc.html": {
+   "x": 1410,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Lie down: goodnight"
+  },
+  "K5MorningToday.dc.html": {
+   "x": 1880,
+   "y": 22700,
+   "w": 390,
+   "h": 844,
+   "title": "Today, morning"
+  },
+  "K6MorningDone.dc.html": {
+   "x": 0,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Rise: what stayed overnight"
+  },
+  "K7FromQuestion.dc.html": {
+   "x": 470,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Lesson step: from the question"
+  },
+  "K8Contrast.dc.html": {
+   "x": 940,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Lesson step: which question says this?"
+  },
+  "K9Pray.dc.html": {
+   "x": 1410,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Lesson end: pray this answer"
+  },
+  "K10Family.dc.html": {
+   "x": 1880,
+   "y": 23700,
+   "w": 390,
+   "h": 844,
+   "title": "Family night"
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-11-20T21:30:00Z",
+  "v": 1
+ },
+ "designSystems": [],
+ "launch": {
+  "view": "canvas"
+ },
+ "notes": {
+  "t1": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "How a question grows",
+   "w": 240,
+   "x": 0,
+   "y": -300
+  },
+  "t2": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "Where progress lives",
+   "w": 240,
+   "x": 0,
+   "y": 1000
+  },
+  "t3": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "The moments",
+   "w": 240,
+   "x": 0,
+   "y": 3130
+  },
+  "t4": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "The journey: three directions",
+   "x": 0,
+   "y": 4350
+  },
+  "t5": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "C, refined: three quieter variations",
+   "x": 0,
+   "y": 6440
+  },
+  "t6": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "C1, taken further",
+   "x": 0,
+   "y": 7960
+  },
+  "t7": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "Unit arcs, alive",
+   "x": 0,
+   "y": 9280
+  },
+  "t8": {
+   "kind": "title1",
+   "maxW": 1840,
+   "text": "Night sky, alive",
+   "x": 0,
+   "y": 10600
+  },
+  "t9": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "The window, modern: ten ways to begin",
+   "x": 0,
+   "y": 11920
+  },
+  "t10": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "Round two: the window at half the screen",
+   "x": 0,
+   "y": 14200
+  },
+  "t11": {
+   "kind": "title1",
+   "maxW": 2800,
+   "text": "Lancets, Editorial, Hold: two refinements each",
+   "x": 0,
+   "y": 15500
+  },
+  "t12": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "Your four, with tabs (top) or a menu (bottom)",
+   "x": 0,
+   "y": 16900
+  },
+  "t13": {
+   "kind": "title1",
+   "maxW": 1900,
+   "text": "Real stained glass: the arcs, and the panes around the rose",
+   "x": 0,
+   "y": 19480
+  },
+  "t14": {
+   "kind": "title1",
+   "maxW": 1400,
+   "text": "The round window, from the Good Shepherd glass",
+   "x": 0,
+   "y": 20900
+  },
+  "t15": {
+   "kind": "title1",
+   "maxW": 2300,
+   "text": "Lie down, rise, and the new lesson steps",
+   "x": 0,
+   "y": 22420
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Medal.dc.html",
+  "Today.dc.html",
+  "Progress.dc.html",
+  "LevelUp.dc.html",
+  "LockIn.dc.html",
+  "Learn.dc.html",
+  "JourneyPath.dc.html",
+  "JourneyWall.dc.html",
+  "JourneyParts.dc.html",
+  "UnitGuide.dc.html",
+  "C1Quiet.dc.html",
+  "C2Rings.dc.html",
+  "C3Ascent.dc.html",
+  "Q1Arcs.dc.html",
+  "Q2Night.dc.html",
+  "Q3Beads.dc.html",
+  "A1Dawn.dc.html",
+  "A2Glass.dc.html",
+  "A3Rose.dc.html",
+  "A4Week.dc.html",
+  "N1Stars.dc.html",
+  "N2Aurora.dc.html",
+  "N3Lamp.dc.html",
+  "N4Morning.dc.html",
+  "G01Gallery.dc.html",
+  "G02Pool.dc.html",
+  "G03Frost.dc.html",
+  "G04Hold.dc.html",
+  "G05Swipe.dc.html",
+  "G06Editorial.dc.html",
+  "G07Lancets.dc.html",
+  "G08Mosaic.dc.html",
+  "G09Candle.dc.html",
+  "G10Palette.dc.html",
+  "H1EditHold.dc.html",
+  "H2Lancets.dc.html",
+  "H3FrostLight.dc.html",
+  "H4HoldHalf.dc.html",
+  "L1Quiet.dc.html",
+  "L2Tracery.dc.html",
+  "E1Refined.dc.html",
+  "E2Night.dc.html",
+  "R1Quiet.dc.html",
+  "R2Rise.dc.html",
+  "V1LancetsTabs.dc.html",
+  "V2HoldTabs.dc.html",
+  "V3DawnTabs.dc.html",
+  "V4GlassTabs.dc.html",
+  "V5LancetsMenu.dc.html",
+  "V6HoldMenu.dc.html",
+  "V7DawnMenu.dc.html",
+  "V8GlassMenu.dc.html",
+  "V9MenuOpen.dc.html",
+  "W1GlassArcsTabs.dc.html",
+  "W2GlassArcsMenu.dc.html",
+  "W3HoldPanesTabs.dc.html",
+  "W4HoldPanesMenu.dc.html",
+  "W5RoseWindow.dc.html",
+  "W6CircleFace.dc.html",
+  "W7CircleEmbrace.dc.html",
+  "W8CircleLamb.dc.html",
+  "K1EveningToday.dc.html",
+  "K2Listen.dc.html",
+  "K3Check.dc.html",
+  "K4Goodnight.dc.html",
+  "K5MorningToday.dc.html",
+  "K6MorningDone.dc.html",
+  "K7FromQuestion.dc.html",
+  "K8Contrast.dc.html",
+  "K9Pray.dc.html",
+  "K10Family.dc.html"
+ ],
+ "pages": [],
+ "title": "Heir Progress and Awards"
+}

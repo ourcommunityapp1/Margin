@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Welcome to Heir</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&amp;family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}
+button{font:inherit}
+@keyframes rdrift{from{transform:scale(1.25) translate3d(-2%,0,0)}to{transform:scale(1.3) translate3d(2%,-1%,0)}}
+.r-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(26px) saturate(.55) brightness(1.06);animation:rdrift 90s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.r-bg{animation:none;transform:scale(1.25)}}
+.r-card{background:#F7F5F0;border-radius:28px;box-shadow:0 1px 2px rgba(20,24,28,.05),0 8px 24px rgba(20,24,28,.06)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #1D2327; background: #DCD4C3">
+  <img class="r-bg" src="/_blob/454ea225b40ad6c86dd7d279a18cf289" alt="">
+  <div style="position: absolute; inset: 0; background: rgba(242,240,235,.42)"></div>
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 72px 20px 36px; display: flex; flex-direction: column; align-items: center">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; font-weight: 500; letter-spacing: .5px">Heir</span>
+    <div class="r-card" style="margin-top: auto; width: 100%; box-sizing: border-box; padding: 28px 24px 24px; display: flex; flex-direction: column; gap: 22px">
+      <p style="margin: 0; font-family: 'Source Serif 4', Georgia, serif; font-size: 30px; line-height: 1.18; font-weight: 400"><span style="font-weight: 600">Remember.</span> <span style="color: #5B6469">Scripture, catechisms and creeds, learned together and kept for life.</span></p>
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <a href="R2Today.dc.html" style="height: 56px; border-radius: 28px; background: #1D2327; color: #F7F5F0; text-decoration: none; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center">Get started</a>
+        <a href="R2Today.dc.html" style="height: 48px; border-radius: 24px; color: #1D2327; text-decoration: none; font-weight: 500; font-size: 16px; display: flex; align-items: center; justify-content: center">I already have an account</a>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

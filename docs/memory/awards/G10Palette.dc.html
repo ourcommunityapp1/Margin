@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The glass's colours</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#16181A}a:hover{color:#000}
+@keyframes g10-mesh{0%,100%{background-position:0% 50%, 100% 50%, 50% 0%}50%{background-position:30% 40%, 70% 60%, 50% 100%}}
+@keyframes g10-pane{0%,100%{opacity:.55}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F3EFE8; color: #16181A; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 20px; right: 20px; top: 52px; display: flex; justify-content: space-between; align-items: center">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px">Good evening, Landon</span>
+    <span style="width: 38px; height: 38px; border-radius: 19px; background: #E6E0D5; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600">L</span>
+  </div>
+
+  <div style="position: absolute; left: 20px; right: 20px; top: 104px; height: 440px; border-radius: 30px; overflow: hidden; background: #120E0B">
+    <img src="/_blob/73cfbf251d6b66f5ef2df21a5c1859b0" alt="The Good Shepherd window, about a third lit" style="position: absolute; left: -10px; top: -250px; width: 370px; height: 801px; object-fit: cover">
+  </div>
+
+  <div style="position: absolute; left: 20px; right: 20px; top: 566px; display: flex; flex-direction: column; gap: 10px">
+    <span style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 600; color: #5B6064"><span>Part 1 · eight units</span><span>7 of 38</span></span>
+    <div style="display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px">
+      <sc-for list="{{panes}}" as="p" hint-placeholder-count="8">
+        <span style="height: 34px; border-radius: 6px; border: 2.5px solid #16181A; background: {{p.bg}}; animation: {{p.anim}}"></span>
+      </sc-for>
+    </div>
+  </div>
+
+  <a href="#" style="position: absolute; left: 20px; right: 20px; top: 666px; height: 72px; border-radius: 22px; border: 2.5px solid #16181A; overflow: hidden; display: flex; align-items: center; justify-content: space-between; padding: 0 12px 0 22px; text-decoration: none; color: #FFFFFF; background-image: radial-gradient(60% 120% at 0% 50%, #9E1F2B, rgba(158,31,43,0) 70%), radial-gradient(60% 140% at 100% 50%, #23449C, rgba(35,68,156,0) 70%), radial-gradient(70% 90% at 50% 0%, #E2A33A, #C9772A); background-size: 160% 160%, 160% 160%, 100% 100%; animation: g10-mesh 9s ease-in-out infinite">
+    <span style="display: flex; flex-direction: column; gap: 2px; text-shadow: 0 1px 8px rgba(0,0,0,0.35)">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 600">Light the next pane</span>
+      <span style="font-size: 12px; font-weight: 600; opacity: 0.9">Lesson 8</span>
+    </span>
+    <span style="width: 48px; height: 48px; border-radius: 24px; background: #16181A; display: flex; align-items: center; justify-content: center; color: #FFFFFF">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+  </a>
+
+  <nav aria-label="Main" style="position: absolute; left: 20px; right: 20px; bottom: 20px; display: flex; justify-content: space-around; font-size: 12px; font-weight: 600">
+    <a href="#" aria-current="page" style="text-decoration: none">Today</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">Learn</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Each unit a pane in a colour taken from the window: full when its questions are lit, part-lit, or plain.
+    const glass = ['#23449C', '#9E1F2B', '#E2A33A', '#2E7D4F', '#6B3A8E', '#C9772A', '#2A6E9E', '#B23A48'];
+    const lit = [1, 0.4, 0, 0, 0, 0, 0, 0];
+    const panes = glass.map((c, i) => ({
+      bg: lit[i] >= 1 ? c : lit[i] > 0 ? `linear-gradient(0deg, ${c} ${lit[i] * 100}%, #DCD5C9 ${lit[i] * 100}%)` : '#DCD5C9',
+      anim: lit[i] > 0 && lit[i] < 1 ? 'g10-pane 2.4s ease-in-out infinite' : 'none',
+    }));
+    return { panes };
+  }
+}
+</script>
+</body>
+</html>

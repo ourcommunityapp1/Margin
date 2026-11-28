@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unit guide</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: absolute; inset: 0; background: rgba(20,24,28,0.25)"></div>
+  <section style="position: absolute; left: 0; right: 0; bottom: 0; top: 64px; background: #F7F5F0; border-radius: 28px 28px 0 0; box-sizing: border-box; padding: 12px 20px 28px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+    <span style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #D6D0C4" aria-hidden="true"></span>
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+      <span style="display: flex; flex-direction: column; gap: 4px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #5B6469">PART 1 · UNIT 2 · GUIDE</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600; line-height: 1.15">God’s plan and creation</span>
+      </span>
+      <a href="JourneyPath.dc.html" aria-label="Close" style="width: 40px; height: 40px; border-radius: 20px; background: #ECE8DF; display: flex; align-items: center; justify-content: center; flex: none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </a>
+    </div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.5; color: #4A5257">Who God is as three persons, and how he carries out his eternal plan: in making all things, and in making us in his image. Read them aloud once before you start.</p>
+    <ol style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column">
+      <sc-for list="{{qs}}" as="q" hint-placeholder-count="5">
+        <li style="display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #E3DFD6; opacity: {{q.op}}">
+          <dc-import name="Medal" level="{{q.level}}" size="30" hint-size="30px,30px"></dc-import>
+          <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <span style="font-weight: 600; font-size: 15px; line-height: 1.35">{{q.q}} · {{q.prompt}}</span>
+            <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; line-height: 1.45; color: #4A5257">{{q.text}}</span>
+            <span style="font-size: 12px; color: #5B6469">{{q.refs}}</span>
+          </span>
+        </li>
+      </sc-for>
+    </ol>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      qs: [
+        { q: 'Q6', prompt: 'How many persons are there in the Godhead?', text: 'There are three persons in the Godhead; the Father, the Son, and the Holy Ghost; and these three are one God, the same in substance, equal in power and glory.', refs: '1 John 5:7 · Matthew 28:19', level: 'amethyst', op: 1 },
+        { q: 'Q7', prompt: 'What are the decrees of God?', text: 'The decrees of God are, his eternal purpose, according to the counsel of his will, whereby, for his own glory, he hath foreordained whatsoever comes to pass.', refs: 'Ephesians 1:4, 11 · Romans 9:22–23', level: 'amethyst', op: 1 },
+        { q: 'Q8', prompt: 'How doth God execute his decrees?', text: 'God executeth his decrees in the works of creation and providence.', refs: 'Revelation 4:11 · Daniel 4:35', level: 'none', op: 1 },
+        { q: 'Q9', prompt: 'What is the work of creation?', text: 'The work of creation is, God’s making all things of nothing, by the word of his power, in the space of six days, and all very good.', refs: 'Genesis 1 · Hebrews 11:3', level: 'none', op: 0.75 },
+        { q: 'Q10', prompt: 'How did God create man?', text: 'God created man male and female, after his own image, in knowledge, righteousness, and holiness, with dominion over the creatures.', refs: 'Genesis 1:26–28 · Colossians 3:10', level: 'none', op: 0.75 },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

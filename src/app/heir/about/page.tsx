@@ -1,0 +1,79 @@
+import { Back } from '../ui/tabs';
+
+import { DAWN, DUSK } from '@/heir/photos';
+
+const PHOTOS = [
+  { when: 'Dawn', who: 'Abrget47j', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Hommikune_udu_Kakerdaja_rabas.jpg' },
+  { when: 'Day', who: 'Trougnouf (Benoit Brummer)', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Stuor_D%C3%A1ht%C3%A1_lake_along_the_Kungsleden_trail_during_golden_hour_in_Kvikkjokk-Kabla_fj%C3%A4llurskog_(DSCF2557).jpg' },
+  { when: 'Dusk', who: 'Thomas Bresson', license: 'CC BY 3.0', page: 'https://commons.wikimedia.org/wiki/File:Vallee-brouillard.jpg' },
+  { when: 'Night', who: 'Giles Laurent', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:036_Milky_Way_during_Perseids_seen_from_Oeschinensee_with_water_reflections_Photo_by_Giles_Laurent.jpg' },
+];
+
+// The stained-glass windows, cut into panes for each course (round crops, shared under the same licenses).
+const WINDOWS = [
+  { name: 'The Good Shepherd', place: 'St Barnabas Church, Mount Eden, Auckland', who: 'Bjankuloski06', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Good_Shepherd_staned-glass_window,_St_Barnabas,_Mt_Eden.jpg' },
+  { name: 'North rose', place: 'Chartres Cathedral', who: 'Zairon', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Chartres_Cath%C3%A9drale_Notre-Dame_de_Chartres_Innen_Nordrosette_1.jpg' },
+  { name: 'Good Samaritan window', place: 'Chartres Cathedral', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Vitrail_Chartres-044_rectifi%C3%A9.JPG' },
+  { name: 'Jesus and the Children', place: 'Sacred Heart Church, New Philadelphia, Ohio', who: 'Nheyob', license: 'CC0', page: 'https://commons.wikimedia.org/wiki/File:Sacred_Heart_Church_(New_Philadelphia,_Ohio)_-_Jesus_and_the_Children,_stained-glass.jpg' },
+  { name: 'The Nativity', place: 'Sacred Heart Church, New Philadelphia, Ohio', who: 'Nheyob', license: 'CC0', page: 'https://commons.wikimedia.org/wiki/File:Sacred_Heart_Church_(New_Philadelphia,_Ohio)_-_The_Nativity_of_the_Lord,_stained-glass.jpg' },
+  { name: 'The Good Shepherd with a lamb', place: 'Christ Church, Blacklands, Hastings', who: 'Jules & Jenny', license: 'CC BY 2.0', page: 'https://commons.wikimedia.org/wiki/File:Stained_glass_window,_Christchurch_Blacklands,_Hastings_(15232949385).jpg' },
+  { name: 'Christ praying in Gethsemane', place: 'Notre-Dame Cathedral Basilica, Ottawa', who: 'ΙΣΧΣΝΙΚΑ-888', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Christ_praying_in_the_garden_of_Gethsemane_-_Notre-Dame_Cathedral_Basilica,_Ottawa.JPG' },
+  { name: 'Moses and the burning bush', place: 'Parish church, Spay', who: 'Rolf Kranz', license: 'CC BY-SA 4.0', page: 'https://commons.wikimedia.org/wiki/File:Spay,_Pfarrkirche,_Moses_und_der_brennende_Dornbusch.jpg' },
+  { name: 'Moses with the tablets', place: 'Temple De Hirsch Sinai, Seattle', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Temple_De_Hirsch_Sinai_-_Moses_with_the_Tablets_(stained_glass)_01.jpg' },
+  { name: 'Jesus walks on the water', place: 'First Presbyterian Church, Oklahoma City (Willet Studios)', who: 'NateBergin', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:08_First_Presbyterian_OKC_(Jesus_Walks_on_Water)_Willet_Studios.png' },
+  { name: '“Consummatum est”', place: 'Church in Bobrek, Bytom (Mayer’sche Hofkunstanstalt)', who: 'Public domain photo', license: 'Public domain', page: 'https://commons.wikimedia.org/wiki/File:Bytom_Bobrek_church_crucifixion_stained_glass.jpg' },
+  { name: 'The Lamb of God', place: 'Saint Aloysius Church, Shandon, Ohio', who: 'Nheyob', license: 'CC BY-SA 3.0', page: 'https://commons.wikimedia.org/wiki/File:Saint_Aloysius_Catholic_Church_(Shandon,_Ohio)_-_interior,_stained_glass,_Lamb_of_God_%26_Seven_Seals_detail.jpg' },
+  { name: 'The empty tomb', place: 'Trinity Church, Boston (Eugène Oudinot)', who: 'NateBergin', license: 'CC BY 4.0', page: 'https://commons.wikimedia.org/wiki/File:Eug%C3%A8ne_Oudinot_Stained-Glass_Window,_the_Empty_Tomb,_Trinity_Church,_Boston.png' },
+];
+
+export default function About() {
+  return (
+    <main className="hr-page bare">
+      <div style={{ marginTop: 8 }}><Back href="/heir" /></div>
+      <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <h1 className="serif" style={{ margin: 0, fontSize: 30, fontWeight: 500 }}>About Katekize</h1>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>Katekize helps a family memorize Scripture, catechisms and creeds using recall, spaced review and speaking aloud. Your progress is saved to your account, so it’s kept on every phone you sign in on.</p>
+        <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5 }}>The Westminster Shorter and Larger Catechisms (1647), the Apostles’ Creed and the Nicene Creed are in the public domain.</p>
+      </section>
+      <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <h2 className="hr-label" style={{ margin: 0 }}>Scripture</h2>
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>
+          Scripture quotations marked NASB are taken from the NEW AMERICAN STANDARD BIBLE® (NASB®), Copyright © 1960, 1971, 1977,
+          1995, 2020 by The Lockman Foundation. Used by permission. All rights reserved.{' '}
+          <a href="https://www.lockman.org" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>lockman.org</a>
+        </p>
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>NASB text is provided through the YouVersion Platform. Scripture marked KJV is from the King James Version, in the public domain.</p>
+      </section>
+      <section className="hr-card" style={{ padding: '6px 22px' }}>
+        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Stained-glass windows, from Wikimedia Commons</h2>
+        {WINDOWS.map((w) => (
+          <a key={w.page} className="hr-row" href={w.page} target="_blank" rel="noopener noreferrer">
+            <span><b>{w.name}</b> · {w.place} · {w.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{w.license}</span>
+          </a>
+        ))}
+      </section>
+      <section className="hr-card" style={{ padding: '6px 22px' }}>
+        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Background photos (softened), from Wikimedia Commons</h2>
+        {PHOTOS.map((p) => (
+          <a key={p.when} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
+            <span><b>{p.when}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
+          </a>
+        ))}
+      </section>
+      <section className="hr-card" style={{ padding: '6px 22px' }}>
+        <h2 className="hr-label" style={{ margin: '14px 0 4px' }}>Sunrise and night photos on Today (square crops)</h2>
+        {[...DAWN, ...DUSK].map((p) => (
+          p.page ? (
+            <a key={p.file} className="hr-row" href={p.page} target="_blank" rel="noopener noreferrer">
+              <span><b>{p.alt}</b> · {p.who}, from Wikimedia Commons</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
+            </a>
+          ) : (
+            <div key={p.file} className="hr-row">
+              <span><b>{p.alt}</b> · {p.who}</span><span style={{ color: 'var(--muted)', fontSize: 14 }}>{p.license}</span>
+            </div>
+          )
+        ))}
+      </section>
+    </main>
+  );
+}

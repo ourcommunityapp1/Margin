@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today at night</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#E0B45C}a:hover{color:#F0CA7C}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+@media (prefers-reduced-motion: reduce){.h-bg{animation:none}}
+.h-dark{background:rgba(14,20,28,.6);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);color:#EEF0F2}
+.h-tab{height:52px;border-radius:20px;text-decoration:none;color:#B6C0C8;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.h-tab.on{background:#E0B45C;color:#14181C}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #EEF0F2; background: #0E141C">
+  <img class="h-bg" src="/_blob/5e1bd7dbf0419f66b43c80716b4e9498" alt="">
+  <div style="position: absolute; inset: 0; background: rgba(6, 10, 16, .3)"></div>
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 16px 100px; display: flex; flex-direction: column; gap: 12px">
+    <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 4px">
+      <div style="display: flex; flex-direction: column">
+        <span style="font-size: 14px; font-weight: 700; color: #B6C0C8">Thursday night</span>
+        <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 34px; font-weight: 500; line-height: 1.05">Good night, June</span>
+      </div>
+      <button aria-label="Switch profile" style="width: 48px; height: 48px; border-radius: 24px; border: 2px solid rgba(255,255,255,.7); background: #E9C46A; font-weight: 800; font-size: 19px; color: #1F2421">J</button>
+    </div>
+
+    <div class="h-dark" style="margin-top: auto; border-radius: 26px; padding: 20px 18px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E0B45C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>
+        <span style="font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #E0B45C">Bedtime review · 2 min</span>
+      </div>
+      <p style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; line-height: 1.2"><b style="font-weight: 600">Once more before sleep.</b> <span style="color: #B6C0C8">Just what you learned today. Sleep does the rest.</span></p>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.07); border-radius: 14px; padding: 10px 12px">
+          <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 18px">“…and to enjoy him forever.”</span><span style="font-size: 12px; color: #B6C0C8; font-weight: 700">Q1</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,.07); border-radius: 14px; padding: 10px 12px">
+          <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 18px">“…that I might not sin against you.”</span><span style="font-size: 12px; color: #B6C0C8; font-weight: 700">Ps 119:11</span>
+        </div>
+      </div>
+      <a href="Speak.dc.html" style="height: 56px; border-radius: 28px; background: #E0B45C; color: #14181C; text-decoration: none; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center">Begin</a>
+    </div>
+    <p style="margin: 0; text-align: center; font-size: 13px; font-weight: 700; color: #B6C0C8">Tomorrow morning: 3 due · a new piece of Q5</p>
+  </div>
+
+  <nav aria-label="Main" class="h-dark" style="position: absolute; left: 12px; right: 12px; bottom: 22px; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px">
+    <a href="TodayNight.dc.html" class="h-tab on" aria-current="page"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>Today</a>
+    <a href="Memorize.dc.html" class="h-tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12l4 6-10 12L2 9z"></path><path d="M2 9h20M9 3l3 18 3-18"></path></svg>Memorize</a>
+    <a href="Learn.dc.html" class="h-tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="Family.dc.html" class="h-tab"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><circle cx="17" cy="9.5" r="2.5"></circle><path d="M2.5 20a6.5 6.5 0 0 1 13 0M15 20a4.5 4.5 0 0 1 7-3.7"></path></svg>Family</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

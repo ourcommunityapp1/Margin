@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hold, half and half</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#16181A}a:hover{color:#000}
+@keyframes h4-fill{0%,15%{stroke-dasharray:0 100}70%,85%{stroke-dasharray:100 100}100%{stroke-dasharray:0 100}}
+@keyframes h4-glow{0%,15%{filter:brightness(.6) saturate(.7)}70%,85%{filter:brightness(1.25) saturate(1.3)}100%{filter:brightness(.6) saturate(.7)}}
+@keyframes h4-halo{0%,15%{opacity:.2}70%,85%{opacity:1}100%{opacity:.2}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #F3EFE8; color: #16181A; font-family: Inter, system-ui, sans-serif">
+  <section style="position: absolute; left: 0; right: 0; top: 0; height: 430px; border-radius: 0 0 36px 36px; overflow: hidden; background: radial-gradient(90% 70% at 50% 70%, #2A2018, #120E0B); color: #FFF6E6">
+    <div style="position: absolute; left: 0; right: 0; top: 52px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 21px">Good evening, Landon</span>
+      <span style="font-size: 12px; font-weight: 600; opacity: 0.7">7 / 107</span>
+    </div>
+    <div style="position: absolute; left: 105px; top: 98px; width: 180px; height: 300px; border-radius: 90px 90px 0 0; overflow: hidden; border: 3px solid #0B0806">
+      <div style="position: absolute; inset: 0; background-image: url(/_blob/73cfbf251d6b66f5ef2df21a5c1859b0); background-size: 300px 650px; background-position: -60px -262px"></div>
+    </div>
+  </section>
+
+  <div style="position: absolute; left: 131px; top: 370px; width: 128px; height: 128px; border-radius: 64px; background: radial-gradient(circle, rgba(255,190,110,0.6), rgba(255,190,110,0) 70%); animation: h4-halo 4s ease-in-out infinite"></div>
+  <a href="#" aria-label="Hold to light lesson 8" style="position: absolute; left: 143px; top: 382px; width: 104px; height: 104px; border-radius: 52px; background: #F3EFE8; text-decoration: none">
+    <svg width="104" height="104" viewBox="0 0 104 104" aria-hidden="true" style="position: absolute; inset: 0; transform: rotate(-90deg)">
+      <circle cx="52" cy="52" r="49" fill="none" stroke="#DDD6CA" stroke-width="3"></circle>
+      <circle cx="52" cy="52" r="49" pathLength="100" fill="none" stroke="#C98A2E" stroke-width="3.5" stroke-linecap="round" style="animation: h4-fill 4s ease-in-out infinite"></circle>
+    </svg>
+    <span style="position: absolute; inset: 9px; border-radius: 50%; border: 4px solid #16181A; background-image: url(/_blob/4423f54f58552653a8210bcd7aed723d); background-size: 560px 1212px; background-position: -241px -1005px; animation: h4-glow 4s ease-in-out infinite"></span>
+  </a>
+  <span style="position: absolute; left: 0; right: 0; top: 498px; text-align: center; display: flex; flex-direction: column; gap: 2px">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px">Hold to light</span>
+    <span style="font-size: 12px; font-weight: 600; color: #6B6F72">Lesson 8 · two new panes</span>
+  </span>
+
+  <section style="position: absolute; left: 16px; right: 16px; top: 572px; background: #FBF9F5; border-radius: 24px; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px">
+    <span style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 600"><span>2 days kept</span><span style="color: #6B6F72">Best 4</span></span>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center">
+      <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+          <span style="font-size: 11px; font-weight: 600; color: #8A8E91">{{d.l}}</span>
+          <span style="width: 24px; height: 24px; border-radius: 12px; box-sizing: border-box; background: {{d.bg}}; border: {{d.border}}"></span>
+        </span>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="position: absolute; left: 16px; right: 16px; top: 692px; background: #FBF9F5; border-radius: 24px; padding: 12px 18px; display: grid; grid-template-columns: repeat(4, 1fr); text-align: center">
+    <sc-for list="{{counts}}" as="c" hint-placeholder-count="4">
+      <span style="display: flex; align-items: center; justify-content: center; gap: 6px">
+        <dc-import name="Medal" level="{{c.level}}" size="22" hint-size="22px,22px"></dc-import>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 17px; font-weight: 600">{{c.n}}</span>
+      </span>
+    </sc-for>
+  </section>
+
+  <nav aria-label="Main" style="position: absolute; left: 0; right: 0; bottom: 16px; display: flex; justify-content: center; gap: 36px; font-size: 13px; font-weight: 600">
+    <a href="#" aria-current="page" style="text-decoration: none">Today</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">Learn</a>
+    <a href="#" style="text-decoration: none; color: #8A8E91">Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const states = ['missed', 'missed', 'missed', 'kept', 'today', 'later', 'rest'];
+    const week = states.map((s, i) => ({
+      l: 'MTWTFSS'[i],
+      bg: s === 'kept' ? '#16181A' : s === 'today' ? '#C98A2E' : 'transparent',
+      border: s === 'rest' ? '1.5px dashed #B9B1A3' : s === 'kept' || s === 'today' ? 'none' : '1.5px solid #D3CBBE',
+    }));
+    return {
+      week,
+      counts: [
+        { level: 'amethyst', n: 7 }, { level: 'topaz', n: 0 }, { level: 'carnelian', n: 0 }, { level: 'emerald', n: 0 },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

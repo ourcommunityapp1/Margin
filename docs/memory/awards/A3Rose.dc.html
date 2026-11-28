@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rose window</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+@keyframes hr-turn{to{transform:rotate(360deg)}}
+@keyframes hr-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes hr-bloom{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; border: 0; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #1D2327; min-height: 40px">Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 5px; font-weight: 700; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 0 12px; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B0442A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: rgba(247,245,240,0.9); display: flex; align-items: center; justify-content: center; font-weight: 700">L</span>
+    </div>
+
+    <section style="background: #F7F5F0; border-radius: 36px; padding: 24px 18px 22px; display: flex; flex-direction: column; align-items: center; gap: 18px; box-shadow: 0 16px 40px rgba(20,24,28,0.1)">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 2.4px; color: #5B6469">PART 1 · WHAT TO BELIEVE</span>
+      <div style="position: relative; width: 312px; height: 312px">
+        <svg width="312" height="312" viewBox="0 0 312 312" aria-hidden="true" style="position: absolute; inset: 0; animation: hr-turn 180s linear infinite">
+          <defs>
+            <radialGradient id="hr-petal-a" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="#CDB0F2"></stop><stop offset="1" stop-color="#6B3FB0"></stop></radialGradient>
+            <radialGradient id="hr-petal-t" cx="50%" cy="30%" r="80%"><stop offset="0" stop-color="#F7DA97"></stop><stop offset="1" stop-color="#C48419"></stop></radialGradient>
+          </defs>
+          <circle cx="156" cy="156" r="150" fill="none" stroke="#E3DDD1" stroke-width="1.5"></circle>
+          <sc-for list="{{petals}}" as="p" hint-placeholder-count="38">
+            <ellipse cx="156" cy="44" rx="8.5" ry="34" fill="{{p.fill}}" stroke="{{p.stroke}}" stroke-width="1.2" transform="rotate({{p.angle}} 156 156)" style="opacity: {{p.op}}; animation: {{p.anim}}"></ellipse>
+          </sc-for>
+          <circle cx="156" cy="156" r="92" fill="#F7F5F0" stroke="#E3DDD1" stroke-width="1.5"></circle>
+          <sc-for list="{{medallions}}" as="m" hint-placeholder-count="8">
+            <circle cx="{{m.x}}" cy="{{m.y}}" r="9" fill="{{m.fill}}" stroke="{{m.stroke}}" stroke-width="1.6" style="animation: {{m.anim}}"></circle>
+          </sc-for>
+        </svg>
+        <div style="position: absolute; inset: 104px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: hr-bloom 1.2s cubic-bezier(.2,.8,.2,1) both">
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 54px; font-weight: 300; line-height: 1">5</span>
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #5B6469">OF 38</span>
+        </div>
+      </div>
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.6px; color: #7B52B5">UNIT 2</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 500">God’s plan and creation</span>
+      </span>
+      <a href="#" style="align-self: stretch; min-height: 60px; border-radius: 30px; background: #1D2327; color: #F7F5F0; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none">
+        Start lesson 8
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </a>
+    </section>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #F7F5F0; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(20,24,28,0.12)">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #ECE8DF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #1D2327">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // 38 petals, one per question, grouped by unit with a little space between units.
+    const sizes = [5, 5, 5, 5, 5, 5, 4, 4];
+    const levels = ['topaz', 'amethyst', 'amethyst', 'amethyst', 'amethyst', 'amethyst', 'amethyst'];
+    const slots = 38 + sizes.length * 0.7;
+    const petals = [];
+    let pos = 0.35, q = 0;
+    sizes.forEach((n, u) => {
+      for (let k = 0; k < n; k++, q++, pos++) {
+        const lv = levels[q];
+        const next = q === levels.length;
+        petals.push({
+          angle: (pos / slots) * 360,
+          fill: lv === 'topaz' ? 'url(#hr-petal-t)' : lv ? 'url(#hr-petal-a)' : next ? 'rgba(123,82,181,0.18)' : '#EFEAE0',
+          stroke: lv ? 'rgba(255,255,255,0.6)' : next ? '#7B52B5' : '#E1DACC',
+          op: 1,
+          anim: next ? 'hr-pulse 2.6s ease-in-out infinite' : 'none',
+        });
+      }
+      pos += 0.7;
+    });
+    const medallions = sizes.map((_, u) => {
+      const a = ((u + 0.5) / sizes.length) * 2 * Math.PI - Math.PI / 2;
+      return {
+        x: 156 + 72 * Math.cos(a), y: 156 + 72 * Math.sin(a),
+        fill: u === 0 ? '#1D2327' : u === 1 ? '#CDB0F2' : '#F7F5F0',
+        stroke: u <= 1 ? (u === 0 ? '#1D2327' : '#7B52B5') : '#D6CFC2',
+        anim: u === 1 ? 'hr-pulse 2.6s ease-in-out infinite' : 'none',
+      };
+    });
+    return { petals, medallions };
+  }
+}
+</script>
+</body>
+</html>

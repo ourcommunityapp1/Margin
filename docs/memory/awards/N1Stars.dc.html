@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Constellation</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ECEEF0}a:hover{color:#FFFFFF}
+@keyframes hr-twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes hr-shine{0%,100%{opacity:.75}50%{opacity:1}}
+@keyframes hr-draw{from{stroke-dasharray:0 100}}
+@keyframes hr-shoot{0%,86%{opacity:0;transform:translate(0,0) rotate(28deg)}88%{opacity:1}100%{opacity:0;transform:translate(-260px,140px) rotate(28deg)}}
+@keyframes hr-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes hr-next{0%,100%{box-shadow:0 0 0 0 rgba(205,176,242,.5)}50%{box-shadow:0 0 0 9px rgba(205,176,242,0)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #0F1418; color: #ECEEF0; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/614f50e7fc7c4f0f0011b5cb8eb02f67" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover; opacity: .55">
+  <div style="position: absolute; inset: 0; background: radial-gradient(120% 70% at 50% 30%, rgba(40,32,70,0.35), rgba(8,10,14,0.85))"></div>
+
+  <sc-for list="{{dust}}" as="s" hint-placeholder-count="60">
+    <span style="position: absolute; left: {{s.x}}; top: {{s.y}}; width: {{s.r}}; height: {{s.r}}; border-radius: 50%; background: #FFFFFF; animation: hr-twinkle {{s.dur}} ease-in-out {{s.delay}} infinite"></span>
+  </sc-for>
+  <span style="position: absolute; left: 330px; top: 120px; width: 90px; height: 1.5px; border-radius: 1px; background: linear-gradient(90deg, rgba(255,255,255,0), #FFFFFF); animation: hr-shoot 9s ease-in 3s infinite"></span>
+
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; border: 0; background: rgba(30,37,43,0.8); border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #ECEEF0; min-height: 40px">Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 5px; font-weight: 700; background: rgba(30,37,43,0.8); border-radius: 18px; padding: 0 12px; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E8A33A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: rgba(30,37,43,0.8); display: flex; align-items: center; justify-content: center; font-weight: 700">L</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 18px; animation: hr-rise 1s .2s ease-out both">
+      <span style="font-size: 12px; font-weight: 700; letter-spacing: 2.4px; color: #A9B3BA">PART 1 · WHAT TO BELIEVE</span>
+      <span style="display: flex; align-items: baseline; gap: 8px"><span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 84px; font-weight: 300; line-height: 1; text-shadow: 0 0 30px rgba(205,176,242,0.45)">5</span><span style="font-size: 15px; font-weight: 600; color: #A9B3BA">stars of 38</span></span>
+    </div>
+
+    <div style="position: relative; height: 340px">
+      <svg width="358" height="340" viewBox="0 0 358 340" aria-hidden="true" style="position: absolute; inset: 0">
+        <polyline points="{{line}}" fill="none" stroke="rgba(205,176,242,0.55)" stroke-width="1.2" pathLength="100" stroke-dasharray="100 100" style="animation: hr-draw 3s .6s ease-out both"></polyline>
+        <line x1="{{tail.x1}}" y1="{{tail.y1}}" x2="{{tail.x2}}" y2="{{tail.y2}}" stroke="rgba(205,176,242,0.35)" stroke-width="1.2" stroke-dasharray="3 5"></line>
+      </svg>
+      <sc-for list="{{faint}}" as="f" hint-placeholder-count="33">
+        <span style="position: absolute; left: {{f.x}}; top: {{f.y}}; width: 4px; height: 4px; margin: -2px 0 0 -2px; border-radius: 2px; background: rgba(236,238,240,0.28)"></span>
+      </sc-for>
+      <sc-for list="{{stars}}" as="s" hint-placeholder-count="5">
+        <span style="position: absolute; left: {{s.x}}; top: {{s.y}}; width: 0; height: 0; animation: hr-rise .8s {{s.delay}} ease-out both">
+          <span style="position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(circle, {{s.glow}} 0, rgba(0,0,0,0) 70%); animation: hr-shine {{s.dur}} ease-in-out infinite"></span>
+          <svg width="22" height="22" viewBox="-11 -11 22 22" aria-hidden="true" style="position: absolute; left: -11px; top: -11px"><path d="M0-10 2-2 10 0 2 2 0 10-2 2-10 0-2-2z" fill="{{s.color}}"></path></svg>
+          <span style="position: absolute; left: 14px; top: -7px; font-size: 11px; font-weight: 600; color: #A9B3BA; white-space: nowrap">{{s.q}}</span>
+        </span>
+      </sc-for>
+      <span style="position: absolute; left: {{next.x}}; top: {{next.y}}; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 7px; border: 1.5px solid #CDB0F2; box-sizing: border-box; animation: hr-next 2.4s ease-in-out infinite"></span>
+      <span style="position: absolute; left: {{next.lx}}; top: {{next.ly}}; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #CDB0F2">NEXT · Q6</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px; animation: hr-rise 1s 1.4s ease-out both">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 500">God’s plan and creation</span>
+      <a href="#" style="width: 300px; min-height: 60px; border-radius: 30px; background: #ECEEF0; color: #12171B; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; box-shadow: 0 0 40px rgba(205,176,242,0.25)">
+        Light the next star
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </a>
+    </div>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: rgba(30,37,43,0.92); border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #2A333A; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #ECEEF0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #A9B3BA">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #A9B3BA">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // A seeded random so the sky looks the same every render.
+    let seed = 7;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const dust = Array.from({ length: 60 }, () => ({
+      x: `${rnd() * 390}px`, y: `${rnd() * 1000}px`, r: `${1 + rnd() * 1.6}px`,
+      dur: `${2.5 + rnd() * 4}s`, delay: `${-rnd() * 6}s`,
+    }));
+    // Unit 1 (Q1 to Q5) as a known figure; the line carries on, dashed, toward Q6.
+    const pts = [[60, 250], [110, 180], [175, 205], [215, 120], [290, 90]];
+    const colors = ['#F7DA97', '#CDB0F2', '#CDB0F2', '#CDB0F2', '#CDB0F2'];
+    const stars = pts.map(([x, y], i) => ({
+      x: `${x}px`, y: `${y}px`, q: `Q${i + 1}`, color: colors[i],
+      glow: i === 0 ? 'rgba(247,218,151,0.55)' : 'rgba(205,176,242,0.5)',
+      delay: `${0.4 + i * 0.5}s`, dur: `${2.6 + i * 0.4}s`,
+    }));
+    const line = pts.map(p => p.join(',')).join(' ');
+    const nx = 300, ny = 190;
+    const tail = { x1: 290, y1: 90, x2: nx, y2: ny };
+    // The other 33 questions sit faint across the sky, waiting.
+    const faint = Array.from({ length: 33 }, (_, i) => {
+      const a = i * 2.39996, r = 40 + (i / 33) * 120;
+      return { x: `${179 + r * Math.cos(a) * 1.05}px`, y: `${200 + r * Math.sin(a) * 0.8}px` };
+    }).filter(f => !pts.some(([x, y]) => Math.hypot(parseFloat(f.x) - x, parseFloat(f.y) - y) < 22));
+    return { dust, stars, line, tail, faint, next: { x: `${nx}px`, y: `${ny}px`, lx: `${nx - 76}px`, ly: `${ny + 14}px` } };
+  }
+}
+</script>
+</body>
+</html>

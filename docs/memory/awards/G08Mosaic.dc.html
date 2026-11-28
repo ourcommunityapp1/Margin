@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mosaic</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0F0D0B}a:hover{color:#000}
+@keyframes g8-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(246,194,118,.7)}50%{transform:scale(1.25);box-shadow:0 0 18px 6px rgba(246,194,118,.55)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #0F0D0B; color: #F2EEE8; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 22px; right: 22px; top: 54px; display: flex; justify-content: space-between; align-items: baseline">
+    <span style="font-size: 20px; font-weight: 600; letter-spacing: -0.3px">Landon</span>
+    <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; opacity: 0.6">007 / 107</span>
+  </div>
+
+  <img src="/_blob/e310a7df6d18c5400ff82775b84f970e" alt="The window as a mosaic of square tiles, the lowest third in colour" style="position: absolute; left: 83px; top: 96px; width: 224px; height: 640px; border-radius: 112px 112px 6px 6px">
+  <span style="position: absolute; left: 229px; top: 530px; width: 13px; height: 13px; border-radius: 3px; background: #F6C276; animation: g8-pulse 2s ease-in-out infinite"></span>
+
+  <a href="#" style="position: absolute; left: 22px; right: 22px; bottom: 74px; height: 64px; border-radius: 14px; background: #F2EEE8; display: flex; align-items: center; justify-content: space-between; padding: 0 10px 0 20px; text-decoration: none">
+    <span style="display: flex; align-items: baseline; gap: 10px">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #6B6F72">08</span>
+      <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.2px">Place the next tile</span>
+    </span>
+    <span style="width: 44px; height: 44px; border-radius: 10px; background: #F6C276; display: flex; align-items: center; justify-content: center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+  </a>
+
+  <nav aria-label="Main" style="position: absolute; left: 22px; right: 22px; bottom: 22px; display: flex; justify-content: space-between; font-size: 12px; font-weight: 600">
+    <a href="#" aria-current="page" style="text-decoration: none; color: #F2EEE8">Today</a>
+    <a href="#" style="text-decoration: none; color: #6B6F72">Learn</a>
+    <a href="#" style="text-decoration: none; color: #6B6F72">Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

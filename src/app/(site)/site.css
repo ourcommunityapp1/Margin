@@ -1,0 +1,163 @@
+/* Public pages. Mobile first; light and dark follow the viewer's system setting. Everything is scoped to .kz so it
+   never touches the app (.hr) or the older Margin page. */
+.kz {
+  --bg: #f6f2ea; --panel: #ffffff; --well: #ece6da; --ink: #1b2027; --muted: #566069; --line: #ddd5c8;
+  --gold: #8a5a12; --gold-soft: #f1e2c2; --btn: #1b2027; --btn-ink: #f6f2ea;
+  --serif: var(--font-source-serif), Georgia, 'Times New Roman', serif;
+  --sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-color-scheme: dark) {
+  .kz { --bg: #11161c; --panel: #1b222a; --well: #252e37; --ink: #f1ece3; --muted: #a3acb6; --line: #2f3943;
+    --gold: #e8b867; --gold-soft: #3a2f24; --btn: #f1ece3; --btn-ink: #11161c; color-scheme: dark; }
+}
+.kz *, .kz *::before, .kz *::after { box-sizing: border-box; }
+.kz h1, .kz h2, .kz h3 { font-family: var(--serif); font-weight: 600; margin: 0; text-wrap: balance; line-height: 1.15; }
+.kz a { color: inherit; }
+.kz a.kz-btn { color: var(--btn-ink); }
+.kz a.kz-btn.quiet { color: var(--ink); }
+.kz a:focus-visible, .kz summary:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: 6px; }
+
+.kz-wrap { width: 100%; max-width: 1040px; margin: 0 auto; padding-inline: 20px; }
+/* Header: on a phone the brand and the app button share the first row and the links sit under them, left-aligned;
+   from 640px up everything is one row, links and button on the right. */
+.kz-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-block: 16px; }
+.kz-brand { display: inline-flex; align-items: center; gap: 10px; font: 600 24px/1 var(--serif); text-decoration: none; letter-spacing: 0.01em; margin-right: auto; }
+.kz-mark { display: block; width: 28px; height: 32px; background: currentColor; -webkit-mask: url(/brand/katekize-k-mark.png) center / contain no-repeat; mask: url(/brand/katekize-k-mark.png) center / contain no-repeat; }
+.kz-head .kz-open { order: 2; }
+.kz-head .kz-nav a:first-child { margin-left: -2px; }
+.kz-head .kz-nav { order: 3; flex-basis: 100%; justify-content: flex-start; gap: 4px 22px; }
+@media (max-width: 359px) {
+  .kz-brand { font-size: 21px; gap: 8px; }
+  .kz-mark { width: 25px; height: 29px; }
+  .kz-head .kz-open { padding: 0 14px; font-size: 14px; }
+}
+@media (min-width: 640px) {
+  .kz-head { flex-wrap: nowrap; }
+  .kz-head .kz-nav { order: 1; flex-basis: auto; justify-content: flex-end; }
+  .kz-head .kz-open { order: 2; }
+}
+.kz-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; border-radius: 999px; background: var(--btn); color: var(--btn-ink); font: 600 16px/1 var(--sans); text-decoration: none; }
+.kz-btn.quiet { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.kz-btn:hover { opacity: 0.88; }
+.kz-btn.small { min-height: 40px; padding: 0 18px; font-size: 15px; }
+
+.kz-hero { display: grid; gap: 32px; padding-block: 28px 56px; align-items: center; }
+.kz-hero h1 { font-size: clamp(34px, 7.4vw, 56px); }
+.kz-lede { font-size: clamp(18px, 2.4vw, 21px); color: var(--muted); max-width: 34em; margin-top: 18px; }
+.kz-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+.kz-note { font-size: 14.5px; color: var(--muted); margin-top: 14px; }
+.kz-window { justify-self: center; width: min(78vw, 360px); aspect-ratio: 1; border-radius: 50%; padding: 10px; background: linear-gradient(135deg, #a69b89, #7c7364 50%, #4f483f); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28); }
+.kz-window img { width: 100%; height: 100%; border-radius: 50%; display: block; object-fit: cover; background: #0b0d0f; border: 5px solid #0b0d0f; }
+
+.kz-sec { padding-block: 48px; border-top: 1px solid var(--line); }
+.kz-sec > h2 { font-size: clamp(26px, 4.4vw, 36px); margin-bottom: 14px; }
+.kz-sec > p.kz-intro { color: var(--muted); max-width: 40em; margin-bottom: 28px; }
+
+.kz-steps { display: grid; gap: 14px; counter-reset: s; list-style: none; padding: 0; margin: 0; }
+.kz-steps li { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px; counter-increment: s; }
+.kz-steps h3 { font-size: 21px; margin-bottom: 8px; }
+.kz-steps h3::before { content: counter(s); display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; background: var(--gold-soft); color: var(--gold); font: 700 15px/1 var(--sans); vertical-align: 2px; }
+.kz-steps p { color: var(--muted); font-size: 16px; }
+
+.kz-example { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 24px; display: grid; gap: 14px; }
+.kz-example .src { font-size: 13.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.kz-example .q { font: 600 clamp(21px, 3.4vw, 26px)/1.3 var(--serif); }
+.kz-example .a { font: 400 clamp(20px, 3.2vw, 25px)/1.5 var(--serif); }
+.kz-example .m { background: var(--well); border-radius: 16px; padding: 16px 18px; font-size: 16px; }
+.kz-example .m b { display: block; margin-bottom: 4px; }
+
+.kz-courses { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.kz-course { display: grid; grid-template-columns: 76px 1fr; gap: 16px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 14px 18px 14px 14px; }
+.kz-course img { width: 76px; height: 76px; border-radius: 50%; display: block; background: #0b0d0f; filter: brightness(0.32) saturate(0.4); }
+.kz-course h3 { font-size: 19px; }
+.kz-course p { color: var(--muted); font-size: 15px; line-height: 1.45; margin-top: 3px; }
+.kz-course .n { display: block; font-size: 13px; font-weight: 600; color: var(--gold); margin-top: 6px; }
+
+.kz-stones { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+.kz-stone { display: grid; grid-template-columns: 56px 1fr; gap: 16px; align-items: center; }
+.kz-stone img { width: 56px; height: 56px; border-radius: 15px; object-fit: cover; display: block; }
+.kz-stone b { font-size: 17px; }
+.kz-stone b span { color: var(--muted); font-weight: 500; }
+.kz-stone p { color: var(--muted); font-size: 15.5px; line-height: 1.45; }
+
+.kz-cols { display: grid; gap: 16px; }
+.kz-cols article { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; padding: 22px; }
+.kz-cols h3 { font-size: 20px; margin-bottom: 8px; }
+.kz-cols p { color: var(--muted); font-size: 16px; }
+
+.kz-refs { margin: 22px 0 0; padding-left: 20px; list-style: disc; display: grid; gap: 8px; font-size: 14.5px; color: var(--muted); }
+
+.kz-faq { display: grid; gap: 22px; }
+.kz-faq h3 { font-size: 20px; margin-bottom: 6px; }
+.kz-faq p { color: var(--muted); max-width: 44em; }
+
+.kz-foot { border-top: 1px solid var(--line); padding-block: 36px 56px; color: var(--muted); font-size: 14.5px; display: grid; gap: 14px; }
+.kz-foot .row { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+
+@media (min-width: 760px) {
+  .kz { font-size: 18px; }
+  .kz-hero { grid-template-columns: 1.25fr 1fr; gap: 56px; padding-block: 44px 72px; }
+  .kz-window { width: min(100%, 380px); }
+  .kz-steps, .kz-cols { grid-template-columns: repeat(3, 1fr); }
+  .kz-courses { grid-template-columns: repeat(2, 1fr); }
+  .kz-stones { grid-template-columns: repeat(2, 1fr); gap: 18px 36px; }
+  .kz-sec { padding-block: 64px; }
+}
+@media (prefers-reduced-motion: no-preference) { .kz { scroll-behavior: smooth; } }
+
+/* Inner pages: nav, breadcrumbs, answer-first question and guide pages, lists. */
+.kz-nav { display: flex; align-items: center; gap: 6px 20px; flex-wrap: wrap; justify-content: flex-end; }
+.kz-nav a:not(.kz-btn) { text-decoration: none; font-weight: 600; font-size: 15px; padding: 8px 2px; }
+.kz-nav a:not(.kz-btn):hover { text-decoration: underline; text-underline-offset: 4px; }
+.kz-page { max-width: 760px; padding-block: 12px 56px; display: flex; flex-direction: column; gap: 22px; }
+.kz-page h1 { font-size: clamp(30px, 6vw, 44px); }
+.kz-page h2 { font-size: clamp(23px, 3.6vw, 29px); margin-top: 14px; }
+.kz-page section { display: flex; flex-direction: column; gap: 12px; }
+.kz-page p, .kz-page li { max-width: 66ch; }
+.kz-muted { color: var(--muted); font-size: 15.5px; }
+.kz-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.kz-answer { font: 400 clamp(20px, 3.4vw, 25px)/1.5 var(--serif); }
+.kz-crumbs ol { display: flex; flex-wrap: wrap; gap: 4px 8px; list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--muted); }
+.kz-crumbs li:not(:last-child)::after { content: "›"; margin-left: 8px; }
+.kz-crumbs a { text-decoration: none; }
+.kz-crumbs a:hover { text-decoration: underline; }
+.kz-proofs { display: grid; gap: 14px; }
+.kz-proofs figure { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px 20px; }
+.kz-proofs figcaption { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+.kz-proofs blockquote { margin: 0; font: 400 18px/1.6 var(--serif); }
+.kz-proofs sup { font: 600 11px var(--sans); color: var(--muted); margin-right: 2px; }
+.kz-pieces { margin: 0; padding-left: 26px; list-style: decimal; font: 400 19px/1.5 var(--serif); display: grid; gap: 4px; }
+.kz-pn { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
+.kz-pn a { display: flex; flex-direction: column; gap: 3px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; text-decoration: none; background: var(--panel); font-size: 15px; line-height: 1.4; }
+.kz-pn a.r { text-align: right; }
+.kz-pn small { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.kz-pn a:hover { border-color: var(--gold); }
+.kz-qlist ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.kz-qlist a { display: grid; grid-template-columns: 38px 1fr; gap: 10px; padding: 9px 4px; text-decoration: none; border-top: 1px solid var(--line); }
+.kz-qlist a:hover span:last-child { text-decoration: underline; text-underline-offset: 3px; }
+.kz-qlist .n { font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
+.kz-guides { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.kz-guides a { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); text-decoration: none; }
+.kz-guides b { font: 600 19px/1.3 var(--serif); }
+.kz-guides span { color: var(--muted); font-size: 15px; }
+.kz-guides a:hover { border-color: var(--gold); }
+.kz-list { margin: 0; padding-left: 24px; display: grid; gap: 8px; }
+ul.kz-list { list-style: disc; }
+ol.kz-list { list-style: decimal; }
+.kz-tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+.kz-tablewrap table { border-collapse: collapse; width: 100%; font-size: 16px; }
+.kz-tablewrap th, .kz-tablewrap td { text-align: left; padding: 12px 16px; border-top: 1px solid var(--line); }
+.kz-tablewrap thead th { border-top: 0; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.kz-page .kz-cta { margin-top: 4px; }
+.kz-explore { display: grid; gap: 12px; }
+.kz-explore a { display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); text-decoration: none; }
+.kz-explore b { font: 600 19px/1.3 var(--serif); }
+.kz-explore span { color: var(--muted); font-size: 15px; }
+.kz-explore a:hover { border-color: var(--gold); }
+@media (min-width: 760px) { .kz-explore { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .kz-pn { grid-template-columns: 1fr; } .kz-pn a.r { text-align: left; } }
+
+.kz-phrase { display: block; }
+.kz-proofs .kz-phrase + .kz-phrase { margin-top: 2px; }

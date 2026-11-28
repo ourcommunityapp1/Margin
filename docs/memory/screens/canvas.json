@@ -1,0 +1,355 @@
+{
+ "v": 3,
+ "attachments": {},
+ "boards": {
+  "BothWays.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "11 \u00b7 Lesson: both ways (Emerald)",
+   "w": 390,
+   "x": 1410,
+   "y": 2600,
+   "page": "r1"
+  },
+  "Catechism.dc.html": {
+   "h": 844,
+   "title": "07 \u00b7 A catechism as a path",
+   "w": 390,
+   "x": 1410,
+   "y": 1300,
+   "page": "r1"
+  },
+  "Family.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "02 \u00b7 Who's in your family",
+   "w": 390,
+   "x": 470,
+   "y": 0,
+   "page": "r1"
+  },
+  "Item.dc.html": {
+   "h": 844,
+   "title": "13 \u00b7 One verse: stones and memory",
+   "w": 390,
+   "x": 0,
+   "y": 3900,
+   "page": "r1"
+  },
+  "Kids.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "15 \u00b7 A child's lesson",
+   "w": 390,
+   "x": 940,
+   "y": 3900,
+   "page": "r1"
+  },
+  "Learn.dc.html": {
+   "h": 844,
+   "title": "14 \u00b7 Learn: videos and articles (later)",
+   "w": 390,
+   "x": 470,
+   "y": 3900,
+   "page": "r1"
+  },
+  "LevelUp.dc.html": {
+   "h": 844,
+   "title": "12 \u00b7 Level reached",
+   "w": 390,
+   "x": 1880,
+   "y": 2600,
+   "page": "r1"
+  },
+  "Main.dc.html": {
+   "h": 844,
+   "title": "01 \u00b7 Welcome",
+   "w": 390,
+   "x": 0,
+   "y": 0,
+   "page": "r1"
+  },
+  "Meaning.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "09 \u00b7 Lesson: what it means",
+   "w": 390,
+   "x": 470,
+   "y": 2600,
+   "page": "r1"
+  },
+  "Memorize.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "06 \u00b7 Memorize: the library",
+   "w": 390,
+   "x": 940,
+   "y": 1300,
+   "page": "r1"
+  },
+  "Plan.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "03 \u00b7 First plan",
+   "w": 390,
+   "x": 940,
+   "y": 0,
+   "page": "r1"
+  },
+  "Speak.dc.html": {
+   "h": 844,
+   "title": "10 \u00b7 Lesson: say it aloud (dusk)",
+   "w": 390,
+   "x": 940,
+   "y": 2600,
+   "page": "r1"
+  },
+  "TodayDay.dc.html": {
+   "h": 844,
+   "title": "04 \u00b7 Today (day)",
+   "w": 390,
+   "x": 0,
+   "y": 1300,
+   "page": "r1"
+  },
+  "TodayNight.dc.html": {
+   "h": 844,
+   "title": "05 \u00b7 Today (night: bedtime review)",
+   "w": 390,
+   "x": 470,
+   "y": 1300,
+   "page": "r1"
+  },
+  "WordBank.dc.html": {
+   "h": 844,
+   "is_interactive": true,
+   "title": "08 \u00b7 Lesson: word bank (dawn)",
+   "w": 390,
+   "x": 0,
+   "y": 2600,
+   "page": "r1"
+  },
+  "R2Welcome.dc.html": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "01 \u00b7 Welcome",
+   "page": "r2"
+  },
+  "R2Today.dc.html": {
+   "x": 470,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "02 \u00b7 Today",
+   "page": "r2"
+  },
+  "R2Night.dc.html": {
+   "x": 940,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "03 \u00b7 Today at night",
+   "page": "r2"
+  },
+  "R2Memorize.dc.html": {
+   "x": 1410,
+   "y": 0,
+   "w": 390,
+   "h": 844,
+   "title": "04 \u00b7 Memorize",
+   "page": "r2",
+   "is_interactive": true
+  },
+  "R2Choose.dc.html": {
+   "x": 0,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "05 \u00b7 Lesson: what it means",
+   "page": "r2",
+   "is_interactive": true
+  },
+  "R2Order.dc.html": {
+   "x": 470,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "06 \u00b7 Lesson: words in order",
+   "page": "r2",
+   "is_interactive": true
+  },
+  "R2Speak.dc.html": {
+   "x": 940,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "07 \u00b7 Lesson: say it",
+   "page": "r2"
+  },
+  "R2Done.dc.html": {
+   "x": 1410,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "08 \u00b7 Lesson done",
+   "page": "r2"
+  },
+  "R2Verse.dc.html": {
+   "x": 1880,
+   "y": 1300,
+   "w": 390,
+   "h": 844,
+   "title": "09 \u00b7 One verse and its level",
+   "page": "r2"
+  }
+ },
+ "createdOnFiles": {
+  "at": "2026-11-19T16:30:00Z",
+  "v": 1
+ },
+ "designSystems": [],
+ "launch": {
+  "view": "canvas",
+  "page": "r2"
+ },
+ "noteOrder": [
+  "rowA",
+  "rowB",
+  "rowC",
+  "rowD",
+  "system",
+  "levels",
+  "credits",
+  "r2a",
+  "r2b",
+  "r2c"
+ ],
+ "notes": {
+  "credits": {
+   "fill": "gray",
+   "text": "Photos: Wikimedia Commons contributors under CC BY / CC BY-SA, credited on the mood board page. Each must be credited in the app or replaced with owned photography before launch.",
+   "w": 420,
+   "x": 1880,
+   "y": 3900,
+   "page": "r1"
+  },
+  "levels": {
+   "fill": "blue",
+   "size": 24,
+   "text": "The six levels, each with a photo of the real stone:\n1 Carnelian: words in order\n2 Topaz: fill the blanks\n3 Sapphire: whole text from its cue\n4 Emerald: both ways, even from a vague cue\n5 Amethyst: perfect for 3+ months\n6 Jasper: plus meaning and connected verses\n(No sapphire photo yet: the badge uses a color only.)",
+   "w": 420,
+   "x": 1410,
+   "y": 3900,
+   "page": "r1"
+  },
+  "rowA": {
+   "kind": "title1",
+   "maxW": 1330,
+   "text": "Start",
+   "w": 240,
+   "x": 0,
+   "y": -300,
+   "page": "r1"
+  },
+  "rowB": {
+   "kind": "title1",
+   "maxW": 1800,
+   "text": "Today and Memorize",
+   "w": 240,
+   "x": 0,
+   "y": 1000,
+   "page": "r1"
+  },
+  "rowC": {
+   "kind": "title1",
+   "maxW": 2270,
+   "text": "A lesson, start to finish",
+   "w": 240,
+   "x": 0,
+   "y": 2300,
+   "page": "r1"
+  },
+  "rowD": {
+   "kind": "title1",
+   "maxW": 1330,
+   "text": "Mastery, Learn and kids",
+   "w": 240,
+   "x": 0,
+   "y": 3600,
+   "page": "r1"
+  },
+  "system": {
+   "fill": "gray",
+   "size": 24,
+   "text": "The system\n\u2022 Tabs: Today \u00b7 Memorize \u00b7 Learn \u00b7 Family\n\u2022 Behind every screen: a real photo that drifts slowly and follows the time of day (dawn, day, dusk, night)\n\u2022 In front: frosted glass cards. Light glass by day, dark glass at night\n\u2022 Type: Cormorant Garamond for Scripture and headings, Figtree for the interface\n\u2022 Day accent: deep green. Night accent: gold",
+   "w": 420,
+   "x": 1410,
+   "y": 0,
+   "page": "r1"
+  },
+  "r2a": {
+   "x": 0,
+   "y": -300,
+   "text": "Simpler: start and home",
+   "kind": "title1",
+   "maxW": 1800,
+   "page": "r2"
+  },
+  "r2b": {
+   "x": 0,
+   "y": 1000,
+   "text": "Simpler: a lesson",
+   "kind": "title1",
+   "maxW": 2270,
+   "page": "r2"
+  },
+  "r2c": {
+   "x": 1880,
+   "y": 0,
+   "w": 420,
+   "fill": "gray",
+   "size": "m",
+   "page": "r2",
+   "text": "What changed in round 2\n\u2022 Backgrounds: the same photos, heavily softened into a calm wash, like the painted sky in the reference\n\u2022 Cards: solid off-white with dark text, never see-through\n\u2022 Type: Source Serif 4 for headings and Scripture, Inter for everything else\n\u2022 Color: quiet neutrals; one soft peach marks what is selected; dark ink for the main button\n\u2022 One main action per screen; stones appear only where a level is the point"
+  }
+ },
+ "order": [
+  "Main.dc.html",
+  "Family.dc.html",
+  "Plan.dc.html",
+  "TodayDay.dc.html",
+  "TodayNight.dc.html",
+  "Memorize.dc.html",
+  "Catechism.dc.html",
+  "WordBank.dc.html",
+  "Meaning.dc.html",
+  "Speak.dc.html",
+  "BothWays.dc.html",
+  "LevelUp.dc.html",
+  "Item.dc.html",
+  "Learn.dc.html",
+  "Kids.dc.html",
+  "R2Welcome.dc.html",
+  "R2Today.dc.html",
+  "R2Night.dc.html",
+  "R2Memorize.dc.html",
+  "R2Choose.dc.html",
+  "R2Order.dc.html",
+  "R2Speak.dc.html",
+  "R2Done.dc.html",
+  "R2Verse.dc.html"
+ ],
+ "pages": [
+  {
+   "id": "r2",
+   "name": "Round 2 \u00b7 simpler"
+  },
+  {
+   "id": "r1",
+   "name": "Round 1"
+  }
+ ],
+ "title": "Heir app screens"
+}

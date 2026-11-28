@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stone</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: {{px}}; height: {{px}}; display: inline-block; vertical-align: middle; flex: none">
+<sc-if value="{{photo}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: {{px}}; height: {{px}}; border-radius: {{radius}}; overflow: hidden; background: #2B343B; box-shadow: 0 1px 2px rgba(20,24,28,0.14), 0 3px 8px rgba(20,24,28,0.10); opacity: {{opacity}}; filter: {{filter}}">
+<img src="{{src}}" alt="" style="display: block; width: 100%; height: 100%; object-fit: cover">
+<div style="position: absolute; inset: 0; border-radius: {{radius}}; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.32), inset 0 -3px 8px rgba(0,0,0,0.22)"></div>
+</div>
+</sc-if>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<div style="width: {{px}}; height: {{px}}; box-sizing: border-box; border-radius: {{radius}}; border: 2px dashed #C9C2B5"></div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"level":{"editor":"enum","options":["amethyst","topaz","carnelian","emerald","sapphire","diamond","none"],"default":"amethyst"},"size":{"editor":"int","default":96,"min":12,"max":200},"dim":{"editor":"boolean","default":false},"$preview":{"width":96,"height":96}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const level = this.props.level ?? 'amethyst';
+    const size = Number(this.props.size ?? 96);
+    const SRC = {
+      carnelian: '/_blob/fac2096b2a56bfc1ff21c5cd5b67c080',
+      topaz: '/_blob/ad83f7e5a62be416f6e3b5dee2c41c51',
+      sapphire: '/_blob/1979c4be847f6bb9b3be068e25cdc213',
+      emerald: '/_blob/7f0d01d19bff44f42d85bb367635ec0c',
+      amethyst: '/_blob/f763d14908b506007e53b64dbc39dab5',
+      diamond: '/_blob/8e1d4e259b8c87c79c69e1a22f9bed29',
+    };
+    const dim = !!this.props.dim;
+    return {
+      src: SRC[level] ?? '',
+      photo: !!SRC[level],
+      empty: !SRC[level],
+      px: size + 'px',
+      radius: Math.round(size * 0.27) + 'px',
+      opacity: dim ? 0.5 : 1,
+      filter: dim ? 'grayscale(0.85)' : 'none',
+    };
+  }
+}
+</script>
+</body>
+</html>

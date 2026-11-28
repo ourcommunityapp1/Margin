@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lancets, compact</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#16181A}a:hover{color:#000}
+@keyframes h2-breathe{0%,100%{box-shadow:0 0 0 2px #E2A33A, 0 10px 30px rgba(226,163,58,0.3)}50%{box-shadow:0 0 0 2px #E2A33A, 0 10px 46px rgba(226,163,58,0.6)}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #EFEAE1; color: #16181A; font-family: Inter, system-ui, sans-serif">
+  <div style="position: absolute; left: 20px; right: 20px; top: 52px; display: flex; justify-content: space-between; align-items: center">
+    <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px">Good evening, Landon</span>
+    <span style="width: 38px; height: 38px; border-radius: 19px; background: #E2DBCF; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600">L</span>
+  </div>
+
+  <div style="position: absolute; left: 40px; top: 132px; width: 80px; height: 290px; border-radius: 40px 40px 6px 6px; overflow: hidden; border: 3px solid #16181A">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/4423f54f58552653a8210bcd7aed723d); background-size: 312px 675px; background-position: -62px -300px"></div>
+  </div>
+  <a href="#" style="position: absolute; left: 133px; top: 104px; width: 124px; height: 346px; border-radius: 62px 62px 8px 8px; overflow: hidden; border: 3px solid #16181A; text-decoration: none; color: #FFF6E6; animation: h2-breathe 3.6s ease-in-out infinite">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/4423f54f58552653a8210bcd7aed723d); background-size: 351px 760px; background-position: -113px -232px; filter: saturate(1.15) brightness(1.06)"></div>
+    <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: linear-gradient(180deg, rgba(13,10,7,0), rgba(13,10,7,0.85))"></div>
+    <span style="position: absolute; left: 0; right: 0; bottom: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 20px; font-weight: 500">Lesson 8</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: #E2A33A; color: #2A1A08; display: flex; align-items: center; justify-content: center">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span>
+    </span>
+  </a>
+  <div style="position: absolute; left: 270px; top: 132px; width: 80px; height: 290px; border-radius: 40px 40px 6px 6px; overflow: hidden; border: 3px solid #16181A">
+    <div style="position: absolute; inset: 0; background-image: url(/_blob/4616fe934452dcc5d91173366d4f58e8); background-size: 312px 675px; background-position: -173px -150px"></div>
+  </div>
+  <span style="position: absolute; left: 40px; width: 86px; top: 432px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: #6B6F72">LIT · 7</span>
+  <span style="position: absolute; left: 270px; width: 86px; top: 432px; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; color: #6B6F72">AHEAD · 98</span>
+
+  <section style="position: absolute; left: 16px; right: 16px; top: 482px; background: #F8F5EF; border-radius: 24px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+    <span style="display: flex; justify-content: space-between; align-items: baseline"><span style="display: flex; align-items: baseline; gap: 6px"><span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 26px; font-weight: 600">2</span><span style="font-weight: 600; font-size: 14px">days kept</span></span><span style="font-size: 12px; font-weight: 600; color: #6B6F72">Best 4</span></span>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center">
+      <sc-for list="{{week}}" as="d" hint-placeholder-count="7">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 5px">
+          <span style="font-size: 11px; font-weight: 600; color: #8A8E91">{{d.l}}</span>
+          <span style="width: 26px; height: 26px; border-radius: 13px; box-sizing: border-box; background: {{d.bg}}; border: {{d.border}}"></span>
+        </span>
+      </sc-for>
+    </div>
+  </section>
+
+  <section style="position: absolute; left: 16px; right: 16px; top: 634px; background: #F8F5EF; border-radius: 24px; padding: 14px 18px; display: grid; grid-template-columns: repeat(4, 1fr); text-align: center">
+    <sc-for list="{{counts}}" as="c" hint-placeholder-count="4">
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 4px">
+        <dc-import name="Medal" level="{{c.level}}" size="26" hint-size="26px,26px"></dc-import>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 18px; font-weight: 600; line-height: 1">{{c.n}}</span>
+        <span style="font-size: 11px; font-weight: 600; color: #6B6F72">{{c.name}}</span>
+      </span>
+    </sc-for>
+  </section>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 14px; background: #F8F5EF; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+    <a href="#" aria-current="page" style="min-height: 48px; border-radius: 20px; background: #E9E3D8; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; text-decoration: none">Today</a>
+    <a href="#" style="min-height: 48px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; text-decoration: none; color: #6B6F72">Learn</a>
+    <a href="#" style="min-height: 48px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; text-decoration: none; color: #6B6F72">Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const states = ['missed', 'missed', 'missed', 'kept', 'today', 'later', 'rest'];
+    const week = states.map((s, i) => ({
+      l: 'MTWTFSS'[i],
+      bg: s === 'kept' ? '#16181A' : s === 'today' ? '#E2A33A' : 'transparent',
+      border: s === 'rest' ? '1.5px dashed #B9B1A3' : s === 'kept' || s === 'today' ? 'none' : '1.5px solid #D3CBBE',
+    }));
+    return {
+      week,
+      counts: [
+        { level: 'amethyst', n: 7, name: 'Know' },
+        { level: 'topaz', n: 0, name: 'Memorized' },
+        { level: 'carnelian', n: 0, name: 'Mastered' },
+        { level: 'emerald', n: 0, name: 'Long-term' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

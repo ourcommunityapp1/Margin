@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Aurora</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,500;8..60,600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#ECEEF0}a:hover{color:#FFFFFF}
+@keyframes hr-ribbon-a{0%{transform:translate(-30px,0) rotate(-14deg) scaleY(1)}50%{transform:translate(30px,-20px) rotate(-6deg) scaleY(1.25)}100%{transform:translate(-30px,0) rotate(-14deg) scaleY(1)}}
+@keyframes hr-ribbon-b{0%{transform:translate(20px,10px) rotate(12deg)}50%{transform:translate(-40px,-10px) rotate(4deg)}100%{transform:translate(20px,10px) rotate(12deg)}}
+@keyframes hr-ribbon-c{0%,100%{opacity:.35;transform:translateX(0) rotate(-24deg)}50%{opacity:.7;transform:translateX(40px) rotate(-18deg)}}
+@keyframes hr-tick{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+@keyframes hr-glow{0%,100%{filter:drop-shadow(0 0 2px rgba(150,240,200,.5))}50%{filter:drop-shadow(0 0 7px rgba(150,240,200,.95))}}
+@keyframes hr-rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes hr-blink{0%,100%{opacity:.3}50%{opacity:1}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #070B10; color: #ECEEF0; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/614f50e7fc7c4f0f0011b5cb8eb02f67" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover; opacity: .35">
+  <div style="position: absolute; left: -80px; top: 120px; width: 560px; height: 220px; border-radius: 50%; background: linear-gradient(90deg, rgba(40,220,160,0), rgba(40,220,160,0.55) 30%, rgba(90,160,255,0.45) 65%, rgba(140,90,230,0)); filter: blur(38px); animation: hr-ribbon-a 16s ease-in-out infinite; mix-blend-mode: screen"></div>
+  <div style="position: absolute; left: -60px; top: 260px; width: 520px; height: 160px; border-radius: 50%; background: linear-gradient(90deg, rgba(123,82,181,0), rgba(160,110,240,0.55) 40%, rgba(40,220,160,0.35) 80%, rgba(40,220,160,0)); filter: blur(40px); animation: hr-ribbon-b 21s ease-in-out infinite; mix-blend-mode: screen"></div>
+  <div style="position: absolute; left: 40px; top: 60px; width: 380px; height: 90px; border-radius: 50%; background: linear-gradient(90deg, rgba(120,255,200,0), rgba(120,255,200,0.6), rgba(120,255,200,0)); filter: blur(26px); animation: hr-ribbon-c 11s ease-in-out infinite; mix-blend-mode: screen"></div>
+  <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7,11,16,0) 30%, rgba(7,11,16,0.85) 75%)"></div>
+
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; border: 0; background: rgba(20,28,34,0.65); border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #ECEEF0; min-height: 40px; backdrop-filter: blur(10px)">Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 5px; font-weight: 700; background: rgba(20,28,34,0.65); border-radius: 18px; padding: 0 12px; min-height: 40px; backdrop-filter: blur(10px)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8FF0C8" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: rgba(20,28,34,0.65); display: flex; align-items: center; justify-content: center; font-weight: 700; backdrop-filter: blur(10px)">L</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 20px; padding-top: 34px">
+      <div style="position: relative; width: 320px; height: 320px">
+        <svg width="320" height="320" viewBox="0 0 320 320" aria-hidden="true" style="position: absolute; inset: 0">
+          <sc-for list="{{ticks}}" as="t" hint-placeholder-count="38">
+            <g transform="rotate({{t.angle}} 160 160)">
+              <rect x="157.5" y="{{t.y}}" width="5" height="{{t.h}}" rx="2.5" fill="{{t.fill}}" style="transform-origin: 160px 160px; animation: {{t.anim}}"></rect>
+            </g>
+          </sc-for>
+        </svg>
+        <div style="position: absolute; inset: 64px; border-radius: 50%; background: radial-gradient(circle, rgba(20,30,36,0.75), rgba(20,30,36,0) 72%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; animation: hr-rise 1.2s .8s ease-out both">
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 72px; font-weight: 300; line-height: 1; text-shadow: 0 0 26px rgba(143,240,200,0.55)">5</span>
+          <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.6px; color: #A9B3BA">OF 38 · PART 1</span>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; animation: hr-rise 1s 1.2s ease-out both">
+        <span style="font-size: 11px; font-weight: 700; letter-spacing: 1.6px; color: #8FF0C8">UNIT 2 OF 8</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 22px; font-weight: 500">God’s plan and creation</span>
+      </div>
+
+      <a href="#" style="width: 300px; min-height: 60px; border-radius: 30px; background: linear-gradient(100deg, #9EF5D0, #B8C6FF 60%, #D6BDF7); color: #0B1116; font-weight: 700; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; box-shadow: 0 0 44px rgba(143,240,200,0.3); animation: hr-rise 1s 1.5s ease-out both">
+        Start lesson 8
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+      </a>
+      <span style="font-family: 'Source Serif 4', Georgia, serif; font-style: italic; font-size: 15px; color: #A9B3BA; text-align: center; max-width: 280px; animation: hr-rise 1s 1.8s ease-out both">“The heavens declare the glory of God.” Psalm 19:1</span>
+    </div>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: rgba(20,28,34,0.8); backdrop-filter: blur(14px); border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: rgba(255,255,255,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #ECEEF0">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #A9B3BA">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #A9B3BA">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // 38 ticks round the ring, one per question, with a small gap between units.
+    const sizes = [5, 5, 5, 5, 5, 5, 4, 4], knownCount = 5, nextQ = 5;
+    const slots = 38 + sizes.length * 0.8;
+    const ticks = [];
+    let pos = 0.4, q = 0;
+    sizes.forEach((n, u) => {
+      for (let k = 0; k < n; k++, q++, pos++) {
+        const known = q < knownCount, next = q === nextQ, inUnit = u === 1;
+        ticks.push({
+          angle: (pos / slots) * 360,
+          y: known ? 8 : 14, h: known ? 30 : next ? 24 : 18,
+          fill: known ? (q === 0 ? '#F7DA97' : '#8FF0C8') : next ? '#D6BDF7' : inUnit ? 'rgba(214,189,247,0.35)' : 'rgba(236,238,240,0.16)',
+          anim: known ? `hr-tick .7s ${0.3 + q * 0.12}s ease-out both, hr-glow 3.2s ${q * 0.3}s ease-in-out infinite` : next ? 'hr-blink 1.8s ease-in-out infinite' : 'none',
+        });
+      }
+      pos += 0.8;
+    });
+    return { ticks };
+  }
+}
+</script>
+</body>
+</html>

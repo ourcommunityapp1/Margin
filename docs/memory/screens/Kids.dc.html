@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>A child's lesson</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&amp;family=Figtree:wght@400;500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#8A4A1E}a:hover{color:#6E3A16}
+button{font:inherit}
+@keyframes hdrift{from{transform:scale(1.05) translate3d(-2%,0,0)}to{transform:scale(1.12) translate3d(2%,-1.5%,0)}}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+.h-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:hdrift 70s ease-in-out infinite alternate}
+.h-pop{animation:pop .35s ease-out}
+@media (prefers-reduced-motion: reduce){.h-bg,.h-pop{animation:none}}
+.h-warm{background:rgba(253,246,236,.86);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Figtree, system-ui, sans-serif; color: #2B1E14; background: #A0522D">
+  <img class="h-bg" src="/_blob/6ad176f67df77eae5ad735b321e48e25" alt="">
+  <div style="position: relative; height: 100%; box-sizing: border-box; padding: 54px 18px 28px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 12px">
+      <span style="width: 48px; height: 48px; border-radius: 24px; background: #E9C46A; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px">J</span>
+      <div style="flex: 1; display: flex; gap: 6px" aria-label="Step 3 of 6">
+        <span style="flex: 1; height: 12px; border-radius: 6px; background: #E9C46A"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: #E9C46A"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: #FFFFFF"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: rgba(255,255,255,.45)"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: rgba(255,255,255,.45)"></span><span style="flex: 1; height: 12px; border-radius: 6px; background: rgba(255,255,255,.45)"></span>
+      </div>
+    </div>
+    <div class="h-warm" style="margin-top: 30px; border-radius: 28px; padding: 22px 20px; display: flex; flex-direction: column; gap: 14px; text-align: center">
+      <span style="font-size: 14px; font-weight: 800; color: #8A4A1E">Psalm 23:1</span>
+      <p style="margin: 0; font-size: 22px; font-weight: 800; line-height: 1.3">Put the words in order!</p>
+      <div style="min-height: 120px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-content: flex-start; border: 2px dashed #D9B48A; border-radius: 20px; padding: 12px" aria-label="Your verse">
+        <sc-for list="{{placed}}" as="w" hint-placeholder-count="0">
+          <button class="h-pop" onClick="{{w.take}}" style="height: 54px; padding: 0 16px; border-radius: 16px; border: 0; border-bottom: 4px solid #8A4A1E; background: #C8743B; color: #FFFFFF; font-size: 20px; font-weight: 800; cursor: pointer">{{w.word}}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px" aria-label="Word tiles">
+      <sc-for list="{{bank}}" as="w" hint-placeholder-count="6">
+        <button onClick="{{w.put}}" disabled="{{w.used}}" style="{{w.style}}">{{w.word}}</button>
+      </sc-for>
+    </div>
+    <sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+      <div class="h-warm h-pop" style="border-radius: 24px; padding: 14px 16px; display: flex; align-items: center; gap: 12px">
+        <img src="/_blob/97551cdfd9c0a6ace13e0af5310c63c8" alt="A carnelian stone" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 3px solid #D8B867">
+        <span style="display: flex; flex-direction: column"><span style="font-weight: 800; font-size: 18px">You did it!</span><span style="font-size: 14px; font-weight: 700; color: #6E4A2C">One step closer to your Carnelian.</span></span>
+      </div>
+    </sc-if>
+    <button onClick="{{hear}}" style="margin-top: auto; height: 58px; border-radius: 29px; border: 0; background: #FFFFFF; color: #2B1E14; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4z"></path><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"></path></svg>Hear it</button>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p) { super(p); this.state = { placed: [] }; }
+  renderVals() {
+    const answer = ['The LORD', 'is my', 'shepherd;', 'I shall', 'not want.'];
+    const bank = ['shepherd;', 'not want.', 'The LORD', 'I shall', 'is my', 'king;'];
+    const placed = this.state.placed;
+    const done = placed.length === answer.length && placed.every((w, i) => w === answer[i]);
+    return {
+      placed: placed.map((w, i) => ({ word: w, take: () => !done && this.setState({ placed: placed.filter((_, k) => k !== i) }) })),
+      bank: bank.map((w) => {
+        const used = placed.includes(w) || done;
+        return { word: w, used, put: () => !used && this.setState({ placed: [...placed, w] }),
+          style: 'height: 64px; border-radius: 18px; border: 0; border-bottom: 5px solid ' + (used ? 'transparent' : '#C9B79C') + '; background: ' + (used ? 'rgba(255,255,255,.3)' : '#FFFFFF') + '; color: ' + (used ? 'transparent' : '#2B1E14') + '; font-size: 18px; font-weight: 800; cursor: pointer' };
+      }),
+      done,
+      hear: () => {}
+    };
+  }
+}
+</script>
+</body>
+</html>

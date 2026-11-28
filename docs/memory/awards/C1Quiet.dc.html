@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Quiet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1D2327}a:hover{color:#000}
+</style>
+</helmet>
+<div style="width: 390px; height: 1000px; position: relative; overflow: hidden; background: #DCD4C3; color: #1D2327; font-family: Inter, system-ui, sans-serif">
+  <img src="/_blob/d6716bc46934f152a7ed5964720d68df" alt="" style="position: absolute; left: -8%; top: -2%; width: 116%; height: 104%; object-fit: cover">
+  <div style="position: relative; box-sizing: border-box; padding: 52px 16px 120px; display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: flex; align-items: center; gap: 8px; padding: 0 4px">
+      <button type="button" style="display: flex; align-items: center; gap: 6px; border: 0; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 8px 12px; font: 600 14px Inter, sans-serif; color: #1D2327; min-height: 40px">
+        Shorter
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>
+      </button>
+      <span style="flex: 1"></span>
+      <span style="display: flex; align-items: center; gap: 5px; font-weight: 700; background: rgba(247,245,240,0.9); border-radius: 18px; padding: 0 12px; min-height: 40px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B0442A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0"></path><path d="M12 6V3M5.6 8.6 3.5 6.5M18.4 8.6l2.1-2.1M2 18h20"></path></svg>2</span>
+      <span style="width: 40px; height: 40px; border-radius: 20px; background: rgba(247,245,240,0.9); display: flex; align-items: center; justify-content: center; font-weight: 700">L</span>
+    </div>
+
+    <section style="background: #F7F5F0; border-radius: 32px; padding: 28px 22px 22px; display: flex; flex-direction: column; align-items: center; gap: 20px">
+      <div style="position: relative; width: 184px; height: 184px">
+        <svg width="184" height="184" viewBox="0 0 184 184" aria-hidden="true" style="transform: rotate(-90deg)">
+          <circle cx="92" cy="92" r="80" fill="none" stroke="#ECE8DF" stroke-width="12"></circle>
+          <sc-for list="{{segs}}" as="s" hint-placeholder-count="2">
+            <circle cx="92" cy="92" r="80" fill="none" stroke="{{s.color}}" stroke-width="12" stroke-linecap="butt" stroke-dasharray="{{s.dash}}" stroke-dashoffset="{{s.offset}}"></circle>
+          </sc-for>
+        </svg>
+        <div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+          <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 52px; font-weight: 600; line-height: 1">5</span>
+          <span style="font-size: 14px; color: #5B6469; font-weight: 600">of 38 known</span>
+        </div>
+      </div>
+      <span style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+        <span style="font-size: 12px; font-weight: 700; letter-spacing: 1.4px; color: #5B6469">PART 1</span>
+        <span style="font-family: 'Source Serif 4', Georgia, serif; font-size: 24px; font-weight: 600">What to believe</span>
+      </span>
+
+      <ol style="list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column">
+        <sc-for list="{{units}}" as="u" hint-placeholder-count="5">
+          <li style="display: flex; align-items: center; gap: 12px; min-height: 52px; border-top: 1px solid #E9E4DA; opacity: {{u.op}}">
+            <span style="width: 22px; font-size: 13px; font-weight: 700; color: #8A9196">{{u.n}}</span>
+            <span style="flex: 1; font-weight: {{u.weight}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{u.name}}</span>
+            <span style="display: flex; gap: 3px">
+              <sc-for list="{{u.stones}}" as="s" hint-placeholder-count="5"><dc-import name="Medal" level="{{s}}" size="14" hint-size="14px,14px"></dc-import></sc-for>
+            </span>
+          </li>
+        </sc-for>
+      </ol>
+    </section>
+
+    <a href="#" style="min-height: 60px; border-radius: 30px; background: #1D2327; color: #F7F5F0; font-weight: 600; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; box-shadow: 0 10px 24px rgba(20,24,28,0.18)">
+      Start lesson 8
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
+  </div>
+
+  <nav aria-label="Main" style="position: absolute; left: 14px; right: 14px; bottom: 16px; background: #F7F5F0; border-radius: 26px; padding: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; box-shadow: 0 8px 24px rgba(20,24,28,0.12)">
+    <a href="#" aria-current="page" style="min-height: 56px; border-radius: 20px; background: #ECE8DF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #1D2327">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2"></path></svg>Today</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5a2 2 0 0 1 2-2h6v18H5a2 2 0 0 0-2 2zM21 5a2 2 0 0 0-2-2h-6v18h6a2 2 0 0 1 2 2z"></path></svg>Learn</a>
+    <a href="#" style="min-height: 56px; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 12px; font-weight: 600; text-decoration: none; color: #5B6469">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"></path><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3"></path></svg>Progress</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Ring: 38 questions in Part 1; each learned one fills its share in its stone's color.
+    const C = 2 * Math.PI * 80, total = 38;
+    const parts = [{ color: '#D99A2B', n: 1 }, { color: '#7B52B5', n: 4 }];
+    let at = 0;
+    const segs = parts.map((p) => {
+      const len = (p.n / total) * C;
+      const seg = { color: p.color, dash: `${len - 2} ${C}`, offset: `${-at}` };
+      at += len;
+      return seg;
+    });
+    const none = ['none', 'none', 'none', 'none', 'none'];
+    return {
+      segs,
+      units: [
+        { n: 1, name: 'Our purpose and God’s Word', stones: ['topaz', 'amethyst', 'amethyst', 'amethyst', 'amethyst'], op: 1, weight: 500 },
+        { n: 2, name: 'God’s plan and creation', stones: ['amethyst', 'amethyst', 'none', 'none', 'none'], op: 1, weight: 700 },
+        { n: 3, name: 'Providence and the fall', stones: none, op: 0.5, weight: 500 },
+        { n: 4, name: 'Sin and grace', stones: none, op: 0.5, weight: 500 },
+        { n: 5, name: 'The Redeemer', stones: none, op: 0.5, weight: 500 },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
