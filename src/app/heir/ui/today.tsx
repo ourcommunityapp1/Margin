@@ -54,7 +54,7 @@ export function TodayCards() {
   const focus = dailyCourse(household.plan);
   const goal = household.plan?.minutes ?? DEFAULT_GOAL;
   const day = localDay(now);
-  const started = useMemo(() => startedCourses(mine, track, focus, household.plan?.removed), [mine, track, focus, household.plan?.removed]);
+  const started = useMemo(() => startedCourses(mine, track, focus, household.plan?.removed, household.plan?.verses), [mine, track, focus, household.plan?.removed, household.plan?.verses]);
   const fixIds = useMemo(() => keep?.tryAgain.map((h) => h.item.id) ?? [], [keep]);
 
   // Make the day's plan once, the first time Today opens on a new day; add a fix found later in the day at the end.
@@ -62,7 +62,7 @@ export function TodayCards() {
   useEffect(() => {
     if (!me) return;
     const planned = today?.day === day && today.cards;
-    const cards = planned ? null : planDay({ p: mine, track, started, focus, goal, now, fix: fixIds });
+    const cards = planned ? null : planDay({ p: mine, track, started, focus, goal, now, fix: fixIds, verses: household.plan?.verses });
     const lateFixes = planned ? planDay({ p: mine, track, started, focus: null, goal: 0, now, fix: fixIds }).filter((c) => c.kind === 'fix' && !today.cards!.some((x) => x.course === c.course && x.kind !== 'lesson')) : [];
     if (planned && !lateFixes.length) return;
     Promise.resolve().then(() => updateProgress((all) => {
@@ -71,7 +71,7 @@ export function TodayCards() {
       const next = cards ? withPlan(p.today, day, cards) : lateFixes.reduce((t, c) => withFix(t, c), p.today!);
       return { ...all, [me.id]: { ...p, today: next } };
     }));
-  }, [me, today, day, mine, track, started, focus, goal, now, fixIds, updateProgress]);
+  }, [me, today, day, mine, track, started, focus, goal, now, fixIds, updateProgress, household.plan?.verses]);
 
   const satisfied = (c: DayCard) => {
     const course = courseFor(c.course);
@@ -92,10 +92,11 @@ export function TodayCards() {
     if (!course) return null;
     const fixItems = s.card.kind === 'fix' ? (keep?.tryAgain ?? []).filter((h) => ids(course).has(h.item.id)).map((h) => h.item.id) : [];
     const href = s.card.kind === 'fix' && fixItems.length ? `/heir/lesson?mode=keep&items=${fixItems.join(',')}&course=${course.id}&card=${encodeURIComponent(s.card.id)}`
+      : s.card.item ? `/heir/lesson?mode=learn&item=${encodeURIComponent(s.card.item)}&course=${course.id}&card=${encodeURIComponent(s.card.id)}`
       : `/heir/lesson?mode=${s.card.kind === 'lesson' ? 'lesson' : 'review'}&course=${course.id}&card=${encodeURIComponent(s.card.id)}`;
     const lessonNo = (mine.courseLessons[course.id] ?? 0) + 1;
-    const lockIn = s.card.kind === 'lesson' && nextLine(mine, track, course, now).text === 'Lock-in next';
-    return { type: 'card', state: s, course, href, tag: s.card.kind === 'fix' ? 'Fix today' : 'Recommended', button: s.card.kind !== 'lesson' ? 'Start review' : lockIn ? 'Lock it in' : lessonNo === 1 ? 'Begin' : `Start lesson ${lessonNo}` };
+    const lockIn = s.card.kind === 'lesson' && !s.card.item && nextLine(mine, track, course, now).text === 'Lock-in next';
+    return { type: 'card', state: s, course, href, tag: s.card.kind === 'fix' ? 'Fix today' : 'Recommended', button: s.card.kind !== 'lesson' ? 'Start review' : s.card.item ? 'Learn it' : lockIn ? 'Lock it in' : lessonNo === 1 ? 'Begin' : `Start lesson ${lessonNo}` };
   };
   // "When you rise" and "When you lie down" are on Today every day from 5 am (once something is learned): the morning
   // recall until it's done or the evening comes, and the evening one shown all day, startable from 7 pm.
@@ -147,7 +148,7 @@ export function TodayCards() {
   // Which questions or verses a card is about: "Q4, Q9", "Luke 2:11", always the references.
   const cardItems = (s: Extract<Slide, { type: 'card' }>): Item[] => {
     const course = ids(s.course);
-    if (s.state.card.kind === 'lesson') return lessonItems(s.course, mine, track, now);
+    if (s.state.card.kind === 'lesson') return s.state.card.item ? [getItem(s.state.card.item)].filter((i): i is Item => !!i) : lessonItems(s.course, mine, track, now);
     if (s.state.card.kind === 'fix') return (keep?.tryAgain ?? []).filter((h) => course.has(h.item.id)).map((h) => h.item);
     return dueCards(mine, now, course).map((d) => getItem(d.itemId)).filter((i): i is Item => !!i);
   };

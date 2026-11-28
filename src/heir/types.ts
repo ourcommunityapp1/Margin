@@ -55,6 +55,8 @@ export interface Plan {
   minutes?: number;
   // Courses taken out of the plan. Nothing is lost: the progress is kept, and adding the course again brings it back.
   removed?: string[];
+  // Single verses or answers added to the plan on their own (item ids), whether or not their course is in the plan.
+  verses?: string[];
 }
 
 export interface Household {

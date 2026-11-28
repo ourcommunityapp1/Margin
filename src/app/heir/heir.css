@@ -1381,3 +1381,5 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
 .hr-mini2 b { font-size: 20px; font-weight: 600; }
 .hr-mini2 span { color: var(--muted); display: inline-flex; align-items: center; }
 .hr-mini2-dot { width: 8px; height: 8px; border-radius: 50%; background: #e8b867; margin-right: 7px; display: inline-block; }
+.hr-itemplan { display: flex; flex-direction: column; gap: 8px; }
+.hr-itemplan .hr-btn { gap: 8px; }

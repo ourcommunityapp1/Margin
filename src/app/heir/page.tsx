@@ -16,7 +16,7 @@ import { dailyCourse } from '@/heir/household';
 import type { Plan, Track } from '@/heir/types';
 import type { MemberProgress } from '@/heir/progress';
 
-const emptyPlan = (plan: Plan | null, mine: MemberProgress, track: Track) => !!plan && startedCourses(mine, track, dailyCourse(plan), plan.removed).length === 0;
+const emptyPlan = (plan: Plan | null, mine: MemberProgress, track: Track) => !!plan && !plan.verses?.length && startedCourses(mine, track, dailyCourse(plan), plan.removed, plan.verses).length === 0;
 
 export default function Today() {
   const { ready, household, time } = useHeir();

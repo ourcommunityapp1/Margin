@@ -60,7 +60,7 @@ export default function Courses() {
   const minutes = household.plan?.minutes ?? DEFAULT_GOAL;
   const summary = (c: Course) => courseSummary(c, track, mine, minutes, now);
   const current = courseFor(dailyCourse(household.plan));
-  const mineCourses = startedCourses(mine, track, current?.id ?? null, household.plan?.removed);
+  const mineCourses = startedCourses(mine, track, current?.id ?? null, household.plan?.removed, household.plan?.verses);
   const mineIds = new Set(mineCourses.map((c) => c.id));
 
   // The season's course, if one is in season now.
@@ -90,6 +90,7 @@ export default function Courses() {
   // Single verses to learn any time, on hand-picked shelves that have nothing to do with which course a verse is in.
   const learnedUnits = new Set(mine.units);
   const isLearned = (i: Item) => unitsFor(i, track).every((u) => learnedUnits.has(u.key));
+  const myVerses = (household.plan?.verses ?? []).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });
   const verseShelves = VERSE_SHELVES.map((sh) => ({ id: sh.id, title: sh.title, items: sh.ids.flatMap((id) => { const it = getItem(id); return it ? [it] : []; }) }));
 
   // Course shelves and verse shelves taken in turn, so the page alternates between a list of courses and a row of verses.
@@ -119,6 +120,12 @@ export default function Courses() {
                 <li key={c.id}><CourseCard course={c} status={statusOf(summary(c))} window={windowFor(c, true, 84, true)} /></li>
               ))}
             </ul>
+          </section>
+        )}
+        {myVerses.length > 0 && (
+          <section className="hr-shelf" aria-labelledby="shelf-verses">
+            <h2 id="shelf-verses" className="hr-label" style={{ margin: '8px 6px 0' }}>Your verses</h2>
+            <div className="hr-hscroll">{myVerses.map((i) => <VerseCard key={i.id} item={i} learned={isLearned(i)} />)}</div>
           </section>
         )}
         {seasonal && !mineIds.has(seasonal.c.id) && hero}

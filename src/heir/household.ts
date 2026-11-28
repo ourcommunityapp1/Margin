@@ -30,7 +30,8 @@ export function setActive(h: Household, id: string): Household {
 export function setPlan(h: Household, plan: Plan): Household {
   const minutes = plan.minutes ?? h.plan?.minutes;
   const removed = (plan.removed ?? h.plan?.removed ?? []).filter((id) => id !== plan.course);
-  return { ...h, plan: { course: plan.course, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}) } };
+  const verses = plan.verses ?? h.plan?.verses ?? [];
+  return { ...h, plan: { course: plan.course, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}), ...(verses.length ? { verses } : {}) } };
 }
 
 /** The daily course: where new lessons come from. Null when it has been taken out of the plan. */
@@ -45,7 +46,7 @@ export function removeFromPlan(h: Household, courseId: string, next: string | nu
   if (!h.plan) return h;
   const removed = [...new Set([...(h.plan.removed ?? []), courseId])].filter((id) => id !== next);
   const course = h.plan.course === courseId ? (next ?? courseId) : h.plan.course;
-  return { ...h, plan: { course, ...(h.plan.minutes ? { minutes: h.plan.minutes } : {}), removed } };
+  return { ...h, plan: { course, ...(h.plan.minutes ? { minutes: h.plan.minutes } : {}), removed, ...(h.plan.verses?.length ? { verses: h.plan.verses } : {}) } };
 }
 
 export function activeMember(h: Household): Member | null {
@@ -66,9 +67,25 @@ export function parseHousehold(raw: string | null): Household {
     const named = v.plan && (typeof v.plan.course === 'string' ? v.plan.course : typeof v.plan.collection === 'string' ? v.plan.collection : null);
     const minutes = v.plan && typeof v.plan.minutes === 'number' && v.plan.minutes >= 1 && v.plan.minutes <= 120 ? v.plan.minutes : undefined;
     const removed = v.plan && Array.isArray(v.plan.removed) ? v.plan.removed.filter((x: unknown): x is string => typeof x === 'string').slice(0, 40) : [];
-    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}) } : null;
+    const verses = v.plan && Array.isArray(v.plan.verses) ? v.plan.verses.filter((x: unknown): x is string => typeof x === 'string' && /^[A-Za-z0-9._-]{1,40}$/.test(x)).slice(0, 200) : [];
+    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}), ...(verses.length ? { verses } : {}) } : null;
     return { members, activeMemberId, plan };
   } catch {
     return emptyHousehold();
   }
+}
+
+/** Add one verse or answer to the plan on its own. A household with no plan yet gets one, with this item's course as the daily course. */
+export function addVerse(h: Household, itemId: string, courseId: string): Household {
+  const verses = [...new Set([...(h.plan?.verses ?? []), itemId])];
+  const base: Plan = h.plan ?? { course: courseId, removed: [courseId] };
+  return { ...h, plan: { ...base, verses } };
+}
+
+/** Take one verse or answer out of the plan. (If its course is in the plan it stays in it through the course.) */
+export function removeVerse(h: Household, itemId: string): Household {
+  if (!h.plan) return h;
+  const verses = (h.plan.verses ?? []).filter((id) => id !== itemId);
+  const { verses: _old, ...rest } = h.plan; void _old;
+  return { ...h, plan: { ...rest, ...(verses.length ? { verses } : {}) } };
 }

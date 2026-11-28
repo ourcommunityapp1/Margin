@@ -11,7 +11,7 @@ import { memberProgress } from '@/heir/progress';
 import { needsRefresh, nextStep } from '@/heir/levels';
 import { tierOf } from '@/heir/tiers';
 import { Explain } from './explain';
-import { PlanButtons, usePlanState } from './plan-button';
+import { ItemPlanButton } from './plan-button';
 import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import { RelatedVerses } from './related';
@@ -104,7 +104,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           </section>
         )}
 
-        {owner && <ItemPlan course={owner} />}
+        {owner && <ItemPlanButton item={item} course={owner} />}
 
         {learned && cards.some((c) => c.band !== 'none') && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Word by word">
@@ -181,13 +181,3 @@ function StrengthLine({ series }: { series: { at: number; chance: number }[] }) 
   );
 }
 
-// Add the verse's course to your plan (or see that it's there), from the verse's own page.
-function ItemPlan({ course }: { course: NonNullable<ReturnType<typeof courses.find>> }) {
-  const s = usePlanState(course);
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <PlanButtons course={course} surface="plain" calm />
-      <span className="hr-btn-note" style={{ marginTop: 0 }}>{s.isIn ? `${course.title} is in your plan` : `Adds ${course.title} to your plan`}</span>
-    </div>
-  );
-}

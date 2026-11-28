@@ -18,7 +18,7 @@ import { finishSession, localDay, markNight, markRisen, memberProgress, seenCoun
 import { bedtimePicks, lessonsDone, morningPicks, planNext, riskOrder } from '@/heir/planner';
 import { INTROS } from '@/heir/content/intros';
 import { daysKept, settle } from '@/heir/levels';
-import { dailyCourse } from '@/heir/household';
+import { addVerse, dailyCourse } from '@/heir/household';
 import { tierIndex, tierOf } from '@/heir/tiers';
 import { testedPositions } from '@/heir/observe';
 import { Stone } from './stone';
@@ -68,7 +68,7 @@ function useKeyboardLift() {
 export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, from = '/heir' }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'learn' | 'keep' | 'extra'; itemId?: string; itemIds?: string[]; courseId?: string; cardId?: string; from?: string }) {
   useKeyboardLift();
   const router = useRouter();
-  const { ready, household, updateProgress, progress, keepRules } = useHeir();
+  const { ready, household, update, updateProgress, progress, keepRules } = useHeir();
   const { me, items, track, mine, due, course } = useCourse(courseId);
   const idsKey = itemIds.join(',');
   const [session, setSession] = useState<Session | null>(null);
@@ -146,7 +146,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
     const one = mode === 'item' && itemId ? getItem(itemId) : undefined;
     if (mode === 'extra') {
       // Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
-      const started = startedCourses(mine, track, dailyCourse(household.plan), household.plan?.removed);
+      const started = startedCourses(mine, track, dailyCourse(household.plan), household.plan?.removed, household.plan?.verses);
       const allIds = new Set(started.flatMap((c) => courseItems(c).map((i) => i.id)));
       const recent = recalledRecently(mine.log, new Date());
       const picks = riskOrder(mine, allIds, new Date(), parts).filter((x) => !waitingForSleep(mine, x.itemId, new Date()) && !recent.has(x.itemId));
@@ -286,6 +286,8 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
     const kind = session.rise ? 'rise' : session.night ? 'night' : mode === 'extra' || mode === 'item' || (mode === 'keep' && !cardId) ? 'extra' : session.kind === 'review' ? 'review' : 'lesson';
     const saved = { ...marked, today: withSession(marked.today, localDay(now), { id: crypto.randomUUID(), at: now.toISOString(), secs: Math.max(1, Math.round(activeMs.current / 1000)), course: courseId ?? course.id, kind, ...(cardId ? { card: cardId } : {}) }) };
     updateProgress((p) => ({ ...p, [session.memberId]: saved }));
+    // Learning a verse on its own puts it in the plan (its reviews follow), without bringing its whole course along.
+    if (mode === 'learn' && itemId) update((h) => addVerse(h, itemId, course.id));
     const recall = recorded.filter((r) => r.kind !== 'intro');
     setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round(activeMs.current / 60000)), ups: settled.ups, awards: settled.awards, kept: daysKept(settled.progress.days, localDay(now)) });
   };

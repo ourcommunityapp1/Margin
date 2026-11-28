@@ -6,8 +6,9 @@ import { useState } from 'react';
 // "Remove from plan" takes it out of Today; nothing is lost, and adding it again picks up where you left off.
 
 import { courseFor, courses, type Course } from '@/heir/content';
+import type { Item } from '@/heir/types';
 import { startedCourses } from '@/heir/dayplan';
-import { activeMember, dailyCourse, inPlan, removeFromPlan, setPlan } from '@/heir/household';
+import { activeMember, addVerse, dailyCourse, inPlan, removeFromPlan, removeVerse, setPlan } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
 import { useHeir } from './provider';
 
@@ -19,8 +20,8 @@ export function usePlanState(course: Course) {
   const plan = household.plan;
   const daily = dailyCourse(plan);
   // The courses in the plan right now (the daily course, then every course begun and not removed).
-  const inYourPlan = startedCourses(mine, track, daily, plan?.removed);
-  const started = courses.some((c) => c.id === course.id && startedCourses(mine, track, null).some((s) => s.id === c.id));
+  const inYourPlan = startedCourses(mine, track, daily, plan?.removed, plan?.verses);
+  const started = courses.some((c) => c.id === course.id && startedCourses(mine, track, null, [], plan?.verses).some((s) => s.id === c.id));
   const isIn = inPlan(plan, course.id, started);
   const isDaily = daily === course.id;
   const dailyTitle = courseFor(daily)?.title ?? null;
@@ -79,6 +80,35 @@ export function PlanRow({ course, learned, total }: { course: Course; learned: n
           : <button type="button" className="hr-plan-btn" onClick={s.add}>Add to plan</button>}
         {s.isIn && open && <button type="button" className="hr-plan-btn" data-quiet="true" onClick={() => { setOpen(false); s.remove(); }}>Remove from plan</button>}
       </span>
+    </div>
+  );
+}
+
+/** Add one verse or answer to the plan on its own. It knows when the verse is already in the plan: on its own, or through its course. */
+export function ItemPlanButton({ item, course }: { item: Item; course: Course }) {
+  const { household, update } = useHeir();
+  const c = usePlanState(course);
+  const [open, setOpen] = useState(false);
+  const own = !!household.plan?.verses?.includes(item.id);
+  const through = c.isIn;
+  const note = own && through ? `In your plan, and through ${course.title}`
+    : own ? 'In your plan on its own'
+    : through ? `In your plan through ${course.title}`
+    : 'Adds just this one to your plan';
+  if (!own && !through) {
+    return (
+      <div className="hr-itemplan">
+        <button type="button" className="hr-btn hr-btn-outline" onClick={() => update((h) => addVerse(h, item.id, course.id))}>Add to plan</button>
+        <span className="hr-btn-note" style={{ marginTop: 0 }}>{note}</span>
+      </div>
+    );
+  }
+  return (
+    <div className="hr-itemplan">
+      <button type="button" className="hr-btn hr-btn-outline" aria-expanded={open} onClick={() => setOpen((v) => !v)}><span>Added to plan</span>{chevron(open)}</button>
+      {open && own && <button type="button" className="hr-btn hr-btn-outline" onClick={() => { setOpen(false); update((h) => removeVerse(h, item.id)); }}>Remove this one from plan</button>}
+      {open && through && <button type="button" className="hr-btn hr-btn-outline" onClick={() => { setOpen(false); c.remove(); }}>Remove {course.title} from plan</button>}
+      <span className="hr-btn-note" style={{ marginTop: 0 }}>{note}</span>
     </div>
   );
 }

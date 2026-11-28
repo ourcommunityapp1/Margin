@@ -147,3 +147,11 @@ The passage sits open on the page, then Practice (solid) and Review (outlined) s
 - **Practice** on a verse/answer page is now ~2 minutes: `buildPractice` in `lesson.ts` (first a step matched to how well it is known, then 3 more varied quick steps, then the whole thing typed). **Learn it · 2 min** on an unlearned verse page opens a new lesson mode (`mode=learn&item=&course=`) that teaches that item's next unlearned part. Dart: port `buildPractice`; the lesson fixture does not cover it.
 - Community: tab renamed; Requests and Friends are two small boxes under the search bar (Friends expands the list); leaderboard card unchanged below them. The activity feed is not built (needs a server events table and privacy rules; see the TODO).
 - Lessons take a `from` path and return there (back goes where it was started); Today shows "opens 7 pm" for the locked evening row.
+
+## Update 2026-11-28 (later): single verses in the plan
+
+`Plan.verses?: string[]` holds verses or answers added on their own (item ids). Rules (`household.ts`, `dayplan.ts`, tests in `plan.test.ts`):
+- A verse is in the plan if its id is in `plan.verses` **or** its course is in the plan; the verse page shows which ("In your plan on its own" / "…through <course>") and offers the matching Remove.
+- A course counts as started (so it is in the plan and reviewed as a whole) only for what was learned **outside** the single verses: `startedCourses(p, track, focus, removed, verses)`. Learning one verse with "Learn it" adds it to `plan.verses` when the lesson finishes, so its course does not join the plan.
+- `planDay(... verses)` adds one lesson card per day for the first planned verse not yet learned (only when there is no other new lesson that day and the weekly brake is off); `DayCard.item` names the verse; card id `YYYY-MM-DD:lesson:<itemId>`; href `mode=learn&item=&course=&card=`. Learned planned verses in a course that is not in the plan get a review card for that course.
+- Not built: removing a *learned* verse does not stop its reviews if another planned verse of the same course is still in the plan (the review card picks from the whole course).

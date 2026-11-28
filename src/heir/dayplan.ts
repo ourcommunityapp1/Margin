@@ -6,14 +6,14 @@
 // Order: things to fix first (a recall missed, to put right by the end of tomorrow), then any course whose reviews are
 // piling up, then the focus course's next lesson, then other courses' reviews while time allows. See ADR-002.
 
-import { courseItems, courses, type Course } from './content/index.ts';
+import { courseItems, courses, getItem, type Course } from './content/index.ts';
 import { unitsFor } from './lesson.ts';
 import { lessonsDone, planNext } from './planner.ts';
 import { dueCards, localDay, type MemberProgress } from './progress.ts';
-import type { Track } from './types.ts';
+import type { Item, Track } from './types.ts';
 
 export type CardKind = 'lesson' | 'review' | 'fix';
-export interface DayCard { id: string; kind: CardKind; course: string; est: number }
+export interface DayCard { id: string; kind: CardKind; course: string; est: number; /** A lesson for one verse or answer added to the plan on its own. */ item?: string }
 /** One finished session today: a lesson, review, fix, extra practice, or a night or morning recall. */
 export interface DaySession { id: string; at: string; secs: number; course: string; kind: CardKind | 'extra' | 'night' | 'rise'; card?: string }
 export interface Today { day: string; cards?: DayCard[]; sessions: DaySession[]; /** Cards opened today (ids), finished or not. */ started?: string[] }
@@ -30,16 +30,17 @@ export const NEW_PER_WEEK = 5;
 
 /** The courses in this person's plan: the focus course (even if not begun), then every course they've learned anything in,
  *  except those they've taken out of the plan (`removed`; their progress is kept). */
-export function startedCourses(p: MemberProgress, track: Track, focus: string | null, removed: string[] = []): Course[] {
+export function startedCourses(p: MemberProgress, track: Track, focus: string | null, removed: string[] = [], verses: string[] = []): Course[] {
   const learned = new Set(p.units);
-  const started = courses.filter((c) => c.id === focus || (!removed.includes(c.id) && courseItems(c).some((i) => unitsFor(i, track).some((u) => learned.has(u.key)))));
+  // A verse added on its own does not bring its whole course into the plan: only what was learned outside the single verses does.
+  const started = courses.filter((c) => c.id === focus || (!removed.includes(c.id) && courseItems(c).some((i) => !verses.includes(i.id) && unitsFor(i, track).some((u) => learned.has(u.key)))));
   return started.sort((a, b) => (a.id === focus ? -1 : b.id === focus ? 1 : 0));
 }
 
 /** Which course an item belongs to, among the started ones (the focus course first). */
 export const courseOfItem = (started: Course[], itemId: string) => started.find((c) => courseItems(c).some((i) => i.id === itemId))?.id ?? null;
 
-export function planDay(o: { p: MemberProgress; track: Track; started: Course[]; focus: string | null; goal: number; now: Date; fix?: string[] }): DayCard[] {
+export function planDay(o: { p: MemberProgress; track: Track; started: Course[]; focus: string | null; goal: number; now: Date; fix?: string[]; verses?: string[] }): DayCard[] {
   const day = localDay(o.now);
   const card = (kind: CardKind, course: string, est: number): DayCard => ({ id: `${day}:${kind}:${course}`, kind, course, est });
 
@@ -65,25 +66,37 @@ export function planDay(o: { p: MemberProgress; track: Track; started: Course[];
   // The brake on new material: when reviews already fill most of the day, or five new lessons came in the last week, today is
   // for keeping what you know, not adding.
   // Something new still comes at least every third day, so learning never stalls.
-  if (lesson?.kind === 'lesson' && focus) {
-    const load = o.started.reduce((n, c) => { const due = dueCards(o.p, o.now, new Set(courseItems(c).map((i) => i.id))).length; return n + (due ? reviewEst(due) : 0); }, 0);
-    const lastNew = o.p.log.reduce((m, e) => (e.kind === 'intro' && e.at > m ? e.at : m), '');
-    const daysSinceNew = lastNew ? (o.now.getTime() - Date.parse(lastNew)) / 86_400_000 : Infinity;
-    const lessonsThisWeek = new Set(o.p.log.filter((e) => e.kind === 'intro' && Date.parse(e.at) > o.now.getTime() - 7 * 86_400_000).map((e) => e.at)).size;
-    if ((load > 0.7 * o.goal && daysSinceNew < 3) || lessonsThisWeek >= NEW_PER_WEEK) {
-      const focusDue = dueCards(o.p, o.now, new Set(courseItems(focus).map((i) => i.id))).length;
-      lesson = focusDue ? card('review', focus.id, reviewEst(focusDue)) : null;
-    }
+  const load = o.started.reduce((n, c) => { const due = dueCards(o.p, o.now, new Set(courseItems(c).map((i) => i.id))).length; return n + (due ? reviewEst(due) : 0); }, 0);
+  const lastNew = o.p.log.reduce((m, e) => (e.kind === 'intro' && e.at > m ? e.at : m), '');
+  const daysSinceNew = lastNew ? (o.now.getTime() - Date.parse(lastNew)) / 86_400_000 : Infinity;
+  const lessonsThisWeek = new Set(o.p.log.filter((e) => e.kind === 'intro' && Date.parse(e.at) > o.now.getTime() - 7 * 86_400_000).map((e) => e.at)).size;
+  const braked = (load > 0.7 * o.goal && daysSinceNew < 3) || lessonsThisWeek >= NEW_PER_WEEK;
+  if (lesson?.kind === 'lesson' && focus && braked) {
+    const focusDue = dueCards(o.p, o.now, new Set(courseItems(focus).map((i) => i.id))).length;
+    lesson = focusDue ? card('review', focus.id, reviewEst(focusDue)) : null;
   }
   if (lesson && fixCourses.includes(lesson.course) && lesson.kind === 'review') lesson = null;
-  const ordered = [...fixes, ...reviews.filter((r) => r.piling).map((r) => r.card), ...(lesson ? [lesson] : []), ...reviews.filter((r) => !r.piling).map((r) => r.card)];
+  // Single verses added to the plan on their own: one lesson a day for the first one not yet learned (when there is no other
+  // new lesson today and the brake is off), and reviews for the ones learned, in courses not otherwise in the plan.
+  const planned = (o.verses ?? []).flatMap((id) => { const item = getItem(id); const course = courses.find((c) => courseItems(c).some((i) => i.id === id)); return item && course ? [{ item, course }] : []; });
+  const learnedSet = new Set(o.p.units);
+  const isLearned = (i: Item) => unitsFor(i, o.track).every((u) => learnedSet.has(u.key));
+  const nextVerse = lesson?.kind === 'lesson' || braked ? null : planned.find((x) => !isLearned(x.item));
+  const verseLesson: DayCard | null = nextVerse ? { id: `${day}:lesson:${nextVerse.item.id}`, kind: 'lesson', course: nextVerse.course.id, est: 3, item: nextVerse.item.id } : null;
+  const covered = new Set(o.started.map((c) => c.id));
+  const verseReviews = [...new Set(planned.filter((x) => isLearned(x.item) && !covered.has(x.course.id)).map((x) => x.course.id))].flatMap((cid) => {
+    const mine = new Set(planned.filter((x) => x.course.id === cid && isLearned(x.item)).map((x) => x.item.id));
+    const due = dueCards(o.p, o.now, mine).length;
+    return due ? [card('review', cid, reviewEst(due))] : [];
+  });
+  const ordered = [...fixes, ...reviews.filter((r) => r.piling).map((r) => r.card), ...(lesson ? [lesson] : []), ...(verseLesson ? [verseLesson] : []), ...reviews.filter((r) => !r.piling).map((r) => r.card), ...verseReviews];
 
   // Fit the goal: fixes and the focus lesson are always in; reviews join while they fit. At least one card, at most four.
   const out: DayCard[] = [];
   let total = 0;
   for (const c of ordered) {
     if (out.length >= MAX_CARDS) break;
-    const must = c.kind === 'fix' || c === lesson;
+    const must = c.kind === 'fix' || c === lesson || c === verseLesson;
     if (must || !out.length || total + c.est <= o.goal) { out.push(c); total += c.est; }
   }
   return out;
