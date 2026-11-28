@@ -9,7 +9,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../data/social.dart' show siteOrigin;
 import '../../engine/content.dart';
 import '../../engine/keep.dart' show DueForReview, KeepOptions, Kept, heldItems, keepLaunch;
-import '../../engine/levels.dart' show levelInfo, needsRefresh, recited;
+import '../../engine/levels.dart' show levelShown, needsRefresh, recited;
+import '../../engine/tiers.dart';
 import '../../engine/memory.dart' show partMemories;
 import '../../engine/progress.dart' show MemberProgress;
 import '../../platform/share.dart';
@@ -205,12 +206,12 @@ class _ItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final level = mine.levels[item.id] ?? 0;
+    final level = levelShown(mine, item, track);
     final dim = needsRefresh(mine, item.id, now);
     final status = dim
         ? 'Needs a refresh'
         : level > 0
-            ? levelInfo(level)!.name
+            ? tierOf(level)!.name
             : recited(item, track, mine.log)
                 ? 'Recited'
                 : learned

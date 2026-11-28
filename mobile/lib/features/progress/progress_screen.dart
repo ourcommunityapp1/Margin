@@ -14,6 +14,7 @@ import '../../engine/levels.dart';
 import '../../engine/measures.dart';
 import '../../engine/path.dart';
 import '../../engine/progress.dart';
+import '../../engine/tiers.dart';
 import '../../engine/types.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
@@ -29,7 +30,6 @@ import '../window/light.dart';
 import 'progress_parts.dart';
 
 // Recited (no stone yet) in warm glass, then each stone's own colour.
-const _stageColors = [Color(0xFFC9A46A), Color(0xFF7B52B5), Color(0xFFD99A2B), Color(0xFFB0442A), Color(0xFF1E8657), Color(0xFF2F5DA8), Color(0xFFBFC6CC)];
 const _monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 String _fmt(int n) => fmtWords(n);
@@ -56,10 +56,15 @@ class ProgressScreen extends ConsumerWidget {
     final today = localDay(now);
     final kept = daysKept(mine.days, today);
     final best = kept > bestDaysKept(mine.days) ? kept : bestDaysKept(mine.days);
-    // Each stone keeps the ones below it: an item at Topaz also counts toward Amethyst. So counts fall as you climb.
+    // How many questions and verses sit at each of the five levels right now (their highest).
     int levelAt(String id) => mine.levels[id] ?? 0;
-    final recitedCount = items.where((i) => levelAt(i.id) > 0 || recited(i, track, mine.log)).length;
-    final holding = [for (final l in levelList) items.where((i) => levelAt(i.id) >= l.n).length];
+    final tierCounts = [for (final _ in tiers) 0];
+    for (final i in items) {
+      final n = levelShown(mine, i, track);
+      if (n > 0) tierCounts[tierIndex(n)]++;
+    }
+    final startedCount = tierCounts.fold(0, (a, b) => a + b);
+    final recalledUp = tierCounts.skip(1).fold(0, (a, b) => a + b);
     // Every course with anything learned, the one in progress first.
     final yours = [
       for (final c in courses)
@@ -111,7 +116,7 @@ class ProgressScreen extends ConsumerWidget {
             children: [
               Expanded(child: RingChip(frac: wordsFrac, value: _fmt(inMemory), label: 'Words', color: const Color(0xFFF3D8B6))),
               Expanded(child: RingChip(frac: best > 0 ? (kept / best).clamp(0, 1).toDouble() : 0, value: '$kept', label: 'Days kept', color: const Color(0xFF9FB8E8))),
-              Expanded(child: RingChip(frac: recitedCount > 0 ? holding[0] / recitedCount : 0, value: '${holding[0]}', label: 'Stones', color: const Color(0xFFB9A1E6))),
+              Expanded(child: RingChip(frac: startedCount > 0 ? recalledUp / startedCount : 0, value: '$recalledUp', label: 'Recalled', color: const Color(0xFFB9A1E6))),
               Expanded(child: RingChip(frac: totalAll > 0 ? learnedAll / totalAll : 0, value: '${yours.length}', label: 'Windows', color: const Color(0xFFE5B66A))),
             ],
           ),
@@ -178,7 +183,7 @@ class ProgressScreen extends ConsumerWidget {
           title: '${_monthNames[now.toLocal().month - 1]}, day by day${best > 0 ? ' · best $best' : ''}',
           children: [_MonthGrid(days: mine.days, today: today, now: now)],
         ),
-        // Stones
+        // Levels
         KCard.column(
           gap: 14,
           children: [
@@ -186,11 +191,10 @@ class ProgressScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
-              children: [const KLabel('Stones'), Flexible(child: Text('All courses · $recitedCount recited', textAlign: TextAlign.right, style: sans(13, color: k.muted)))],
+              children: [const KLabel('Levels'), Flexible(child: Text('All courses · $startedCount started', textAlign: TextAlign.right, style: sans(13, color: k.muted)))],
             ),
-            _StoneRow(level: 0, name: stages[0].name, word: 'No stone yet', count: recitedCount, total: recitedCount, color: _stageColors[0], dim: false),
-            for (final (i, l) in levelList.indexed)
-              _StoneRow(level: l.n, name: l.name, word: l.counts, count: holding[i], total: recitedCount, color: _stageColors[l.n], dim: holding[i] == 0),
+            for (final (i, t) in tiers.indexed)
+              _StoneRow(level: t.n, name: t.name, word: t.stone, count: tierCounts[i], total: startedCount, color: Color(t.color), dim: tierCounts[i] == 0),
             if (hints.isNotEmpty)
               Container(
                 width: double.infinity,
@@ -206,7 +210,7 @@ class ProgressScreen extends ConsumerWidget {
               ),
             InkWell(
               onTap: () => context.push('/how'),
-              child: Text('How to earn each stone', style: sans(14, weight: FontWeight.w600, color: k.ink).copyWith(decoration: TextDecoration.underline)),
+              child: Text('What the levels mean', style: sans(14, weight: FontWeight.w600, color: k.ink).copyWith(decoration: TextDecoration.underline)),
             ),
           ],
         ),

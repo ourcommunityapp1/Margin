@@ -30,7 +30,7 @@ int learnedItems(List<Item> items, Track track, MemberProgress p) {
 }
 
 Stats statsFor(List<({String id, List<Item> items})> courses, List<Item> allItems, Track track, MemberProgress p, String today, [({KeepOptions options, DateTime now})? keepRules]) {
-  final stones = [for (final n in [1, 2, 3, 4, 5, 6]) allItems.where((i) => levelOf(p, i.id) >= n).length];
+  final stones = [for (final n in [1, 2, 3, 4, 5]) allItems.where((i) => levelOf(p, i.id) >= n).length];
   final days = [...p.days]..sort();
   return Stats(
     keepRules != null ? summarize(heldItems(allItems, p, track, keepRules.now, keepRules.options)).wordsKept : wordsIn(allItems, track, p).inMemory,
@@ -40,3 +40,7 @@ Stats statsFor(List<({String id, List<Item> items})> courses, List<Item> allItem
     [for (final c in courses) CourseStat(c.id, learnedItems(c.items, track, p), c.items.length)].where((c) => c.learned > 0).toList(),
   );
 }
+
+/// A friend's stone counts on the five levels: a six-count list was saved on the earlier scale (Amethyst … Diamond).
+List<int> foldStones(List<int> stones) =>
+    stones.length >= 6 ? [stones[0], stones[0], stones[1], stones[2], stones[3]] : [for (var i = 0; i < 5; i++) i < stones.length ? stones[i] : 0];

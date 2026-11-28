@@ -48,16 +48,6 @@ const windows = [
   _Credit('The empty tomb', 'NateBergin', 'CC BY 4.0', '${_wiki}Eug%C3%A8ne_Oudinot_Stained-Glass_Window,_the_Empty_Tomb,_Trinity_Church,_Boston.png', 'Trinity Church, Boston (Eugène Oudinot)'),
 ];
 
-// Close-up crops of these photos, shared under the same licenses.
-const stones = [
-  _Credit('Amethyst', 'Jon Zander (Digon3)', 'CC BY-SA 3.0', '${_wiki}Amethyst_Quartz_Macro_1.JPG'),
-  _Credit('Topaz', 'Didier Descouens', 'CC BY-SA 4.0', '${_wiki}Topaze_Br%C3%A9sil.jpg'),
-  _Credit('Carnelian', 'Claire Pearcy', 'CC BY-SA 4.0', '${_wiki}Three_Carnelian_Gemstones.jpg'),
-  _Credit('Emerald', 'Didier Descouens', 'CC BY-SA 3.0', '$_wiki(Muzo)_Emerald_crystal_in_its_matrix.jpg'),
-  _Credit('Sapphire', 'W.carter', 'CC BY 4.0', '${_wiki}Four_man-made_faceted_blue_sapphires_1.jpg'),
-  _Credit('Diamond', 'Petragems', 'CC BY-SA 4.0', '${_wiki}Round_Brilliant_Cut_Diamond.jpg'),
-];
-
 /// The two typefaces the app carries (the website loads the same two from Google Fonts).
 const fonts = [
   _Credit('Inter', 'The Inter Project Authors', 'SIL Open Font License 1.1', 'https://github.com/rsms/inter'),
@@ -121,7 +111,6 @@ class AboutScreen extends StatelessWidget {
         _Section('Stained-glass windows, from Wikimedia Commons', windows),
         _Section('Background photos (softened), from Wikimedia Commons', photos),
         _Section('Sunrise and night photos on Today', todayPhotos),
-        _Section('Stone photos (close-up crops, same licenses), from Wikimedia Commons', stones),
         _Section('Typefaces', fonts),
       ],
     );

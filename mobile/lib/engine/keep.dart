@@ -15,7 +15,7 @@ import 'util.dart';
 const _day = dayMillis;
 
 /// Days an item may go without a right recall, by the stone it has reached.
-int windowDays(int level) => level >= 5 ? 425 : level >= 4 ? 240 : 90;
+int windowDays(int level) => level >= expert ? 240 : 90;
 const reviewNoticeDays = 14;
 
 /// When the rules start. Nothing leaves anyone's count for 30 days after this.
@@ -171,7 +171,7 @@ List<Held> heldItems(List<Item> items, MemberProgress p, Track track, DateTime n
   final parts = o.model ? partMemories(p.log, p.partSnap) : null;
   return [
     for (final item in items)
-      if (levelOf(p, item.id) >= 1)
+      if (levelOf(p, item.id) >= recalled)
         () {
           final mems = parts != null ? itemParts(unitsFor(item, track).map((u) => u.key).toList(), parts) : null;
           final level = levelOf(p, item.id);

@@ -8,8 +8,10 @@ import 'dayplan.dart';
 import 'fsrs.dart';
 import 'keep.dart';
 import 'lesson.dart';
+import 'level_scale.dart';
 import 'memory.dart';
 import 'models.dart';
+import 'observe.dart' show lightMark;
 import 'util.dart';
 
 export 'util.dart' show localDay;
@@ -38,6 +40,8 @@ class MemberProgress {
   final Map<String, SavedCard> cards;
   final int lessons;
   final Map<String, int> courseLessons, levels;
+  /// The scale `levels` are stored on (ADR-005): 2 now. Saved progress without it is on the earlier six-stone scale.
+  final int levelScale;
   final Map<String, String> awards;
   final List<LogEntry> log;
   final Night? night;
@@ -53,6 +57,7 @@ class MemberProgress {
     this.lessons = 0,
     this.courseLessons = const {},
     this.levels = const {},
+    this.levelScale = levelScaleNow,
     this.awards = const {},
     this.days = const [],
     this.log = const [],
@@ -71,6 +76,7 @@ class MemberProgress {
     int? lessons,
     Map<String, int>? courseLessons,
     Map<String, int>? levels,
+    int? levelScale,
     Map<String, String>? awards,
     List<String>? days,
     List<LogEntry>? log,
@@ -88,6 +94,7 @@ class MemberProgress {
         lessons: lessons ?? this.lessons,
         courseLessons: courseLessons ?? this.courseLessons,
         levels: levels ?? this.levels,
+        levelScale: levelScale ?? this.levelScale,
         awards: awards ?? this.awards,
         days: days ?? this.days,
         log: log ?? this.log,
@@ -106,6 +113,7 @@ class MemberProgress {
         'lessons': lessons,
         'courseLessons': courseLessons,
         'levels': levels,
+        'levelScale': levelScale,
         'awards': awards,
         'days': days,
         'log': log.map((e) => e.toJson()).toList(),
@@ -209,7 +217,13 @@ MemberProgress finishSession(
     final card = existing.toCard();
     if (card.state == stateNew && now.isBefore(card.due)) continue;
     final grade = v2 ? gradeRecall(rs, (state: card.state, reps: card.reps), speed) : ratingFor(rs, card);
-    if (grade == null) continue;
+    if (grade == null) {
+      // A review of quick steps only (fill in, order, spot, match, next): still evidence. It strengthens or weakens the schedule
+      // by how much those steps show (observe.dart), and the next review is spaced from today.
+      final light = lightMark(rs);
+      if (light != null && card.state != stateNew) cards[itemId] = SavedCard.fromCard(dampedStep(card, now, light.mark, light.weight, fuzz: true));
+      continue;
+    }
     cards[itemId] = SavedCard.fromCard(fsrsNext(card, now, grade, fuzz: true));
   }
   if (v2) {
@@ -227,7 +241,7 @@ MemberProgress finishSession(
   if (keepRules != null) {
     for (final itemId in byItem.keys) {
       final c = cards[itemId], level = p.levels[itemId] ?? 0;
-      if (c != null && level >= 1) cards[itemId] = c.withDue(iso(clampDue(DateTime.parse(c.due), level, keep[itemId], now, keepRules.tz, 'whole')));
+      if (c != null && level >= 2) cards[itemId] = c.withDue(iso(clampDue(DateTime.parse(c.due), level, keep[itemId], now, keepRules.tz, 'whole')));
     }
   }
   final partSnap = log.length > logKeep ? foldTrimmed(log.sublist(0, log.length - logKeep), p.partSnap) : p.partSnap;
@@ -238,6 +252,7 @@ MemberProgress finishSession(
     lessons: p.lessons + 1,
     courseLessons: courseId != null && courseId.isNotEmpty ? {...p.courseLessons, courseId: (p.courseLessons[courseId] ?? _lessonsBefore(p, results)) + 1} : p.courseLessons,
     levels: p.levels,
+    levelScale: p.levelScale,
     awards: p.awards,
     days: p.days.contains(day) ? p.days : _lastN([...p.days, day], 400),
     log: _lastN(log, logKeep),
@@ -373,7 +388,8 @@ Progress parseProgress(String? raw) {
         cards: m['cards'] is Map ? {for (final c in (m['cards'] as Map).entries) if (c.value is Map && (c.value as Map)['due'] is String) c.key as String: SavedCard.fromJson((c.value as Map).cast<String, dynamic>())} : {},
         lessons: m['lessons'] is num ? (m['lessons'] as num).toInt() : (int.tryParse('${m['lessons']}') ?? 0),
         courseLessons: _ints(m['courseLessons']),
-        levels: _ints(m['levels']),
+        levels: levelsOnCurrentScale(_ints(m['levels']), m['levelScale'] is num ? (m['levelScale'] as num).toInt() : null),
+        levelScale: levelScaleNow,
         awards: _strings(m['awards']) ?? {},
         days: m['days'] is List ? (m['days'] as List).whereType<String>().toList() : [],
         log: m['log'] is List ? (m['log'] as List).whereType<Map>().map((e) => LogEntry.fromJson(e.cast<String, dynamic>())).toList() : [],
@@ -414,7 +430,8 @@ Map<String, T> _mergeRecord<T>(Map<String, T> a, Map<String, T> b, T Function(T 
 
 String _logKey(LogEntry e) => e.id ?? '${e.at}|${e.itemId}|${e.kind}|${e.review ? 1 : 0}';
 
-MemberProgress mergeProgress(MemberProgress a, MemberProgress b) {
+MemberProgress mergeProgress(MemberProgress a0, MemberProgress b0) {
+  final a = onCurrentScale(a0), b = onCurrentScale(b0);
   final log = <String, LogEntry>{};
   for (final e in [...a.log, ...b.log]) {
     log.putIfAbsent(_logKey(e), () => e);
@@ -432,6 +449,7 @@ MemberProgress mergeProgress(MemberProgress a, MemberProgress b) {
     lessons: math.max(a.lessons, b.lessons),
     courseLessons: _mergeRecord<int>(a.courseLessons, b.courseLessons, math.max),
     levels: _mergeRecord<int>(a.levels, b.levels, math.max),
+    levelScale: levelScaleNow,
     awards: _mergeRecord<String>(a.awards, b.awards, (x, y) => earliestIso(x, y)!),
     days: _union(a.days, b.days)..sort(),
     log: stableSorted(log.values, (x, y) => x.at.compareTo(y.at)),
@@ -443,6 +461,10 @@ MemberProgress mergeProgress(MemberProgress a, MemberProgress b) {
     partSnap: mergeSnapshot(a.partSnap, b.partSnap),
   );
 }
+
+/// A progress record's levels on the current scale (ADR-005). A record already on it is left as it is.
+MemberProgress onCurrentScale(MemberProgress p) =>
+    p.levelScale >= levelScaleNow ? p : p.copyWith(levels: levelsOnCurrentScale(p.levels, p.levelScale), levelScale: levelScaleNow);
 
 /// Whether two copies hold the same progress (so there's nothing to send).
 bool sameProgress(MemberProgress a, MemberProgress b) => jsonEncode(a.toJson()) == jsonEncode(b.toJson());

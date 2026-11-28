@@ -135,7 +135,7 @@ void main() {
     expect(find.text('Friends since Mar 2026'), findsOneWidget);
     expect(find.text('1,234'), findsOneWidget);
     expect(find.text('day streak'), findsOneWidget);
-    expect(find.text('Stones'), findsOneWidget);
+    expect(find.text('Levels'), findsOneWidget);
     expect(find.text('4 of 10'), findsOneWidget);
     expect(find.text('Bea'), findsOneWidget);
     await _tap(tester, 'Remove friend');

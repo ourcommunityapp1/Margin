@@ -7,7 +7,8 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/social.dart';
 import '../../engine/content.dart';
-import '../../engine/levels.dart';
+import '../../engine/stats.dart' show foldStones;
+import '../../engine/tiers.dart';
 import '../../engine/util.dart' show localDay;
 import '../../state/clock.dart';
 import '../../state/social.dart';
@@ -142,34 +143,32 @@ class _PersonScreenState extends ConsumerState<PersonScreen> {
               ),
             ),
             Semantics(
-              label: 'Stones',
+              label: 'Levels',
               child: KCard.column(
                 gap: 12,
                 children: [
-                  const KLabel('Stones'),
-                  for (var row = 0; row < levelList.length; row += 3) ...[
-                    if (row > 0) const SizedBox(height: 14),
-                    Row(
-                      children: [
-                        for (var i = row; i < row + 3; i++)
-                          Expanded(
-                            child: i >= levelList.length
-                                ? const SizedBox()
-                                : Opacity(
-                                    opacity: (i < p.stones!.length ? p.stones![i] : 0) > 0 ? 1 : 0.4,
-                                    child: Column(
-                                      children: [
-                                        KStone(level: levelList[i].n, size: 40),
-                                        const SizedBox(height: 4),
-                                        Text('${i < p.stones!.length ? p.stones![i] : 0}', style: sans(15, weight: FontWeight.w700, color: k.ink)),
-                                        Text(levelList[i].counts, textAlign: TextAlign.center, style: sans(11, color: k.muted)),
-                                      ],
-                                    ),
-                                  ),
-                          ),
-                      ],
-                    ),
-                  ],
+                  const KLabel('Levels'),
+                  Row(
+                    children: [
+                      for (final t in tiers.skip(1))
+                        Expanded(
+                          child: () {
+                            final n = foldStones(p.stones!)[t.n - 1];
+                            return Opacity(
+                              opacity: n > 0 ? 1 : 0.4,
+                              child: Column(
+                                children: [
+                                  KStone(level: t.n, size: 36),
+                                  const SizedBox(height: 4),
+                                  Text('$n', style: sans(15, weight: FontWeight.w700, color: k.ink)),
+                                  Text(t.name, textAlign: TextAlign.center, style: sans(11, color: k.muted)),
+                                ],
+                              ),
+                            );
+                          }(),
+                        ),
+                    ],
+                  ),
                 ],
               ),
             ),

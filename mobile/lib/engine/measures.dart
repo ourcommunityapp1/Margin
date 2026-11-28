@@ -17,16 +17,16 @@ class Words {
 }
 
 Words wordsIn(List<Item> items, Track track, MemberProgress p) {
-  final atStage = [0, 0, 0, 0, 0, 0, 0];
+  final atStage = [0, 0, 0, 0, 0, 0];
   for (final item in items) {
     final level = p.levels[item.id] ?? 0;
     if (level == 0 && !recited(item, track, p.log)) continue;
     final w = itemWords(item, track);
-    for (var n = 0; n <= (level < 6 ? level : 6); n++) {
+    for (var n = 0; n <= (level < 5 ? level : 5); n++) {
       atStage[n] += w;
     }
   }
-  return Words(atStage[0], atStage, atStage[1]);
+  return Words(atStage[0], atStage, atStage[2]); // in memory from Recalled (level 2) up
 }
 
 /// Words of items first recited in the last 7 days.

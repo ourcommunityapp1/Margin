@@ -1,9 +1,9 @@
-// How it works (src/app/heir/how/page.tsx): what the stones mean, how each recall is graded, and how reviews are spaced.
+// How it works (src/app/heir/how/page.tsx): what the levels mean, how each recall is graded, and how reviews are spaced.
 
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../engine/levels.dart';
+import '../../engine/tiers.dart';
 import '../../ui/stone.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
@@ -16,7 +16,6 @@ class HowScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     Widget h2(String t) => Semantics(header: true, child: Text(t, style: serif(22, weight: FontWeight.w600, color: k.ink, height: 1.2)));
-    final first = stages.first;
     return KPage(
       bare: true,
       children: [
@@ -25,30 +24,28 @@ class HowScreen extends StatelessWidget {
         KCard.column(
           gap: 14,
           children: [
-            h2('The stones'),
+            h2('The five levels'),
             Text(
-              'Each question or verse climbs a ladder of memory. It starts ${first.name.toLowerCase()}: ${first.means.substring(0, 1).toLowerCase()}${first.means.substring(1)} '
-              'Every stone after that is earned the way memory research measures it: the whole thing recalled with no hints, after time away. '
-              'Extra practice keeps it fresh, but doesn’t earn a stone by itself.',
+              'Each question or verse climbs five levels. Recalling it from memory, with no hints, on different days and after time away is what moves it up. '
+              'Extra practice keeps it fresh, but doesn’t move it up by itself.',
               style: sans(15, color: k.muted, height: 1.5),
             ),
-            for (final l in levelList)
+            for (final t in tiers)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  KStone(level: l.n, size: 34),
+                  KStone(level: t.n, size: 34),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text.rich(TextSpan(children: [
-                          TextSpan(text: l.name, style: sans(16, weight: FontWeight.w600, color: k.ink)),
-                          TextSpan(text: ' · ${l.counts}', style: sans(16, weight: FontWeight.w500, color: k.muted)),
+                          TextSpan(text: t.stone, style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                          TextSpan(text: ' · ${t.name}', style: sans(16, weight: FontWeight.w500, color: k.muted)),
                         ])),
                         const SizedBox(height: 2),
-                        Text(l.means, style: sans(15, color: k.ink, height: 1.45)),
-                        Text('${l.rule}.', style: sans(13, color: k.muted, height: 1.45)),
+                        Text(t.means, style: sans(15, color: k.ink, height: 1.45)),
                       ],
                     ),
                   ),

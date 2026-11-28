@@ -7,7 +7,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/household.dart';
 import '../../engine/content.dart';
-import '../../engine/levels.dart';
+import '../../engine/tiers.dart';
 import '../../engine/path.dart';
 import '../../engine/types.dart';
 import '../../state/clock.dart';
@@ -79,8 +79,8 @@ class PlanScreen extends ConsumerWidget {
         KCard.column(
           gap: 14,
           children: [
-            heading('What the stones mean'),
-            for (final l in levelList.where((l) => l.means.isNotEmpty))
+            heading('What the levels mean'),
+            for (final l in tiers)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -92,8 +92,8 @@ class PlanScreen extends ConsumerWidget {
                       children: [
                         Text.rich(
                           TextSpan(children: [
-                            TextSpan(text: l.counts, style: sans(16, weight: FontWeight.w600, color: k.ink)),
-                            TextSpan(text: ' · ${l.name}', style: sans(16, weight: FontWeight.w500, color: k.muted)),
+                            TextSpan(text: l.name, style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                            TextSpan(text: ' · ${l.stone}', style: sans(16, weight: FontWeight.w500, color: k.muted)),
                           ]),
                         ),
                         const SizedBox(height: 2),

@@ -72,7 +72,6 @@ flutter:
   assets:
     - assets/content/content.json
     - assets/images/
-    - assets/images/stones/
     - assets/photos/dawn/
     - assets/photos/dusk/
     - assets/glass/chartres-m1/

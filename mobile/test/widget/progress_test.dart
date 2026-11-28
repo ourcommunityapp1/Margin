@@ -39,7 +39,7 @@ void main() {
     expect(find.text('day kept'), findsWidgets);
     expect(find.text('WORDS IN YOUR MEMORY'), findsOneWidget);
     // The new layout: the four rings, the hero's sentence, and the folds (closed until tapped).
-    for (final label in ['Words', 'Days kept', 'Stones', 'Windows']) {
+    for (final label in ['Words', 'Days kept', 'Recalled', 'Windows']) {
       expect(find.text(label), findsWidgets, reason: 'the $label ring');
     }
     expect(find.text('Your first words are coming'), findsOneWidget, reason: 'nothing recalled on a later day yet');
@@ -52,10 +52,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Westminster Shorter Catechism'), findsOneWidget);
     expect(find.textContaining('1 of 107 learned'), findsOneWidget);
-    // The stones ladder names every stone.
-    for (final name in ['Recited', 'Amethyst', 'Topaz', 'Diamond']) {
-      await tester.ensureVisible(find.text(name));
-      expect(find.text(name), findsOneWidget);
+    // The levels card names every level.
+    for (final name in ['Familiar', 'Recalled', 'Memorized', 'Proficient', 'Expert']) {
+      await tester.ensureVisible(find.text(name).last);
+      expect(find.text(name), findsWidgets);
     }
   });
 }

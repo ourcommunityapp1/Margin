@@ -29,7 +29,7 @@ Map<String, int> memoryDates(List<Item> items, Track track, List<LogEntry> log) 
     final times = ({for (final e in entries) e.at}.toList()..sort()).where((at) => localDay(DateTime.parse(at)) != firstDay);
     for (final at in times) {
       final upTo = [for (final e in log) if (e.itemId == item.id && e.at.compareTo(at) <= 0) e];
-      if (levelFromLog(item, track, upTo, DateTime.parse(at)) >= 1) {
+      if (levelFromLog(item, track, upTo, DateTime.parse(at)) >= 2) {
         out[item.id] = DateTime.parse(at).millisecondsSinceEpoch;
         break;
       }

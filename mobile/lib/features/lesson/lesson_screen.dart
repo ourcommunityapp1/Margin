@@ -13,6 +13,8 @@ import '../../platform/haptics.dart';
 import '../../engine/dayplan.dart';
 import '../../engine/lesson.dart' as lesson;
 import '../../engine/levels.dart';
+import '../../engine/tiers.dart';
+import '../../ui/stone.dart';
 import '../../engine/measures.dart';
 import '../../engine/memory.dart';
 import '../../engine/models.dart';
@@ -188,8 +190,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     );
     ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
     Haptics.finished();
-    // A stone earned: felt once the window's new light has arrived (about three and a half seconds in).
-    if (settled.ups.isNotEmpty) {
+    // A new level from Recalled up (the news the finish screen shows): felt once the window's new light has arrived (about
+    // three and a half seconds in). Familiar comes with every lesson, so it isn't news.
+    if (settled.ups.any((u) => u.to >= recalled && tierIndex(u.to) > tierIndex(u.from))) {
       Future<void>.delayed(const Duration(milliseconds: 3600), () {
         if (mounted) Haptics.stone();
       });
@@ -424,9 +427,11 @@ class _Done extends ConsumerWidget {
     final first = session.units.isEmpty ? null : session.units.first;
     final partial = first != null && first.part < first.of;
     final kind = session.label == 'Welcome' ? 'Welcome lesson complete' : '${session.label} complete';
-    final top = finished.ups.isEmpty ? null : finished.ups.first;
+    // Only a move to a new level from Recalled up is news (Familiar comes with every lesson).
+    final tierUps = [for (final u in finished.ups) if (u.to >= recalled && tierIndex(u.to) > tierIndex(u.from)) u];
+    final top = tierUps.isEmpty ? null : tierUps.first;
     final topItem = top == null ? null : getItem(top.itemId);
-    final topLevel = top == null ? null : levelInfo(top.to);
+    final topLevel = top == null ? null : tierOf(top.to);
     final message = session.kind == 'checkpoint'
         ? 'From here they come back on a spaced schedule: soon for any you found hard, then further apart each time you remember them.'
         : session.kind == 'review'
@@ -485,12 +490,20 @@ class _Done extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: k.well, borderRadius: BorderRadius.circular(16)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text('${itemLabel(topItem)} · ${topLevel.name}', style: sans(16, weight: FontWeight.w600, color: k.ink)),
-                    const SizedBox(height: 2),
-                    Text(topLevel.means, style: sans(14, color: k.muted, height: 1.45)),
+                    KStone(level: top!.to, size: 44),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${itemLabel(topItem)} reached ${topLevel.name}', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                          const SizedBox(height: 2),
+                          Text('${topLevel.stone} · ${topLevel.means}', style: sans(14, color: k.muted, height: 1.45)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),

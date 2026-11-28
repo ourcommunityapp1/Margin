@@ -3,37 +3,23 @@
 
 import 'lesson.dart';
 import 'models.dart';
+import 'observe.dart';
+export 'observe.dart' show lightWeight;
 import 'progress.dart';
 import 'related.dart';
 import 'types.dart';
 import 'util.dart';
+export 'level_scale.dart';
 
-class Level {
-  final int n;
-  final String id, name, foundation, counts, means, rule;
-  const Level(this.n, this.id, this.name, this.foundation, this.counts, this.means, this.rule);
-}
-
-const levelList = [
-  Level(1, 'amethyst', 'Amethyst', '12th foundation', 'Remembered', 'You recalled it, unaided, after a night’s sleep: it has started to stick.',
-      'Recalled with no hints on a day after you first recited it: in full, or right in a quick step like filling in the blanks'),
-  Level(2, 'topaz', 'Topaz', '9th foundation', 'Memorized', 'You’ve recalled it unaided on three different days: it’s yours, word for word.', 'Recalled with no hints on 3 different days: in full, or right in two or more kinds of quick step'),
-  Level(3, 'carnelian', 'Carnelian', '6th foundation', 'Lasting', 'Still there after three weeks away: it has moved past short-term memory.',
-      'Recalled with no hints after a gap of 3 weeks or more: in full, or right in a step that makes you find the words'),
-  Level(4, 'emerald', 'Emerald', '4th foundation', 'Long-term', 'Right every time for six months, including after two months away: it’s in long-term memory.',
-      'Every recall right for 6 months, including one after a gap of 2 months or more'),
-  Level(5, 'sapphire', 'Sapphire', '2nd foundation', 'Enduring', 'A year after you first knew it, still there after half a year away.',
-      'Known for a year, and recalled in full with no hints after a gap of 6 months or more'),
-  Level(6, 'diamond', 'Diamond', 'The top', 'Lifelong', 'Recalled after a whole year away, three years on. Memories that last this long tend to stay for life.',
-      'Known for 3 years, and recalled in full with no hints after a gap of a year or more'),
-];
-
-final stages = <({int n, String name, String means})>[
-  (n: 0, name: 'Recited', means: 'You’ve typed it in full, with no hints, at its lesson.'),
-  for (final l in levelList) (n: l.n, name: l.counts, means: l.means),
-];
-
-Level? levelInfo(int n) => n >= 1 && n <= levelList.length ? levelList[n - 1] : null;
+// The five levels a question or verse climbs (ADR-005). Stored as `levels[itemId]`: 0 none yet, then
+//   1 Familiar    you've been through its lesson
+//   2 Recalled    recalled unaided on a later day than the lesson
+//   3 Memorized   recalled on three different days, with variety
+//   4 Proficient  typed or said in full, right, after three weeks or more away (whole answers only)
+//   5 Expert      known six months, three or more whole answers in that time all right, one after two months away
+// Names, gems and wording are in tiers.dart. A level never goes down. Words "in memory" start at Recalled.
+const familiar = 1, recalled = 2, memorized = 3, proficient = 4, expert = 5;
+const topLevel = expert;
 
 const _day = dayMillis;
 const _full = {'type', 'say'};
@@ -49,9 +35,7 @@ class _S {
 // Light recall (ADR-003; the same as src/heir/levels.ts). Reviews are light, so the first three stones can also be earned by
 // consistent recall across a variety of light steps. Easy kinds weigh little and must be right the first time; the kinds that
 // make you produce words weigh more and keep the slack for a slip or two. Whole recall counts in full; higher stones need it.
-const lightWeight = <String, double>{'match': 0.4, 'spot': 0.5, 'order': 0.5, 'next': 0.6, 'blanks': 0.75, 'letters': 0.9};
-const _easy = {'match', 'spot', 'order', 'next'};
-bool _lightPass(LogEntry e) => e.hints == 0 && (_easy.contains(e.kind) ? e.correct : keptRecall(e));
+bool _lightPass(LogEntry e) => lightPass(e);
 
 /// How much one session shows: 1 for a whole answer; else the weights of the distinct light kinds passed (a kind missed
 /// first and passed on the retry counts half), at most 1.
@@ -104,40 +88,43 @@ int levelFromLog(Item item, Track track, List<LogEntry> log, DateTime now) {
           if (i > 0 && ss[i].at - ss[i - 1].at >= days * _day && ss[i].anyUnaided) ss[i],
       ];
   final firstRecall = ss.where((s) => s.anyUnaided).firstOrNull;
-  bool knownFor(int days) => firstRecall != null && firstRecall.at <= now.millisecondsSinceEpoch - days * _day;
 
   final firstDay = ss.isNotEmpty ? localDay(fromMs(ss[0].at)) : '';
   final counting = _countingSessions(ss, 0.5);
   if (!counting.any((s) => localDay(fromMs(s.at)) != firstDay)) return 0;
   final days = {for (final s in counting) localDay(fromMs(s.at))};
   final variety = counting.any((s) => s.anyUnaided && localDay(fromMs(s.at)) != firstDay) || {for (final s in counting) ..._lightKinds(s)}.length >= 2;
-  if (days.length < 3 || !variety) return 1;
-  final lasting = _countingSessions(ss, 0.7);
-  var gapped = false;
-  for (var i = 1; i < ss.length; i++) {
-    if (ss[i].at - ss[i - 1].at >= 21 * _day && lasting.contains(ss[i])) gapped = true;
-  }
-  if (!gapped) return 2;
+  if (days.length < 3 || !variety) return recalled;
 
+  // Proficient: typed or said in full, right with no hints, after three weeks or more away. Whole answers only.
+  if (afterGap(21).isEmpty) return memorized;
+
+  // Expert: at some point, known six months, every whole answer in those six months right (at least three), one of them
+  // after two months away. Checked as of each session, so a later long gap doesn't undo it.
   final gap60 = afterGap(60);
-  bool longTermAt(int t) {
+  bool expertAt(int t) {
     final since = t - 182 * _day;
     if (firstRecall == null || firstRecall.at > since) return false;
     final recent = [for (final s in ss) if (s.at >= since && s.at <= t) ...s.entries.where((e) => _full.contains(e.kind))];
-    return recent.length >= 2 && recent.every((e) => e.correct) && gap60.any((s) => s.at >= since && s.at <= t);
+    return recent.length >= 3 && recent.every((e) => e.correct) && gap60.any((s) => s.at >= since && s.at <= t);
   }
 
-  if (!longTermAt(now.millisecondsSinceEpoch) && !ss.any((s) => s.at <= now.millisecondsSinceEpoch && longTermAt(s.at))) return 3;
-  if (!knownFor(365) || afterGap(182).isEmpty) return 4;
-  if (!knownFor(3 * 365) || afterGap(365).isEmpty) return 5;
-  return 6;
+  if (!expertAt(now.millisecondsSinceEpoch) && !ss.any((s) => s.at <= now.millisecondsSinceEpoch && expertAt(s.at))) return proficient;
+  return expert;
+}
+
+/// Learned: every part of it has been through its lesson.
+bool isLearned(Item item, Track track, MemberProgress p) {
+  final learned = p.units.toSet();
+  return unitsFor(item, track).every((u) => learned.contains(u.key));
 }
 
 /// Levels never go down: a stored level stays, and a higher one replaces it.
 Map<String, int> earnedLevels(List<Item> items, Track track, MemberProgress p, DateTime now) {
   final out = <String, int>{...p.levels};
   for (final item in items) {
-    final n = levelFromLog(item, track, p.log, now);
+    var n = levelFromLog(item, track, p.log, now);
+    if (n == 0 && isLearned(item, track, p)) n = familiar;
     if (n > (out[item.id] ?? 0)) out[item.id] = n;
   }
   return out;
@@ -165,27 +152,38 @@ int understanding(Item item, MemberProgress p) {
 
 int levelOf(MemberProgress p, String itemId) => p.levels[itemId] ?? 0;
 
+/// The level to show: the stored one, and at least Familiar for anything learned.
+int levelShown(MemberProgress p, Item item, Track track) {
+  final n = levelOf(p, item.id);
+  return n > 0 ? n : (isLearned(item, track, p) ? familiar : 0);
+}
+
 /// Overdue for review: the level stays, but the stone fades until the next good review.
 bool needsRefresh(MemberProgress p, String itemId, DateTime now) {
   final card = p.cards[itemId];
   return card != null && parseMs(card.due) < now.millisecondsSinceEpoch - _day / 2;
 }
 
+/// What the next level asks for, in a few words, or null at the top (Expert).
 String? nextStep(Item item, Track track, MemberProgress p, DateTime now) {
   final n = levelOf(p, item.id);
-  if (n == 0) return recited(item, track, p.log) ? 'Amethyst, once you recall it after a night’s sleep' : 'Type it in full with no hints to recite it';
-  if (n == 1) {
+  if (n == 0) return 'Finish its lesson to make it Familiar';
+  if (n == familiar) {
+    return recited(item, track, p.log)
+        ? 'Recalled, once you recall it after a night’s sleep'
+        : 'Recalled, once you type it in full with no hints and recall it after a night’s sleep';
+  }
+  if (n == recalled) {
     final days = {for (final s in _countingSessions(_sessions(p.log, item.id), 0.5)) localDay(fromMs(s.at))}.length;
     final left = 3 - days < 1 ? 1 : 3 - days;
-    return 'Topaz, once you recall it on $left more ${left == 1 ? 'day' : 'days'}';
+    return 'Memorized, once you recall it on $left more ${left == 1 ? 'day' : 'days'}';
   }
-  if (n == 2) return 'Carnelian, once you recall it after three weeks away';
-  if (n == 3) return 'Emerald, once it’s held for six months';
-  if (n == 4) return 'Sapphire, once you recall it a year on, after six months away';
-  if (n == 5) return 'Diamond, once you recall it three years on, after a year away';
+  if (n == memorized) return 'Proficient, once you type it right after three weeks away';
+  if (n == proficient) return 'Expert, once it’s held for six months';
   return null;
 }
 
+/// How many items are at each level or higher: Recalled, Memorized, Proficient, Expert (Familiar is "learned").
 class Counts {
   final int know, memorized, mastered, longTerm;
   const Counts(this.know, this.memorized, this.mastered, this.longTerm);
@@ -193,14 +191,16 @@ class Counts {
 
 Counts countsFor(List<Item> items, MemberProgress p) {
   final lv = items.map((i) => levelOf(p, i.id)).toList();
-  return Counts(lv.where((n) => n >= 1).length, lv.where((n) => n >= 2).length, lv.where((n) => n >= 3).length, lv.where((n) => n >= 4).length);
+  return Counts(lv.where((n) => n >= recalled).length, lv.where((n) => n >= memorized).length, lv.where((n) => n >= proficient).length,
+      lv.where((n) => n >= expert).length);
 }
 
+/// How many items sit at each level (their highest), level 1 to 5.
 List<int> shelf(List<Item> items, MemberProgress p) {
-  final out = [0, 0, 0, 0, 0, 0];
+  final out = [0, 0, 0, 0, 0];
   for (final i in items) {
     final n = levelOf(p, i.id);
-    if (n > 0) out[n - 1]++;
+    if (n > 0) out[(n > topLevel ? topLevel : n) - 1]++;
   }
   return out;
 }
@@ -264,41 +264,41 @@ class Award {
 
 const awardList = [
   Award('first-lesson', 'First lesson', 'Finish a lesson'),
-  Award('first-amethyst', 'First Amethyst', 'Recall one unaided after a night’s sleep'),
+  Award('first-amethyst', 'First Recalled', 'Recall one unaided after a night’s sleep'),
   Award('first-lock', 'First unit locked in', 'Finish a unit’s Lock it in'),
   Award('kept-7', '7 days kept', 'Keep 7 days in a row'),
-  Award('first-topaz', 'First Topaz', 'Recall one unaided on 3 different days'),
+  Award('first-topaz', 'First Memorized', 'Recall one unaided on 3 different days'),
   Award('kept-30', '30 days kept', 'Keep 30 days in a row'),
-  Award('first-carnelian', 'First Carnelian', 'Recall one after three weeks away'),
-  Award('wsc-memorized', 'Shorter Catechism memorized', 'Every Shorter question at Topaz'),
-  Award('wlc-memorized', 'Larger Catechism memorized', 'Every Larger question at Topaz'),
-  Award('apostles-memorized', 'Apostles’ Creed memorized', 'Every section at Topaz'),
-  Award('nicene-memorized', 'Nicene Creed memorized', 'Every section at Topaz'),
-  Award('first-emerald', 'First Emerald', 'Six months of right recalls'),
+  Award('first-carnelian', 'First Proficient', 'Type one right after three weeks away'),
+  Award('wsc-memorized', 'Shorter Catechism memorized', 'Every Shorter question Memorized'),
+  Award('wlc-memorized', 'Larger Catechism memorized', 'Every Larger question Memorized'),
+  Award('apostles-memorized', 'Apostles’ Creed memorized', 'Every section Memorized'),
+  Award('nicene-memorized', 'Nicene Creed memorized', 'Every section Memorized'),
+  Award('first-emerald', 'First Expert', 'Six months of right typed answers'),
 ];
 
 List<String> awardsMet(MemberProgress p, List<Item> all, String today) {
   final lv = p.levels.values.toList();
   final a = bestDaysKept(p.days), b = daysKept(p.days, today);
   final best = a > b ? a : b;
-  bool memorized(String collection) {
+  bool allMemorized(String collection) {
     final list = all.where((i) => i.collection == collection).toList();
-    return list.isNotEmpty && list.every((i) => levelOf(p, i.id) >= 2);
+    return list.isNotEmpty && list.every((i) => levelOf(p, i.id) >= memorized);
   }
 
   final met = {
     'first-lesson': p.lessons > 0,
-    'first-amethyst': lv.any((n) => n >= 1),
+    'first-amethyst': lv.any((n) => n >= recalled),
     'first-lock': p.checkpoints.isNotEmpty,
     'kept-7': best >= 7,
-    'first-topaz': lv.any((n) => n >= 2),
+    'first-topaz': lv.any((n) => n >= memorized),
     'kept-30': best >= 30,
-    'first-carnelian': lv.any((n) => n >= 3),
-    'wsc-memorized': memorized('westminster-shorter'),
-    'wlc-memorized': memorized('westminster-larger'),
-    'apostles-memorized': memorized('apostles-creed'),
-    'nicene-memorized': memorized('nicene-creed'),
-    'first-emerald': lv.any((n) => n >= 4),
+    'first-carnelian': lv.any((n) => n >= proficient),
+    'wsc-memorized': allMemorized('westminster-shorter'),
+    'wlc-memorized': allMemorized('westminster-larger'),
+    'apostles-memorized': allMemorized('apostles-creed'),
+    'nicene-memorized': allMemorized('nicene-creed'),
+    'first-emerald': lv.any((n) => n >= expert),
   };
   return [for (final aw in awardList) if (met[aw.id] == true) aw.id];
 }

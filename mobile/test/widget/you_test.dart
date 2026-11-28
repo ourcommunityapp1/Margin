@@ -74,7 +74,7 @@ void main() {
     await _tap(tester, 'Course and daily goal');
     expect(find.text('Courses'), findsOneWidget);
     expect(find.text('Your daily goal'), findsOneWidget);
-    expect(find.text('What the stones mean'), findsOneWidget);
+    expect(find.text('What the levels mean'), findsOneWidget);
     expect(find.text('How each recall is graded'), findsOneWidget);
 
     await _tap(tester, '25 minutes a day');
@@ -160,12 +160,12 @@ void main() {
     expect(find.textContaining('progress is cleared'), findsOneWidget);
   });
 
-  testWidgets('How it works explains the stones, the grades and spaced review', (tester) async {
+  testWidgets('How it works explains the levels, the grades and spaced review', (tester) async {
     await pumpApp(tester, store: await _phone(tester));
     await _openYou(tester);
     await _tap(tester, 'How it works');
-    expect(find.text('The stones'), findsOneWidget);
-    expect(find.textContaining('Amethyst'), findsWidgets);
+    expect(find.text('The five levels'), findsOneWidget);
+    expect(find.textContaining('Bronze'), findsWidgets);
     expect(find.text('How each recall is graded'), findsOneWidget);
     for (final w in ['Forgot', 'Shaky', 'Solid', 'Effortless']) {
       expect(find.text(w), findsOneWidget);

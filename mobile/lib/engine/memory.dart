@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'fsrs.dart';
 import 'models.dart';
+import 'observe.dart' show lightMark;
 import 'util.dart';
 
 /// Stamped on every answer with the chance the model gave just before it.
@@ -141,29 +142,66 @@ const _grade = {'again': ratingAgain, 'hard': ratingHard, 'good': ratingGood};
 class _Sess {
   final String part, at, day;
   final List<String> marks = [];
+  final List<LogEntry> light = [];
   _Sess(this.part, this.at, this.day);
+}
+
+/// A quick step's effect on a memory: the full update for a good (or missed) recall, moved only [weight] of the way. A match
+/// nudges; first letters nearly counts in full. The review date moves to today, so the next one is spaced from now, and a
+/// quick step never counts as a lapse. Pure; [fuzz] picks the full update (the part replay uses none).
+FsrsCard dampedStep(FsrsCard prev, DateTime at, String mark, double weight, {required bool fuzz}) {
+  final full = fsrsNext(prev, at, mark == 'good' ? ratingGood : ratingAgain, fuzz: fuzz);
+  final s = prev.stability + weight * (full.stability - prev.stability);
+  final d = prev.difficulty + weight * (full.difficulty - prev.difficulty);
+  final days = math.max(1, s.round());
+  return prev.copy()
+    ..stability = s
+    ..difficulty = d
+    ..reps = prev.reps + 1
+    ..lastReview = at
+    ..scheduledDays = days
+    ..due = DateTime.fromMillisecondsSinceEpoch(at.millisecondsSinceEpoch + days * _day, isUtc: true);
 }
 
 /// Replay answers (any order) on top of [start]. Only the first graded recall of a part on a given day moves its memory.
 Map<String, PartMem> replayParts(List<LogEntry> entries, [Map<String, PartMem> start = const {}]) {
   final mem = <String, PartMem>{...start};
+  // Group by part and session; one mark per part per session (the worst), and the first session of each day counts.
+  // A session with only quick steps (fill in, order, spot, match, next; reviews only) moves the memory by what they show.
   final sessions = <String, _Sess>{};
   for (final e in entries) {
-    if (e.part == null || !recallKinds.contains(e.kind)) continue;
+    if (e.part == null) continue;
+    final isRecall = recallKinds.contains(e.kind);
+    if (!isRecall && lightMark([e]) == null) continue;
     final key = '${e.part}|${e.at}';
     final s = sessions[key] ?? _Sess(e.part!, e.at, e.day ?? e.at.substring(0, 10));
-    s.marks.add(markOf(e));
+    if (isRecall) {
+      s.marks.add(markOf(e));
+    } else {
+      s.light.add(e);
+    }
     sessions[key] = s;
   }
   final seenDay = <String>{};
+  // A day's quick-step update is only a first look: if a typed, said or first-letters recall of the same line comes later that
+  // day, it replaces the quick-step update (the stronger evidence wins), as if the quick steps had not moved the memory.
+  final quick = <String, ({String day, PartMem? prev})>{};
   for (final s in stableSorted(sessions.values, (a, b) => a.at.compareTo(b.at))) {
+    final undo = quick[s.part];
+    if (undo != null && undo.day == s.day && s.marks.isNotEmpty) {
+      if (undo.prev != null) {
+        mem[s.part] = undo.prev!;
+      } else {
+        mem.remove(s.part);
+      }
+      quick.remove(s.part);
+      seenDay.remove('${s.part}|${s.day}');
+    }
     final m = mem[s.part];
     if (m != null && s.at.compareTo(m.last) <= 0) continue;
     if (seenDay.contains('${s.part}|${s.day}') || (m != null && m.last.substring(0, 10) == s.day)) continue;
-    seenDay.add('${s.part}|${s.day}');
-    final mark = s.marks.contains('again') ? 'again' : s.marks.contains('hard') ? 'hard' : 'good';
     final at = DateTime.parse(s.at);
-    final card = m != null
+    final prev = m != null
         ? FsrsCard(
             due: fromMsD(parseMs(m.last) + m.s * _day),
             stability: m.s,
@@ -172,8 +210,19 @@ Map<String, PartMem> replayParts(List<LogEntry> entries, [Map<String, PartMem> s
             lapses: m.lapses,
             state: m.state,
             lastReview: DateTime.parse(m.last))
-        : createEmptyCard(at);
-    final next = fsrsNext(card, at, _grade[mark]!, fuzz: false);
+        : null;
+    final FsrsCard next;
+    if (s.marks.isNotEmpty) {
+      final mark = s.marks.contains('again') ? 'again' : s.marks.contains('hard') ? 'hard' : 'good';
+      next = fsrsNext(prev ?? createEmptyCard(at), at, _grade[mark]!, fuzz: false);
+    } else {
+      final lm = lightMark(s.light);
+      // Quick steps strengthen or weaken a memory that exists; they never create one (that takes a recall).
+      if (lm == null || prev == null || prev.state == stateNew) continue;
+      next = dampedStep(prev, at, lm.mark, lm.weight, fuzz: false);
+    }
+    seenDay.add('${s.part}|${s.day}');
+    if (s.marks.isEmpty) quick[s.part] = (day: s.day, prev: m);
     mem[s.part] = PartMem(s: next.stability, d: next.difficulty, last: s.at, reps: next.reps, lapses: next.lapses, state: next.state);
   }
   return mem;

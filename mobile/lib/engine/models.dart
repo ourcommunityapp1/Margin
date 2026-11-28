@@ -12,6 +12,9 @@ class StepResult {
   final String? part;
   final int? of, words, misses;
   final List<int>? missed;
+
+  /// Positions of the words this step asked about, when it asks about only some (fill in the blanks, spot the wrong word).
+  final List<int>? tested;
   final bool correct, review;
   final int hints, ms;
   final double? p;
@@ -23,6 +26,7 @@ class StepResult {
     this.words,
     this.misses,
     this.missed,
+    this.tested,
     required this.correct,
     required this.hints,
     required this.ms,
@@ -38,6 +42,7 @@ class StepResult {
         words: _int(j['words']),
         misses: _int(j['misses']),
         missed: (j['missed'] as List?)?.map((x) => (x as num).toInt()).toList(),
+        tested: (j['tested'] as List?)?.map((x) => (x as num).toInt()).toList(),
         correct: j['correct'] == true,
         hints: _int(j['hints']) ?? 0,
         ms: _int(j['ms']) ?? 0,
@@ -53,6 +58,7 @@ class StepResult {
         if (words != null) 'words': words,
         if (misses != null) 'misses': misses,
         if (missed != null) 'missed': missed,
+        if (tested != null) 'tested': tested,
         'correct': correct,
         'hints': hints,
         'ms': ms,
@@ -74,6 +80,7 @@ class LogEntry extends StepResult {
     super.words,
     super.misses,
     super.missed,
+    super.tested,
     required super.correct,
     required super.hints,
     required super.ms,
@@ -95,6 +102,7 @@ class LogEntry extends StepResult {
       words: r.words,
       misses: r.misses,
       missed: r.missed,
+      tested: r.tested,
       correct: r.correct,
       hints: r.hints,
       ms: r.ms,
@@ -115,6 +123,7 @@ class LogEntry extends StepResult {
         words: r.words,
         misses: r.misses,
         missed: r.missed,
+        tested: r.tested,
         correct: r.correct,
         hints: r.hints,
         ms: r.ms,

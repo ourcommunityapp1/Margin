@@ -10,6 +10,7 @@ import '../../platform/share.dart';
 import '../../engine/content.dart';
 import '../../engine/levels.dart';
 import '../../engine/progress.dart';
+import '../../engine/tiers.dart';
 import '../../state/auth.dart';
 import '../../state/clock.dart';
 import '../../state/social.dart';
@@ -172,7 +173,7 @@ class _Person extends StatelessWidget {
             Text('$days ${days == 1 ? 'day' : 'days'} kept · ${p.lessons} ${p.lessons == 1 ? 'lesson' : 'lessons'} · ${p.units.length} learned', style: sans(15, color: k.ink)),
             if (c != null)
               Text(
-                '${levelList[0].counts} ${c.know} · ${levelList[1].counts} ${c.memorized} · ${levelList[2].counts} ${c.mastered} · ${levelList[3].counts} ${c.longTerm}',
+                '${tiers[1].name} ${c.know} · ${tiers[2].name} ${c.memorized} · ${tiers[3].name} ${c.mastered} · ${tiers[4].name} ${c.longTerm}',
                 style: sans(14, color: k.muted),
               ),
           ],

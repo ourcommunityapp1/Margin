@@ -314,10 +314,10 @@ class _Ctx {
 
 String _nextId(_Ctx c, String kind, String itemId) => '$kind:$itemId:${c.n++}';
 
-Step _orderStep(_Ctx c, Item item, List<String> tiles, String lead, bool pieces, bool review, [bool slots = false]) {
+Step _orderStep(_Ctx c, Item item, List<String> tiles, String lead, bool pieces, bool review, [bool slots = false, Unit? unit]) {
   final extra = pieces ? <String>[] : _otherWords(c.pool.where((i) => i.id != item.id).toList(), item.text).take(40).toList();
   final decoys = shuffle(extra, c.rng).take(pieces ? 0 : tiles.length > 4 ? 2 : 1).toList();
-  return Step(id: _nextId(c, 'order', item.id), itemId: item.id, review: review, kind: 'order', tiles: tiles, decoys: decoys, bank: _bankFor(tiles, decoys, c.rng), pieces: pieces, slots: slots, lead: lead);
+  return Step(id: _nextId(c, 'order', item.id), itemId: item.id, review: review, kind: 'order', tiles: tiles, decoys: decoys, bank: _bankFor(tiles, decoys, c.rng), pieces: pieces, slots: slots, lead: lead, part: unit?.key, partOf: unit?.of);
 }
 
 final _tokenParts = RegExp('^([“‘"\'(]*)(.*?)([.,;:!?”’")]*)\$');
@@ -369,7 +369,7 @@ Step? _nextPhraseStep(_Ctx c, Item item, Unit unit, bool review) {
   }).toList();
   final wrong = [...mixed, ...real].take(2).toList();
   if (wrong.length < 2) return null;
-  return Step(id: _nextId(c, 'next', item.id), itemId: item.id, review: review, kind: 'next', lead: chunks[j - 1], answer: answer, options: shuffle([answer, ...wrong], c.rng));
+  return Step(id: _nextId(c, 'next', item.id), itemId: item.id, review: review, kind: 'next', lead: chunks[j - 1], answer: answer, options: shuffle([answer, ...wrong], c.rng), part: unit.key, partOf: unit.of);
 }
 
 Step? _matchStep(_Ctx c, Item item, Unit unit, bool review) {
@@ -378,14 +378,14 @@ Step? _matchStep(_Ctx c, Item item, Unit unit, bool review) {
   final prompts = {...shuffle(same, c.rng), ...shuffle(rest, c.rng)}.map((i) => i.prompt).toSet().where((p) => p != item.prompt).take(3).toList();
   if (prompts.length < 2) return null;
   final text = unitText(item, c.track, unit).text;
-  return Step(id: _nextId(c, 'match', item.id), itemId: item.id, review: review, kind: 'match', text: text, answer: item.prompt, options: shuffle([item.prompt, ...prompts], c.rng));
+  return Step(id: _nextId(c, 'match', item.id), itemId: item.id, review: review, kind: 'match', text: text, answer: item.prompt, options: shuffle([item.prompt, ...prompts], c.rng), part: unit.key, partOf: unit.of);
 }
 
 Step? _spotStep(_Ctx c, Item item, Unit unit, bool review) {
   final text = unitText(item, c.track, unit).text;
   final m = _mixUp(c, text, item.text);
   if (m == null) return null;
-  return Step(id: _nextId(c, 'spot', item.id), itemId: item.id, review: review, kind: 'spot', text: m.text, wrongIndex: m.at, rightWord: text.split(' ')[m.at], correctText: text);
+  return Step(id: _nextId(c, 'spot', item.id), itemId: item.id, review: review, kind: 'spot', text: m.text, wrongIndex: m.at, rightWord: text.split(' ')[m.at], correctText: text, part: unit.key, partOf: unit.of);
 }
 
 Step _textStep(_Ctx c, String kind, Item item, Unit unit, bool review, [double blankShare = 0.3]) {
@@ -665,8 +665,8 @@ List<Step> buildRise({required List<Item> items, required Track track, required 
     final pieces = chunks.sublist(unit.start, unit.end);
     final lead = unit.start - 1 >= 0 ? chunks[unit.start - 1] : '';
     steps.add(pieces.length >= 2
-        ? _orderStep(c, item, pieces, lead, true, true)
-        : _orderStep(c, item, pieces[0].split(' '), lead, false, true, true));
+        ? _orderStep(c, item, pieces, lead, true, true, false, unit)
+        : _orderStep(c, item, pieces[0].split(' '), lead, false, true, true, unit));
   }
   return _withVerse(c, steps, 'first');
 }

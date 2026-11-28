@@ -13,7 +13,8 @@ import 'package:material_ui/material_ui.dart';
 import '../../engine/content.dart';
 import '../../engine/keep.dart' show strongUntilFor;
 import '../../engine/lesson.dart' show unitsFor;
-import '../../engine/levels.dart' show levelInfo, needsRefresh, nextStep, recited, stages;
+import '../../engine/levels.dart' show levelShown, needsRefresh, nextStep, recited;
+import '../../engine/tiers.dart';
 import '../../engine/memory.dart' show partMemories;
 import '../../engine/types.dart';
 import '../../state/clock.dart';
@@ -140,7 +141,7 @@ class _Progress extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final k = context.k;
     final mine = ref.watch(myProgressProvider);
-    final level = mine.levels[item.id] ?? 0;
+    final level = levelShown(mine, item, track);
     final dim = needsRefresh(mine, item.id, now);
     final next = nextStep(item, track, mine, now);
     final strong = strongUntilFor(item, mine, track);
@@ -149,7 +150,7 @@ class _Progress extends ConsumerWidget {
     final stats = itemStats(item, mine, track);
     final noun = unit == 'Question' ? 'answer' : unit == 'Verse' ? 'verse' : 'words';
     final hasRecited = recited(item, track, mine.log);
-    final info = levelInfo(level);
+    final info = tierOf(level);
     String date(DateTime d) {
       final l = d.toLocal();
       return '${_months[l.month - 1]} ${l.day}${l.year == now.toLocal().year ? '' : ', ${l.year}'}';
@@ -184,7 +185,7 @@ class _Progress extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(info != null ? '${info.name} · ${info.counts}' : hasRecited ? stages.first.name : 'Practiced', style: sans(16, weight: FontWeight.w600, color: k.ink)),
+                    Text(info != null ? '${info.stone} · ${info.name}' : hasRecited ? 'Recited' : 'Not learned yet', style: sans(16, weight: FontWeight.w600, color: k.ink)),
                     if (dim) Text('Due for a refresh', style: sans(14, color: k.miss)),
                     if (strong != null && !dim)
                       Text(
@@ -216,7 +217,14 @@ class _Progress extends ConsumerWidget {
           ],
           if (next != null) ...[
             const SizedBox(height: 10),
-            Text('${level == 0 && !hasRecited ? 'Next' : 'Next stone'}: $next.', style: sans(14, color: k.muted, height: 1.45)),
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(text: 'Next: ${next.split(',').first}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                if (next.contains(',')) TextSpan(text: ', ${next.substring(next.indexOf(',') + 2)}'),
+                const TextSpan(text: '.'),
+              ]),
+              style: sans(14, color: k.muted, height: 1.45),
+            ),
           ],
           const SizedBox(height: 10),
           KButton('Practice', onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}')),

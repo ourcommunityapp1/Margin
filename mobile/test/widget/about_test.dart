@@ -27,12 +27,10 @@ void main() {
     }
   });
 
-  test('the background photos and the stones are credited, with their licences', () {
+  test('the background photos are credited, with their licences (the gems are drawn, so need none)', () {
     expect(about.photos.map((p) => p.title), ['Dawn', 'Day', 'Dusk', 'Night']);
-    for (final f in Directory('assets/images/stones').listSync().whereType<File>().map((f) => f.uri.pathSegments.last.replaceAll('.jpg', ''))) {
-      expect(about.stones.map((s) => s.title.toLowerCase()), contains(f), reason: 'the $f stone');
-    }
-    for (final c in [...about.windows, ...about.photos, ...about.stones, ...about.fonts]) {
+    expect(Directory('assets/images/stones').existsSync(), isFalse);
+    for (final c in [...about.windows, ...about.photos, ...about.fonts]) {
       expect(c.license, isNotEmpty);
       expect(c.page, startsWith('https://'));
     }
