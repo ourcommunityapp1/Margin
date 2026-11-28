@@ -1362,3 +1362,4 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
 .hr-status .hr-kv div { border-bottom: 0; padding: 7px 2px; }
 .hr-status-next { margin: 0; font-size: 14px; line-height: 1.45; color: var(--muted); }
 .hr-status-next b { color: var(--ink); font-weight: 600; }
+.hr-hero-btn svg, .hr-plan-btn svg { flex: none; vertical-align: -3px; margin-left: 2px; }

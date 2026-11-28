@@ -171,7 +171,7 @@ export function TodayCards() {
       title: r ? `${s.course.title} · ${r}` : s.course.title, right: `${effort(s).full ? '✎ ' : ''}${mins(s.state.card.est)}` });
   });
   if (rise && heroKind !== 'rise') upcoming.push({ key: 'rise', label: upcoming.length ? 'Then' : 'Up next', left: <PhotoThumb photo={dawn} />, title: `When you rise · ${recallRefs(rise)}`, right: mins(recallMinutes(rise.length)) });
-  if (night && heroKind !== 'night') upcoming.push({ key: 'night', label: 'This evening', ev: true, left: <PhotoThumb photo={dusk} />, title: `When you lie down · ${recallRefs(night)}`, right: mins(recallMinutes(night.length)) });
+  if (night && heroKind !== 'night') upcoming.push({ key: 'night', label: 'This evening', ev: true, left: <PhotoThumb photo={dusk} />, title: `When you lie down · ${recallRefs(night)}`, right: nightOpen ? mins(recallMinutes(night.length)) : `opens ${EVENING_FROM - 12} pm` });
   // Finished today, at the bottom: small and dim, with a tick where the minutes were.
   const doneRows = finished.map((x) => {
     const secs = x.type === 'extra' ? x.session.secs : x.state.secs;
@@ -231,7 +231,7 @@ export function TodayCards() {
             })()}
             {/* The evening recall is still to come: not "done for today" yet. */}
             <h2 className="serif hr-b4-title">{states.length ? (night ? 'Done for now' : 'Done for today') : 'Today'}</h2>
-            {states.length > 0 && <p className="hr-b4-sub">{minutesWord(minutes)}{night ? ' · one light recall tonight' : ''}</p>}
+            {states.length > 0 && <p className="hr-b4-sub">{minutesWord(minutes)}{night ? (nightOpen ? ' · one light recall tonight' : ` · one light recall tonight, from ${EVENING_FROM - 12} pm`) : ''}</p>}
             {extraOffer && <Link href="/heir/lesson?mode=extra" className="hr-b4-go">Extra practice</Link>}
           </>
         )}

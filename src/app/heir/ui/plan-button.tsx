@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 // One way to put a course in your plan or take it out, the same everywhere a course is shown (its page, the course list).
 // "Add to plan" makes it your daily course (where new lessons come from); the others in your plan keep their reviews.
 // "Remove from plan" takes it out of Today; nothing is lost, and adding it again picks up where you left off.
@@ -31,14 +32,25 @@ export function usePlanState(course: Course) {
   return { isIn, isDaily, dailyTitle, add, remove, othersInPlan: inYourPlan.filter((c) => c.id !== course.id) };
 }
 
+const chevron = (open: boolean) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform .15s' }}><path d="M6 9l6 6 6-6" /></svg>;
+
 /** The primary and secondary buttons for a course, on a dark card (`hero`) or a plain one. */
 export function PlanButtons({ course, surface = 'hero' }: { course: Course; surface?: 'hero' | 'plain' }) {
   const s = usePlanState(course);
   const hero = surface === 'hero';
   const primary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn'} onClick={on}>{label}</button>;
   const secondary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn quiet'} {...(hero ? { 'data-quiet': 'true' } : {})} onClick={on}>{label}</button>;
-  // Two states, two words: Add to plan, or Remove from plan.
-  return s.isIn ? secondary('Remove from plan', s.remove) : primary('Add to plan', s.add);
+  const [open, setOpen] = useState(false);
+  // Two states: Add to plan; or "Added to plan" with a down arrow, and Remove from plan one tap further (no accidental removals).
+  if (!s.isIn) return primary('Add to plan', s.add);
+  return (
+    <>
+      <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn quiet'} {...(hero ? { 'data-quiet': 'true' } : {})} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <span>Added to plan</span>{chevron(open)}
+      </button>
+      {open && secondary('Remove from plan', () => { setOpen(false); s.remove(); })}
+    </>
+  );
 }
 
 /** One quiet line under the buttons: where this course stands in the plan. */
@@ -54,6 +66,7 @@ export function PlanNote({ course }: { course: Course }) {
 /** The same two choices as a compact row, for a list of courses (the plan screen). */
 export function PlanRow({ course, learned, total }: { course: Course; learned: number; total: number }) {
   const s = usePlanState(course);
+  const [open, setOpen] = useState(false);
   return (
     <div className="hr-plan-row" data-in={s.isIn}>
       <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: '1 1 170px' }}>
@@ -62,8 +75,9 @@ export function PlanRow({ course, learned, total }: { course: Course; learned: n
       </span>
       <span className="hr-plan-actions">
         {s.isIn
-          ? <button type="button" className="hr-plan-btn" data-quiet="true" onClick={s.remove}>Remove from plan</button>
+          ? <button type="button" className="hr-plan-btn" data-quiet="true" aria-expanded={open} onClick={() => setOpen((v) => !v)}>Added to plan {chevron(open)}</button>
           : <button type="button" className="hr-plan-btn" onClick={s.add}>Add to plan</button>}
+        {s.isIn && open && <button type="button" className="hr-plan-btn" data-quiet="true" onClick={() => { setOpen(false); s.remove(); }}>Remove from plan</button>}
       </span>
     </div>
   );

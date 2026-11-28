@@ -157,7 +157,6 @@ export function CommunityScreen() {
 
 // ---------------------------------------------------------------------------------------------------- the preview on Progress
 
-const goArrow = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>;
 
 export function CommunityPreview() {
   const { ready, accounts, email, board: status, boardAlert } = useHeir();
@@ -180,7 +179,7 @@ export function CommunityPreview() {
       <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }} aria-label="Community">
         <span className="hr-label">Community</span>
         <p style={{ margin: 0, lineHeight: 1.5 }}>Memorize alongside friends. Make a profile to see how you compare.</p>
-        <Link href="/heir/profile" className="hr-golink"><span>Make my profile</span><i>{goArrow}</i></Link>
+        <Link href="/heir/profile" className="hr-btn">Make my profile</Link>
       </section>
     );
   }
@@ -197,7 +196,7 @@ export function CommunityPreview() {
         <>
           <ol className="hr-lb-static"><li className="hr-lb-row me"><div className="hr-lb-link"><RowBody r={board.rows[0] ?? { place: 1, prev_place: null, idx: 1, username: 'me', relation: 'me', words: 0, name: 'You', is_me: true, friends_since: null, via: null }} note="Just you so far" /></div></li></ol>
           <p style={{ margin: 0, fontSize: 14, color: 'var(--muted)', lineHeight: 1.45 }}>Add friends to race them here. Their friends join your board too.</p>
-          <Link href="/heir/friends" className="hr-golink"><span>Find friends</span><i>{goArrow}</i></Link>
+          <Link href="/heir/friends" className="hr-btn">Find friends</Link>
         </>
       ) : (
         <>
@@ -209,7 +208,7 @@ export function CommunityPreview() {
               </li>,
             ])}
           </ol>
-          <Link href="/heir/community" className="hr-golink"><span>View leaderboard</span><i>{goArrow}</i></Link>
+          <Link href="/heir/community" className="hr-btn">View leaderboard</Link>
         </>
       )}
     </section>

@@ -65,7 +65,7 @@ function useKeyboardLift() {
   }, []);
 }
 
-export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'keep' | 'extra'; itemId?: string; itemIds?: string[]; courseId?: string; cardId?: string }) {
+export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, from = '/heir' }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'keep' | 'extra'; itemId?: string; itemIds?: string[]; courseId?: string; cardId?: string; from?: string }) {
   useKeyboardLift();
   const router = useRouter();
   const { ready, household, updateProgress, progress, keepRules } = useHeir();
@@ -237,13 +237,13 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
       <main className="hr-page bare">
         <section className="hr-card" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p className="serif" style={{ margin: 0, fontSize: 26, lineHeight: 1.25 }}><span style={{ fontWeight: 600 }}>Nothing to review yet.</span> <span style={{ color: 'var(--muted)' }}>Finish a lesson first, and it will come back here.</span></p>
-          <Link className="hr-btn" href="/heir">Back to Today</Link>
+          <Link className="hr-btn" href={from}>{from === '/heir' ? 'Back to Today' : 'Back'}</Link>
         </section>
       </main>
     );
   }
 
-  if (finished) return <Done session={session} finished={finished} again={() => { setSession(null); setPos(0); setResults({}); setRetried(new Set()); setFinished(null); }} />;
+  if (finished) return <Done session={session} finished={finished} from={from} again={() => { setSession(null); setPos(0); setResults({}); setRetried(new Set()); setFinished(null); }} />;
 
   const step = queue[pos];
   const item = getItem(step.itemId)!;
@@ -305,7 +305,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
   return (
     <main className="hr-page bare hr-lesson-screen" data-feedback={feedback ? 'true' : undefined}>
       <div className="hr-lesson-top">
-        <Link href="/heir" className="hr-back" aria-label="End lesson">
+        <Link href={from} className="hr-back" aria-label="End lesson">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </Link>
         <div className="hr-progress" role="progressbar" aria-valuemin={0} aria-valuemax={queue.length} aria-valuenow={pos} aria-label="Lesson progress">
@@ -377,7 +377,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId }: {
   );
 }
 
-function Done({ session, finished, again }: { session: Session; finished: Finished; again(): void }) {
+function Done({ session, finished, again, from }: { session: Session; finished: Finished; again(): void; from: string }) {
   const { activity, group, groupLearned, mine, items, track, course, path } = useCourse(session.course);
   const lockTomorrow = path.find((u) => u.lockWaiting && session.units.some((x) => u.group.items.some((i) => i.id === x.itemId)));
   const { now } = useHeir();
@@ -468,7 +468,7 @@ function Done({ session, finished, again }: { session: Session; finished: Finish
       {message && <p style={{ margin: '0 4px', fontSize: 15, lineHeight: 1.5 }}>{message}</p>}
       <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {cta && !session.night && !session.rise && <button type="button" className="hr-btn" onClick={again}>{cta}</button>}
-        <Link className={cta && !session.night && !session.rise ? 'hr-btn quiet' : 'hr-btn'} style={cta && !session.night && !session.rise ? { background: 'var(--card)' } : undefined} href="/heir">{session.card ? 'Back to Today' : 'Done'}</Link>
+        <Link className={cta && !session.night && !session.rise ? 'hr-btn quiet' : 'hr-btn'} style={cta && !session.night && !session.rise ? { background: 'var(--card)' } : undefined} href={from}>{session.card && from === '/heir' ? 'Back to Today' : 'Done'}</Link>
       </div>
     </main>
     </>

@@ -82,7 +82,7 @@ export function KeepScreen() {
               <span>{ids.length} chosen · about {minutes} {minutes === 1 ? 'minute' : 'minutes'}</span>
               <button type="button" onClick={() => setPicked(chosen.size >= sorted.length && sorted.length > 0 && sorted.every((h) => chosen.has(h.item.id)) ? new Set() : new Set(sorted.map((h) => h.item.id)))} style={{ background: 'none', border: 0, color: 'inherit', font: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>{sorted.length > 0 && sorted.every((h) => chosen.has(h.item.id)) ? 'Clear all' : 'Choose all'}</button>
             </span>
-            {ids.length > 0 ? <Link className="hr-btn" href={`/heir/lesson?mode=keep&items=${ids.map(encodeURIComponent).join(',')}`}>Review {ids.length}</Link> : <button type="button" className="hr-btn" disabled>Review</button>}
+            {ids.length > 0 ? <Link className="hr-btn" href={`/heir/lesson?mode=keep&items=${ids.map(encodeURIComponent).join(',')}&from=%2Fheir%2Fkeep`}>Review {ids.length}</Link> : <button type="button" className="hr-btn" disabled>Review</button>}
           </div>
         )}
       </main>

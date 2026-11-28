@@ -10,7 +10,7 @@ const TABS = [
   { href: '/heir/progress', label: 'Progress', icon: <><path d="M8 4h8v5a4 4 0 0 1-8 0z" /><path d="M12 13v4M8 20h8M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3" /></> },
 ];
 
-const FRIENDS_TAB = { href: '/heir/friends', label: 'Friends', icon: <><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.6" /><path d="M15.6 14.3A4.6 4.6 0 0 1 21 18.6" /></> };
+const FRIENDS_TAB = { href: '/heir/friends', label: 'Community', icon: <><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19a5.5 5.5 0 0 1 11 0" /><circle cx="17" cy="9" r="2.6" /><path d="M15.6 14.3A4.6 4.6 0 0 1 21 18.6" /></> };
 
 export function Tabs() {
   const path = usePathname();

@@ -23,7 +23,6 @@ import { bestDaysKept, daysKept, recited } from '@/heir/levels';
 import { TIERS, tierIndex } from '@/heir/tiers';
 import { MILESTONES, milestones, wordsIn } from '@/heir/measures';
 import { wordsHistory, type WordsPoint } from '@/heir/memory-history';
-import { weekSummary } from '@/heir/week';
 import { localDay, memberProgress } from '@/heir/progress';
 
 export default function Progress() {
@@ -65,7 +64,6 @@ export default function Progress() {
 
   const viewing = yours.find((y) => y.c.id === open);
   const wash = yours[0]?.s.window.base ?? null;
-  const week = weekSummary(mine, now);
   // The ring row: verses and catechism answers learned (of those in the courses you've begun), active minutes this week, the streak.
   const startedItems = yours.flatMap(({ c }) => courseItems(c));
   const learnedUnits = new Set(mine.units);
@@ -97,13 +95,6 @@ export default function Progress() {
           <span className="hr-pg-kicker">Words in your memory</span>
           {keep && keep.review.length > 0 ? <Link href="/heir/keep" className="hr-hero-btn">Review {keep.review.length} soon</Link>
             : keep && keep.out.length > 0 ? <Link href="/heir/keep" className="hr-hero-btn">Bring {keep.out.length} back</Link> : null}
-        </section>
-
-        <section className="hr-pg-week" aria-label="This week">
-          {[[week.learned, 'learned'], [week.kept, 'kept up'], [week.strengthened, 'strengthened'], [week.days, week.days === 1 ? 'day kept' : 'days kept']].map(([n, label]) => (
-            <div key={String(label)}><b className="serif">{n}</b><span>{label}</span></div>
-          ))}
-          <span className="hr-pg-week-title">This week</span>
         </section>
 
         {history.length > 2 && (

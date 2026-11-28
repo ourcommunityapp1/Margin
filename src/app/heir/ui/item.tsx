@@ -59,8 +59,8 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
 
         {learned && (
           <div className="hr-actions">
-            <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}`} className="hr-btn">Practice</Link>
-            <Link href={`/heir/lesson?mode=keep&items=${encodeURIComponent(item.id)}`} className="hr-btn hr-btn-outline" aria-label={`Review: type or say the whole ${noun} from memory`}>Review</Link>
+            <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn">Practice</Link>
+            <Link href={`/heir/lesson?mode=keep&items=${encodeURIComponent(item.id)}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn hr-btn-outline" aria-label={`Review: type or say the whole ${noun} from memory`}>Review</Link>
           </div>
         )}
 

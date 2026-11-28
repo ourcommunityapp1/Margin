@@ -9,7 +9,9 @@ export default async function LessonPage({ searchParams }: { searchParams: Promi
   // card on Today it was started from.
   const course = typeof q.course === 'string' && /^[a-z0-9-]{1,40}$/.test(q.course) ? q.course : undefined;
   const card = typeof q.card === 'string' && /^[0-9-]{10}:(lesson|review|fix):[a-z0-9-]{1,40}$/.test(q.card) ? q.card : undefined;
+  // Where the lesson was started from (a page in the app), so closing or finishing goes back there; Today when not given.
+  const from = typeof q.from === 'string' && /^\/heir(\/[A-Za-z0-9._-]+)*$/.test(q.from) ? q.from : '/heir';
   // Before sleep the screen stays dark, whatever the hour: less light, easier sleep.
-  if (mode === 'night') return <div className="hr hr-dark-shell" data-time="night" data-theme="dark"><LessonRunner mode="night" courseId={course} /></div>;
-  return <LessonRunner mode={mode} itemId={item} itemIds={ids} courseId={course} cardId={card} />;
+  if (mode === 'night') return <div className="hr hr-dark-shell" data-time="night" data-theme="dark"><LessonRunner mode="night" courseId={course} from={from} /></div>;
+  return <LessonRunner mode={mode} itemId={item} itemIds={ids} courseId={course} cardId={card} from={from} />;
 }

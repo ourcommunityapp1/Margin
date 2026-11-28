@@ -280,10 +280,10 @@ export function FriendsScreen() {
     <Gate g={g}>
       <main className="hr-page">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 4px 0' }}>
-          <h1 className="serif" style={{ margin: 0, fontSize: 34, fontWeight: 500 }}>Friends</h1>
+          <h1 className="serif" style={{ margin: 0, fontSize: 34, fontWeight: 500 }}>Community</h1>
           {g.profile && (
-            <button type="button" aria-label="Invite someone to Katekize" aria-expanded={invite} onClick={() => setInvite((v) => !v)} style={{ width: 44, height: 44, borderRadius: 22, border: 0, cursor: 'pointer', background: 'var(--button)', color: 'var(--button-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            <button type="button" aria-label="Share Katekize with someone" aria-expanded={invite} onClick={() => setInvite((v) => !v)} style={{ width: 44, height: 44, borderRadius: 22, border: 0, cursor: 'pointer', background: 'var(--button)', color: 'var(--button-ink)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 15V3M8 7l4-4 4 4" /><path d="M7 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1" /></svg>
             </button>
           )}
         </div>
