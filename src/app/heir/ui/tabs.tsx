@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { takeBack } from './nav-track';
 import { useHeir } from './provider';
 
 const TABS = [
@@ -31,8 +32,12 @@ export function Tabs() {
 }
 
 export function Back({ href, label = 'Back' }: { href: string; label?: string }) {
+  const router = useRouter();
+  const path = usePathname();
+  // Back goes to where you were (the tab you came from); `href` is only the fallback for a page opened directly.
+  const go = (e: React.MouseEvent) => { const prev = takeBack(path); if (prev) { e.preventDefault(); router.push(prev); } };
   return (
-    <Link href={href} className="hr-back" aria-label={label}>
+    <Link href={href} className="hr-back" aria-label={label} onClick={go}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
     </Link>
   );

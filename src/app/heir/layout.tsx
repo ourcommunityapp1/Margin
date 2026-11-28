@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Source_Serif_4 } from 'next/font/google';
 import { HeirProvider } from './ui/provider';
+import { NavTracker } from './ui/nav-track';
 import './heir.css';
 
 // Source Serif 4 for Scripture and headings, Inter for the interface.
@@ -26,7 +27,7 @@ export const viewport: Viewport = {
 export default function HeirLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className={`${serif.variable} ${inter.variable}`}>
-      <HeirProvider>{children}</HeirProvider>
+      <HeirProvider><NavTracker />{children}</HeirProvider>
     </div>
   );
 }
