@@ -35,17 +35,16 @@ void main() {
 
     await tester.tap(find.text('Progress'));
     await tester.pumpAndSettle();
-    expect(find.text('Today is kept.'), findsOneWidget);
-    expect(find.text('day kept'), findsWidgets);
     expect(find.text('WORDS IN YOUR MEMORY'), findsOneWidget);
-    // The new layout: the four rings, the hero's sentence, and the folds (closed until tapped).
-    for (final label in ['Words', 'Days kept', 'Recalled', 'Windows']) {
-      expect(find.text(label), findsWidgets, reason: 'the $label ring');
+    // The ring row: verses, catechism answers, minutes this week, the day streak.
+    for (final label in ['Verses', 'Catechism', 'Min this week', 'Day streak']) {
+      expect(find.text(label), findsOneWidget, reason: 'the $label ring');
     }
-    expect(find.text('Your first words are coming'), findsOneWidget, reason: 'nothing recalled on a later day yet');
-    expect(find.text('Recall a verse or answer on a later day and it counts here.'), findsOneWidget);
-    expect(find.textContaining('How a word gets into your memory'), findsOneWidget);
-    expect(find.textContaining('day by day'), findsOneWidget);
+    // Hidden for now, as on the website: the hero's sentences, the folds, days kept, awards.
+    expect(find.text('Your first words are coming'), findsNothing);
+    expect(find.textContaining('How a word gets into your memory'), findsNothing);
+    expect(find.textContaining('day by day'), findsNothing);
+    expect(find.text('Awards'), findsNothing);
     expect(find.text('Growing'), findsNothing, reason: 'no chart before any words count');
     // The course she began is listed with how far she has got.
     await tester.ensureVisible(find.text('Westminster Shorter Catechism'));

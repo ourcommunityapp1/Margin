@@ -72,7 +72,7 @@ class _RingPainter extends CustomPainter {
 /// The hero: the blurred glass of your first course behind an arc from the last milestone to the next, the number, the
 /// kicker, one serif sentence, one grey line and, when there is something to do, a quiet pill.
 class ProgressHero extends StatelessWidget {
-  const ProgressHero({super.key, required this.wash, required this.frac, this.left, this.right, required this.number, required this.say, required this.line, this.button, this.onButton});
+  const ProgressHero({super.key, required this.wash, required this.frac, this.left, this.right, required this.number, this.say = '', this.line = '', this.button, this.onButton});
   final String? wash; // window folder of the first started course
   final double frac;
   final String? left, right;
@@ -132,13 +132,17 @@ class ProgressHero extends StatelessWidget {
                     Text(number, style: serif(62, weight: FontWeight.w500, color: _cream, height: 1).copyWith(letterSpacing: -1.24)),
                     const SizedBox(height: 4),
                     Text('WORDS IN YOUR MEMORY', style: sans(11, weight: FontWeight.w700, color: _cream).copyWith(letterSpacing: 1.54)),
-                    const SizedBox(height: 10),
-                    Text(say, textAlign: TextAlign.center, style: serif(24, weight: FontWeight.w500, color: _cream, height: 1.15)),
-                    const SizedBox(height: 4),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 260),
-                      child: Text(line, textAlign: TextAlign.center, style: sans(14, color: _cream.withValues(alpha: 0.85), height: 1.4)),
-                    ),
+                    if (say.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Text(say, textAlign: TextAlign.center, style: serif(24, weight: FontWeight.w500, color: _cream, height: 1.15)),
+                    ],
+                    if (line.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 260),
+                        child: Text(line, textAlign: TextAlign.center, style: sans(14, color: _cream.withValues(alpha: 0.85), height: 1.4)),
+                      ),
+                    ],
                     if (button != null && onButton != null) ...[
                       const SizedBox(height: 12),
                       Semantics(
