@@ -16,6 +16,7 @@ import { unitsFor } from '@/heir/lesson';
 import { RelatedVerses } from './related';
 import { relatedFor } from '@/heir/related';
 import { strongUntilFor } from '@/heir/keep';
+import { courseItems, courses } from '@/heir/content';
 import type { Item } from '@/heir/types';
 import { partMemories } from '@/heir/memory';
 import { itemStats, itemStrength, practisedToday, recitedPerfectly, strengthBand, strengthSeries, timesPracticed, wordCards, type WordCard } from '@/heir/item-stats';
@@ -24,6 +25,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
   const { household, progress, now, labs } = useHeir();
   const me = activeMember(household);
   const mine = memberProgress(progress, me?.id);
+  const owner = courses.find((c) => courseItems(c).some((i) => i.id === item.id));
   const learned = unitsFor(item, me?.track ?? 'adult').every((u) => mine.units.includes(u.key));
   const level = mine.levels[item.id] ?? 0;
   const dim = needsRefresh(mine, item.id, now);
@@ -56,6 +58,12 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           <p className="serif hr-passage-text">{item.text}</p>
           {labs && !item.reviewed && <div><span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span></div>}
         </section>
+
+        {!learned && owner && (
+          <div className="hr-actions">
+            <Link href={`/heir/lesson?mode=learn&item=${encodeURIComponent(item.id)}&course=${owner.id}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn">Learn it · 2 min</Link>
+          </div>
+        )}
 
         {learned && (
           <div className="hr-actions">

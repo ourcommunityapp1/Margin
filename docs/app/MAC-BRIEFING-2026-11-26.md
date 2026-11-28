@@ -140,3 +140,10 @@ A bug fix with an engine change: reviews made of quick steps (fill in, order, sp
 ## Update 2026-11-27 (night): verse / answer page layout
 
 The passage sits open on the page, then Practice (solid) and Review (outlined) side by side with no explanatory lines under them, then one status card (strength ring, level, three numbers: recited perfectly, times practised, next review; then Learned, Last time, Often missed; then "Next: <level>, once …"), then Word by word, Strength over time, meaning, related. No card inside a card. `nextStep` now names the five levels (Recalled, Memorized, Proficient, Expert; null at Expert).
+
+## Update 2026-11-28: Learn, Discover, Community, two-minute practice
+
+- Tab "Courses" is now **Learn**: search bar (opens Discover), "In your plan" cards with "Added ⌄" (tap to reveal Remove from plan) or "Add", the season's course, single-verse shelves ("Short and strong", then the "For life" verse courses; each card "Learn · 2 min"), then the course shelves. Discover (`/heir/discover`) searches every verse, answer and course by words, reference or title.
+- **Practice** on a verse/answer page is now ~2 minutes: `buildPractice` in `lesson.ts` (first a step matched to how well it is known, then 3 more varied quick steps, then the whole thing typed). **Learn it · 2 min** on an unlearned verse page opens a new lesson mode (`mode=learn&item=&course=`) that teaches that item's next unlearned part. Dart: port `buildPractice`; the lesson fixture does not cover it.
+- Community: tab renamed; Requests and Friends are two small boxes under the search bar (Friends expands the list); leaderboard card unchanged below them. The activity feed is not built (needs a server events table and privacy rules; see the TODO).
+- Lessons take a `from` path and return there (back goes where it was started); Today shows "opens 7 pm" for the locked evening row.

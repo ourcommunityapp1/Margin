@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCheckpoint, buildLesson, buildReview, groupsOf, nextActivity, nextUnit, phrases, practiceKinds, seeded, unitsFor, unitText, withoutSpeaking, type Mate } from '../lesson.ts';
+import { buildCheckpoint, buildPractice, buildLesson, buildReview, groupsOf, nextActivity, nextUnit, phrases, practiceKinds, seeded, unitsFor, unitText, withoutSpeaking, type Mate } from '../lesson.ts';
 import { checkOrder, closeWord, gradeSpoken, wordMatches, firstLetter, SPOKEN_PASS } from '../grade.ts';
 import { afterSleep, dueCards, emptyProgress, finishSession, GRADES, parseProgress, ratingFor, seenCounts, waitingForSleep, type StepResult } from '../progress.ts';
 import { planNext } from '../planner.ts';
@@ -305,4 +305,14 @@ test('voice typing slips are forgiven, different words are not', () => {
   assert.ok(!wordMatches('his', 'him'));
   assert.ok(!wordMatches('good', 'God'));
   assert.ok(!wordMatches('thee', 'the'));
+});
+
+test('practice on one verse is about two minutes: a varied run of quick steps, then the whole thing typed', () => {
+  const item = getItem('wsc-2')!;
+  const pool = courseItems(courses.find((c) => c.id === 'westminster-shorter')!);
+  const steps = buildPractice({ item, track: 'adult', pool, rng: seeded(7) });
+  assert.ok(steps.length >= 4 && steps.length <= 6, `${steps.length} steps`);
+  assert.equal(steps[steps.length - 1].kind, 'type');
+  assert.ok(steps.every((s) => s.itemId === 'wsc-2' && s.review && s.part));
+  for (let i = 1; i < steps.length; i++) assert.notEqual(steps[i].kind, steps[i - 1].kind, 'no step twice in a row');
 });

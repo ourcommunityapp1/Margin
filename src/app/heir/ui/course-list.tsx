@@ -97,7 +97,7 @@ export function CourseScreen({ id }: { id: string }) {
     <>
       <main className="hr-page">
         <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Back href="/heir/courses" label="Courses" />
+          <Back href="/heir/courses" label="Learn" />
           <ShareCourseIcon course={course} />
         </div>
         {/* Like the window card on Today: the window's own colours, blurred, behind a frosted button. */}

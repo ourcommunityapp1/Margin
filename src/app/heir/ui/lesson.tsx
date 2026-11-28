@@ -11,7 +11,7 @@ import { useHeir } from './provider';
 import type { Item, Track } from '@/heir/types';
 import { groupLabel, useCourse } from './course';
 import { Blanks, Cue, Intro, Letters, Match, Meaning, Next, Order, Say, Spot, Type, type Outcome, type Report, Dock, Context } from './steps';
-import { buildCheckpoint, buildKeep, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
+import { buildCheckpoint, buildKeep, buildPractice, buildLesson, buildLite, buildNight, buildReview, buildRise, buildWelcome, groupsOf, unitsFor, withoutSpeaking, type Group, type Mate, type Step, type Unit } from '@/heir/lesson';
 import { wordCount } from '@/heir/measures';
 import { KEEP_LAUNCH, heldItems, summarize } from '@/heir/keep';
 import { finishSession, localDay, markNight, markRisen, memberProgress, seenCounts, waitingForSleep, type StepResult } from '@/heir/progress';
@@ -65,7 +65,7 @@ function useKeyboardLift() {
   }, []);
 }
 
-export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, from = '/heir' }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'keep' | 'extra'; itemId?: string; itemIds?: string[]; courseId?: string; cardId?: string; from?: string }) {
+export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, from = '/heir' }: { mode: 'lesson' | 'review' | 'rise' | 'night' | 'item' | 'learn' | 'keep' | 'extra'; itemId?: string; itemIds?: string[]; courseId?: string; cardId?: string; from?: string }) {
   useKeyboardLift();
   const router = useRouter();
   const { ready, household, updateProgress, progress, keepRules } = useHeir();
@@ -121,7 +121,11 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
     const learnedUnits = new Set(mine.units);
     const ids = new Set(items.map((i) => i.id));
     const done = lessonsDone(mine, course.id, ids);
-    const plan = mode === 'review'
+    const learnItem = mode === 'learn' && itemId ? getItem(itemId) : undefined;
+    const learnUnit = learnItem ? unitsFor(learnItem, track).find((u) => !learnedUnits.has(u.key)) : undefined;
+    const plan = learnItem && learnUnit
+      ? { kind: 'learn' as const, units: [learnUnit], group: groupsOf(items).find((g) => g.items.some((i) => i.id === learnItem.id)) ?? groupsOf(items)[0] }
+      : mode === 'review'
       ? (() => {
         // A review fits its time: the card's minutes (or about four) at this person's own pace, two steps an item.
         const est = mine.today?.cards?.find((c) => c.id === cardId)?.est ?? 4;
@@ -149,9 +153,10 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
       const slipping = picks.filter((x) => x.recall < 0.85);
       next = { ...base, courseId: '', label: 'Extra practice', kind: 'review', steps: buildReview({ due: fromPicks((slipping.length ? slipping : picks).slice(0, 5)), track, pool, rng: Math.random, max: 5 }), units: [], group: null };
     } else if (one) {
-      // One question or verse, practiced on its own from its page: a quick recall, then said or typed in full.
+      // One question or verse, practiced on its own from its page: about two minutes of varied steps, then the whole thing typed.
       // Not numbered as a lesson of the course: no course id.
-      next = { ...base, courseId: '', label: `Practice · ${itemLabel(one)}`, kind: 'review', steps: buildReview({ due: [{ item: one, strength: Math.min(6, mine.cards[one.id]?.stability ?? 1) }], track, pool, rng: Math.random, max: 1 }), units: [], group: null };
+      const chance = parts ? (() => { const card = mine.cards[one.id]; const byPart = itemChance(one.id, parts, new Date()); return card ? Math.min(recallChance(card, new Date()), byPart ?? 1) : byPart ?? undefined; })() : undefined;
+      next = { ...base, courseId: '', label: `Practice · ${itemLabel(one)}`, kind: 'review', steps: buildPractice({ item: one, track, pool, rng: Math.random, ...(chance !== undefined ? { chance } : {}) }), units: [], group: null };
     } else if (mode === 'keep') {
       // Keeping words in memory: the verses and answers you chose, each recalled whole.
       const chosen = idsKey.split(',').filter(Boolean).flatMap((id) => { const it = getItem(id); return it ? [it] : []; });

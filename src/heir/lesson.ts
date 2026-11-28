@@ -480,6 +480,22 @@ export function buildReview(o: { due: Due[]; track: Track; pool: Item[]; rng: Rn
   return [...first, ...shuffle(second, o.rng)];
 }
 
+// Practice on one question or verse, chosen by the person from its page: about two minutes. A varied run of quick steps (the first
+// matched to how well it is known), then the whole thing typed from memory, so the practice is one real recall at the end.
+export function buildPractice(o: { item: Item; track: Track; pool: Item[]; rng: Rng; chance?: number; quick?: number }): Step[] {
+  const c: Ctx = { n: 0, rng: o.rng, track: o.track, pool: o.pool };
+  const units = unitsFor(o.item, o.track);
+  const steps: Step[] = [dueStep(c, { item: o.item, strength: 3, ...(o.chance !== undefined ? { chance: o.chance } : {}) })];
+  const kinds: PracticeKind[] = ['blanks', 'next', 'spot', 'letters', 'match'];
+  for (const k of shuffle(kinds, c.rng)) {
+    if (steps.length >= (o.quick ?? 4)) break;
+    if (k === steps[steps.length - 1].kind) continue;
+    steps.push(practiceStep(c, o.item, units, [k], true, steps[steps.length - 1].kind));
+  }
+  steps.push(textStep(c, 'type', o.item, pick(units, c.rng), true));
+  return steps;
+}
+
 // When speaking isn't possible right now, a say step becomes typing the same words.
 export function withoutSpeaking(step: Step): Step {
   return step.kind === 'say' ? { ...step, kind: 'type', id: `${step.id}:typed` } : step;

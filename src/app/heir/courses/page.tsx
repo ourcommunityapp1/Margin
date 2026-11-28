@@ -1,6 +1,6 @@
 'use client';
 
-// Courses: "My courses" first (the course you're on, then every course you've begun), then the season's course while it's
+// Learn: "In your plan" first (the course you're on, then every course you've begun), then the season's course while it's
 // in season, then every other course on its shelf. Each is a card with its window (lit as far as you've come), its name and
 // two lines on what it is.
 
@@ -10,13 +10,54 @@ import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
-import { courseFor, courses, SHELVES, type Course } from '@/heir/content';
+import { courseFor, courseItems, courses, isVerse, itemLabel, SHELVES, type Course } from '@/heir/content';
+import { unitsFor } from '@/heir/lesson';
+import { usePlanState } from '../ui/plan-button';
+import { useState } from 'react';
+import type { Item } from '@/heir/types';
 import { startedCourses } from '@/heir/dayplan';
 import { activeMember, dailyCourse } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
 import { seasonLabel } from '@/heir/season';
 
 const chevron = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', color: 'var(--muted)' }}><path d="M9 5l7 7-7 7" /></svg>;
+
+const search = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>;
+const down = (open: boolean) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform .15s' }}><path d="M6 9l6 6 6-6" /></svg>;
+
+// A course card: its window, name and status, and the one control for the plan: "Add", or "Added" with a down arrow that opens "Remove".
+function CourseCard({ course, status, window: w, i, count, offset }: { course: Course; status: string; window: React.ReactNode; i?: number; count?: number; offset?: number }) {
+  const s = usePlanState(course);
+  const [open, setOpen] = useState(false);
+  void i; void count; void offset;
+  return (
+    <div className="hr-card hr-course-card" style={{ flexWrap: 'wrap' }}>
+      <Link href={`/heir/courses/${course.id}`} style={{ display: 'flex', alignItems: 'center', gap: 14, flex: '1 1 220px', minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
+        {w}
+        <span className="hr-course-text">
+          <span className="serif hr-course-name">{course.title}</span>
+          <span className="hr-course-short">{course.short}</span>
+          {status && <span className="hr-course-status">{status}</span>}
+        </span>
+      </Link>
+      {s.isIn
+        ? <button type="button" className="hr-plan-btn" data-quiet="true" aria-expanded={open} onClick={() => setOpen((v) => !v)}>Added {down(open)}</button>
+        : <button type="button" className="hr-plan-btn" onClick={s.add}>Add</button>}
+      {s.isIn && open && <button type="button" className="hr-plan-btn" data-quiet="true" onClick={() => { setOpen(false); s.remove(); }}>Remove from plan</button>}
+    </div>
+  );
+}
+
+// A verse on a shelf: its reference, its first words, and whether it's learned.
+function VerseCard({ item, learned }: { item: Item; learned: boolean }) {
+  return (
+    <Link href={`/heir/item/${item.id}`} className="hr-vc">
+      <span className="serif hr-vc-ref">{itemLabel(item)}</span>
+      <span className="hr-vc-txt">{item.text}</span>
+      <span className="hr-vc-go" data-done={learned || undefined}>{learned ? 'Learned' : 'Learn · 2 min'}</span>
+    </Link>
+  );
+}
 
 export default function Courses() {
   const { ready, household, progress, now, labs } = useHeir();
@@ -54,55 +95,52 @@ export default function Courses() {
   // Every other course on its shelf: the ones under My courses and the one in season are not shown twice.
   const shelves = SHELVES.map((sh, n) => ({ ...sh, n, list: courses.filter((c) => c.shelf === sh.id && c.id !== seasonal?.c.id && !mineIds.has(c.id)) })).filter((sh) => sh.list.length);
 
+  // Single verses to learn any time, on shelves: the shortest first, then each verse course on the "For life" and "Start" shelves.
+  const learnedUnits = new Set(mine.units);
+  const isLearned = (i: Item) => unitsFor(i, track).every((u) => learnedUnits.has(u.key));
+  const verses = courses.filter((c) => courseItems(c).every(isVerse) && c.id !== 'ten-commandments');
+  const shortest = verses.flatMap((c) => courseItems(c)).filter((i) => i.text.split(/\s+/).length <= 16)
+    .sort((a, b) => a.text.split(/\s+/).length - b.text.split(/\s+/).length).slice(0, 10);
+  const verseShelves = [
+    { id: 'short', title: 'Short and strong', items: shortest },
+    ...verses.filter((c) => c.shelf === 'life').map((c) => ({ id: c.id, title: c.title, items: courseItems(c) })),
+  ].filter((sh) => sh.items.length > 1);
+
+  const windowFor = (c: Course, started: boolean, size: number, reveal?: boolean) => {
+    const s = summary(c);
+    return <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={size} started={started} reveal={reveal} label={`${c.title} window`} />;
+  };
+
   return (
     <>
       <main className="hr-page">
-        <h1 className="serif" style={{ margin: '20px 4px 0', fontSize: 34, fontWeight: 500 }}>Courses</h1>
+        <h1 className="serif" style={{ margin: '20px 4px 0', fontSize: 34, fontWeight: 500 }}>Learn</h1>
+        <Link href="/heir/discover" className="hr-search" aria-label="Search verses, topics and courses">{search}<span>Search verses, topics, courses</span></Link>
+
         {mineCourses.length > 0 && (
           <section className="hr-shelf" aria-labelledby="shelf-mine">
-            <h2 id="shelf-mine" className="hr-label" style={{ margin: '8px 6px 0' }}>My courses</h2>
+            <h2 id="shelf-mine" className="hr-label" style={{ margin: '8px 6px 0' }}>In your plan</h2>
             <ul>
-              {mineCourses.map((c) => {
-                const s = summary(c);
-                return (
-                  <li key={c.id}>
-                    <Link href={`/heir/courses/${c.id}`} className="hr-card hr-course-card">
-                      <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={92} started reveal label={`${c.title} window`} />
-                      <span className="hr-course-text">
-                        <span className="serif hr-course-name">{c.title}</span>
-                        <span className="hr-course-short">{c.short}</span>
-                        {statusOf(s) && <span className="hr-course-status">{statusOf(s)}</span>}
-                      </span>
-                      {chevron}
-                    </Link>
-                  </li>
-                );
-              })}
+              {mineCourses.map((c) => (
+                <li key={c.id}><CourseCard course={c} status={statusOf(summary(c))} window={windowFor(c, true, 84, true)} /></li>
+              ))}
             </ul>
           </section>
         )}
         {seasonal && !mineIds.has(seasonal.c.id) && hero}
+        {verseShelves.map((sh) => (
+          <section key={sh.id} className="hr-shelf" aria-labelledby={`vs-${sh.id}`}>
+            <h2 id={`vs-${sh.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sh.title} · single verses</h2>
+            <div className="hr-hscroll">{sh.items.map((i) => <VerseCard key={i.id} item={i} learned={isLearned(i)} />)}</div>
+          </section>
+        ))}
         {shelves.map((sh) => (
           <section key={sh.id} className="hr-shelf" aria-labelledby={`shelf-${sh.id}`}>
             <h2 id={`shelf-${sh.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sh.title}</h2>
             <ul>
-              {sh.list.map((c, i) => {
-                const s = summary(c);
-                return (
-                  <li key={c.id}>
-                    <Link href={`/heir/courses/${c.id}`} className="hr-card hr-course-card">
-                      <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={92} started={s.started}
-                        motion={{ kind: 'list', index: i, count: sh.list.length, offset: sh.n * 1700 }} label={`${c.title} window`} />
-                      <span className="hr-course-text">
-                        <span className="serif hr-course-name">{c.title}</span>
-                        <span className="hr-course-short">{c.short}</span>
-                        {statusOf(s) && <span className="hr-course-status">{statusOf(s)}</span>}
-                      </span>
-                      {chevron}
-                    </Link>
-                  </li>
-                );
-              })}
+              {sh.list.map((c) => (
+                <li key={c.id}><CourseCard course={c} status={statusOf(summary(c))} window={windowFor(c, summary(c).started, 84)} /></li>
+              ))}
             </ul>
           </section>
         ))}

@@ -15,17 +15,17 @@ Owner's list, added 2026-11-27. Each item says how big it is and what can be don
 
 ## Courses tab becomes Learn
 
-6. **Rename** Courses to Learn (or similar) and make it the main place for self-directed learning: learn any verse, any time. *Plan + Mockup (the biggest item in this list).*
-7. **Shelves of specific verses** (by theme, season, need), plus recommended plans and "new" tags on courses. *Plan, needs a content decision.*
-8. **Search bar leading to a Discover page**; later search verses by topic. *Plan (search needs a topic index) + Mockup for the page.*
-9. **Practice means about 2 minutes**, not one question. From Learn, Practice builds a short session (several steps, or several verses). *Plan; touches the lesson builder.*
+6. **BUILT 2026-11-28 (Learn tab).** **Rename** Courses to Learn (or similar) and make it the main place for self-directed learning: learn any verse, any time. *Plan + Mockup (the biggest item in this list).*
+7. **PARTLY BUILT 2026-11-28 (shelves of single verses; recommended plans are the existing shelves; no "new" tags yet).** **Shelves of specific verses** (by theme, season, need), plus recommended plans and "new" tags on courses. *Plan, needs a content decision.*
+8. **BUILT 2026-11-28 (search by words, reference or title; topics later).** **Search bar leading to a Discover page**; later search verses by topic. *Plan (search needs a topic index) + Mockup for the page.*
+9. **BUILT 2026-11-28 (varied quick steps, then the whole verse typed; Learn it · 2 min for new verses).** **Practice means about 2 minutes**, not one question. From Learn, Practice builds a short session (several steps, or several verses). *Plan; touches the lesson builder.*
 10. **DONE 2026-11-28.** **Plan button.** Replace "Remove from plan" with "Added to plan ⌄"; tapping opens the choice to remove, so removal takes two taps. *Fix, small.*
 
 ## Community (the Friends tab)
 
 11. **DONE 2026-11-28.** **Friends becomes Community**; the leaderboard button looks like the app's other buttons. *Fix, small; part of the layout in 12.*
 12. **DONE 2026-11-28.** **Top-right Invite becomes a share icon.** *Fix, tiny.*
-13. **Friend requests and friends** become small boxes right under the search bar, out of the way. *Mockup.*
+13. **BUILT 2026-11-28.** **Friend requests and friends** become small boxes right under the search bar, out of the way. *Mockup.*
 14. **Later: show contacts who are on the app.** *Plan (needs contacts permission and privacy design).*
 15. **Feed:** when community members memorise or master verses or catechisms, or finish one of their plans. *Plan (data model, privacy: friends only, never answers, never children; what counts as an event).*
 

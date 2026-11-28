@@ -26,7 +26,6 @@ function Avatar({ name, size = 40 }: { name: string; size?: number }) {
   return <span aria-hidden="true" style={{ width: size, height: size, borderRadius: size / 2, background: colorFor(name), color: '#11161c', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.4, flex: 'none' }}>{name[0]}</span>;
 }
 
-const chevron = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ color: 'var(--muted)', flex: 'none' }}><path d="M9 6l6 6-6 6" /></svg>;
 
 function Blocked({ children }: { children: React.ReactNode }) {
   return <main className="hr-page bare"><section className="hr-card" style={{ margin: 'auto 0', display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</section></main>;
@@ -235,6 +234,7 @@ export function FriendsScreen() {
   const [busy, setBusy] = useState(false);
   const { now } = useHeir();
   const [invite, setInvite] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
 
   const load = useCallback(() => {
     const db = cloud();
@@ -314,12 +314,11 @@ export function FriendsScreen() {
               </section>
             ) : (
               <>
-                <CommunityPreview />
-                <Link href="/heir/friends/requests" className="hr-card hr-row" style={{ minHeight: 56, padding: '10px 20px', gap: 12 }}>
-                  <b style={{ flex: 1 }}>Friend requests</b>
-                  {incoming > 0 && <span className="hr-tag" style={{ background: 'var(--button)', color: 'var(--button-ink)' }}>{incoming}</span>}
-                  {chevron}
-                </Link>
+                <div className="hr-mini2">
+                  <Link href="/heir/friends/requests" aria-label={`Friend requests${incoming ? `, ${incoming} waiting` : ''}`}><span>{incoming > 0 && <i className="hr-mini2-dot" />}Requests</span><b className="serif">{incoming}</b></Link>
+                  <button type="button" aria-expanded={showFriends} onClick={() => setShowFriends((v) => !v)}><span>Friends</span><b className="serif">{friends ? friends.length : '–'}</b></button>
+                </div>
+                {showFriends && (
                 <section className="hr-card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 4 }} aria-label="Your friends">
                   <span className="hr-label">{friends ? friendsCount(friends.length) : 'Friends'}</span>
                   {friends && friends.length === 0 && <p style={{ margin: '10px 0 4px', color: 'var(--muted)', lineHeight: 1.5 }}>No friends yet. Search for someone above to send a request.</p>}
@@ -335,6 +334,8 @@ export function FriendsScreen() {
                   ))}
                   {friends && friends.length > 0 && <span style={{ fontSize: 12, color: 'var(--muted)', textAlign: 'right' }}>words in memory</span>}
                 </section>
+                )}
+                <CommunityPreview />
               </>
             )}
           </>

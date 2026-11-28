@@ -4,7 +4,7 @@ export default async function LessonPage({ searchParams }: { searchParams: Promi
   const q = await searchParams;
   const item = typeof q.item === 'string' ? q.item : undefined;
   const ids = typeof q.items === 'string' ? q.items.split(',').filter((s) => /^[A-Za-z0-9._#-]{1,40}$/.test(s)).slice(0, 40) : [];
-  const mode = q.mode === 'keep' && ids.length ? 'keep' : q.mode === 'item' && item ? 'item' : q.mode === 'review' ? 'review' : q.mode === 'rise' ? 'rise' : q.mode === 'night' ? 'night' : q.mode === 'extra' ? 'extra' : 'lesson';
+  const mode = q.mode === 'keep' && ids.length ? 'keep' : q.mode === 'item' && item ? 'item' : q.mode === 'learn' && item ? 'learn' : q.mode === 'review' ? 'review' : q.mode === 'rise' ? 'rise' : q.mode === 'night' ? 'night' : q.mode === 'extra' ? 'extra' : 'lesson';
   // A lesson or review for a course other than the household's chosen one (from Today's cards or Keep going), and the
   // card on Today it was started from.
   const course = typeof q.course === 'string' && /^[a-z0-9-]{1,40}$/.test(q.course) ? q.course : undefined;
