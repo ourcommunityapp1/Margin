@@ -22,7 +22,7 @@ import '../../engine/models.dart';
 import '../../engine/planner.dart' as planner;
 import '../../engine/progress.dart';
 import '../../engine/types.dart';
-import '../../data/household.dart' show newId;
+import '../../data/household.dart' show addVerse, newId;
 import '../../state/feedback.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
@@ -198,6 +198,10 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       ),
     );
     ref.read(progressProvider.notifier).update((all) => {...all, session.memberId: saved});
+    // Learning a verse on its own puts it in the plan (its reviews follow), without bringing its whole course along.
+    if (session.mode == 'learn' && session.units.isNotEmpty) {
+      ref.read(householdProvider.notifier).update((h) => addVerse(h, session.units.first.itemId, session.courseId));
+    }
     Haptics.finished();
     // A new level from Recalled up (the news the finish screen shows): felt once the window's new light has arrived (about
     // three and a half seconds in). Familiar comes with every lesson, so it isn't news.

@@ -58,6 +58,8 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
         _session = buildNightSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now);
       case 'rise':
         _session = buildRiseSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now);
+      case 'learn':
+        _session = buildLessonSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now, mode: 'learn', cardId: widget.cardId, learnItemId: widget.itemId);
       case 'extra':
         _session = buildExtraSession(focus: plan?.course, track: me.track, mine: mine, memberId: me.id, now: now);
       default:

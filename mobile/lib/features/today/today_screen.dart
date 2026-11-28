@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/household.dart' show dailyCourse;
 import '../../data/photos.dart';
 import '../../engine/content.dart';
 import '../../engine/dayplan.dart';
@@ -76,14 +77,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final h = ref.read(householdProvider);
     final mine = ref.read(myProgressProvider);
     final keep = ref.read(keepProvider);
-    final focus = h.plan?.course;
+    final focus = dailyCourse(h.plan);
     final goal = h.plan?.minutes ?? planner.defaultGoal;
     final day = localDay(now);
-    final started = startedCourses(mine, me.track, focus);
+    final started = startedCourses(mine, me.track, focus, h.plan?.removed ?? const [], h.plan?.verses ?? const []);
     final fixIds = [for (final x in keep?.tryAgain ?? const <Held>[]) x.item.id];
     final today = mine.today;
     final planned = today?.day == day && today?.cards != null;
-    final cards = planned ? null : planDay(p: mine, track: me.track, started: started, focus: focus, goal: goal, now: now, fix: fixIds);
+    final cards = planned ? null : planDay(p: mine, track: me.track, started: started, focus: focus, goal: goal, now: now, fix: fixIds, verses: h.plan?.verses ?? const []);
     final lateFixes = planned
         ? planDay(
             p: mine,
@@ -117,10 +118,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final k = context.k;
     if (me == null) return const KPage(children: []);
 
-    final focus = h.plan?.course;
+    final focus = dailyCourse(h.plan);
     final track = me.track;
     final day = localDay(now);
-    final started = startedCourses(mine, track, focus);
+    final started = startedCourses(mine, track, focus, h.plan?.removed ?? const [], h.plan?.verses ?? const []);
     final today = mine.today;
     final sameDay = today?.day == day;
     final sessions = sameDay ? today!.sessions : const <DaySession>[];
@@ -390,6 +391,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     }
 
     final hello = greeting(timeOfDay(now));
+    final emptyPlan = h.plan != null && (h.plan!.verses.isEmpty) && started.isEmpty;
     return Stack(
       children: [
         Positioned.fill(
@@ -419,8 +421,23 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               ),
             ),
             if (warning != null) KeepWarning(warning),
-            Semantics(container: true, label: 'Now', child: big),
-            if (upcoming.isNotEmpty || doneRows.isNotEmpty)
+            // Everything taken out of the plan: nothing for Today to fill (progress in removed courses is kept).
+            if (emptyPlan)
+              KCard.column(
+                gap: 12,
+                children: [
+                  Semantics(header: true, child: Text('Your plan is empty', textAlign: TextAlign.center, style: serif(24, weight: FontWeight.w500, color: k.ink))),
+                  Text(
+                    'Add a course and Today will fill with its lessons and reviews. Your progress in the courses you removed is kept.',
+                    textAlign: TextAlign.center,
+                    style: sans(15, color: k.muted, height: 1.5),
+                  ),
+                  KButton('Add a course', onPressed: () => context.go('/courses')),
+                ],
+              )
+            else
+              Semantics(container: true, label: 'Now', child: big),
+            if (!emptyPlan && (upcoming.isNotEmpty || doneRows.isNotEmpty))
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -473,18 +490,22 @@ _Card? _card(CardState s, MemberProgress mine, KeepSummary? keep, Track track, D
   final card = Uri.encodeQueryComponent(s.card.id);
   final href = s.card.kind == 'fix' && fixHeld.isNotEmpty
       ? '/lesson?mode=keep&items=${fixHeld.map((i) => i.id).join(',')}&course=${course.id}&card=$card'
+      : s.card.item != null
+      ? '/lesson?mode=learn&item=${Uri.encodeQueryComponent(s.card.item!)}&course=${course.id}&card=$card'
       : '/lesson?mode=${s.card.kind == 'lesson' ? 'lesson' : 'review'}&course=${course.id}&card=$card';
   final lessonNo = (mine.courseLessons[course.id] ?? 0) + 1;
-  final lockIn = s.card.kind == 'lesson' && nextLine(mine, track, course, now).text == 'Lock-in next';
+  final lockIn = s.card.kind == 'lesson' && s.card.item == null && nextLine(mine, track, course, now).text == 'Lock-in next';
   final button = s.card.kind != 'lesson'
       ? 'Start review'
+      : s.card.item != null
+      ? 'Learn it'
       : lockIn
       ? 'Lock it in'
       : lessonNo == 1
       ? 'Begin'
       : 'Start lesson $lessonNo';
   final items = switch (s.card.kind) {
-    'lesson' => lessonItems(course, mine, track, now),
+    'lesson' => s.card.item != null ? [?getItem(s.card.item!)] : lessonItems(course, mine, track, now),
     'fix' => fixHeld,
     _ => [for (final d in dueCards(mine, now, ids)) ?getItem(d.itemId)],
   };

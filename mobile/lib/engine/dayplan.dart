@@ -13,9 +13,12 @@ import 'util.dart';
 class DayCard {
   final String id, kind, course; // kind: lesson, review, fix
   final num est;
-  const DayCard(this.id, this.kind, this.course, this.est);
-  Map<String, Object?> toJson() => {'id': id, 'kind': kind, 'course': course, 'est': est};
-  factory DayCard.fromJson(Map j) => DayCard(j['id'] as String, j['kind'] as String, j['course'] as String, j['est'] as num);
+
+  /// A lesson for one verse or answer added to the plan on its own.
+  final String? item;
+  const DayCard(this.id, this.kind, this.course, this.est, [this.item]);
+  Map<String, Object?> toJson() => {'id': id, 'kind': kind, 'course': course, 'est': est, if (item != null) 'item': item};
+  factory DayCard.fromJson(Map j) => DayCard(j['id'] as String, j['kind'] as String, j['course'] as String, j['est'] as num, j['item'] is String ? j['item'] as String : null);
 }
 
 /// One finished session today. [kind]: lesson, review, fix, extra, night or rise.
@@ -53,9 +56,13 @@ int reviewEst(int due) => math.min(6, math.max(2, (due * 0.5).ceil()));
 const newPerWeek = 5;
 
 /// The courses this person has started, with the focus course first even if not begun.
-List<Course> startedCourses(MemberProgress p, Track track, String? focus) {
+/// The courses in the plan: the focus (daily) course, and every course begun and not removed. A verse added on its own
+/// does not bring its whole course into the plan: only what was learned outside the single verses does.
+List<Course> startedCourses(MemberProgress p, Track track, String? focus, [List<String> removed = const [], List<String> verses = const []]) {
   final learned = p.units.toSet();
-  final started = courses.where((c) => c.id == focus || courseItems(c).any((i) => unitsFor(i, track).any((u) => learned.contains(u.key)))).toList();
+  final started = courses
+      .where((c) => c.id == focus || (!removed.contains(c.id) && courseItems(c).any((i) => !verses.contains(i.id) && unitsFor(i, track).any((u) => learned.contains(u.key)))))
+      .toList();
   return stableSorted(started, (a, b) => a.id == focus ? -1 : b.id == focus ? 1 : 0);
 }
 
@@ -63,7 +70,16 @@ String? courseOfItem(List<Course> started, String itemId) => started.where((c) =
 
 int _dueIn(MemberProgress p, DateTime now, Course c) => dueCards(p, now, courseItems(c).map((i) => i.id).toSet()).length;
 
-List<DayCard> planDay({required MemberProgress p, required Track track, required List<Course> started, required String? focus, required num goal, required DateTime now, List<String> fix = const []}) {
+List<DayCard> planDay({
+  required MemberProgress p,
+  required Track track,
+  required List<Course> started,
+  required String? focus,
+  required num goal,
+  required DateTime now,
+  List<String> fix = const [],
+  List<String> verses = const [],
+}) {
   final day = localDay(now);
   DayCard card(String kind, String course, num est) => DayCard('$day:$kind:$course', kind, course, est);
 
@@ -85,27 +101,52 @@ List<DayCard> planDay({required MemberProgress p, required Track track, required
     (a, b) => b.due.compareTo(a.due),
   ).map((x) => (card: card('review', x.c.id, reviewEst(x.due)), piling: x.due >= pile)).toList();
 
-  if (lesson?.kind == 'lesson' && focusCourse != null) {
-    final load = started.fold<int>(0, (n, c) {
-      final due = _dueIn(p, now, c);
-      return n + (due > 0 ? reviewEst(due) : 0);
-    });
-    final lastNew = p.log.fold<String>('', (m, e) => e.kind == 'intro' && e.at.compareTo(m) > 0 ? e.at : m);
-    final daysSinceNew = lastNew.isNotEmpty ? (now.millisecondsSinceEpoch - parseMs(lastNew)) / dayMillis : double.infinity;
-    final lessonsThisWeek = {for (final e in p.log) if (e.kind == 'intro' && parseMs(e.at) > now.millisecondsSinceEpoch - 7 * dayMillis) e.at}.length;
-    if ((load > 0.7 * goal && daysSinceNew < 3) || lessonsThisWeek >= newPerWeek) {
-      final focusDue = _dueIn(p, now, focusCourse);
-      lesson = focusDue > 0 ? card('review', focusCourse.id, reviewEst(focusDue)) : null;
-    }
+  // The brake on new material: when reviews already fill most of the day, or five new lessons came in the last week, today
+  // is for keeping what you know, not adding. Something new still comes at least every third day.
+  final load = started.fold<int>(0, (n, c) {
+    final due = _dueIn(p, now, c);
+    return n + (due > 0 ? reviewEst(due) : 0);
+  });
+  final lastNew = p.log.fold<String>('', (m, e) => e.kind == 'intro' && e.at.compareTo(m) > 0 ? e.at : m);
+  final daysSinceNew = lastNew.isNotEmpty ? (now.millisecondsSinceEpoch - parseMs(lastNew)) / dayMillis : double.infinity;
+  final lessonsThisWeek = {for (final e in p.log) if (e.kind == 'intro' && parseMs(e.at) > now.millisecondsSinceEpoch - 7 * dayMillis) e.at}.length;
+  final braked = (load > 0.7 * goal && daysSinceNew < 3) || lessonsThisWeek >= newPerWeek;
+  if (lesson?.kind == 'lesson' && focusCourse != null && braked) {
+    final focusDue = _dueIn(p, now, focusCourse);
+    lesson = focusDue > 0 ? card('review', focusCourse.id, reviewEst(focusDue)) : null;
   }
   if (lesson != null && fixCourses.contains(lesson.course) && lesson.kind == 'review') lesson = null;
-  final ordered = [...fixes, for (final r in reviews) if (r.piling) r.card, ?lesson, for (final r in reviews) if (!r.piling) r.card];
+  // Single verses added to the plan on their own: one lesson a day for the first one not yet learned (when there is no
+  // other new lesson today and the brake is off), and reviews for the ones learned, in courses not otherwise in the plan.
+  final planned = [
+    for (final id in verses)
+      if (getItem(id) case final item?)
+        if (courses.where((c) => courseItems(c).any((i) => i.id == id)).firstOrNull case final course?) (item: item, course: course),
+  ];
+  final learnedSet = p.units.toSet();
+  bool isLearned(Item i) => unitsFor(i, track).every((u) => learnedSet.contains(u.key));
+  final nextVerse = lesson?.kind == 'lesson' || braked ? null : planned.where((x) => !isLearned(x.item)).firstOrNull;
+  final verseLesson = nextVerse == null ? null : DayCard('$day:lesson:${nextVerse.item.id}', 'lesson', nextVerse.course.id, 3, nextVerse.item.id);
+  final covered = {for (final c in started) c.id};
+  final verseReviews = <DayCard>[
+    for (final cid in {for (final x in planned) if (isLearned(x.item) && !covered.contains(x.course.id)) x.course.id})
+      if (dueCards(p, now, {for (final x in planned) if (x.course.id == cid && isLearned(x.item)) x.item.id}).length case final due when due > 0)
+        card('review', cid, reviewEst(due)),
+  ];
+  final ordered = [
+    ...fixes,
+    for (final r in reviews) if (r.piling) r.card,
+    ?lesson,
+    ?verseLesson,
+    for (final r in reviews) if (!r.piling) r.card,
+    ...verseReviews,
+  ];
 
   final out = <DayCard>[];
   num total = 0;
   for (final c in ordered) {
     if (out.length >= maxCards) break;
-    final must = c.kind == 'fix' || identical(c, lesson);
+    final must = c.kind == 'fix' || identical(c, lesson) || identical(c, verseLesson);
     if (must || out.isEmpty || total + c.est <= goal) {
       out.add(c);
       total += c.est;

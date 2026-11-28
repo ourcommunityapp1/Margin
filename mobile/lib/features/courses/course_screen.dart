@@ -20,6 +20,7 @@ import '../../engine/types.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../state/item_stats.dart';
+import 'plan_buttons.dart';
 import '../../ui/stone.dart';
 import '../window/appear_window.dart';
 import '../window/glass_window.dart';
@@ -103,6 +104,9 @@ class CourseScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: sans(13, color: k.muted),
             ),
+            const SizedBox(height: 6),
+            PlanButtons(course: course),
+            PlanNote(course: course),
           ],
         ),
         if (learnedItems.isNotEmpty)

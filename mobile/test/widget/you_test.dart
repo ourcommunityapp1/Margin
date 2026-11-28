@@ -2,6 +2,7 @@ import 'package:katekize/platform/haptics.dart';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:katekize/features/courses/plan_buttons.dart' show PlanRow;
 import 'package:katekize/data/content_assets.dart';
 import 'package:katekize/data/household.dart';
 import 'package:katekize/data/removed.dart';
@@ -67,12 +68,12 @@ void main() {
     expect(find.text('About Katekize'), findsOneWidget);
   });
 
-  testWidgets('changing course keeps the daily goal, saves, and goes to Today; changing the goal saves', (tester) async {
+  testWidgets('adding a course to the plan keeps the daily goal and saves; changing the goal saves', (tester) async {
     final store = await _phone(tester);
     await pumpApp(tester, store: store);
     await _openYou(tester);
     await _tap(tester, 'Course and daily goal');
-    expect(find.text('Courses'), findsOneWidget);
+    expect(find.text('Your plan'), findsOneWidget);
     expect(find.text('Your daily goal'), findsOneWidget);
     expect(find.text('What the levels mean'), findsOneWidget);
     expect(find.text('How each recall is graded'), findsOneWidget);
@@ -81,11 +82,15 @@ void main() {
     expect((_household(store)['plan'] as Map)['minutes'], 25);
     expect((_household(store)['plan'] as Map)['course'], 'first-verses');
 
-    await _tap(tester, 'Psalm 23');
+    // Add Psalm 23 to the plan: it becomes the daily course and the goal stays.
+    final psalmRow = find.ancestor(of: find.text('Psalm 23'), matching: find.byType(PlanRow));
+    await tester.ensureVisible(psalmRow);
+    await tester.tap(find.descendant(of: psalmRow, matching: find.text('Add to plan')));
+    await tester.pumpAndSettle();
     final plan = _household(store)['plan'] as Map;
     expect(plan['course'], 'psalm-23');
     expect(plan['minutes'], 25, reason: 'switching course keeps the goal');
-    expect(find.text('Good afternoon, Ann'), findsOneWidget, reason: 'back on Today');
+    expect(find.descendant(of: psalmRow, matching: find.text('Added to plan')), findsOneWidget);
   });
 
   testWidgets('family: add someone, change their track, remove them, bring them back', (tester) async {

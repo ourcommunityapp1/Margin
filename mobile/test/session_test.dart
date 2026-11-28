@@ -28,4 +28,12 @@ void main() {
     expect(s.steps, isNotEmpty);
     expect(s.steps.every((x) => x.itemId == 'wsc-1'), isTrue);
   });
+
+  test('“Learn it” teaches that one verse’s next part, not the course’s next lesson', () {
+    final s = buildLessonSession(course: getCourse('first-verses')!, track: Track.adult, mine: emptyProgress(), memberId: 'me', now: now, mode: 'learn', learnItemId: 'fv-3');
+    expect(s.kind, 'learn');
+    expect(s.mode, 'learn');
+    expect(s.units.single.itemId, 'fv-3');
+    expect(s.steps.where((x) => x.kind != 'info').every((x) => x.itemId == 'fv-3' || x.review), isTrue);
+  });
 }

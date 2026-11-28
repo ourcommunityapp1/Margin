@@ -13,6 +13,8 @@ import '../../engine/types.dart';
 import '../../engine/planner.dart' show defaultGoal;
 import '../../state/clock.dart';
 import '../../state/household.dart';
+import '../../engine/dayplan.dart' show startedCourses;
+import '../courses/plan_buttons.dart';
 import '../../ui/stone.dart';
 import '../../ui/theme.dart';
 import '../../ui/widgets.dart';
@@ -37,7 +39,9 @@ class PlanScreen extends ConsumerWidget {
     final mine = ref.watch(myProgressProvider);
     final now = ref.watch(clockProvider)();
     final track = me?.track ?? Track.adult;
-    final course = courseFor(household.plan?.course);
+    final daily = dailyCourse(household.plan);
+    final course = courseFor(daily);
+    final inPlanIds = {for (final c in startedCourses(mine, track, daily, household.plan?.removed ?? const [])) c.id};
     final minutes = household.plan?.minutes ?? defaultGoal;
     final stats = {for (final c in courses) c.id: courseStats(courseItems(c), track, mine)};
 
@@ -49,16 +53,17 @@ class PlanScreen extends ConsumerWidget {
         Align(alignment: Alignment.centerLeft, child: KBack(onPressed: () => context.canPop() ? context.pop() : context.go('/you'))),
         KCard.column(
           children: [
-            heading('Courses', size: 28),
-            CourseChoices(
-              value: course?.id,
-              stats: {for (final e in stats.entries) e.key: (learned: e.value.learned, total: e.value.total)},
-              onChanged: (id) {
-                ref.read(householdProvider.notifier).update((h) => setPlan(h, Plan(course: id)));
-                context.go('/today');
-              },
+            heading('Your plan', size: 28),
+            Column(
+              children: [
+                for (final (i, c) in ([...courses]..sort((a, b) => (inPlanIds.contains(b.id) ? 1 : 0) - (inPlanIds.contains(a.id) ? 1 : 0))).indexed)
+                  PlanRow(course: c, learned: stats[c.id]?.learned ?? 0, total: stats[c.id]?.total ?? courseItems(c).length, first: i == 0),
+              ],
             ),
-            Text('Progress in each course is kept when you switch. Passages of Scripture come later.', style: sans(15, color: k.muted, height: 1.5)),
+            Text(
+              'Today is made from your plan: new lessons from the course you added last, and reviews from every course in it. Removing a course keeps your progress.',
+              style: sans(15, color: k.muted, height: 1.5),
+            ),
           ],
         ),
         if (course != null)

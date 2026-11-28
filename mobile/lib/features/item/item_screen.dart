@@ -21,6 +21,7 @@ import '../../engine/types.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../state/item_stats.dart';
+import '../courses/plan_buttons.dart';
 import '../../ui/stone.dart';
 import '../../ui/screen_parts.dart';
 import '../../ui/theme.dart';
@@ -51,6 +52,7 @@ class ItemScreen extends ConsumerWidget {
     final mine = ref.watch(myProgressProvider);
     final now = ref.watch(clockProvider)();
     final learned = unitsFor(item, track).every((u) => mine.units.contains(u.key));
+    final owner = courses.where((c) => courseItems(c).any((i) => i.id == item.id)).firstOrNull;
 
     return KPage(
       children: [
@@ -83,12 +85,16 @@ class ItemScreen extends ConsumerWidget {
             ),
           ),
         ),
-        if (!learned)
-          KButton(
-            'Practice this ${unit == 'Question' ? 'question' : unit == 'Verse' ? 'verse' : 'now'}',
-            onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'),
-          )
-        else ...[
+        if (!learned) ...[
+          if (owner != null)
+            KButton('Learn it · 2 min', onPressed: () => context.push('/lesson?mode=learn&item=${Uri.encodeQueryComponent(item.id)}&course=${owner.id}'))
+          else
+            KButton(
+              'Practice this ${unit == 'Question' ? 'question' : unit == 'Verse' ? 'verse' : 'now'}',
+              onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'),
+            ),
+          if (owner != null) ItemPlanButton(item: item, course: owner),
+        ] else ...[
           Row(
             children: [
               Expanded(child: KButton('Practice', onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'))),
@@ -103,6 +109,7 @@ class ItemScreen extends ConsumerWidget {
             ],
           ),
           _Status(item: item, track: track, now: now),
+          if (owner != null) ItemPlanButton(item: item, course: owner),
           _WordByWord(item: item, track: track),
           _StrengthOverTime(item: item, now: now),
         ],

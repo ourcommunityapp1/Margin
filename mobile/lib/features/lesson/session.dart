@@ -100,6 +100,7 @@ Session buildLessonSession({
   lesson.Rng? rng,
   String mode = 'lesson',
   String? cardId,
+  String? learnItemId,
 }) {
   final r = rng ?? _random.nextDouble;
   final items = courseItems(course);
@@ -123,7 +124,13 @@ Session buildLessonSession({
   final seen = seenCounts(mine);
   final done = planner.lessonsDone(mine, course.id, ids);
   final due = dueCards(mine, now, ids);
-  final plan = mode == 'review'
+  // Learn one verse or answer (mode learn): its next part not yet learned, as a lesson of its own.
+  final learnItem = mode == 'learn' && learnItemId != null ? getItem(learnItemId) : null;
+  final learnUnit = learnItem == null ? null : lesson.unitsFor(learnItem, track).where((u) => !mine.units.contains(u.key)).firstOrNull;
+  final plan = learnItem != null && learnUnit != null
+      ? planner.LessonPlan('learn',
+          units: [learnUnit], group: lesson.groupsOf(items).where((g) => g.items.any((i) => i.id == learnItem.id)).firstOrNull ?? lesson.groupsOf(items).first)
+      : mode == 'review'
       ? () {
           // A review fits its time: the card's minutes (or about four) at this person's own pace, two steps an item.
           final est = mine.today?.cards?.where((c) => c.id == cardId).firstOrNull?.est ?? 4;
