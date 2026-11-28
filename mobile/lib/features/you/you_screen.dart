@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/household.dart' show dailyCourse;
 import '../../engine/content.dart';
 import '../../engine/planner.dart' show defaultGoal;
 import '../../state/auth.dart';
@@ -43,7 +44,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
     final accounts = ref.watch(accountsProvider);
     final email = ref.watch(emailProvider).value;
     final sync = ref.watch(syncProvider);
-    final course = courseFor(household.plan?.course);
+    final course = courseFor(dailyCourse(household.plan));
     final others = household.members.length - 1;
     final signedIn = accounts && email != null;
 

@@ -374,11 +374,14 @@ Session buildExtraSession({
   required String memberId,
   required DateTime now,
   lesson.Rng? rng,
+  List<String> removed = const [],
+  List<String> verses = const [],
 }) {
   final r = rng ?? _random.nextDouble;
   final parts = partMemories(mine.log, mine.partSnap);
   final weak = weakPartsNow(mine.log, parts, now);
-  final started = startedCourses(mine, track, focus);
+  // The courses in the plan (not the ones taken out of it).
+  final started = startedCourses(mine, track, focus, removed, verses);
   final allIds = {for (final c in started) ...courseItems(c).map((i) => i.id)};
   final recent = recalledRecently(mine.log, now);
   final picks = riskOrder(mine, allIds, now, parts).where((x) => !waitingForSleep(mine, x.itemId, now) && !recent.contains(x.itemId)).toList();

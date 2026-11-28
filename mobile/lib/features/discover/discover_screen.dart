@@ -67,7 +67,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: Row(children: [
             KBack(label: 'Learn', onPressed: () => context.canPop() ? context.pop() : context.go('/courses')),
             const SizedBox(width: 12),
-            Semantics(header: true, child: Text('Discover', style: serif(28, weight: FontWeight.w500, color: k.ink))),
+            Flexible(child: Semantics(header: true, child: Text('Discover', overflow: TextOverflow.ellipsis, style: serif(28, weight: FontWeight.w500, color: k.ink)))),
           ]),
         ),
         Semantics(

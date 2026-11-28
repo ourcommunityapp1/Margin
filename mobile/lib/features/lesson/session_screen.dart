@@ -1,6 +1,8 @@
 // Opens a lesson: the person's next lesson of their course, or (with an item) a practice on that one question or
 // verse. The session is built once, from the progress saved when the screen opens (lesson.tsx's session effect).
 
+import '../../engine/lesson.dart' show unitsFor;
+import '../../data/household.dart' show dailyCourse;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -59,9 +61,23 @@ class _SessionScreenState extends ConsumerState<SessionScreen> {
       case 'rise':
         _session = buildRiseSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now);
       case 'learn':
+        // Already learned (a card from earlier today, or learned since): practise it instead of starting the course's next lesson.
+        final item = widget.itemId == null ? null : getItem(widget.itemId!);
+        if (item != null && unitsFor(item, me.track).every((u) => mine.units.contains(u.key))) {
+          _session = buildItemSession(item: item, dayCourse: course.id, track: me.track, mine: mine, memberId: me.id, now: now);
+          break;
+        }
         _session = buildLessonSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now, mode: 'learn', cardId: widget.cardId, learnItemId: widget.itemId);
       case 'extra':
-        _session = buildExtraSession(focus: plan?.course, track: me.track, mine: mine, memberId: me.id, now: now);
+        _session = buildExtraSession(
+          focus: dailyCourse(plan),
+          track: me.track,
+          mine: mine,
+          memberId: me.id,
+          now: now,
+          removed: plan?.removed ?? const [],
+          verses: plan?.verses ?? const [],
+        );
       default:
         _session = buildLessonSession(course: course, track: me.track, mine: mine, memberId: me.id, now: now, mode: widget.mode, cardId: widget.cardId);
     }

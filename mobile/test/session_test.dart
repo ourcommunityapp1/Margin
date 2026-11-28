@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:katekize/engine/content.dart';
-import 'package:katekize/engine/lesson.dart' show buildPractice, seeded;
+import 'package:katekize/engine/lesson.dart' show buildPractice, seeded, unitsFor;
+import 'package:katekize/engine/models.dart' show StepResult;
 import 'package:katekize/engine/progress.dart';
 import 'package:katekize/engine/types.dart';
 import 'package:katekize/features/lesson/session.dart';
@@ -47,5 +48,22 @@ void main() {
     for (var i = 1; i < steps.length; i++) {
       expect(steps[i].kind, isNot(steps[i - 1].kind), reason: 'no step twice in a row');
     }
+  });
+
+  test('extra practice leaves out a course taken out of the plan', () {
+    final us = unitsFor(getItem('fv-3')!, Track.adult);
+    final p = finishSession(emptyProgress(),
+        results: [
+          StepResult(itemId: 'fv-3', kind: 'intro', correct: true, hints: 0, ms: 1, review: false),
+          for (final u in us) StepResult(itemId: 'fv-3', kind: 'type', correct: true, hints: 0, ms: 1, review: false, part: u.key, of: us.length),
+        ],
+        learned: us,
+        courseId: 'first-verses',
+        now: DateTime(2026, 11, 1, 9));
+    final later = DateTime(2026, 11, 25, 10);
+    final kept = buildExtraSession(focus: null, track: Track.adult, mine: p, memberId: 'me', now: later);
+    final removed = buildExtraSession(focus: null, track: Track.adult, mine: p, memberId: 'me', now: later, removed: ['first-verses']);
+    expect(kept.steps.any((x) => x.itemId == 'fv-3'), isTrue);
+    expect(removed.steps.any((x) => x.itemId == 'fv-3'), isFalse);
   });
 }

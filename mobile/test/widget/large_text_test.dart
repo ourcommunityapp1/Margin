@@ -23,7 +23,7 @@ void main() {
     await tester.pumpAndSettle();
     final router = GoRouter.of(tester.element(find.byType(Navigator).first));
     final bad = <String>[];
-    for (final path in ['/today', '/courses', '/progress', '/friends', '/you', '/plan', '/family', '/how', '/about', '/reminders', '/profile', '/linked', '/delete-account', '/community', '/lesson']) {
+    for (final path in ['/today', '/courses', '/progress', '/friends', '/you', '/plan', '/family', '/how', '/about', '/reminders', '/profile', '/linked', '/delete-account', '/community', '/lesson', '/discover', '/courses/westminster-shorter', '/item/wsc-1', '/item/fv-3']) {
       router.go(path);
       await tester.pumpAndSettle();
       final e = tester.takeException();
