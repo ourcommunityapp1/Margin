@@ -31,7 +31,8 @@ export function setPlan(h: Household, plan: Plan): Household {
   const minutes = plan.minutes ?? h.plan?.minutes;
   const removed = (plan.removed ?? h.plan?.removed ?? []).filter((id) => id !== plan.course);
   const verses = plan.verses ?? h.plan?.verses ?? [];
-  return { ...h, plan: { course: plan.course, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}), ...(verses.length ? { verses } : {}) } };
+  const { removed: _r, verses: _v, minutes: _m, ...rest } = { ...(h.plan ?? {}), ...plan }; void _r; void _v; void _m;
+  return { ...h, plan: { ...rest, course: plan.course, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}), ...(verses.length ? { verses } : {}) } };
 }
 
 /** The daily course: where new lessons come from. Null when it has been taken out of the plan. */
@@ -46,7 +47,7 @@ export function removeFromPlan(h: Household, courseId: string, next: string | nu
   if (!h.plan) return h;
   const removed = [...new Set([...(h.plan.removed ?? []), courseId])].filter((id) => id !== next);
   const course = h.plan.course === courseId ? (next ?? courseId) : h.plan.course;
-  return { ...h, plan: { course, ...(h.plan.minutes ? { minutes: h.plan.minutes } : {}), removed, ...(h.plan.verses?.length ? { verses: h.plan.verses } : {}) } };
+  return { ...h, plan: { ...h.plan, course, removed } };
 }
 
 export function activeMember(h: Household): Member | null {
@@ -68,7 +69,9 @@ export function parseHousehold(raw: string | null): Household {
     const minutes = v.plan && typeof v.plan.minutes === 'number' && v.plan.minutes >= 1 && v.plan.minutes <= 120 ? v.plan.minutes : undefined;
     const removed = v.plan && Array.isArray(v.plan.removed) ? v.plan.removed.filter((x: unknown): x is string => typeof x === 'string').slice(0, 40) : [];
     const verses = v.plan && Array.isArray(v.plan.verses) ? v.plan.verses.filter((x: unknown): x is string => typeof x === 'string' && /^[A-Za-z0-9._-]{1,40}$/.test(x)).slice(0, 200) : [];
-    const plan = named ? { course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}), ...(verses.length ? { verses } : {}) } : null;
+    // Fields a newer app saves on the plan are kept as they are, so a save here never erases them.
+    const extra = v.plan && typeof v.plan === 'object' ? Object.fromEntries(Object.entries(v.plan).filter(([k]) => !['course', 'collection', 'minutes', 'removed', 'verses', 'through'].includes(k))) : {};
+    const plan = named ? { ...extra, course: named === 'apostles-creed' ? 'creeds' : named, ...(minutes ? { minutes } : {}), ...(removed.length ? { removed } : {}), ...(verses.length ? { verses } : {}) } : null;
     return { members, activeMemberId, plan };
   } catch {
     return emptyHousehold();

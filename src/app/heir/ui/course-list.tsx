@@ -10,7 +10,6 @@ import { courseItems, courseParts, getCollection, getCourse, itemNoun, type Cour
 import { activeMember, dailyCourse } from '@/heir/household';
 import { groupsOf, unitsFor } from '@/heir/lesson';
 import { levelShown, needsRefresh } from '@/heir/levels';
-import { tierOf } from '@/heir/tiers';
 import { courseStats } from '@/heir/path';
 import { project } from '@/heir/planner';
 import { emptyProgress, memberProgress, type MemberProgress } from '@/heir/progress';
@@ -24,9 +23,7 @@ import { PlanButtons, PlanNote } from './plan-button';
 import { MiniWindow } from './glass/mini';
 import { Stone } from './stone';
 import { partMemories } from '@/heir/memory';
-import { KEEP_LAUNCH, heldItems } from '@/heir/keep';
-import { itemStrength, practisedToday, strengthBand } from '@/heir/item-stats';
-import { localTz } from './keep';
+import { itemStrength, strengthBand } from '@/heir/item-stats';
 
 export type Kind = 'scripture' | 'catechism' | 'creed';
 export const KINDS: [Kind, string][] = [['scripture', 'Verses'], ['catechism', 'Catechisms'], ['creed', 'Creeds']];
@@ -91,7 +88,6 @@ export function CourseScreen({ id }: { id: string }) {
   const strengthOf = new Map(learnedItems.map((i) => [i.id, itemStrength(mine, i.id, now, mems)]));
   const nums = [...strengthOf.values()].filter((v): v is number => typeof v === 'number');
   const average = nums.length ? Math.round((nums.reduce((a, b) => a + b, 0) / nums.length) * 100) : null;
-  const inMemory = heldItems(all, mine, track, now, { launch: KEEP_LAUNCH, tz: localTz(), mode: 'whole' }).filter((h) => h.state.state === 'kept' || h.state.state === 'review').length;
 
   return (
     <>
@@ -114,10 +110,9 @@ export function CourseScreen({ id }: { id: string }) {
         </section>
 
         {learnedItems.length > 0 && (
-          <section className="hr-cstats" data-four aria-label="Where you are">
+          <section className="hr-cstats" aria-label="Where you are">
             <div><b className="serif">{Math.round((learnedItems.length / Math.max(1, all.length)) * 100)}%</b><span>of the course done</span></div>
             <div><b className="serif">{learnedItems.length}</b><span>learned of {all.length}</span></div>
-            <div><b className="serif">{inMemory}</b><span>in memory</span></div>
             <div><b className="serif">{average === null ? '–' : `${average}%`}</b><span>average strength</span></div>
           </section>
         )}
@@ -159,11 +154,10 @@ export function CourseScreen({ id }: { id: string }) {
                     {g.items.map((item) => {
                       const level = levelShown(mine, item, track);
                       const dim = needsRefresh(mine, item.id, now);
-                      const status = dim ? 'Needs a refresh' : level ? tierOf(level)!.name : null;
-                      const unit = getCollection(item.collection)?.unit;
+                                            const unit = getCollection(item.collection)?.unit;
                       return (
                         <li key={item.id}>
-                          <Link className="hr-lesson" href={`/heir/item/${item.id}`} style={{ alignItems: 'flex-start', padding: '10px 4px' }}>
+                          <Link className="hr-lesson" href={`/heir/item/${item.id}`} style={{ alignItems: 'center', padding: '16px 4px', minHeight: 80 }}>
                             <Stone level={level} size={30} dim={dim} />
                             <span style={{ display: 'flex', flexDirection: 'column', gap: 3, minWidth: 0, flex: 1 }}>
                               <span style={{ fontWeight: 600, fontSize: 16, lineHeight: 1.35 }}>{unit === 'Question' ? `Q${item.number} · ${item.prompt}` : unit === 'Verse' || unit === 'Commandment' ? item.prompt : `${item.number} · ${item.prompt}`}</span>
@@ -171,14 +165,11 @@ export function CourseScreen({ id }: { id: string }) {
                             </span>
                             {(() => {
                               const st = strengthOf.get(item.id);
-                              if (st === undefined) return status && <span style={{ flex: 'none', fontSize: 12, fontWeight: 600, color: 'var(--muted)', paddingTop: 2 }}>{status}</span>;
-                              return (
-                                <span style={{ flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, paddingTop: 2 }}>
-                                  {st === null ? null : <span className="hr-strength" data-band={strengthBand(st)}>{Math.round(st * 100)}%</span>}
-                                  {(practisedToday(mine, item.id, now) || status) && <span style={{ fontSize: 11.5, fontWeight: 600, color: dim ? 'var(--miss)' : 'var(--muted)' }}>{practisedToday(mine, item.id, now) ? 'Practised today' : status}</span>}
-                                </span>
-                              );
+                              return st === undefined || st === null
+                                ? <span className="hr-strength" data-band="none">0%</span>
+                                : <span className="hr-strength" data-band={strengthBand(st)}>{Math.round(st * 100)}%</span>;
                             })()}
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', color: 'var(--muted)' }}><path d="M9 6l6 6-6 6" /></svg>
                           </Link>
                         </li>
                       );

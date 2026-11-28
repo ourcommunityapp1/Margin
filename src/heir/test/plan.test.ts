@@ -90,3 +90,13 @@ test('Today offers a lesson for a verse added on its own, and reviews it once le
   const later = planDay({ ...base, p, now: new Date(2026, 10, 30, 9) });
   assert.deepEqual(later.map((c) => [c.kind, c.course]), [['review', 'first-verses']]);
 });
+
+test('plan fields this version does not know are kept through parse, setPlan, remove', () => {
+  const raw = JSON.stringify({ members: [{ id: 'a', name: 'A', track: 'adult', createdAt: '2026-01-01' }], activeMemberId: 'a', plan: { course: 'fv', minutes: 7, newer: { x: 1 } } });
+  const h = parseHousehold(raw);
+  assert.deepEqual((h.plan as unknown as Record<string, unknown>).newer, { x: 1 });
+  const h2 = setPlan(h, { course: 'psalms' });
+  assert.deepEqual((h2.plan as unknown as Record<string, unknown>).newer, { x: 1 });
+  const h3 = removeFromPlan(h2, 'psalms', 'fv');
+  assert.deepEqual((h3.plan as unknown as Record<string, unknown>).newer, { x: 1 });
+});

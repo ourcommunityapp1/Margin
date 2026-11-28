@@ -156,7 +156,7 @@ export function allGuides(): Guide[] {
           'Locking in each group of five questions takes about 4 minutes.',
           'Two lessons in three bring something new. The third is practice.',
           'Reviews grow as more is learned, so a fifth more time is allowed for them.',
-          'Long-term memory means six months of right recalls after the last question is learned, including a recall after two months away.',
+          'Long-term memory means three right whole answers (typed or said) over six months, one of them after two months away.',
         ] },
         { h: 'Learned is not the same as remembered', p: ['The first number is how long it takes to learn each answer once. The second adds the time it takes for the answers to settle into long-term memory, because an answer is only counted as remembered once you can recall it with no hints after time away.'] },
         { h: 'A slower pace is fine', p: ['The Shorter Catechism has 107 questions, and some of the later answers are long. Taking a year or more, a few questions a week, is fine. What matters is that earlier answers keep being reviewed while you add new ones.'] },

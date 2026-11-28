@@ -8,7 +8,7 @@ import { useHeir } from './provider';
 import { Back, Tabs } from './tabs';
 import { activeMember } from '@/heir/household';
 import { memberProgress } from '@/heir/progress';
-import { levelShown, needsRefresh, nextStep } from '@/heir/levels';
+import { levelShown, needsRefresh } from '@/heir/levels';
 import { tierOf } from '@/heir/tiers';
 import { Explain } from './explain';
 import { ItemPlanButton } from './plan-button';
@@ -16,11 +16,10 @@ import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import { RelatedVerses } from './related';
 import { relatedFor } from '@/heir/related';
-import { strongUntilFor } from '@/heir/keep';
 import { courseItems, courses, isVerse } from '@/heir/content';
 import type { Item } from '@/heir/types';
 import { partMemories } from '@/heir/memory';
-import { itemStats, itemStrength, practisedToday, recitedPerfectly, strengthBand, strengthSeries, timesPracticed, wordCards, type WordCard } from '@/heir/item-stats';
+import { itemStats, itemStrength, recitedPerfectly, strengthBand, strengthSeries, timesPracticed, wordCards, type WordCard } from '@/heir/item-stats';
 
 export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses' }: { item: Item; collectionTitle: string; unit: string; back?: string }) {
   const { household, progress, now, labs } = useHeir();
@@ -30,9 +29,6 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
   const learned = unitsFor(item, me?.track ?? 'adult').every((u) => mine.units.includes(u.key));
   const level = levelShown(mine, item, me?.track ?? 'adult');
   const dim = needsRefresh(mine, item.id, now);
-  const next = learned ? nextStep(item, me?.track ?? 'adult', mine, now) : null;
-  const strong = learned ? strongUntilFor(item, mine, me?.track ?? 'adult') : null;
-  const today = learned && practisedToday(mine, item.id, now);
   const strength = learned ? itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap)) : null;
   const stats = learned ? itemStats(item, mine, me?.track ?? 'adult') : null;
   const cards = learned ? wordCards(item, me?.track ?? 'adult', mine.log) : [];
@@ -41,35 +37,29 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
   const series = learned ? strengthSeries(item, mine.log, now) : [];
   const noun = unit === 'Question' ? 'answer' : unit === 'Verse' ? 'verse' : 'words';
   const date = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: d.getFullYear() === now.getFullYear() ? undefined : 'numeric' });
-  const ago = (d: Date) => { const days = Math.round((new Date(now).setHours(0, 0, 0, 0) - new Date(d).setHours(0, 0, 0, 0)) / 86_400_000); return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`; };
 
   return (
     <>
       <main className="hr-page">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 0 }}>
           <Back href={back} />
-          <span style={{ fontSize: 15, fontWeight: 600 }}>{collectionTitle} · {unit === 'Question' ? 'Q' : unit === 'Verse' || unit === 'Commandment' ? `${unit} ` : 'Part '}{item.number}</span>
+          <span style={{ fontSize: 15, fontWeight: 600 }}>{unit === 'Verse' ? item.prompt : `${collectionTitle} · ${unit === 'Question' ? 'Q' : unit === 'Commandment' ? `${unit} ` : 'Part '}${item.number}`}</span>
         </div>
 
         {/* The passage sits open on the page, with the two actions straight under it. */}
         <section className="hr-item-passage" aria-label="Passage">
           {unit === 'Question'
             ? <p className="serif hr-item-q">{item.prompt}</p>
-            : <span className="hr-label">{item.prompt}</span>}
+            : unit === 'Verse' ? null : <span className="hr-label">{item.prompt}</span>}
           <p className="serif hr-item-text">{item.text}</p>
           {labs && !item.reviewed && <div><span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span></div>}
         </section>
 
+        {owner && <ItemPlanButton item={item} course={owner} />}
+
         {!learned && owner && (
           <div className="hr-actions">
             <Link href={`/heir/lesson?mode=learn&item=${encodeURIComponent(item.id)}&course=${owner.id}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn">Learn it · 2 min</Link>
-          </div>
-        )}
-
-        {learned && (
-          <div className="hr-actions">
-            <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn">Practice</Link>
-            <Link href={`/heir/lesson?mode=keep&items=${encodeURIComponent(item.id)}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn hr-btn-outline" aria-label={`Review: type or say the whole ${noun} from memory`}>Review</Link>
           </div>
         )}
 
@@ -80,10 +70,8 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
                 ? <div className="hr-ring" data-band={strengthBand(strength)} style={{ ['--v' as string]: Math.round(strength * 100), width: 92, height: 92 }}><b className="serif">{Math.round(strength * 100)}%</b></div>
                 : <Stone level={level} size={56} dim={dim} />}
               <span className="hr-status-text">
-                <span className="hr-status-cap">{strength !== null ? (today ? 'Strength, practised today' : 'Strength') : 'Level'}</span>
                 <b>{level ? `${tierOf(level)!.stone} · ${tierOf(level)!.name}` : 'Not learned yet'}</b>
-                {dim ? <span style={{ color: 'var(--miss)' }}>Due for a refresh</span>
-                  : strong ? <span>{strong.getTime() <= now.getTime() ? 'Worth a review now' : `Strong until about ${strong.toLocaleDateString('en-US', { month: 'long', year: strong.getFullYear() === now.getFullYear() ? undefined : 'numeric' })}`}</span> : null}
+                {dim ? <span style={{ color: 'var(--miss)' }}>Due for a refresh</span> : null}
               </span>
             </div>
             {stats && (
@@ -91,20 +79,20 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
                 <div className="hr-status-nums">
                   <div><b className="serif">{perfect}</b><span>recited perfectly</span></div>
                   <div><b className="serif">{practised}</b><span>times practised</span></div>
-                  <div><b className="serif">{stats.due ? (stats.due.getTime() <= now.getTime() ? 'Now' : date(stats.due)) : '–'}</b><span>next review</span></div>
+                  <div><b className="serif">{stats.learnedAt ? date(stats.learnedAt) : '–'}</b><span>learned</span></div>
                 </div>
-                <div className="hr-kv">
-                  {stats.learnedAt && <div><span>Learned</span><span>{date(stats.learnedAt)}</span></div>}
-                  {stats.last && <div><span>Last time</span><span>{ago(stats.last)}{stats.lastRight === false ? ' · a slip' : ''}</span></div>}
-                  {stats.oftenMissed && <div><span>Often missed</span><span>“{stats.oftenMissed}”</span></div>}
-                </div>
+                {stats.oftenMissed && <div className="hr-kv"><div><span>Often missed</span><span>“{stats.oftenMissed}”</span></div></div>}
               </>
             )}
-            {next && <p className="hr-status-next"><b>Next: {next.split(',')[0]}</b>{next.includes(',') ? `, ${next.slice(next.indexOf(',') + 2)}` : ''}.</p>}
           </section>
         )}
 
-        {owner && <ItemPlanButton item={item} course={owner} />}
+        {learned && (
+          <div className="hr-actions">
+            <Link href={`/heir/lesson?mode=item&item=${encodeURIComponent(item.id)}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn">Practice</Link>
+            <Link href={`/heir/lesson?mode=keep&items=${encodeURIComponent(item.id)}&from=${encodeURIComponent(`/heir/item/${item.id}`)}`} className="hr-btn hr-btn-outline" aria-label={`Review: type or say the whole ${noun} from memory`}>Review</Link>
+          </div>
+        )}
 
         {learned && cards.some((c) => c.band !== 'none') && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Word by word">

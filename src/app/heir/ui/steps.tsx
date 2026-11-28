@@ -57,7 +57,7 @@ export function Cue({ item, step, title, tag }: { item: Item; step: Step; title:
         {tag !== undefined ? tag && <span className="hr-tag">{tag}</span> : step.review && <span className="hr-tag">Review</span>}
         {label}
       </span>
-      <p className="serif" style={{ margin: 0, fontSize: 25, lineHeight: 1.3, fontWeight: 500 }}>{item.prompt}</p>
+      <p className="serif hr-cue-q">{item.prompt}</p>
     </div>
   );
 }
@@ -306,7 +306,7 @@ export function Letters({ step, onReport }: { step: Extract<Step, { kind: 'lette
     <>
       <p className="hr-instruction">Type the first letter of each word</p>
       <div style={{ position: 'relative' }} onClick={() => input.current?.focus()}>
-        <p key={shake} className={`hr-passage${shake ? ' hr-shake' : ''}`} aria-live="polite">
+        <p key={shake} className={`hr-passage letters${shake ? ' hr-shake' : ''}`} aria-live="polite">
           <Lead text={step.lead} />
           {tokens.map((t, i) => i < shown
             ? <span key={i}>{t} </span>

@@ -113,3 +113,6 @@ Rules as always: never change Scripture, catechism or creed text; plain words; o
 | Course page | `mobile/lib/features/courses/course_screen.dart` (`_ItemRow`, the boxes) |
 | Verse page | `mobile/lib/features/item/item_screen.dart` (`ItemScreen`, `_Status`) |
 | Plan buttons | `mobile/lib/features/courses/plan_buttons.dart` |
+
+## Web status (done 2026-11-28, cloud session)
+Section 2 is mirrored on the website: slimmer lesson top bar (6 px bar, 36 px close), 21 px question (18 px and no course line with the keyboard up), no "last practised" line, first-letters line height 1.55, outlined buttons at 1.5 px of the ink colour at 45%, course page (three boxes, bigger strength %, arrow on every row, grey 0% before a verse is started, roomier rows), verse page (reference alone in the header, new order, trimmed status card with three numbers). Section 3: `mode=learn` on an already-learned item is now a short practice and does not add it to the plan; unknown plan fields are kept (`parseHousehold`, `setPlan`, `removeFromPlan`, test in `plan.test.ts`); the long-term-memory wording now says three whole answers over six months, one after two months away.

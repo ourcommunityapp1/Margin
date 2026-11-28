@@ -123,6 +123,8 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
     const done = lessonsDone(mine, course.id, ids);
     const learnItem = mode === 'learn' && itemId ? getItem(itemId) : undefined;
     const learnUnit = learnItem ? unitsFor(learnItem, track).find((u) => !learnedUnits.has(u.key)) : undefined;
+    // "Learn it" on something already learned (a stale card, or learned since) is a short practice on it, not the course's next lesson.
+    const alreadyLearned = !!learnItem && !learnUnit;
     const plan = learnItem && learnUnit
       ? { kind: 'learn' as const, units: [learnUnit], group: groupsOf(items).find((g) => g.items.some((i) => i.id === learnItem.id)) ?? groupsOf(items)[0] }
       : mode === 'review'
@@ -143,7 +145,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
     const glassBefore = windowLight(items, track, mine, new Date());
     const base = { memberId: me.id, courseId: course.id, label: mode === 'review' ? `Review · ${course.title}` : done === 0 ? 'Welcome' : `Lesson ${done + 1}`, before: { lit: glassBefore.lit, dusty: glassBefore.dusty } };
     let next: Session;
-    const one = mode === 'item' && itemId ? getItem(itemId) : undefined;
+    const one = (mode === 'item' || alreadyLearned) && itemId ? getItem(itemId) : undefined;
     if (mode === 'extra') {
       // Extra practice, after the day's lessons: what is most likely to slip, across every course you've started.
       const started = startedCourses(mine, track, dailyCourse(household.plan), household.plan?.removed, household.plan?.verses);
@@ -287,7 +289,7 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
     const saved = { ...marked, today: withSession(marked.today, localDay(now), { id: crypto.randomUUID(), at: now.toISOString(), secs: Math.max(1, Math.round(activeMs.current / 1000)), course: courseId ?? course.id, kind, ...(cardId ? { card: cardId } : {}) }) };
     updateProgress((p) => ({ ...p, [session.memberId]: saved }));
     // Learning a verse on its own puts it in the plan (its reviews follow), without bringing its whole course along.
-    if (mode === 'learn' && itemId) update((h) => addVerse(h, itemId, course.id));
+    if (mode === 'learn' && itemId && session.units.length) update((h) => addVerse(h, itemId, course.id));
     const recall = recorded.filter((r) => r.kind !== 'intro');
     setFinished({ right: recall.filter((r) => r.correct).length, total: recall.length, minutes: Math.max(1, Math.round(activeMs.current / 60000)), ups: settled.ups, awards: settled.awards, kept: daysKept(settled.progress.days, localDay(now)) });
   };
@@ -350,7 +352,6 @@ export function LessonRunner({ mode, itemId, itemIds = [], courseId, cardId, fro
             {step.kind === 'match' || step.kind === 'meaning'
               ? <span className="hr-label" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{tag && <span className="hr-tag">{tag}</span>}{step.kind === 'meaning' ? title : 'Match'}{retry ? ' · Second try' : ''}</span>
               : <Cue item={item} step={step} tag={tag} title={`${title}${retry ? ' · Second try' : ''}`} />}
-            {step.review && session.why?.[step.itemId] && <p className="hr-why">{session.why[step.itemId]}</p>}
             {'lead' in step && step.kind !== 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'next' && <Context text={contextBefore(item, track, step.lead)} />}
             {step.kind === 'order' && <Order step={step} onReport={report} />}
