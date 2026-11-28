@@ -1,6 +1,6 @@
-// One course (src/app/heir/courses/[id]/page.tsx, ui/course-list.tsx CourseScreen): its window, name and what it is, four
-// numbers (% done, learned of total, in memory, average strength), and its questions or verses by part, each learned one with its
-// strength (always shown; "Practised today" under it on a day it was practised) and its stone. Opening one shows its page (the item screen).
+// One course (src/app/heir/courses/[id]/page.tsx, ui/course-list.tsx CourseScreen): its window, name and what it is, three
+// numbers (% done, learned of total, average strength), and its questions or verses by part: each with its gem, its strength
+// in large type (0% in grey before it is started) and an arrow. Opening one shows its page (the item screen).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,9 +8,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../data/social.dart' show siteOrigin;
 import '../../engine/content.dart';
-import '../../engine/keep.dart' show DueForReview, KeepOptions, Kept, heldItems, keepLaunch;
-import '../../engine/levels.dart' show levelShown, needsRefresh, recited;
-import '../../engine/tiers.dart';
+import '../../engine/levels.dart' show levelShown, needsRefresh;
 import '../../engine/memory.dart' show partMemories;
 import '../../engine/progress.dart' show MemberProgress;
 import '../../platform/share.dart';
@@ -60,7 +58,6 @@ class CourseScreen extends ConsumerWidget {
     };
     final nums = strengthOf.values.whereType<double>().toList();
     final average = nums.isEmpty ? null : (nums.reduce((a, b) => a + b) / nums.length * 100).round();
-    final inMemory = heldItems(items, mine, track, now, KeepOptions(launch: keepLaunch, tz: null)).where((h) => h.state is Kept || h.state is DueForReview).length;
 
     return KPage(
       children: [
@@ -120,8 +117,6 @@ class CourseScreen extends ConsumerWidget {
                   _Stat('${(learnedItems.length / (items.isEmpty ? 1 : items.length) * 100).round()}%', 'of the course done'),
                   const SizedBox(width: 6),
                   _Stat('${learnedItems.length}', 'learned of ${items.length}'),
-                  const SizedBox(width: 6),
-                  _Stat('$inMemory', 'in memory'),
                   const SizedBox(width: 6),
                   _Stat(average == null ? '–' : '$average%', 'average strength'),
                 ],
@@ -218,55 +213,38 @@ class _ItemRow extends StatelessWidget {
     final k = context.k;
     final level = levelShown(mine, item, track);
     final dim = needsRefresh(mine, item.id, now);
-    final status = dim
-        ? 'Needs a refresh'
-        : level > 0
-            ? tierOf(level)!.name
-            : recited(item, track, mine.log)
-                ? 'Recited'
-                : learned
-                    ? 'Practiced'
-                    : null;
     final st = strength;
-    final today = practisedToday(mine, item.id, now);
-    final under = today ? 'Practised today' : status;
+    // The strength, large: in its band's colour once learned; 0% in grey for one not started yet.
+    final pct = learned ? (st == null ? '–' : '${(st * 100).round()}%') : '0%';
+    final pctColour = learned && st != null ? bandColor(strengthBand(st)) : k.muted.withValues(alpha: 0.6);
     return Semantics(
       button: true,
+      label: '${itemLabel(item)}, ${learned ? 'strength $pct' : 'not started'}',
       child: InkWell(
         onTap: () => context.push('/item/${Uri.encodeComponent(item.id)}'),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 64),
+          constraints: const BoxConstraints(minHeight: 80),
           decoration: BoxDecoration(border: first ? null : Border(top: BorderSide(color: k.line))),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Row(
             children: [
-              if (learned || level > 0) ...[KStone(level: level, size: 30, dim: dim), const SizedBox(width: 12)],
+              // The gem (a dashed outline before it is learned); it fades when it needs a refresh.
+              KStone(level: level, size: 30, dim: dim),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(itemLabel(item), style: sans(16, weight: FontWeight.w600, color: k.ink)),
-                    const SizedBox(height: 2),
-                    Text(itemSubtitle(item), maxLines: 2, overflow: TextOverflow.ellipsis, style: sans(14, color: k.muted)),
+                    const SizedBox(height: 3),
+                    Text(itemSubtitle(item), maxLines: 2, overflow: TextOverflow.ellipsis, style: sans(14, color: k.muted, height: 1.35)),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              if (learned)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    if (st != null) Text('${(st * 100).round()}%', style: sans(13.5, weight: FontWeight.w700, color: bandColor(strengthBand(st)))),
-                    if (under != null) ...[
-                      const SizedBox(height: 2),
-                      Text(under, style: sans(11.5, weight: FontWeight.w600, color: dim && !today ? k.miss : k.muted)),
-                    ],
-                  ],
-                )
-              else if (status != null)
-                Text(status, style: sans(12, weight: FontWeight.w600, color: k.muted))
-              else
-                KIcon('<path d="M9 6l6 6-6 6"/>', size: 16, color: k.muted, strokeWidth: 2.2),
+              Text(pct, style: sans(20, weight: FontWeight.w700, color: pctColour)),
+              const SizedBox(width: 6),
+              KIcon('<path d="M9 6l6 6-6 6"/>', size: 16, color: k.muted, strokeWidth: 2.2),
             ],
           ),
         ),
