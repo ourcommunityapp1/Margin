@@ -368,7 +368,6 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     // A lock-in says so on every question; elsewhere, practice on earlier questions is marked Review.
     final tag = _session.kind == 'checkpoint' ? 'Lock it in · ${(_pos + 1).clamp(1, _queue.length)} of ${_queue.length}' : step.review ? 'Review' : null;
     final second = retry ? ' · Second try' : '';
-    final why = step.review ? _session.why[step.itemId] : null;
 
     Widget tagged(String text) => Row(
           children: [
@@ -376,9 +375,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             Flexible(child: KLabel(text)),
           ],
         );
-    // While the keyboard is up, only what's needed to answer: the question, smaller; no label or "why" line.
+    // While the keyboard is up, only what's needed to answer: the question, smaller, with no label line. (The "last practised ·
+    // strength" line is gone: too much on a step.)
     final typing = MediaQuery.viewInsetsOf(context).bottom > 0;
-    final whyLine = why == null || typing ? null : Text(why, style: sans(13.5, color: k.muted));
 
     switch (step.kind) {
       case 'intro' || 'info' || 'verse':
@@ -386,7 +385,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       case 'quiz':
         return const [KLabel('Welcome')];
       case 'match' || 'meaning':
-        return [tagged('${step.kind == 'meaning' ? title : 'Match'}$second'), ?whyLine];
+        return [tagged('${step.kind == 'meaning' ? title : 'Match'}$second')];
       default:
             return [
           Column(
@@ -400,7 +399,6 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
               Text(item.prompt, style: serif(typing ? 18 : 21, weight: FontWeight.w500, color: k.ink, height: 1.3)),
             ],
           ),
-          ?whyLine,
         ];
     }
   }
