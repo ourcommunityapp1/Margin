@@ -800,7 +800,7 @@ class _LettersStepState extends State<LettersStep> with SingleTickerProviderStat
     final passage = AnimatedBuilder(
       animation: _shake,
       builder: (_, child) => Transform.translate(offset: Offset(math.sin(_shake.value * math.pi * 4) * 6 * (1 - _shake.value), 0), child: child),
-      child: Semantics(liveRegion: true, child: Text.rich(TextSpan(children: spans), style: serif(22, color: k.ink, height: 1.7))),
+      child: Semantics(liveRegion: true, child: Text.rich(TextSpan(children: spans), style: serif(22, color: k.ink, height: 1.55))),
     );
 
     return StepFrame(

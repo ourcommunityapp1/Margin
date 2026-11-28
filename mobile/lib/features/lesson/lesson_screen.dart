@@ -272,9 +272,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
           Padding(
             padding: EdgeInsets.fromLTRB(
               KSize.pageSide + pad.left,
-              KSize.pageTop + pad.top,
+              8 + pad.top,
               KSize.pageSide + pad.right,
-              KSize.pageTop + (keyboard > pad.bottom ? keyboard : pad.bottom),
+              (keyboard > pad.bottom ? 8 + keyboard : KSize.pageTop + pad.bottom),
             ),
             child: Center(
               child: ConstrainedBox(
@@ -294,27 +294,27 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                               customBorder: const CircleBorder(),
                               onTap: _exit,
                               child: SizedBox(
-                                width: 44,
-                                height: 44,
-                                child: Center(child: KIcon('<path d="M6 6l12 12M18 6L6 18"/>', size: 18, color: k.ink, strokeWidth: 2.2)),
+                                width: 36,
+                                height: 36,
+                                child: Center(child: KIcon('<path d="M6 6l12 12M18 6L6 18"/>', size: 16, color: k.ink, strokeWidth: 2.2)),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Semantics(
                             label: 'Lesson progress',
                             value: '$_pos of ${_queue.length}',
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(5),
+                              borderRadius: BorderRadius.circular(3),
                               child: Container(
-                                height: 10,
+                                height: 6,
                                 color: k.card,
                                 alignment: Alignment.centerLeft,
                                 child: FractionallySizedBox(
                                   widthFactor: _pos / _queue.length,
-                                  child: Container(decoration: BoxDecoration(color: k.ink, borderRadius: BorderRadius.circular(5))),
+                                  child: Container(decoration: BoxDecoration(color: k.ink, borderRadius: BorderRadius.circular(3))),
                                 ),
                               ),
                             ),
@@ -335,11 +335,14 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                           style: sans(15, color: k.ink, height: 1.45),
                         ),
                       ),
-                    const SizedBox(height: KSize.gap),
+                    const SizedBox(height: 8),
                     Expanded(
                       child: StepChrome(
                         locked: feedback != null,
                         header: _header(step, item, retry),
+                        lead: step.lead != null && !const {'intro', 'info', 'verse', 'quiz', 'match', 'meaning'}.contains(step.kind)
+                            ? ContextBefore(contextBefore(item, widget.track, step.lead!))
+                            : null,
                         child: KeyedSubtree(key: ValueKey('${step.id}-$_pos'), child: _stepWidget(step, item)),
                       ),
                     ),
@@ -373,7 +376,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
             Flexible(child: KLabel(text)),
           ],
         );
-    final whyLine = why == null ? null : Text(why, style: sans(13.5, color: k.muted));
+    // While the keyboard is up, only what's needed to answer: the question, smaller; no label or "why" line.
+    final typing = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final whyLine = why == null || typing ? null : Text(why, style: sans(13.5, color: k.muted));
 
     switch (step.kind) {
       case 'intro' || 'info' || 'verse':
@@ -383,19 +388,19 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
       case 'match' || 'meaning':
         return [tagged('${step.kind == 'meaning' ? title : 'Match'}$second'), ?whyLine];
       default:
-        // A verse's prompt is its reference, already shown large below, so the label names the course instead.
-        final label = isVerse(item) ? title.replaceFirst(item.prompt, getCollection(item.collection)?.title ?? '') : title;
-        return [
+            return [
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              tagged('$label$second'),
-              const SizedBox(height: 10),
-              Text(item.prompt, style: serif(25, weight: FontWeight.w500, color: k.ink, height: 1.3)),
+              // No course label, question number or "Review" tag: the question is enough. Only a lock-in or a second try says so.
+              if (!typing && (_session.kind == 'checkpoint' || second.isNotEmpty)) ...[
+                Row(children: [if (_session.kind == 'checkpoint') KTag(tag!) else KTag(second.replaceFirst(' · ', ''))]),
+                const SizedBox(height: 8),
+              ],
+              Text(item.prompt, style: serif(typing ? 18 : 21, weight: FontWeight.w500, color: k.ink, height: 1.3)),
             ],
           ),
           ?whyLine,
-          if (step.lead != null) ContextBefore(contextBefore(item, widget.track, step.lead!)),
         ];
     }
   }

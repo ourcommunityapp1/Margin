@@ -9,7 +9,10 @@ import 'outcome.dart';
 
 /// What the lesson screen shares with the step on screen.
 class StepChrome extends InheritedWidget {
-  const StepChrome({super.key, required this.header, required this.locked, required super.child});
+  const StepChrome({super.key, required this.header, required this.locked, this.lead, required super.child});
+
+  /// The words just before the part being asked, shown straight above the answer (after the step's instruction line).
+  final Widget? lead;
 
   /// The label, cue and earlier words at the top of the card.
   final List<Widget> header;
@@ -37,7 +40,11 @@ class StepFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chrome = StepChrome.of(context);
-    final children = [...chrome.header, ...body];
+    // The earlier words sit right above the answer, so they read on into it: after the instruction line, not before it.
+    final children = [
+      ...chrome.header,
+      if (chrome.lead != null && body.length > 1) ...[body.first, chrome.lead!, ...body.skip(1)] else ...[?chrome.lead, ...body],
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -45,11 +52,11 @@ class StepFrame extends StatelessWidget {
           child: IgnorePointer(
             ignoring: chrome.locked,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(4, 6, 4, 12),
+              padding: const EdgeInsets.fromLTRB(4, 2, 4, 12),
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.manual,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [for (var i = 0; i < children.length; i++) ...[if (i > 0) const SizedBox(height: 18), children[i]]],
+                children: [for (var i = 0; i < children.length; i++) ...[if (i > 0) SizedBox(height: MediaQuery.viewInsetsOf(context).bottom > 0 ? 10 : 14), children[i]]],
               ),
             ),
           ),
