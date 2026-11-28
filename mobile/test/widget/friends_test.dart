@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:katekize/ui/widgets.dart' show KRow;
 import 'package:go_router/go_router.dart';
 import 'package:katekize/ui/widgets.dart' show KPage;
 import 'package:katekize/data/household.dart';
@@ -73,13 +72,14 @@ void main() {
       ..incoming = [const RequestRow(id: 'r1', username: 'bea', name: 'Bea Jones')];
     await _pump(tester, social);
     await _openFriends(tester);
+    // One request waiting: the Requests box says so; the Friends box opens the list.
+    expect(find.bySemanticsLabel('Friend requests, 1 waiting'), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel('Friends, 1'));
+    await tester.pumpAndSettle();
     expect(find.text('1 friend'), findsOneWidget);
     expect(find.text('Cal Wright'), findsOneWidget);
     expect(find.text('5-day streak'), findsOneWidget);
     expect(find.text('1,234'), findsOneWidget);
-    // One request waiting: the count sits in the Friend requests row (the leaderboard card above has its own numbers).
-    final requests = find.ancestor(of: find.text('Friend requests'), matching: find.byType(KRow));
-    expect(find.descendant(of: requests, matching: find.text('1')), findsOneWidget);
   });
 
   testWidgets('search finds someone and Add sends a request', (tester) async {
@@ -113,7 +113,8 @@ void main() {
       ..outgoing = [const RequestRow(id: 'r3', username: 'eve', name: 'Eve Hall')];
     await _pump(tester, social);
     await _openFriends(tester);
-    await _tap(tester, 'Friend requests');
+    await tester.tap(find.bySemanticsLabel(RegExp('^Friend requests')));
+    await tester.pumpAndSettle();
     expect(find.text('For you · 2'), findsOneWidget);
     expect(find.text('You sent · 1'), findsOneWidget);
     await _tap(tester, 'Accept');
@@ -131,6 +132,8 @@ void main() {
       ..friends = [const FriendRow(username: 'cal', name: 'Cal Wright', wordsInMemory: 1234, streak: 5)];
     await _pump(tester, social);
     await _openFriends(tester);
+    await tester.tap(find.bySemanticsLabel('Friends, 1'));
+    await tester.pumpAndSettle();
     await _tap(tester, 'Cal Wright');
     expect(find.text('Friends since Mar 2026'), findsOneWidget);
     expect(find.text('1,234'), findsOneWidget);
@@ -146,7 +149,7 @@ void main() {
     await _tap(tester, 'Remove friend');
     await _tap(tester, 'Remove');
     expect(social.removed, ['cal']);
-    expect(find.text('Friend requests'), findsOneWidget); // back on Friends
+    expect(find.bySemanticsLabel(RegExp('^Friend requests')), findsOneWidget); // back on Community
   });
 
   testWidgets('a stranger shows no numbers; block asks first; report sends a note', (tester) async {

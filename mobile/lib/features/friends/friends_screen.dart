@@ -1,5 +1,5 @@
-// Friends (src/app/heir/ui/social.tsx FriendsScreen): search, requests, your friends, and an invite for someone who
-// isn't on Katekize yet. The database decides what each person may see; this only shows what it returns.
+// Community (src/app/heir/ui/social.tsx FriendsScreen): search, then two small boxes (Requests, and Friends, which opens
+// your list), then the leaderboard; and an invite for someone who isn't on Katekize yet. The database decides what each person may see; this only shows what it returns.
 
 import 'dart:async';
 
@@ -33,7 +33,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
   List<FriendRow>? _friends;
   int _incoming = 0;
   String _error = '', _link = '', _inviteNote = '';
-  bool _busy = false, _invite = false, _inviteBusy = false, _loadedFor = false;
+  bool _busy = false, _invite = false, _inviteBusy = false, _loadedFor = false, _showFriends = false;
 
   @override
   void dispose() {
@@ -151,7 +151,7 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Row(
             children: [
-              const Expanded(child: KTitle('Friends')),
+              const Expanded(child: KTitle('Community')),
               if (has)
                 Semantics(
                   button: true,
@@ -235,30 +235,34 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
               ),
             )
           else ...[
-            // The leaderboard preview sits at the top of Friends (moved from Progress on Nov 26); not while searching.
-            const CommunityPreview(),
-            KCard(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              child: KRow(
-                first: true,
-                onTap: () => context.push('/friends/requests'),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_incoming > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: k.button, borderRadius: BorderRadius.circular(10)),
-                        child: Text('$_incoming', style: sans(13, weight: FontWeight.w600, color: k.buttonInk)),
-                      ),
-                    const SizedBox(width: 8),
-                    KIcon('<path d="M9 6l6 6-6 6"/>', size: 16, color: k.muted, strokeWidth: 2.2),
-                  ],
-                ),
-                child: Text('Friend requests', style: sans(16, weight: FontWeight.w700, color: k.ink)),
+            // Two small boxes under the search: Requests (with a dot when one is waiting) and Friends (opens the list).
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _MiniBox(
+                      label: 'Requests',
+                      value: '$_incoming',
+                      dot: _incoming > 0,
+                      semantics: 'Friend requests${_incoming > 0 ? ', $_incoming waiting' : ''}',
+                      onTap: () => context.push('/friends/requests'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _MiniBox(
+                      label: 'Friends',
+                      value: _friends == null ? '–' : '${_friends!.length}',
+                      expanded: _showFriends,
+                      onTap: () => setState(() => _showFriends = !_showFriends),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Semantics(
+            if (_showFriends)
+              Semantics(
               label: 'Your friends',
               child: KCard.column(
                 gap: 4,
@@ -294,9 +298,54 @@ class _FriendsScreenState extends ConsumerState<FriendsScreen> {
                 ],
               ),
             ),
+            // The leaderboard, unchanged, below the boxes; not while searching.
+            const CommunityPreview(),
           ],
         ],
       ],
+    );
+  }
+}
+
+/// One of the two small boxes (`.hr-mini2`): a word on the left, a number on the right.
+class _MiniBox extends StatelessWidget {
+  const _MiniBox({required this.label, required this.value, required this.onTap, this.dot = false, this.expanded, this.semantics});
+  final String label, value;
+  final VoidCallback onTap;
+  final bool dot;
+  final bool? expanded;
+  final String? semantics;
+
+  @override
+  Widget build(BuildContext context) {
+    final k = context.k;
+    return Semantics(
+      button: true,
+      expanded: expanded,
+      label: semantics ?? '$label, $value',
+      excludeSemantics: true,
+      child: Material(
+        color: k.card,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  if (dot) Container(width: 8, height: 8, margin: const EdgeInsets.only(right: 7), decoration: const BoxDecoration(color: Color(0xFFE8B867), shape: BoxShape.circle)),
+                  Expanded(child: Text(label, style: sans(15, weight: FontWeight.w500, color: k.muted))),
+                  const SizedBox(width: 10),
+                  Text(value, style: serif(20, weight: FontWeight.w600, color: k.ink)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

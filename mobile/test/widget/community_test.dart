@@ -75,7 +75,7 @@ void main() {
     await _openFriends(tester);
     expect(find.text('Just you so far'), findsOneWidget);
     await _tap(tester, 'Find friends');
-    expect(find.text('Friend requests'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('^Friend requests')), findsOneWidget);
   });
 
   testWidgets('with no profile, Friends and the board ask to make one', (tester) async {
