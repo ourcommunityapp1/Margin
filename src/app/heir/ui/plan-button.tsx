@@ -35,17 +35,17 @@ export function usePlanState(course: Course) {
 const chevron = (open: boolean) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform .15s' }}><path d="M6 9l6 6 6-6" /></svg>;
 
 /** The primary and secondary buttons for a course, on a dark card (`hero`) or a plain one. */
-export function PlanButtons({ course, surface = 'hero' }: { course: Course; surface?: 'hero' | 'plain' }) {
+export function PlanButtons({ course, surface = 'hero', calm = false }: { course: Course; surface?: 'hero' | 'plain'; calm?: boolean }) {
   const s = usePlanState(course);
   const hero = surface === 'hero';
   const primary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn'} onClick={on}>{label}</button>;
-  const secondary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn quiet'} {...(hero ? { 'data-quiet': 'true' } : {})} onClick={on}>{label}</button>;
+  const secondary = (label: string, on: () => void) => <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn hr-btn-outline'} {...(hero ? { 'data-quiet': 'true' } : {})} onClick={on}>{label}</button>;
   const [open, setOpen] = useState(false);
   // Two states: Add to plan; or "Added to plan" with a down arrow, and Remove from plan one tap further (no accidental removals).
-  if (!s.isIn) return primary('Add to plan', s.add);
+  if (!s.isIn) return calm ? secondary('Add to plan', s.add) : primary('Add to plan', s.add);
   return (
     <>
-      <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn quiet'} {...(hero ? { 'data-quiet': 'true' } : {})} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button type="button" className={hero ? 'hr-hero-btn' : 'hr-btn hr-btn-outline'} {...(hero ? { 'data-quiet': 'true' } : {})} aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <span>Added to plan</span>{chevron(open)}
       </button>
       {open && secondary('Remove from plan', () => { setOpen(false); s.remove(); })}

@@ -11,12 +11,13 @@ import { memberProgress } from '@/heir/progress';
 import { needsRefresh, nextStep } from '@/heir/levels';
 import { tierOf } from '@/heir/tiers';
 import { Explain } from './explain';
+import { PlanButtons, usePlanState } from './plan-button';
 import { Stone } from './stone';
 import { unitsFor } from '@/heir/lesson';
 import { RelatedVerses } from './related';
 import { relatedFor } from '@/heir/related';
 import { strongUntilFor } from '@/heir/keep';
-import { courseItems, courses } from '@/heir/content';
+import { courseItems, courses, isVerse } from '@/heir/content';
 import type { Item } from '@/heir/types';
 import { partMemories } from '@/heir/memory';
 import { itemStats, itemStrength, practisedToday, recitedPerfectly, strengthBand, strengthSeries, timesPracticed, wordCards, type WordCard } from '@/heir/item-stats';
@@ -103,6 +104,8 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           </section>
         )}
 
+        {owner && <ItemPlan course={owner} />}
+
         {learned && cards.some((c) => c.band !== 'none') && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }} aria-label="Word by word">
             <span className="hr-label">Word by word</span>
@@ -121,7 +124,7 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
           </section>
         )}
 
-        <Explain item={item} />
+        {!isVerse(item) && <Explain item={item} />}
 
         {item.meaning.length > 0 && (
           <section className="hr-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -175,5 +178,16 @@ function StrengthLine({ series }: { series: { at: number; chance: number }[] }) 
       <text className="n" x={x(series.length - 1) - 8} y={y(last.chance) - 9} textAnchor="end">{Math.round(last.chance * 100)}%</text>
       <text x={L} y={h - 6}>{day(series[0].at)}</text><text x={w - R} y={h - 6} textAnchor="end">Now</text>
     </svg>
+  );
+}
+
+// Add the verse's course to your plan (or see that it's there), from the verse's own page.
+function ItemPlan({ course }: { course: NonNullable<ReturnType<typeof courses.find>> }) {
+  const s = usePlanState(course);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <PlanButtons course={course} surface="plain" calm />
+      <span className="hr-btn-note" style={{ marginTop: 0 }}>{s.isIn ? `${course.title} is in your plan` : `Adds ${course.title} to your plan`}</span>
+    </div>
   );
 }
