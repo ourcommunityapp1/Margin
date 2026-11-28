@@ -16,6 +16,7 @@ class Outcome {
     this.missedAt,
     this.note,
     this.reveal,
+    this.share,
   });
 
   final bool ok, close, slip;
@@ -25,6 +26,9 @@ class Outcome {
 
   /// The right answer, shown in the feedback sheet when something was missed.
   final Widget? reveal;
+
+  /// Share of the main words recalled (0 to 1), for the feedback band only (state/feedback.dart). Never decides `ok`.
+  final double? share;
 }
 
 typedef Report = void Function(Outcome outcome);

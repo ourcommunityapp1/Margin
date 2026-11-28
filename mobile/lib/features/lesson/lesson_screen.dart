@@ -22,6 +22,7 @@ import '../../engine/planner.dart' as planner;
 import '../../engine/progress.dart';
 import '../../engine/types.dart';
 import '../../data/household.dart' show newId;
+import '../../state/feedback.dart';
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../ui/theme.dart';
@@ -248,13 +249,9 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     final item = getItem(step.itemId)!;
     final feedback = _feedback;
     final retry = _retried.contains(_key(step)) && _queue.indexOf(step) != _pos;
-    final heading = feedback == null
-        ? ''
-        : feedback.ok
-            ? 'Correct!'
-            : feedback.close
-                ? 'Almost'
-                : 'Not quite';
+    final band = feedback == null ? null : bandFor(ok: feedback.ok, slip: feedback.slip, misses: feedback.misses, share: feedback.share, close: feedback.close);
+    // A whole answer from memory, perfect: celebrated.
+    final celebrate = band == Band.perfect && (step.kind == 'type' || step.kind == 'say');
 
     return Material(
       type: MaterialType.transparency,
@@ -334,7 +331,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
                         child: KeyedSubtree(key: ValueKey('${step.id}-$_pos'), child: _stepWidget(step, item)),
                       ),
                     ),
-                    if (feedback != null) ...[const SizedBox(height: 10), _Feedback(feedback: feedback, heading: heading, retryLater: !feedback.ok && !retry && step.kind != 'quiz', onContinue: _advance)],
+                    if (feedback != null) ...[const SizedBox(height: 10), _Feedback(feedback: feedback, band: band!, celebrate: celebrate, retryLater: !feedback.ok && !retry && step.kind != 'quiz', onContinue: _advance)],
                   ],
                 ),
               ),
@@ -517,25 +514,72 @@ class _Done extends ConsumerWidget {
   }
 }
 
-/// What the check found: any correction, then a small callout ("Correct!", "Almost", "Not quite") right above Continue,
-/// which turns green for a right answer and coral otherwise. No coloured panel: it sits on the page under the step.
+/// What the check found: any correction, then a small pill in one of five bands (state/feedback.dart) right above
+/// Continue, which takes the band's colour. Never red: a miss says "you're still learning". A perfect whole answer is
+/// celebrated with a bigger, glowing pill.
 class _Feedback extends StatelessWidget {
-  const _Feedback({required this.feedback, required this.heading, required this.retryLater, required this.onContinue});
+  const _Feedback({required this.feedback, required this.band, required this.celebrate, required this.retryLater, required this.onContinue});
   final Outcome feedback;
-  final String heading;
-  final bool retryLater;
+  final Band band;
+  final bool celebrate, retryLater;
   final VoidCallback onContinue;
+
+  // The website's colours (heir.css .hr-fb-pill, .hr-fb-go); in light mode the pill's words use a deeper shade to stay readable.
+  static const _fill = {
+    Band.perfect: Color(0xFFF1C46B),
+    Band.good: Color(0xFFB9E3B0),
+    Band.growing: Color(0xFFE9C48A),
+    Band.learning: Color(0xFF9FB8E8),
+  };
+  static const _deep = {
+    Band.perfect: Color(0xFF8A6510),
+    Band.good: Color(0xFF3B6E35),
+    Band.growing: Color(0xFF85581A),
+    Band.learning: Color(0xFF3E5E9E),
+  };
+  static const _star = '<path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z"/>';
+  static const _check = '<path d="M5 12l5 5 9-10"/>';
+  static const _heart = '<path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/>';
 
   @override
   Widget build(BuildContext context) {
     final k = context.k;
-    final ok = feedback.ok;
-    final tone = ok ? k.good : k.miss;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fill = band == Band.pass ? k.good : _fill[band]!;
+    final ink = band == Band.pass ? k.good : dark ? fill : _deep[band]!;
+    final wash = band == Band.pass ? k.goodWash : fill.withValues(alpha: dark ? 0.16 : 0.28);
+    final icon = band == Band.perfect ? _star : band == Band.pass || band == Band.good ? _check : _heart;
     final details = [
       if (feedback.note != null) Text(feedback.note!, style: sans(16, weight: FontWeight.w500, color: k.ink, height: 1.45)),
       ?feedback.reveal,
-      if (retryLater) Text('You’ll get another try at the end.', style: sans(14, color: k.muted)),
+      if (retryLater) Text('It’ll come back once more at the end.', style: sans(14, color: k.muted)),
     ];
+    Widget pill = Container(
+      padding: celebrate ? const EdgeInsets.symmetric(horizontal: 20, vertical: 10) : const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: wash,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: celebrate ? const [BoxShadow(color: Color(0x73F1C46B), blurRadius: 28)] : null,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          KIcon(icon, size: celebrate ? 18 : 16, color: ink, strokeWidth: 2.6),
+          const SizedBox(width: 6),
+          Flexible(child: Text(bandWords[band]!, textAlign: TextAlign.center, style: sans(celebrate ? 18 : 15, weight: FontWeight.w700, color: ink))),
+        ],
+      ),
+    );
+    if (celebrate && !MediaQuery.disableAnimationsOf(context)) {
+      // As .hr-fb-pill[data-big]: pops up a little past full size and settles (1.6 s, once).
+      pill = TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 1600),
+        curve: Curves.easeOut,
+        builder: (context, t, child) => Transform.scale(scale: t < 0.4 ? 0.85 + (t / 0.4) * 0.23 : 1.08 - ((t - 0.4) / 0.6) * 0.08, child: child),
+        child: pill,
+      );
+    }
     return Semantics(
       liveRegion: true,
       child: Column(
@@ -553,22 +597,9 @@ class _Feedback extends StatelessWidget {
               ),
             ),
           if (details.isNotEmpty) const SizedBox(height: 16),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-              decoration: BoxDecoration(color: ok ? k.goodWash : k.missWash, borderRadius: BorderRadius.circular(999)),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  KIcon(ok ? '<path d="M5 12l5 5 9-10"/>' : '<path d="M12 7v6M12 17h.01"/>', size: 16, color: tone, strokeWidth: 2.6),
-                  const SizedBox(width: 6),
-                  Text(heading, style: sans(15, weight: FontWeight.w700, color: tone)),
-                ],
-              ),
-            ),
-          ),
+          Center(child: pill),
           const SizedBox(height: 10),
-          KButton('Continue', onPressed: onContinue, color: tone, ink: const Color(0xFF15181B)),
+          KButton('Continue', onPressed: onContinue, color: fill, ink: const Color(0xFF15181B)),
         ],
       ),
     );

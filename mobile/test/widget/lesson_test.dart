@@ -96,7 +96,7 @@ void main() {
       await _tap(tester, t);
     }
     await _tap(tester, 'Check');
-    expect(find.text('Correct!'), findsOneWidget);
+    expect(find.text('Perfect!'), findsOneWidget);
     await _tap(tester, 'Continue');
 
     // Fill in the missing words.
@@ -107,7 +107,7 @@ void main() {
     }
     await tester.pump();
     await _tap(tester, 'Check');
-    expect(find.text('Correct!'), findsOneWidget);
+    expect(find.text('Perfect!'), findsOneWidget);
     await _tap(tester, 'Continue');
 
     // Type it.
@@ -115,7 +115,7 @@ void main() {
     await tester.enterText(find.byType(TextField), type.text!);
     await tester.pump();
     await _tap(tester, 'Check');
-    expect(find.text('Correct!'), findsOneWidget);
+    expect(find.text('Perfect!'), findsOneWidget);
     await _tap(tester, 'Continue');
 
     // Done, and saved.
@@ -145,7 +145,7 @@ void main() {
     }
     await _tap(tester, 'Check');
     expect(find.textContaining('out of order'), findsOneWidget);
-    expect(find.text('You’ll get another try at the end.'), findsOneWidget);
+    expect(find.text('It’ll come back once more at the end.'), findsOneWidget);
     expect(find.text('Man’s chief end is to glorify God, and to enjoy him forever.'), findsOneWidget, reason: 'the right answer is revealed');
     await _tap(tester, 'Continue');
     expect(find.text('Fill in the missing words'), findsOneWidget);
@@ -276,7 +276,7 @@ void main() {
       expect(find.text(s.step.text!), findsOneWidget, reason: 'the words heard are shown as they come');
       await tester.tap(find.bySemanticsLabel('Stop and check'));
       await tester.pumpAndSettle();
-      expect(find.text('Correct!'), findsOneWidget);
+      expect(find.text('Perfect!'), findsOneWidget);
     });
 
     testWidgets('words that were not said are marked', (tester) async {
@@ -312,7 +312,7 @@ void main() {
       expect(find.text('Say it aloud without looking. Then check yourself.'), findsOneWidget);
       await _tap(tester, 'Show the words');
       await _tap(tester, 'I said it all');
-      expect(find.text('Correct!'), findsOneWidget);
+      expect(find.text('Perfect!'), findsOneWidget);
     });
 
     testWidgets('“Can’t speak now, type it” turns it into typing and stops listening', (tester) async {

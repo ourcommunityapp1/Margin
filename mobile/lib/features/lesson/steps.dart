@@ -4,6 +4,7 @@
 // Say-aloud uses the "check yourself" mode only: real speech recognition is a later phase (ADR-0008), and the
 // website falls back to the same mode where a browser can't listen.
 
+import '../../state/feedback.dart' show mainWordShare;
 import 'dart:math' as math;
 
 import 'package:flutter/services.dart';
@@ -882,6 +883,7 @@ Outcome scored(BuildContext context, String text, String lead, String said, doub
     missedAt: [for (var i = 0; i < tokens.length; i++) if (!heardAt(i)) i],
     slip: ok && notes.isNotEmpty,
     close: !ok && r.score >= nearly,
+    share: mainWordShare(tokens, [for (var i = 0; i < tokens.length; i++) heardAt(i) || movedAt(i)]),
     note: notes.isEmpty ? null : notes.join(' '),
     reveal: notes.isEmpty
         ? null

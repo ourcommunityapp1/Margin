@@ -237,7 +237,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             label: '${c.course.title} window',
           ),
           title: r.isEmpty ? c.course.title : '${c.course.title} · $r',
-          right: _mins(c.state.card.est),
+          right: '${_effort(c).full ? '✎ ' : ''}${_mins(c.state.card.est)}',
         ),
       );
     }
@@ -258,7 +258,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
           evening: true,
           left: PhotoThumb(photo: dusk),
           title: 'When you lie down · ${refList(_items(night))}',
-          right: _mins(_recallMinutes(night.length)),
+          right: nightOpen ? _mins(_recallMinutes(night.length)) : 'opens ${planner.eveningFrom - 12} pm',
         ),
       );
     }
@@ -315,6 +315,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         art: PhotoCircle(photo: dawn, night: false),
         title: 'When you rise',
         line: heroRefs(_items(rise!), named: true),
+        effort: (full: false, label: 'Light'),
         button: 'Start',
         minutes: _mins(_recallMinutes(rise.length)),
         onStart: () => context.push('/lesson?mode=rise'),
@@ -323,6 +324,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         art: PhotoCircle(photo: dusk, night: true),
         title: 'When you lie down',
         line: heroRefs(_items(night!), named: true),
+        effort: (full: false, label: 'Light'),
         button: 'Start',
         minutes: _mins(_recallMinutes(night.length)),
         night: true,
@@ -343,6 +345,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         ),
         title: first.course.title,
         line: heroRefs(first.items, reviewOf: first.state.card.kind != 'lesson' ? first.course.title : null),
+        effort: _effort(first),
         button: first.button,
         minutes: _mins(first.state.card.est),
         onStart: () => context.push(first.href),
@@ -365,8 +368,12 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                   beam: const CircleMotion(),
                   label: '${doneCourse!.title} window',
                 ),
-          title: states.isNotEmpty ? 'Done for today' : 'Today',
-          line: states.isNotEmpty ? '$minutes minute${minutes == 1 ? '' : 's'}' : '',
+          // The evening recall is still to come: not "done for today" yet.
+          title: states.isEmpty ? 'Today' : night != null ? 'Done for now' : 'Done for today',
+          line: states.isEmpty
+              ? ''
+              : '$minutes minute${minutes == 1 ? '' : 's'}'
+                    '${night == null ? '' : nightOpen ? ' · one light recall tonight' : ' · one light recall tonight, from ${planner.eveningFrom - 12} pm'}',
           button: extraOffer ? 'Extra practice' : null,
           onStart: extraOffer ? () => context.push('/lesson?mode=extra') : null,
         );
@@ -434,6 +441,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 }
 
 enum _Hero { rise, card, night, done }
+
+/// How hard a card is, said before it starts (ADR-003): reviews are light; a lesson ends with one full answer; a fix is
+/// typed whole.
+({bool full, String label}) _effort(_Card c) => c.state.card.kind == 'review'
+    ? (full: false, label: 'Light')
+    : c.state.card.kind == 'fix'
+    ? (full: true, label: '✎ Type it from memory')
+    : c.button == 'Lock it in'
+    ? (full: true, label: '✎ Lock it in: each from memory')
+    : (full: true, label: 'Ends with one full answer');
 
 /// One of the day's cards: its course, window, where it starts, its button and what it covers.
 class _Card {
@@ -574,9 +591,12 @@ String heroRefs(List<Item> items, {String? reviewOf, bool named = false}) {
 
 /// The big card: a window or photo, the serif title, one grey line, and the pill button.
 class _HeroBlock extends StatelessWidget {
-  const _HeroBlock({required this.art, required this.title, required this.line, required this.button, this.minutes, this.night = false, this.onStart});
+  const _HeroBlock({required this.art, required this.title, required this.line, required this.button, this.effort, this.minutes, this.night = false, this.onStart});
   final Widget? art;
   final String title, line;
+
+  /// How hard it is, said before it starts (ADR-003): "Light", or a full answer marked with ✎.
+  final ({bool full, String label})? effort;
   final String? button, minutes;
   final bool night;
   final VoidCallback? onStart;
@@ -602,6 +622,17 @@ class _HeroBlock extends StatelessWidget {
             line,
             textAlign: TextAlign.center,
             style: sans(13, color: _grey),
+          ),
+        ],
+        if (effort case final e?) ...[
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: e.full ? const Color(0x29F3D8B6) : const Color(0x14FFFFFF),
+              borderRadius: BorderRadius.circular(99),
+            ),
+            child: Text(e.label, style: sans(12, weight: FontWeight.w600, color: e.full ? _peach : _grey)),
           ),
         ],
         if (button != null && onStart != null) ...[
