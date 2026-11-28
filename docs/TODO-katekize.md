@@ -50,3 +50,7 @@ Owner's list, added 2026-11-27. Each item says how big it is and what can be don
 - Five levels in the engine (ADR-005) and the one memory model (ADR-006, phases 1 onward).
 - Mac session: port the engine changes, run the Dart tests, then the new screens.
 - Reminders (email and push), "everything you know" page, focus courses, Larger Catechism, AI-taught understanding, Android and widget, TestFlight.
+
+## Verse shelves (added 2026-11-28)
+
+Two hand-picked shelves of single verses on the Learn tab ("Most-loved verses", "For hard days"), chosen on their own merits, not by course (`src/heir/content/verse-shelves.ts`). They use only verses already in the app, with their verified NASB 2020 text. **Next:** add well-loved verses that are in no course yet (for example Romans 8:28, Jeremiah 29:11, Joshua 1:9, Philippians 4:13, Isaiah 40:31, Psalm 46:1, Romans 12:2, 2 Timothy 3:16–17, Matthew 28:19–20). Each needs its exact NASB 2020 text checked against the publisher (the same check as the existing courses) and a meaning question, so it is a content task, not a code task.

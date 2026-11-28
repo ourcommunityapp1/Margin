@@ -10,7 +10,8 @@ import { useHeir } from '../ui/provider';
 import { Tabs } from '../ui/tabs';
 import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
-import { courseFor, courseItems, courses, isVerse, itemLabel, SHELVES, type Course } from '@/heir/content';
+import { courseFor, courses, getItem, itemLabel, SHELVES, type Course } from '@/heir/content';
+import { VERSE_SHELVES } from '@/heir/content/verse-shelves';
 import { unitsFor } from '@/heir/lesson';
 import type { Item } from '@/heir/types';
 import { startedCourses } from '@/heir/dayplan';
@@ -86,23 +87,17 @@ export default function Courses() {
   // Every other course on its shelf: the ones under My courses and the one in season are not shown twice.
   const shelves = SHELVES.map((sh, n) => ({ ...sh, n, list: courses.filter((c) => c.shelf === sh.id && c.id !== seasonal?.c.id && !mineIds.has(c.id)) })).filter((sh) => sh.list.length);
 
-  // Single verses to learn any time, on shelves: the shortest first, then each verse course on the "For life" and "Start" shelves.
+  // Single verses to learn any time, on hand-picked shelves that have nothing to do with which course a verse is in.
   const learnedUnits = new Set(mine.units);
   const isLearned = (i: Item) => unitsFor(i, track).every((u) => learnedUnits.has(u.key));
-  const verses = courses.filter((c) => courseItems(c).every(isVerse) && c.id !== 'ten-commandments');
-  const shortest = verses.flatMap((c) => courseItems(c)).filter((i) => i.text.split(/\s+/).length <= 16)
-    .sort((a, b) => a.text.split(/\s+/).length - b.text.split(/\s+/).length).slice(0, 10);
-  const verseShelves = [
-    { id: 'short', title: 'Short and strong', items: shortest },
-    ...verses.filter((c) => c.shelf === 'life').map((c) => ({ id: c.id, title: c.title, items: courseItems(c) })),
-  ].filter((sh) => sh.items.length > 1);
+  const verseShelves = VERSE_SHELVES.map((sh) => ({ id: sh.id, title: sh.title, items: sh.ids.flatMap((id) => { const it = getItem(id); return it ? [it] : []; }) }));
 
   // Course shelves and verse shelves taken in turn, so the page alternates between a list of courses and a row of verses.
   type Sec = { kind: 'courses'; id: string; title: string; list: Course[] } | { kind: 'verses'; id: string; title: string; items: Item[] };
   const mixed: Sec[] = [];
   for (let n = 0; n < Math.max(shelves.length, verseShelves.length); n++) {
     if (shelves[n]) mixed.push({ kind: 'courses', id: shelves[n].id, title: shelves[n].title, list: shelves[n].list });
-    if (verseShelves[n]) mixed.push({ kind: 'verses', id: verseShelves[n].id, title: `${verseShelves[n].title} · single verses`, items: verseShelves[n].items });
+    if (verseShelves[n]) mixed.push({ kind: 'verses', id: verseShelves[n].id, title: verseShelves[n].title, items: verseShelves[n].items });
   }
 
   const windowFor = (c: Course, started: boolean, size: number, reveal?: boolean) => {
