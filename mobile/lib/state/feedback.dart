@@ -6,7 +6,7 @@
 //   growing:  50 to 75% of the main words
 //   learning: under 50%
 
-enum Band { perfect, pass, good, growing, learning }
+enum FeedbackBand { perfect, pass, good, growing, learning }
 
 // Small words carry little of the meaning; missing one barely counts.
 const _small = {
@@ -30,16 +30,16 @@ double mainWordShare(List<String> tokens, List<bool> heard) {
   return all > 0 ? got / all : 0;
 }
 
-Band bandFor({required bool ok, bool slip = false, int? misses, double? share, bool close = false}) {
-  if (ok) return slip || (misses ?? 0) > 0 ? Band.pass : Band.perfect;
+FeedbackBand bandFor({required bool ok, bool slip = false, int? misses, double? share, bool close = false}) {
+  if (ok) return slip || (misses ?? 0) > 0 ? FeedbackBand.pass : FeedbackBand.perfect;
   final s = share ?? (close ? 0.6 : 0.0);
-  return s >= 0.75 ? Band.good : s >= 0.5 ? Band.growing : Band.learning;
+  return s >= 0.75 ? FeedbackBand.good : s >= 0.5 ? FeedbackBand.growing : FeedbackBand.learning;
 }
 
 const bandWords = {
-  Band.perfect: 'Perfect!',
-  Band.pass: 'Correct!',
-  Band.good: 'Good. We’ll strengthen this.',
-  Band.growing: 'Good job. We’ll strengthen this.',
-  Band.learning: 'No problem, you’re still learning.',
+  FeedbackBand.perfect: 'Perfect!',
+  FeedbackBand.pass: 'Correct!',
+  FeedbackBand.good: 'Good. We’ll strengthen this.',
+  FeedbackBand.growing: 'Good job. We’ll strengthen this.',
+  FeedbackBand.learning: 'No problem, you’re still learning.',
 };

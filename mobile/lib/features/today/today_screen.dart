@@ -77,7 +77,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final mine = ref.read(myProgressProvider);
     final keep = ref.read(keepProvider);
     final focus = h.plan?.course;
-    final goal = h.plan?.minutes ?? 15;
+    final goal = h.plan?.minutes ?? planner.defaultGoal;
     final day = localDay(now);
     final started = startedCourses(mine, me.track, focus);
     final fixIds = [for (final x in keep?.tryAgain ?? const <Held>[]) x.item.id];

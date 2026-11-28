@@ -41,24 +41,33 @@ void main() {
     await pumpApp(tester, store: _phone());
     GoRouter.of(tester.element(find.byType(Navigator).first)).push('/item/wsc-1');
     await tester.pumpAndSettle();
-    expect(find.text('strength'), findsOneWidget);
-    expect(find.textContaining('%'), findsWidgets);
-    expect(find.text('Learned'), findsOneWidget);
-    expect(find.text('Nov 20'), findsOneWidget);
-    expect(find.text('Practised'), findsOneWidget);
-    expect(find.text('3 times · 2 right'), findsOneWidget);
-    expect(find.text('Last time'), findsOneWidget);
-    expect(find.text('2 days ago'), findsOneWidget);
-    expect(find.text('Next review'), findsOneWidget);
+    // Practice and Review straight under the passage, then one status card.
     expect(find.text('Practice'), findsOneWidget);
     expect(find.text('Review'), findsOneWidget);
-    expect(find.text('Type or say the whole answer from memory'), findsOneWidget);
+    expect(find.bySemanticsLabel('Review: type or say the whole answer from memory'), findsOneWidget);
+    expect(find.textContaining('Strength'), findsWidgets);
+    expect(find.textContaining('%'), findsWidgets);
+    expect(find.text('recited perfectly'), findsOneWidget);
+    expect(find.text('times practised'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget, reason: 'the lesson and two reviews');
+    expect(find.text('next review'), findsOneWidget);
+    expect(find.text('Learned'), findsOneWidget);
+    expect(find.text('Nov 20'), findsOneWidget);
+    expect(find.text('Last time'), findsOneWidget);
+    expect(find.text('2 days ago'), findsOneWidget);
+    // The word missed once is coloured; the passage word by word and its strength line follow.
+    await tester.scrollUntilVisible(find.text('Word by word'), 200);
+    expect(find.text('Missed a lot'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Strength over time'), 200);
+    expect(find.text('85% is the target'), findsOneWidget);
   });
 
-  testWidgets('the course page shows its three numbers and each learned question’s strength', (tester) async {
+  testWidgets('the course page shows its four numbers and each learned question’s strength', (tester) async {
     await pumpApp(tester, store: _phone());
     GoRouter.of(tester.element(find.byType(Navigator).first)).push('/courses/westminster-shorter');
     await tester.pumpAndSettle();
+    expect(find.text('1%'), findsOneWidget);
+    expect(find.text('of the course done'), findsOneWidget);
     expect(find.text('learned of 107'), findsOneWidget);
     expect(find.text('in memory'), findsOneWidget);
     expect(find.text('average strength'), findsOneWidget);

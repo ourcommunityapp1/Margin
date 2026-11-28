@@ -12,6 +12,7 @@ import '../../data/household.dart';
 import '../../engine/content.dart';
 import '../../engine/progress.dart';
 import '../../engine/types.dart';
+import '../../engine/planner.dart' show defaultGoal;
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../ui/theme.dart';
@@ -31,7 +32,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
   final _name = TextEditingController();
   _Step _step = _Step.name;
   String? _course;
-  int? _minutes = 15;
+  int? _minutes = defaultGoal;
 
   @override
   void dispose() {
@@ -44,7 +45,7 @@ class _StartScreenState extends ConsumerState<StartScreen> {
     if (course == null) return;
     final id = newId(), now = ref.read(clockProvider)();
     ref.read(householdProvider.notifier).update(
-          (h) => setPlan(hasSomeone ? h : addMember(h, _name.text, Track.adult, id, now), Plan(course: course, minutes: _minutes ?? 15)),
+          (h) => setPlan(hasSomeone ? h : addMember(h, _name.text, Track.adult, id, now), Plan(course: course, minutes: _minutes ?? defaultGoal)),
         );
     context.go('/today');
   }

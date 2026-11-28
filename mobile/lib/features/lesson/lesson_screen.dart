@@ -251,7 +251,7 @@ class _LessonScreenState extends ConsumerState<LessonScreen> {
     final retry = _retried.contains(_key(step)) && _queue.indexOf(step) != _pos;
     final band = feedback == null ? null : bandFor(ok: feedback.ok, slip: feedback.slip, misses: feedback.misses, share: feedback.share, close: feedback.close);
     // A whole answer from memory, perfect: celebrated.
-    final celebrate = band == Band.perfect && (step.kind == 'type' || step.kind == 'say');
+    final celebrate = band == FeedbackBand.perfect && (step.kind == 'type' || step.kind == 'say');
 
     return Material(
       type: MaterialType.transparency,
@@ -520,22 +520,22 @@ class _Done extends ConsumerWidget {
 class _Feedback extends StatelessWidget {
   const _Feedback({required this.feedback, required this.band, required this.celebrate, required this.retryLater, required this.onContinue});
   final Outcome feedback;
-  final Band band;
+  final FeedbackBand band;
   final bool celebrate, retryLater;
   final VoidCallback onContinue;
 
   // The website's colours (heir.css .hr-fb-pill, .hr-fb-go); in light mode the pill's words use a deeper shade to stay readable.
   static const _fill = {
-    Band.perfect: Color(0xFFF1C46B),
-    Band.good: Color(0xFFB9E3B0),
-    Band.growing: Color(0xFFE9C48A),
-    Band.learning: Color(0xFF9FB8E8),
+    FeedbackBand.perfect: Color(0xFFF1C46B),
+    FeedbackBand.good: Color(0xFFB9E3B0),
+    FeedbackBand.growing: Color(0xFFE9C48A),
+    FeedbackBand.learning: Color(0xFF9FB8E8),
   };
   static const _deep = {
-    Band.perfect: Color(0xFF8A6510),
-    Band.good: Color(0xFF3B6E35),
-    Band.growing: Color(0xFF85581A),
-    Band.learning: Color(0xFF3E5E9E),
+    FeedbackBand.perfect: Color(0xFF8A6510),
+    FeedbackBand.good: Color(0xFF3B6E35),
+    FeedbackBand.growing: Color(0xFF85581A),
+    FeedbackBand.learning: Color(0xFF3E5E9E),
   };
   static const _star = '<path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.4 6.8 19.2l1-5.9L3.5 9.2l5.9-.8z"/>';
   static const _check = '<path d="M5 12l5 5 9-10"/>';
@@ -545,10 +545,10 @@ class _Feedback extends StatelessWidget {
   Widget build(BuildContext context) {
     final k = context.k;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final fill = band == Band.pass ? k.good : _fill[band]!;
-    final ink = band == Band.pass ? k.good : dark ? fill : _deep[band]!;
-    final wash = band == Band.pass ? k.goodWash : fill.withValues(alpha: dark ? 0.16 : 0.28);
-    final icon = band == Band.perfect ? _star : band == Band.pass || band == Band.good ? _check : _heart;
+    final fill = band == FeedbackBand.pass ? k.good : _fill[band]!;
+    final ink = band == FeedbackBand.pass ? k.good : dark ? fill : _deep[band]!;
+    final wash = band == FeedbackBand.pass ? k.goodWash : fill.withValues(alpha: dark ? 0.16 : 0.28);
+    final icon = band == FeedbackBand.perfect ? _star : band == FeedbackBand.pass || band == FeedbackBand.good ? _check : _heart;
     final details = [
       if (feedback.note != null) Text(feedback.note!, style: sans(16, weight: FontWeight.w500, color: k.ink, height: 1.45)),
       ?feedback.reveal,

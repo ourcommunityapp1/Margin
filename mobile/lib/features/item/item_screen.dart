@@ -1,5 +1,6 @@
-// One question or verse (src/app/heir/ui/item.tsx): the answer; once learned, its stone, how strong it is and how it has gone,
-// then Practice (a mix of steps) and Review (the whole answer from memory); what it means, and the Scripture it rests on.
+// One question or verse (src/app/heir/ui/item.tsx): the passage open on the page with Practice (a mix of steps) and Review (the
+// whole answer from memory) straight under it; once learned, one status card (strength ring, level, three numbers, a few
+// facts, what's next), the passage word by word, strength over time; what it means, and the Scripture it rests on.
 // The text is shown exactly as exported from the website, never retyped.
 //
 // Not yet here: "Explain" and related verses (they need the server).
@@ -13,7 +14,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../engine/content.dart';
 import '../../engine/keep.dart' show strongUntilFor;
 import '../../engine/lesson.dart' show unitsFor;
-import '../../engine/levels.dart' show levelShown, needsRefresh, nextStep, recited;
+import '../../engine/levels.dart' show levelShown, needsRefresh, nextStep;
 import '../../engine/tiers.dart';
 import '../../engine/memory.dart' show partMemories;
 import '../../engine/types.dart';
@@ -63,20 +64,48 @@ class ItemScreen extends ConsumerWidget {
             ],
           ),
         ),
-        KCard.column(
-          gap: 14,
-          children: [
-            Text(item.prompt, style: serif(20, weight: FontWeight.w600, color: k.ink, height: 1.35)),
-            Text(item.text, style: serif(24, color: k.ink, height: 1.45)),
-            if (learned)
-              _Progress(item: item, unit: unit, track: track, now: now)
-            else
-              KButton(
-                'Practice this ${unit == 'Question' ? 'question' : unit == 'Verse' ? 'verse' : 'now'}',
-                onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'),
-              ),
-          ],
+        // The passage sits open on the page, with the two actions straight under it.
+        Semantics(
+          label: 'Passage',
+          container: true,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(4, 10, 4, 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (unit == 'Question')
+                  Text(item.prompt, style: serif(20, weight: FontWeight.w600, color: k.ink, height: 1.35))
+                else
+                  KLabel(item.prompt),
+                const SizedBox(height: 12),
+                Text(item.text, style: serif(25, color: k.ink, height: 1.45)),
+              ],
+            ),
+          ),
         ),
+        if (!learned)
+          KButton(
+            'Practice this ${unit == 'Question' ? 'question' : unit == 'Verse' ? 'verse' : 'now'}',
+            onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'),
+          )
+        else ...[
+          Row(
+            children: [
+              Expanded(child: KButton('Practice', onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}'))),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Semantics(
+                  label: 'Review: type or say the whole ${unit == 'Question' ? 'answer' : unit == 'Verse' ? 'verse' : 'words'} from memory',
+                  excludeSemantics: true,
+                  child: KButton('Review', quiet: true, onPressed: () => context.push('/lesson?mode=keep&items=${Uri.encodeQueryComponent(item.id)}')),
+                ),
+              ),
+            ],
+          ),
+          _Status(item: item, track: track, now: now),
+          _WordByWord(item: item, track: track),
+          _StrengthOverTime(item: item, now: now),
+        ],
         if (item.meaning.isNotEmpty)
           KCard.column(
             gap: 14,
@@ -129,11 +158,11 @@ class ItemScreen extends ConsumerWidget {
   }
 }
 
-/// Once learned: the stone and its strength ring, the stats, and Practice and Review (item.tsx, heir.css .hr-ring .hr-kv).
-class _Progress extends ConsumerWidget {
-  const _Progress({required this.item, required this.unit, required this.track, required this.now});
+/// Once learned, one status card (item.tsx .hr-status): the strength ring (or the gem when it can't be told), the level and
+/// how long it holds, three numbers, a few facts, and what the next level asks for.
+class _Status extends ConsumerWidget {
+  const _Status({required this.item, required this.track, required this.now});
   final Item item;
-  final String unit;
   final Track track;
   final DateTime now;
 
@@ -146,10 +175,10 @@ class _Progress extends ConsumerWidget {
     final next = nextStep(item, track, mine, now);
     final strong = strongUntilFor(item, mine, track);
     final today = practisedToday(mine, item.id, now);
-    final strength = today ? null : itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap));
+    final strength = itemStrength(mine, item.id, now, partMemories(mine.log, mine.partSnap));
     final stats = itemStats(item, mine, track);
-    final noun = unit == 'Question' ? 'answer' : unit == 'Verse' ? 'verse' : 'words';
-    final hasRecited = recited(item, track, mine.log);
+    final perfect = recitedPerfectly(item, track, mine.log);
+    final practised = timesPracticed(item, mine.log);
     final info = tierOf(level);
     String date(DateTime d) {
       final l = d.toLocal();
@@ -165,87 +194,289 @@ class _Progress extends ConsumerWidget {
 
     final rows = <(String, String)>[
       if (stats.learnedAt != null) ('Learned', date(stats.learnedAt!)),
-      if (stats.practised > 0) ('Practised', '${stats.practised} time${stats.practised == 1 ? '' : 's'} · ${stats.right} right'),
       if (stats.last != null) ('Last time', '${ago(stats.last!)}${stats.lastRight == false ? ' · a slip' : ''}'),
       if (stats.oftenMissed != null) ('Often missed', '\u201c${stats.oftenMissed}\u201d'),
-      if (stats.due != null) ('Next review', stats.due!.isAfter(now) ? date(stats.due!) : 'Now'),
     ];
+    Widget num(String big, String small) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(big, style: serif(22, weight: FontWeight.w600, color: k.ink, height: 1)),
+              const SizedBox(height: 4),
+              Text(small, style: sans(12.5, color: k.muted, height: 1.3)),
+            ],
+          ),
+        );
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: k.well, borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Semantics(
+      label: 'How it is going',
+      container: true,
+      child: KCard.column(
+        gap: 22,
         children: [
           Row(
             children: [
-              KStone(level: level, size: 44, dim: dim),
-              const SizedBox(width: 12),
+              if (strength != null)
+                StrengthRing(value: strength, big: '${(strength * 100).round()}%', small: '', band: strengthBand(strength), size: 92)
+              else
+                KStone(level: level, size: 56, dim: dim),
+              const SizedBox(width: 18),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(info != null ? '${info.stone} · ${info.name}' : hasRecited ? 'Recited' : 'Not learned yet', style: sans(16, weight: FontWeight.w600, color: k.ink)),
-                    if (dim) Text('Due for a refresh', style: sans(14, color: k.miss)),
-                    if (strong != null && !dim)
+                    Text(strength != null ? (today ? 'Strength, practised today' : 'Strength') : 'Level', style: sans(12.5, color: k.muted)),
+                    const SizedBox(height: 5),
+                    Text(info != null ? '${info.stone} · ${info.name}' : 'Not learned yet', style: sans(19, weight: FontWeight.w600, color: k.ink, height: 1.2)),
+                    if (dim) ...[const SizedBox(height: 5), Text('Due for a refresh', style: sans(14, color: k.miss, height: 1.35))]
+                    else if (strong != null) ...[
+                      const SizedBox(height: 5),
                       Text(
-                        strong.isAfter(now) ? 'Strong until about ${_monthsLong[strong.toLocal().month - 1]}${strong.toLocal().year == now.toLocal().year ? '' : ' ${strong.toLocal().year}'}' : 'Worth a review now',
-                        style: sans(14, color: k.muted),
+                        strong.isAfter(now)
+                            ? 'Strong until about ${_monthsLong[strong.toLocal().month - 1]}${strong.toLocal().year == now.toLocal().year ? '' : ' ${strong.toLocal().year}'}'
+                            : 'Worth a review now',
+                        style: sans(14, color: k.muted, height: 1.35),
                       ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              if (today) const StrengthRing(value: 1, big: 'Today', small: 'practised') else if (strength != null) StrengthRing(value: strength, big: '${(strength * 100).round()}%', small: 'strength', band: strengthBand(strength)),
             ],
           ),
-          if (rows.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            for (final (i, r) in rows.indexed)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 9),
-                decoration: BoxDecoration(border: i == rows.length - 1 ? null : Border(bottom: BorderSide(color: k.line))),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(r.$1, style: sans(15, color: k.muted)),
-                    const SizedBox(width: 12),
-                    Flexible(child: Text(r.$2, textAlign: TextAlign.right, style: sans(15, color: k.ink))),
-                  ],
-                ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              num('$perfect', 'recited perfectly'),
+              const SizedBox(width: 8),
+              num('$practised', 'times practised'),
+              const SizedBox(width: 8),
+              num(stats.due == null ? '–' : stats.due!.isAfter(now) ? date(stats.due!) : 'Now', 'next review'),
+            ],
+          ),
+          if (rows.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.only(top: 6),
+              decoration: BoxDecoration(border: Border(top: BorderSide(color: k.line))),
+              child: Column(
+                children: [
+                  for (final r in rows)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 7),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(r.$1, style: sans(15, color: k.muted)),
+                          const SizedBox(width: 12),
+                          Flexible(child: Text(r.$2, textAlign: TextAlign.right, style: sans(15, color: k.ink))),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-          ],
-          if (next != null) ...[
-            const SizedBox(height: 10),
+            ),
+          if (next != null)
             Text.rich(
               TextSpan(children: [
-                TextSpan(text: 'Next: ${next.split(',').first}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                TextSpan(text: 'Next: ${next.split(',').first}', style: const TextStyle(fontWeight: FontWeight.w700)),
                 if (next.contains(',')) TextSpan(text: ', ${next.substring(next.indexOf(',') + 2)}'),
                 const TextSpan(text: '.'),
               ]),
               style: sans(14, color: k.muted, height: 1.45),
             ),
-          ],
-          const SizedBox(height: 10),
-          KButton('Practice', onPressed: () => context.push('/lesson?mode=item&item=${Uri.encodeQueryComponent(item.id)}')),
-          const SizedBox(height: 4),
-          Text('A mix of steps, chosen by how well you know it', textAlign: TextAlign.center, style: sans(13, color: k.muted)),
-          const SizedBox(height: 10),
-          KButton('Review', quiet: true, onPressed: () => context.push('/lesson?mode=keep&items=${Uri.encodeQueryComponent(item.id)}')),
-          const SizedBox(height: 4),
-          Text('Type or say the whole $noun from memory', textAlign: TextAlign.center, style: sans(13, color: k.muted)),
         ],
       ),
     );
   }
 }
 
-/// A ring 104 px across filled to [value] in the band's colour, with a big number and a small word in the middle.
+/// The passage word by word (item.tsx .hr-words): every word its own chip, coloured by how reliably it's recalled.
+class _WordByWord extends ConsumerWidget {
+  const _WordByWord({required this.item, required this.track});
+  final Item item;
+  final Track track;
+
+  static const _border = {
+    WordBand.red: Color(0xFFE4745B),
+    WordBand.yellow: Color(0xFFE9C464),
+    WordBand.light: Color(0xFFA8D696),
+    WordBand.dark: Color(0xFF3CA86E),
+  };
+  static const _fill = {
+    WordBand.red: Color(0x47E4745B),
+    WordBand.yellow: Color(0x3DE9C464),
+    WordBand.light: Color(0x38A8D696),
+    WordBand.dark: Color(0x663CA86E),
+  };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final k = context.k;
+    final cards = wordCards(item, track, ref.watch(myProgressProvider).log);
+    if (!cards.any((c) => c.band != WordBand.none)) return const SizedBox.shrink();
+    Widget swatch(WordBand b) => Container(
+          width: 12,
+          height: 12,
+          margin: const EdgeInsets.only(right: 6),
+          decoration: BoxDecoration(
+            color: _fill[b] ?? k.well,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: _border[b] ?? Colors.transparent),
+          ),
+        );
+    Widget legend(WordBand b, String t) => Row(mainAxisSize: MainAxisSize.min, children: [swatch(b), Text(t, style: sans(12.5, color: k.muted))]);
+    return Semantics(
+      label: 'Word by word',
+      container: true,
+      child: KCard.column(
+        gap: 12,
+        children: [
+          const KLabel('Word by word'),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final c in cards)
+                Tooltip(
+                  message: c.tries > 0 ? '${c.misses} miss${c.misses == 1 ? '' : 'es'} in ${c.tries} ${c.tries == 1 ? 'try' : 'tries'}' : 'Not tried yet',
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: _fill[c.band] ?? k.well,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _border[c.band] ?? Colors.transparent),
+                    ),
+                    child: Text(c.word, style: serif(17, color: c.band == WordBand.none ? k.muted : k.ink, height: 1.3)),
+                  ),
+                ),
+            ],
+          ),
+          Wrap(
+            spacing: 14,
+            runSpacing: 6,
+            children: [
+              legend(WordBand.red, 'Missed a lot'),
+              legend(WordBand.yellow, 'Often'),
+              legend(WordBand.light, 'Pretty good'),
+              legend(WordBand.dark, 'Consistent'),
+              legend(WordBand.none, 'Not tried yet'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The model's chance of recalling it, day by day (or week by week), with the 85% target as a dashed line.
+class _StrengthOverTime extends ConsumerWidget {
+  const _StrengthOverTime({required this.item, required this.now});
+  final Item item;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final k = context.k;
+    final series = strengthSeries(item, ref.watch(myProgressProvider).log, now);
+    if (series.length < 2) return const SizedBox.shrink();
+    final last = series.last;
+    final first = DateTime.fromMillisecondsSinceEpoch(series.first.at).toLocal();
+    return Semantics(
+      label: 'Strength over time, now ${(last.chance * 100).round()}%',
+      container: true,
+      excludeSemantics: true,
+      child: KCard.column(
+        gap: 10,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              const Flexible(child: KLabel('Strength over time')),
+              const SizedBox(width: 12),
+              Flexible(child: Text('85% is the target', textAlign: TextAlign.right, style: sans(13, color: k.muted))),
+            ],
+          ),
+          AspectRatio(
+            aspectRatio: 320 / 150,
+            child: CustomPaint(
+              painter: _LinePainter(
+                [for (final p in series) p.chance],
+                '${_months[first.month - 1]} ${first.day}',
+                grid: k.line,
+                text: k.muted,
+                card: k.card,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LinePainter extends CustomPainter {
+  _LinePainter(this.values, this.startLabel, {required this.grid, required this.text, required this.card});
+  final List<double> values;
+  final String startLabel;
+  final Color grid, text, card;
+  static const _green = Color(0xFFB9E3B0), _peach = Color(0xFFF3D8B6);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 320;
+    final l = 30 * s, r = 8 * s, t = 12 * s, b = 26 * s;
+    double x(int i) => l + (size.width - l - r) * i / (values.length - 1);
+    double y(double v) => t + (size.height - t - b) * (1 - v);
+    void label(String str, Offset at, {TextAlign align = TextAlign.left, Color? color, FontWeight weight = FontWeight.w400}) {
+      final tp = TextPainter(text: TextSpan(text: str, style: sans(10 * s, color: color ?? text, weight: weight)), textDirection: TextDirection.ltr)..layout();
+      final dx = align == TextAlign.right ? at.dx - tp.width : at.dx;
+      tp.paint(canvas, Offset(dx, at.dy - tp.height / 2));
+    }
+
+    final gridPaint = Paint()..color = grid..strokeWidth = 1;
+    for (final v in [0.0, 0.5, 1.0]) {
+      canvas.drawLine(Offset(l, y(v)), Offset(size.width - r, y(v)), gridPaint);
+      label('${(v * 100).round()}%', Offset(l - 5 * s, y(v)), align: TextAlign.right);
+    }
+    // The 85% target, dashed.
+    final dash = Paint()..color = _peach.withValues(alpha: 0.6)..strokeWidth = 1;
+    for (var dx = l; dx < size.width - r; dx += 8 * s) {
+      canvas.drawLine(Offset(dx, y(0.85)), Offset(math.min(dx + 4 * s, size.width - r), y(0.85)), dash);
+    }
+    final line = Path()..moveTo(x(0), y(values[0]));
+    for (var i = 1; i < values.length; i++) {
+      line.lineTo(x(i), y(values[i]));
+    }
+    final fill = Path.from(line)
+      ..lineTo(x(values.length - 1), y(0))
+      ..lineTo(x(0), y(0))
+      ..close();
+    canvas.drawPath(
+      fill,
+      Paint()..shader = LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [_green.withValues(alpha: 0.4), _green.withValues(alpha: 0.03)])
+          .createShader(Rect.fromLTWH(0, t, size.width, size.height - t - b)),
+    );
+    canvas.drawPath(line, Paint()..color = _green..style = PaintingStyle.stroke..strokeWidth = 2 * s..strokeJoin = StrokeJoin.round);
+    final end = Offset(x(values.length - 1), y(values.last));
+    canvas.drawCircle(end, 4.5 * s, Paint()..color = _green);
+    canvas.drawCircle(end, 4.5 * s, Paint()..color = card..style = PaintingStyle.stroke..strokeWidth = 2 * s);
+    label('${(values.last * 100).round()}%', end + Offset(-8 * s, -11 * s), align: TextAlign.right, color: _green, weight: FontWeight.w700);
+    label(startLabel, Offset(l, size.height - 8 * s));
+    label('Now', Offset(size.width - r, size.height - 8 * s), align: TextAlign.right);
+  }
+
+  @override
+  bool shouldRepaint(_LinePainter old) => old.values != values || old.grid != grid;
+}
+
+/// A ring ([size] across, 104 by default) filled to [value] in the band's colour, with a big number and a small word in the middle.
 class StrengthRing extends StatelessWidget {
-  const StrengthRing({super.key, required this.value, required this.big, required this.small, this.band});
+  const StrengthRing({super.key, required this.value, required this.big, required this.small, this.band, this.size = 104});
   final double value;
   final String big, small;
   final Band? band;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +486,8 @@ class StrengthRing extends StatelessWidget {
       label: '$big $small',
       excludeSemantics: true,
       child: SizedBox(
-        width: 104,
-        height: 104,
+        width: size,
+        height: size,
         child: CustomPaint(
           painter: _RingPainter(value.clamp(0.0, 1.0), colour, k.line),
           child: Center(
@@ -264,8 +495,7 @@ class StrengthRing extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(big, style: serif(big.length > 4 ? 20 : 26, weight: FontWeight.w500, color: k.ink, height: 1)),
-                const SizedBox(height: 2),
-                Text(small, style: sans(11, color: k.muted)),
+                if (small.isNotEmpty) ...[const SizedBox(height: 2), Text(small, style: sans(11, color: k.muted))],
               ],
             ),
           ),

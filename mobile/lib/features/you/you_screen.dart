@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../../engine/content.dart';
+import '../../engine/planner.dart' show defaultGoal;
 import '../../state/auth.dart';
 import '../../platform/reminders.dart' show reminderSummary;
 import '../../state/household.dart';
@@ -82,7 +83,7 @@ class _YouScreenState extends ConsumerState<YouScreen> {
                 KLinkRow(
                   first: true,
                   title: 'Course and daily goal',
-                  sub: course != null ? '${course.title} · ${household.plan?.minutes ?? 15} min a day' : 'Choose a course',
+                  sub: course != null ? '${course.title} · ${household.plan?.minutes ?? defaultGoal} min a day' : 'Choose a course',
                   onTap: () => context.push('/plan'),
                 ),
                 KLinkRow(title: 'Family', sub: others > 0 ? 'You and $others more on this phone' : 'Just you · add someone', onTap: () => context.push('/family')),

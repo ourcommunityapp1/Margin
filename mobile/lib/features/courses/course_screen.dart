@@ -1,6 +1,6 @@
-// One course (src/app/heir/courses/[id]/page.tsx, ui/course-list.tsx CourseScreen): its window, name and what it is, three
-// numbers (learned of total, in memory, average strength), and its questions or verses by part, each learned one with its
-// strength (or "Today" if practised today) and its stone. Opening one shows its page (the item screen).
+// One course (src/app/heir/courses/[id]/page.tsx, ui/course-list.tsx CourseScreen): its window, name and what it is, four
+// numbers (% done, learned of total, in memory, average strength), and its questions or verses by part, each learned one with its
+// strength (always shown; "Practised today" under it on a day it was practised) and its stone. Opening one shows its page (the item screen).
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -50,12 +50,12 @@ class CourseScreen extends ConsumerWidget {
     final w = partWindow(course, track, mine, now);
     final stats = courseStats(items, track, mine);
     final started = items.any((i) => unitsFor(i, track).any((u) => mine.units.contains(u.key)));
-    // Strength of each learned question or verse ("Today" if practised today), and the course's three numbers.
+    // Strength of each learned question or verse (always shown, practised today or not), and the course's four numbers.
     final learnedUnits = mine.units.toSet();
     final mems = partMemories(mine.log, mine.partSnap);
     final learnedItems = [for (final i in items) if (unitsFor(i, track).every((u) => learnedUnits.contains(u.key))) i];
-    final strengthOf = <String, Object?>{
-      for (final i in learnedItems) i.id: practisedToday(mine, i.id, now) ? 'today' : itemStrength(mine, i.id, now, mems),
+    final strengthOf = <String, double?>{
+      for (final i in learnedItems) i.id: itemStrength(mine, i.id, now, mems),
     };
     final nums = strengthOf.values.whereType<double>().toList();
     final average = nums.isEmpty ? null : (nums.reduce((a, b) => a + b) / nums.length * 100).round();
@@ -111,10 +111,12 @@ class CourseScreen extends ConsumerWidget {
             label: 'Where you are',
             child: Row(
               children: [
+                _Stat('${(learnedItems.length / (items.isEmpty ? 1 : items.length) * 100).round()}%', 'of the course done'),
+                const SizedBox(width: 6),
                 _Stat('${learnedItems.length}', 'learned of ${items.length}'),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _Stat('$inMemory', 'in memory'),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 _Stat(average == null ? '–' : '$average%', 'average strength'),
               ],
             ),
@@ -182,9 +184,9 @@ class _Stat extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value, style: serif(24, weight: FontWeight.w500, color: k.ink, height: 1.1)),
+            Text(value, style: serif(21, weight: FontWeight.w500, color: k.ink, height: 1.1)),
             const SizedBox(height: 2),
-            Text(label, textAlign: TextAlign.center, style: sans(12, color: k.muted)),
+            Text(label, textAlign: TextAlign.center, style: sans(11, color: k.muted)),
           ],
         ),
       ),
@@ -200,8 +202,8 @@ class _ItemRow extends StatelessWidget {
   final Track track;
   final DateTime now;
 
-  /// The strength (0 to 1), 'today' if practised today, or null if it can't be told yet.
-  final Object? strength;
+  /// The strength (0 to 1), or null if it can't be told yet.
+  final double? strength;
 
   @override
   Widget build(BuildContext context) {
@@ -218,6 +220,8 @@ class _ItemRow extends StatelessWidget {
                     ? 'Practiced'
                     : null;
     final st = strength;
+    final today = practisedToday(mine, item.id, now);
+    final under = today ? 'Practised today' : status;
     return Semantics(
       button: true,
       child: InkWell(
@@ -244,13 +248,10 @@ class _ItemRow extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    if (st == 'today')
-                      Text('Today', style: sans(13.5, weight: FontWeight.w700, color: k.muted))
-                    else if (st is double)
-                      Text('${(st * 100).round()}%', style: sans(13.5, weight: FontWeight.w700, color: bandColor(strengthBand(st)))),
-                    if (status != null) ...[
+                    if (st != null) Text('${(st * 100).round()}%', style: sans(13.5, weight: FontWeight.w700, color: bandColor(strengthBand(st)))),
+                    if (under != null) ...[
                       const SizedBox(height: 2),
-                      Text(status, style: sans(11.5, weight: FontWeight.w600, color: dim ? k.miss : k.muted)),
+                      Text(under, style: sans(11.5, weight: FontWeight.w600, color: dim && !today ? k.miss : k.muted)),
                     ],
                   ],
                 )

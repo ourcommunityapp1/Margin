@@ -12,15 +12,15 @@ void main() {
     // Missing main words costs much more.
     final mainMissed = [for (final w in t) !['Spirit,', 'infinite,', 'eternal,'].contains(w)];
     expect(mainWordShare(t, mainMissed), lessThan(0.6));
-    expect(bandFor(ok: true), Band.perfect);
-    expect(bandFor(ok: true, slip: true), Band.pass);
-    expect(bandFor(ok: false, share: 0.8), Band.good);
-    expect(bandFor(ok: false, share: 0.6), Band.growing);
-    expect(bandFor(ok: false, share: 0.3), Band.learning);
-    expect(bandFor(ok: false, close: true), Band.growing);
-    expect(bandFor(ok: false), Band.learning);
+    expect(bandFor(ok: true), FeedbackBand.perfect);
+    expect(bandFor(ok: true, slip: true), FeedbackBand.pass);
+    expect(bandFor(ok: false, share: 0.8), FeedbackBand.good);
+    expect(bandFor(ok: false, share: 0.6), FeedbackBand.growing);
+    expect(bandFor(ok: false, share: 0.3), FeedbackBand.learning);
+    expect(bandFor(ok: false, close: true), FeedbackBand.growing);
+    expect(bandFor(ok: false), FeedbackBand.learning);
     // A generous band never turns a miss into a pass: only `ok` (the strict grade) gives perfect or pass.
-    expect(bandFor(ok: false, share: 0.99), isNot(Band.pass));
-    expect(bandWords[Band.learning], 'No problem, you’re still learning.');
+    expect(bandFor(ok: false, share: 0.99), isNot(FeedbackBand.pass));
+    expect(bandWords[FeedbackBand.learning], 'No problem, you’re still learning.');
   });
 }

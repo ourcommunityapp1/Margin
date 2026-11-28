@@ -10,6 +10,7 @@ import '../../engine/content.dart';
 import '../../engine/tiers.dart';
 import '../../engine/path.dart';
 import '../../engine/types.dart';
+import '../../engine/planner.dart' show defaultGoal;
 import '../../state/clock.dart';
 import '../../state/household.dart';
 import '../../ui/stone.dart';
@@ -37,7 +38,7 @@ class PlanScreen extends ConsumerWidget {
     final now = ref.watch(clockProvider)();
     final track = me?.track ?? Track.adult;
     final course = courseFor(household.plan?.course);
-    final minutes = household.plan?.minutes ?? 15;
+    final minutes = household.plan?.minutes ?? defaultGoal;
     final stats = {for (final c in courses) c.id: courseStats(courseItems(c), track, mine)};
 
     Widget heading(String t, {double size = 24}) => Semantics(header: true, child: Text(t, style: serif(size, weight: FontWeight.w600, color: k.ink, height: 1.2)));
