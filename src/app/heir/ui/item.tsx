@@ -52,11 +52,11 @@ export function ItemScreen({ item, collectionTitle, unit, back = '/heir/courses'
         </div>
 
         {/* The passage sits open on the page, with the two actions straight under it. */}
-        <section className="hr-passage" aria-label="Passage">
+        <section className="hr-item-passage" aria-label="Passage">
           {unit === 'Question'
-            ? <p className="serif hr-passage-q">{item.prompt}</p>
+            ? <p className="serif hr-item-q">{item.prompt}</p>
             : <span className="hr-label">{item.prompt}</span>}
-          <p className="serif hr-passage-text">{item.text}</p>
+          <p className="serif hr-item-text">{item.text}</p>
           {labs && !item.reviewed && <div><span className="hr-tag" style={{ background: 'transparent', border: '1px solid var(--edge)' }}>Not yet reviewed</span></div>}
         </section>
 

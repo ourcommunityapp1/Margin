@@ -1342,9 +1342,9 @@ html[data-kb='open'] .hr-lesson-screen { padding-bottom: calc(var(--kb, 0px) + 2
 .hr-plan-actions { display: flex; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 
 /* A verse or answer's page: the passage open on the page, the two actions straight under it, then one status card. */
-.hr-passage { display: flex; flex-direction: column; gap: 12px; padding: 10px 4px 2px; }
-.hr-passage-q { margin: 0; font-size: 20px; line-height: 1.35; font-weight: 600; }
-.hr-passage-text { margin: 0; font-size: 25px; line-height: 1.45; text-wrap: pretty; }
+.hr-item-passage { display: flex; flex-direction: column; gap: 12px; padding: 10px 4px 2px; }
+.hr-item-q { margin: 0; font-size: 20px; line-height: 1.35; font-weight: 600; }
+.hr-item-text { margin: 0; font-size: 25px; line-height: 1.45; text-wrap: pretty; }
 .hr-actions { display: flex; gap: 10px; }
 .hr-actions .hr-btn { flex: 1; width: auto; }
 .hr-btn.hr-btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--edge, rgba(128, 128, 128, 0.45)); }
