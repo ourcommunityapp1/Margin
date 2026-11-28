@@ -12,8 +12,6 @@ import { courseSummary } from '../ui/course-list';
 import { MiniWindow } from '../ui/glass/mini';
 import { courseFor, courseItems, courses, isVerse, itemLabel, SHELVES, type Course } from '@/heir/content';
 import { unitsFor } from '@/heir/lesson';
-import { usePlanState } from '../ui/plan-button';
-import { useState } from 'react';
 import type { Item } from '@/heir/types';
 import { startedCourses } from '@/heir/dayplan';
 import { activeMember, dailyCourse } from '@/heir/household';
@@ -23,15 +21,12 @@ import { seasonLabel } from '@/heir/season';
 const chevron = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: 'none', color: 'var(--muted)' }}><path d="M9 5l7 7-7 7" /></svg>;
 
 const search = <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-4-4" /></svg>;
-const down = (open: boolean) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform .15s' }}><path d="M6 9l6 6 6-6" /></svg>;
 
-// A course card: its window, name and status, and the one control for the plan: "Add", or "Added" with a down arrow that opens "Remove".
+// A course card: its window, name and status. The plan's Add and Remove live on the course's own page.
 function CourseCard({ course, status, window: w, i, count, offset }: { course: Course; status: string; window: React.ReactNode; i?: number; count?: number; offset?: number }) {
-  const s = usePlanState(course);
-  const [open, setOpen] = useState(false);
   void i; void count; void offset;
   return (
-    <div className="hr-card hr-course-card" style={{ flexWrap: 'wrap' }}>
+    <div className="hr-card hr-course-card">
       <Link href={`/heir/courses/${course.id}`} style={{ display: 'flex', alignItems: 'center', gap: 14, flex: '1 1 220px', minWidth: 0, color: 'inherit', textDecoration: 'none' }}>
         {w}
         <span className="hr-course-text">
@@ -40,10 +35,6 @@ function CourseCard({ course, status, window: w, i, count, offset }: { course: C
           {status && <span className="hr-course-status">{status}</span>}
         </span>
       </Link>
-      {s.isIn
-        ? <button type="button" className="hr-plan-btn" data-quiet="true" aria-expanded={open} onClick={() => setOpen((v) => !v)}>Added {down(open)}</button>
-        : <button type="button" className="hr-plan-btn" onClick={s.add}>Add</button>}
-      {s.isIn && open && <button type="button" className="hr-plan-btn" data-quiet="true" onClick={() => { setOpen(false); s.remove(); }}>Remove from plan</button>}
     </div>
   );
 }
@@ -106,6 +97,14 @@ export default function Courses() {
     ...verses.filter((c) => c.shelf === 'life').map((c) => ({ id: c.id, title: c.title, items: courseItems(c) })),
   ].filter((sh) => sh.items.length > 1);
 
+  // Course shelves and verse shelves taken in turn, so the page alternates between a list of courses and a row of verses.
+  type Sec = { kind: 'courses'; id: string; title: string; list: Course[] } | { kind: 'verses'; id: string; title: string; items: Item[] };
+  const mixed: Sec[] = [];
+  for (let n = 0; n < Math.max(shelves.length, verseShelves.length); n++) {
+    if (shelves[n]) mixed.push({ kind: 'courses', id: shelves[n].id, title: shelves[n].title, list: shelves[n].list });
+    if (verseShelves[n]) mixed.push({ kind: 'verses', id: verseShelves[n].id, title: `${verseShelves[n].title} · single verses`, items: verseShelves[n].items });
+  }
+
   const windowFor = (c: Course, started: boolean, size: number, reveal?: boolean) => {
     const s = summary(c);
     return <MiniWindow base={s.window.base} lit={s.window.lit} dusty={s.window.dusty} size={size} started={started} reveal={reveal} label={`${c.title} window`} />;
@@ -128,20 +127,19 @@ export default function Courses() {
           </section>
         )}
         {seasonal && !mineIds.has(seasonal.c.id) && hero}
-        {verseShelves.map((sh) => (
-          <section key={sh.id} className="hr-shelf" aria-labelledby={`vs-${sh.id}`}>
-            <h2 id={`vs-${sh.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sh.title} · single verses</h2>
-            <div className="hr-hscroll">{sh.items.map((i) => <VerseCard key={i.id} item={i} learned={isLearned(i)} />)}</div>
-          </section>
-        ))}
-        {shelves.map((sh) => (
-          <section key={sh.id} className="hr-shelf" aria-labelledby={`shelf-${sh.id}`}>
-            <h2 id={`shelf-${sh.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sh.title}</h2>
+        {mixed.map((sec) => sec.kind === 'courses' ? (
+          <section key={`c-${sec.id}`} className="hr-shelf" aria-labelledby={`shelf-${sec.id}`}>
+            <h2 id={`shelf-${sec.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sec.title}</h2>
             <ul>
-              {sh.list.map((c) => (
+              {sec.list.map((c) => (
                 <li key={c.id}><CourseCard course={c} status={statusOf(summary(c))} window={windowFor(c, summary(c).started, 84)} /></li>
               ))}
             </ul>
+          </section>
+        ) : (
+          <section key={`v-${sec.id}`} className="hr-shelf" aria-labelledby={`vs-${sec.id}`}>
+            <h2 id={`vs-${sec.id}`} className="hr-label" style={{ margin: '8px 6px 0' }}>{sec.title}</h2>
+            <div className="hr-hscroll">{sec.items.map((i) => <VerseCard key={i.id} item={i} learned={isLearned(i)} />)}</div>
           </section>
         ))}
         {labs && <Link href="/heir/review" style={{ alignSelf: 'center', fontSize: 14, color: 'var(--ink)', padding: 12 }}>Review all the content (for the owner)</Link>}
