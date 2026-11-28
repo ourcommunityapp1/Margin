@@ -468,6 +468,21 @@ Step _dueStep(_Ctx c, Due d, [String? avoid]) {
   return _practiceStep(c, d.item, _partsFor(c, d), kinds, true, avoid);
 }
 
+/// Practice on one question or verse, chosen by the person from its page: about two minutes. A varied run of quick steps (the
+/// first matched to how well it is known), then the whole thing typed from memory, so the practice is one real recall at the end.
+List<Step> buildPractice({required Item item, required Track track, required List<Item> pool, required Rng rng, double? chance, int quick = 4}) {
+  final c = _Ctx(0, rng, track, pool);
+  final units = unitsFor(item, track);
+  final steps = <Step>[_dueStep(c, Due(item, 3, chance: chance))];
+  for (final k in shuffle(const ['blanks', 'next', 'spot', 'letters', 'match'], c.rng)) {
+    if (steps.length >= quick) break;
+    if (k == steps.last.kind) continue;
+    steps.add(_practiceStep(c, item, units, [k], true, steps.last.kind));
+  }
+  steps.add(_textStep(c, 'type', item, _pick(units, c.rng), true));
+  return steps;
+}
+
 /// A second new question in the same lesson, learned more briefly: see it, build it, fill it in, type it.
 List<Step> buildLite({required Unit unit, required Item item, required Track track, required List<Item> pool, required Rng rng, int? idStart}) {
   final c = _Ctx(idStart ?? 500, rng, track, pool);

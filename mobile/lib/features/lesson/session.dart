@@ -246,17 +246,11 @@ Session buildItemSession({
 }) {
   final r = rng ?? _random.nextDouble;
   final parts = partMemories(mine.log, mine.partSnap);
-  final weak = weakPartsNow(mine.log, parts, now);
   final card = mine.cards[item.id];
   final byPart = itemChance(item.id, parts, now);
   final chance = card != null ? math.min(recallChance(card, now), byPart ?? 1) : byPart;
-  final steps = lesson.buildReview(
-    due: [lesson.Due(item, math.min(6, card?.stability ?? 1), weak: [for (final k in weak) if (k.startsWith('${item.id}#')) k], chance: chance)],
-    track: track,
-    pool: allItems(),
-    rng: r,
-    max: 1,
-  );
+  // About two minutes of varied quick steps, then the whole thing typed (buildPractice).
+  final steps = lesson.buildPractice(item: item, track: track, pool: allItems(), rng: r, chance: chance);
   return Session(
     label: 'Practice · ${itemLabel(item)}',
     kind: 'review',

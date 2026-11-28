@@ -518,7 +518,7 @@ class _Done extends ConsumerWidget {
               ),
             if (message.isNotEmpty) Text(message, style: sans(15, color: k.muted, height: 1.5)),
             if (cta != null) KButton(cta, onPressed: () => context.pushReplacement('/lesson')),
-            KButton('Back to Today', quiet: cta != null, onPressed: onExit),
+            KButton(session.cardId != null ? 'Back to Today' : 'Done', quiet: cta != null, onPressed: onExit),
           ],
         ),
       ],
